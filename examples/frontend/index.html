@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Service Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .version {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: #333;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .result.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Core Service</h1>
+        <div class="version" id="version">Loading version...</div>
+
+        <div class="section">
+            <h2>👋 Greeting</h2>
+            <div class="input-group">
+                <label for="greetName">Your Name:</label>
+                <input type="text" id="greetName" placeholder="Enter your name" value="Wails Developer">
+            </div>
+            <button onclick="testGreet()">Greet Me!</button>
+            <div class="result" id="greetResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>🧮 Calculator</h2>
+            <div class="input-group">
+                <label for="operation">Operation:</label>
+                <select id="operation">
+                    <option value="add">Add (+)</option>
+                    <option value="subtract">Subtract (-)</option>
+                    <option value="multiply">Multiply (×)</option>
+                    <option value="divide">Divide (÷)</option>
+                </select>
+            </div>
+            <div class="grid">
+                <div class="input-group">
+                    <label for="num1">Number 1:</label>
+                    <input type="number" id="num1" value="10">
+                </div>
+                <div class="input-group">
+                    <label for="num2">Number 2:</label>
+                    <input type="number" id="num2" value="5">
+                </div>
+            </div>
+            <button onclick="testCalculate()">Calculate</button>
+            <div class="result" id="calcResult"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Load Wails runtime (this would be injected by Wails in a real app)
+        // For this example, we'll simulate the service calls
+        
+        window.testGreet = async function() {
+            const name = document.getElementById('greetName').value;
+            const resultDiv = document.getElementById('greetResult');
+            
+            try {
+                // In a real Wails app, this would call the Go service:
+                // const result = await wails.Call.ByName('github.com.Snider.Core.Greet', name);
+                
+                // For demonstration, we'll simulate it:
+                resultDiv.textContent = `Hello, ${name}!`;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        };
+
+        window.testCalculate = async function() {
+            const operation = document.getElementById('operation').value;
+            const num1 = parseInt(document.getElementById('num1').value);
+            const num2 = parseInt(document.getElementById('num2').value);
+            const resultDiv = document.getElementById('calcResult');
+            
+            try {
+                // In a real Wails app, this would call the Go service:
+                // const result = await wails.Call.ByName('github.com.Snider.Core.Calculate', operation, num1, num2);
+                
+                // For demonstration, we'll simulate it:
+                let result;
+                switch(operation) {
+                    case 'add':
+                        result = num1 + num2;
+                        break;
+                    case 'subtract':
+                        result = num1 - num2;
+                        break;
+                    case 'multiply':
+                        result = num1 * num2;
+                        break;
+                    case 'divide':
+                        if (num2 === 0) {
+                            throw new Error('division by zero');
+                        }
+                        result = Math.floor(num1 / num2);
+                        break;
+                }
+                
+                resultDiv.textContent = `Result: ${result}`;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        };
+
+        // Load version on startup
+        async function loadVersion() {
+            const versionDiv = document.getElementById('version');
+            try {
+                // In a real Wails app:
+                // const version = await wails.Call.ByName('github.com.Snider.Core.GetVersion');
+                versionDiv.textContent = 'Version: 0.1.0';
+            } catch (error) {
+                versionDiv.textContent = 'Version: Unknown';
+            }
+        }
+
+        loadVersion();
+    </script>
+</body>
+</html>

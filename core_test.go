@@ -5,7 +5,9 @@ import (
 	"testing"
 )
 
-func TestGreeter(t *testing.T) {
+func TestCoreService_Greet(t *testing.T) {
+	service := NewCoreService()
+
 	tests := []struct {
 		name     string
 		input    string
@@ -30,8 +32,7 @@ func TestGreeter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			greeter := NewGreeter(tt.input)
-			result := greeter.Greet()
+			result := service.Greet(tt.input)
 			if result != tt.expected {
 				t.Errorf("expected %q, got %q", tt.expected, result)
 			}
@@ -39,8 +40,9 @@ func TestGreeter(t *testing.T) {
 	}
 }
 
-func TestGetVersion(t *testing.T) {
-	version := GetVersion()
+func TestCoreService_GetVersion(t *testing.T) {
+	service := NewCoreService()
+	version := service.GetVersion()
 	if version == "" {
 		t.Error("expected non-empty version string")
 	}
@@ -49,7 +51,18 @@ func TestGetVersion(t *testing.T) {
 	}
 }
 
-func TestAdd(t *testing.T) {
+func TestCoreService_ServiceName(t *testing.T) {
+	service := NewCoreService()
+	name := service.ServiceName()
+	expectedName := "github.com/Snider/Core"
+	if name != expectedName {
+		t.Errorf("expected service name %q, got %q", expectedName, name)
+	}
+}
+
+func TestCoreService_Add(t *testing.T) {
+	service := NewCoreService()
+
 	tests := []struct {
 		name     string
 		a        int
@@ -78,7 +91,7 @@ func TestAdd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Add(tt.a, tt.b)
+			result := service.Add(tt.a, tt.b)
 			if result != tt.expected {
 				t.Errorf("Add(%d, %d) = %d; expected %d", tt.a, tt.b, result, tt.expected)
 			}
@@ -86,7 +99,9 @@ func TestAdd(t *testing.T) {
 	}
 }
 
-func TestMultiply(t *testing.T) {
+func TestCoreService_Multiply(t *testing.T) {
+	service := NewCoreService()
+
 	tests := []struct {
 		name     string
 		a        int
@@ -115,7 +130,7 @@ func TestMultiply(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Multiply(tt.a, tt.b)
+			result := service.Multiply(tt.a, tt.b)
 			if result != tt.expected {
 				t.Errorf("Multiply(%d, %d) = %d; expected %d", tt.a, tt.b, result, tt.expected)
 			}
@@ -123,36 +138,128 @@ func TestMultiply(t *testing.T) {
 	}
 }
 
+func TestCoreService_Calculate(t *testing.T) {
+	service := NewCoreService()
+
+	tests := []struct {
+		name      string
+		operation string
+		a         int
+		b         int
+		expected  int
+		wantErr   bool
+	}{
+		{
+			name:      "add operation",
+			operation: "add",
+			a:         10,
+			b:         5,
+			expected:  15,
+			wantErr:   false,
+		},
+		{
+			name:      "subtract operation",
+			operation: "subtract",
+			a:         10,
+			b:         5,
+			expected:  5,
+			wantErr:   false,
+		},
+		{
+			name:      "multiply operation",
+			operation: "multiply",
+			a:         10,
+			b:         5,
+			expected:  50,
+			wantErr:   false,
+		},
+		{
+			name:      "divide operation",
+			operation: "divide",
+			a:         10,
+			b:         5,
+			expected:  2,
+			wantErr:   false,
+		},
+		{
+			name:      "divide by zero",
+			operation: "divide",
+			a:         10,
+			b:         0,
+			expected:  0,
+			wantErr:   true,
+		},
+		{
+			name:      "unknown operation",
+			operation: "modulo",
+			a:         10,
+			b:         5,
+			expected:  0,
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := service.Calculate(tt.operation, tt.a, tt.b)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Calculate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && result != tt.expected {
+				t.Errorf("Calculate(%q, %d, %d) = %d; expected %d", tt.operation, tt.a, tt.b, result, tt.expected)
+			}
+		})
+	}
+}
+
 // Benchmark tests
-func BenchmarkGreeter(b *testing.B) {
-	greeter := NewGreeter("World")
+func BenchmarkCoreService_Greet(b *testing.B) {
+	service := NewCoreService()
 	for i := 0; i < b.N; i++ {
-		_ = greeter.Greet()
+		_ = service.Greet("World")
 	}
 }
 
-func BenchmarkAdd(b *testing.B) {
+func BenchmarkCoreService_Add(b *testing.B) {
+	service := NewCoreService()
 	for i := 0; i < b.N; i++ {
-		_ = Add(42, 24)
+		_ = service.Add(42, 24)
 	}
 }
 
-func BenchmarkMultiply(b *testing.B) {
+func BenchmarkCoreService_Multiply(b *testing.B) {
+	service := NewCoreService()
 	for i := 0; i < b.N; i++ {
-		_ = Multiply(42, 24)
+		_ = service.Multiply(42, 24)
+	}
+}
+
+func BenchmarkCoreService_Calculate(b *testing.B) {
+	service := NewCoreService()
+	for i := 0; i < b.N; i++ {
+		_, _ = service.Calculate("add", 42, 24)
 	}
 }
 
 // Example tests
-func ExampleGreeter() {
-	greeter := NewGreeter("World")
-	greeting := greeter.Greet()
+func ExampleCoreService_Greet() {
+	service := NewCoreService()
+	greeting := service.Greet("World")
 	fmt.Println(greeting)
 	// Output: Hello, World!
 }
 
-func ExampleAdd() {
-	result := Add(2, 3)
+func ExampleCoreService_Add() {
+	service := NewCoreService()
+	result := service.Add(2, 3)
 	fmt.Println(result)
 	// Output: 5
+}
+
+func ExampleCoreService_Calculate() {
+	service := NewCoreService()
+	result, _ := service.Calculate("multiply", 6, 7)
+	fmt.Println(result)
+	// Output: 42
 }
