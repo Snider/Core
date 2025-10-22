@@ -36,6 +36,27 @@ go get github.com/Snider/Core
 
 ## Usage
 
+### Creating a New Wails Application
+
+If you're starting fresh, create a new Wails v3 application:
+
+```bash
+# Install Wails v3 CLI (if not already installed)
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.36
+
+# Create a new Wails application
+wails3 init -n myfirstapp
+
+# Navigate to your new project
+cd myfirstapp
+```
+
+Then add this service library to your project:
+
+```bash
+go get github.com/Snider/Core
+```
+
 ### Integrating into Your Wails Application
 
 ```go
