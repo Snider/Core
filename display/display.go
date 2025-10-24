@@ -12,13 +12,15 @@ import (
 type ActionOpenWindow struct {
 	Target string
 }
+type API struct {
+	core *core.Core
+}
 
 var instance *API
 
 func Register(c *core.Core) error {
 	instance = &API{
-		core:          c,
-		windowHandles: make(map[string]*application.WebviewWindow),
+		core: c,
 	}
 	if err := c.RegisterModule("display", instance); err != nil {
 		return err
@@ -30,7 +32,8 @@ func Register(c *core.Core) error {
 func handleActionCall(c *core.Core, msg core.Message) error {
 	switch m := msg.(type) {
 	case *ActionOpenWindow:
-		instance.OpenWindow(m.Target, application.WebviewWindowOptions{
+		instance.NewWithStruct(&Window{
+			Name:   "main",
 			Title:  "Core",
 			Height: 900,
 			Width:  1280,
@@ -42,6 +45,7 @@ func handleActionCall(c *core.Core, msg core.Message) error {
 		if err != nil {
 			return err
 		}
+		c.App.Logger.Info("Display service started")
 		return nil
 	default:
 		c.App.Logger.Error("Unknown message type", "type", fmt.Sprintf("%T", m))
@@ -139,16 +143,16 @@ Platform Information:`,
 }
 
 func (d *API) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
-	d.core.App.Logger.Info("Display service starting up")
 	d.analyzeScreens()
 	d.monitorScreenChanges()
 	d.buildMenu()
 	d.systemTray()
-	d.core.App.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:  "Core",
-		Height: 900,
-		Width:  1280,
-		URL:    "/",
-	})
+	d.OpenWindow(
+		OptName("main"),
+		OptHeight(900),
+		OptWidth(1280),
+		OptURL("/"),
+		OptTitle("Core"),
+	)
 	return nil
 }

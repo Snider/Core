@@ -11,7 +11,7 @@ import (
 )
 
 // Hash computes a hash of the payload using the specified algorithm.
-func (s *Service) Hash(lib HashType, payload string) string {
+func (s *API) Hash(lib HashType, payload string) string {
 	switch lib {
 	case LTHN:
 		return lthn.Hash(payload)

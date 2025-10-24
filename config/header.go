@@ -9,7 +9,7 @@ import (
 )
 
 // Config holds the resolved paths and user-configurable settings for the application.
-type Config struct {
+type API struct {
 	// --- Dynamic Paths (not stored in config.json) ---
 	core          *core.Core
 	DataDir       string `json:"-"`
@@ -27,7 +27,7 @@ type Config struct {
 }
 
 // Key retrieves a configuration value by its key. It checks JSON tags and field names (case-insensitive).
-func (c *Config) Key(key string) (interface{}, error) {
+func (c *API) Key(key string) (interface{}, error) {
 	// Use reflection to inspect the struct fields.
 	val := reflect.ValueOf(c).Elem()
 	typ := val.Type()

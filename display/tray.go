@@ -22,7 +22,8 @@ func (d *API) systemTray() {
 	//	systray.SetIcon(appTrayIcon)
 	//}
 	// Create a hidden window for the system tray menu to interact with
-	trayWindow := d.core.App.Window.NewWithOptions(application.WebviewWindowOptions{
+	trayWindow := d.NewWithStruct(&Window{
+		Name:      "system-tray",
 		Title:     "System Tray Status",
 		URL:       "/#/system-tray",
 		Width:     400,
