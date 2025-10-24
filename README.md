@@ -4,9 +4,9 @@ Core is an opinionated framework for building Go applications. It was written to
 
 There is no assumption of what front-end framework you use or what back-end framework you use.
 
-However, Core provides a set of services useful for building applications for the Web3 environment.
+However, Core provides a set of services beneficial for building applications for the Web3 environment.
 
-With working defaults, Core is designed to be as simple as possible to use, yet powerful enough to be used in a wide variety of applications.
+With working defaults, Core is designed to be as simple as possible, yet powerful enough to be used in a wide variety of applications.
 
 ## Libraries used in Core
 - [Wails.io](https://github.com/wailsapp/wails) - A framework for building desktop applications using Go and web technologies.
