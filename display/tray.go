@@ -10,8 +10,8 @@ import (
 func (d *API) systemTray() {
 
 	systray := d.core.App.SystemTray.New()
-	systray.SetTooltip("Lethean Desktop")
-	systray.SetLabel("hey")
+	systray.SetTooltip("Core")
+	systray.SetLabel("Core")
 	//appTrayIcon, _ := d.assets.ReadFile("assets/apptray.png")
 	//
 	//if runtime.GOOS == "darwin" {
@@ -25,7 +25,7 @@ func (d *API) systemTray() {
 	trayWindow := d.NewWithStruct(&Window{
 		Name:      "system-tray",
 		Title:     "System Tray Status",
-		URL:       "/#/system-tray",
+		URL:       "system-tray.html",
 		Width:     400,
 		Frameless: true,
 		Hidden:    true,
