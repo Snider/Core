@@ -1,4 +1,4 @@
-# Core by Snider
+# Core.Framework
 
 Core is an opinionated framework for building Go applications written for assured information exchange between the front-end and back-end of a Web3 environment.
 
