@@ -84,10 +84,38 @@ func main() {
 
 }
 ```
-### Registering Services
-Core aunties that your application is not able to access any of the services that are not explicitly registered.
 
-That said, 
+### Integrating your own services
+```go
+package demo
+
+import "github.com/Snider/Core"
+
+// this instance is the singleton instance of the demo module.
+var instance *Demo
+
+type Demo struct {
+	name string
+	core *core.Core
+}
+
+func Register(c *core.Core) error {
+	instance = &Demo{
+		core: c,
+	}
+	if err := c.RegisterModule("demo", instance); err != nil {
+		return err
+	}
+	c.RegisterAction(handleActionCall)
+	return nil
+}
+
+func handleActionCall(c *core.Core, msg core.Message) error {
+	return nil
+}
+
+
+```
 
 ## Core.Display
 
