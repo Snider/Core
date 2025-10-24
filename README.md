@@ -1,8 +1,8 @@
 # Core.Framework
 
-Core is an opinionated framework for building Go applications written for assured information exchange between the front-end and back-end of a Web3 environment.
+Core is an opinionated framework for building Go applications, written to assure information exchange between the front-end and back-end of a Web3 environment.
 
-There is no assumption of what front-end framework you are using, and no assumption of what back-end framework you are using.
+There is no assumption of what front-end framework you are using or what back-end framework you are using.
 
 However, Core provides a set of services that are useful for building applications that are built for the Web3 environment.
 
