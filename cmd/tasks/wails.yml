@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: "Runs the Wails dev server."
+    vars:
+      APP_ROOT: '{{.APP_ROOT | default "."}}'
+      VITE_PORT: '{{.VITE_PORT | default 9245}}'
+    cmds:
+      # Note the paths are now constructed from the passed-in APP_ROOT.
+      - wails3 dev -approot '{{.APP_ROOT}}' -config '{{.APP_ROOT}}/build/config.yml' -port {{.VITE_PORT}}
+
+  build:
+    desc: "Builds the Wails application."
+    vars:
+      APP_ROOT: '{{.APP_ROOT | default "."}}'
+      APP_NAME: '{{.APP_NAME | default "app"}}'
+    dir: '{{.APP_ROOT}}' # Run the build from the app's root directory.
+    cmds:
+      # This assumes you have a 'build' task in your platform-specific Taskfiles.
+      - wails3 build -platform '{{.GOOS}}/{{.GOARCH}}' -name '{{.APP_NAME}}'

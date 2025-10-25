@@ -1,0 +1,39 @@
+version: '3'
+
+# This file contains the build logic specifically for the macOS (Darwin) platform.
+
+includes:
+  common: ./common.yml
+
+tasks:
+  build:
+    desc: "Builds the application for macOS."
+    dir: "{{.APP_ROOT}}"
+    deps:
+      - task: common:go:mod:tidy
+      - task: common:build:public
+        vars:
+          PRODUCTION: '{{.PRODUCTION | default "false"}}'
+      - task: common:generate:icons
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o bin/{{.APP_NAME}}
+    vars:
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+    env:
+      GOOS: darwin
+      CGO_ENABLED: 1
+      GOARCH: '{{.ARCH | default "amd64"}}'
+      PRODUCTION: '{{.PRODUCTION | default "false"}}'
+
+  package:
+    desc: "Packages the application as a .app bundle for macOS."
+    dir: "{{.APP_ROOT}}"
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - echo "Packaging for macOS..."
+      # This command assumes Wails handles the bundling process.
+      # You may need to adjust based on your specific packaging tool.
+      - wails3 build -package -platform darwin/{{.ARCH | default "amd64"}} -production -clean -o "{{.APP_NAME}}.app"

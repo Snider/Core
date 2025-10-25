@@ -1,7 +1,7 @@
 version: '3'
 
 includes:
-  common: "{{.TASKFILE_DIR}}/Taskfile.yml"
+  common: "../Taskfile.yml"
 
 tasks:
   build:
