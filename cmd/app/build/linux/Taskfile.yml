@@ -1,0 +1,81 @@
+version: '3'
+
+includes:
+  common: "{{.TASKFILE_DIR}}/Taskfile.yml"
+
+tasks:
+  build:
+    summary: Builds the application for Linux
+    deps:
+      - task: common:go:mod:tidy
+      - task: common:build:public
+        vars:
+          BUILD_FLAGS:
+            ref: .BUILD_FLAGS
+          PRODUCTION:
+            ref: .PRODUCTION
+      - task: common:generate:icons
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o bin/{{.APP_NAME}}
+    vars:
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+    env:
+      GOOS: linux
+      CGO_ENABLED: 1
+      GOARCH: '{{.ARCH | default "amd64"}}'
+      PRODUCTION: '{{.PRODUCTION | default "false"}}'
+
+  package:
+    summary: Packages a production build of the application for Linux
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - task: create:appimage
+      - task: create:deb
+      - task: create:rpm
+
+  create:appimage:
+    summary: Creates an AppImage
+    dir: "{{.APP_ROOT}}/build/linux/appimage"
+    deps:
+      - task: ":build"
+        vars:
+          PRODUCTION: "true"
+      - task: ":generate:dotdesktop"
+    cmds:
+      - cp "{{.APP_ROOT}}/bin/{{.APP_NAME}}" .
+      - cp "{{.APP_ROOT}}/build/appicon.png" "{{.APP_NAME}}.png"
+      - wails3 generate appimage -binary "{{.APP_NAME}}" -icon "{{.APP_NAME}}.png" -desktopfile "../{{.APP_NAME}}.desktop" -outputdir "{{.APP_ROOT}}/bin" -builddir build
+
+  create:deb:
+    summary: Creates a deb package
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - task: generate:dotdesktop
+      - wails3 tool package -name {{.APP_NAME}} -format deb -config build/linux/nfpm/nfpm.yaml -out bin
+
+  create:rpm:
+    summary: Creates a rpm package
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - task: generate:dotdesktop
+      - wails3 tool package -name {{.APP_NAME}} -format rpm -config build/linux/nfpm/nfpm.yaml -out bin
+
+  generate:dotdesktop:
+    summary: Generates a `.desktop` file
+    cmds:
+      - mkdir -p linux/appimage
+      - wails3 generate .desktop -name "{{.APP_NAME}}" -exec "{{.APP_NAME}}" -icon "{{.APP_NAME}}" -outputfile "linux/{{.APP_NAME}}.desktop" -categories "Development;"
+
+  run:
+    dir: "{{.APP_ROOT}}"
+    cmds:
+      - "bin/{{.APP_NAME}}"

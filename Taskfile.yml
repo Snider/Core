@@ -1,0 +1,35 @@
+version: '3'
+
+# This top-level Taskfile orchestrates tasks in the sub-directories.
+# It uses the 'dir' property to ensure that each included task runs
+# from its correct working directory.
+includes:
+  app:
+    dir: {{.TASKFILE_DIR}}/cmd/app
+  docs:
+    dir: {{.TASKFILE_DIR}}/pkg/v1/core/docs
+
+
+
+tasks:
+  default:
+    desc: "Show available tasks."
+    cmds:
+      - task --list-all
+
+  build:
+    desc: "Build both the application and the documentation."
+    cmds:
+      - task: app:build
+      - task: docs:build
+
+  dev:
+    desc: "Run the application in development mode and serve the documentation."
+    cmds:
+      - task: app:dev
+      - task: docs:dev
+
+  tidy:
+    desc: "Tidy all Go modules in the workspace."
+    cmds:
+      - go mod tidy

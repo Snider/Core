@@ -1,0 +1,16 @@
+{
+  "name": "core-app",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "",
+    "build": "",
+    "build:dev": ""
+  },
+  "dependencies": {
+    "@tailwindplus/elements": "^1.0.18",
+    "@wailsio/runtime": "^3.0.0-alpha.72"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.14"
+  }
+}
