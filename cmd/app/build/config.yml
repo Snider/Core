@@ -5,8 +5,8 @@ version: '3'
 # This information is used to generate the build assets.
 info:
   companyName: "Snider"
-  productName: "Core.Framework"
-  productIdentifier: "com.core.desktop"
+  productName: "Core.App"
+  productIdentifier: "com.core.app"
   description: "A program that does demos the features"
   copyright: "(c) EUPL-1.2, Snider"
   comments: "Demo Dev Area"

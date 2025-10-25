@@ -1,0 +1,24 @@
+version: '3'
+
+tasks:
+  install:
+    desc: "Install npm dependencies for the frontend."
+    dir: '{{.PUBLIC_DIR}}'
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules/*
+    preconditions:
+      - sh: npm version
+        msg: "Looks like npm isn't installed. Npm is part of the Node installer: https://nodejs.org/en/download/"
+    cmds:
+      - npm install
+
+  build:
+    desc: "Build the frontend assets."
+    dir: '{{.PUBLIC_DIR}}'
+    deps:
+      - task: install
+    cmds:
+      - npm run build

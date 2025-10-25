@@ -2,14 +2,14 @@ version: '3'
 
 
 includes:
-  common: "{{.TASKFILE_DIR}}/build/Taskfile.yml"
-  windows: "{{.TASKFILE_DIR}}/build/windows/Taskfile.yml"
-  darwin: "{{.TASKFILE_DIR}}/build/darwin/Taskfile.yml"
-  linux: "{{.TASKFILE_DIR}}/build/linux/Taskfile.yml"
+  common: "./build/Taskfile.yml"
+  windows: "./build/windows/Taskfile.yml"
+  darwin: "./build/darwin/Taskfile.yml"
+  linux: "./build/linux/Taskfile.yml"
 
 vars:
   APP_NAME: "core"
-  BIN_DIR: "{{.TASKFILE_DIR}}/build/bin"
+  BIN_DIR: "./build/bin"
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
 
 tasks:
@@ -31,4 +31,4 @@ tasks:
   dev:
     summary: Runs the application in development mode
     cmds:
-      - wails3 dev -config {{.TASKFILE_DIR}}/build/config.yml -port {{.VITE_PORT}}
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}

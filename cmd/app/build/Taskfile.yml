@@ -45,6 +45,7 @@ tasks:
   generate:bindings:
     label: generate:bindings (BUILD_FLAGS={{.BUILD_FLAGS}})
     summary: Generates bindings
+    dir: ../
     deps:
       - task: go:mod:tidy
     sources:

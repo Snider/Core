@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  tidy:
+    desc: "Run go mod tidy in a specific directory."
+    dir: '{{.GO_DIR | default "."}}'
+    cmds:
+      - go mod tidy
+
+  build:
+    desc: "Run go build in a specific directory."
+    dir: '{{.GO_DIR | default "."}}'
+    cmds:
+      - go build -o {{.OUTPUT_PATH}} {{.BUILD_FLAGS}}

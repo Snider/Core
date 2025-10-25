@@ -21,14 +21,16 @@ func main() {
 		},
 	})
 
-	app.RegisterService(application.NewService(core.Service(
-		core.WithWails(app),                // Provides the Wails application instance to core services
-		core.WithAssets(assets),            // Provides the embed.FS to core services
-		core.WithService(config.Register),  // Provides the ability to persist UI state (windows reopen where they closed)
-		core.WithService(display.Register), // Provides the ability to open windows
-		core.WithService(crypt.Register),   // Provides cryptographic functions
-		core.WithServiceLock(),             // locks core from accepting new services blocking access to IPC
-	)))
+	coreService := core.New(
+		core.WithWails(app),
+		core.WithAssets(assets),
+		core.WithService(config.New),
+		core.WithService(display.New),
+		core.WithService(crypt.New),
+		core.WithServiceLock(),
+	)
+
+	app.RegisterService(application.NewService(coreService))
 
 	err := app.Run()
 	if err != nil {

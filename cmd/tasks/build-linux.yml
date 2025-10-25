@@ -1,0 +1,40 @@
+version: '3'
+
+# This file contains the build logic specifically for the Linux platform.
+
+includes:
+  common: ./common.yml
+
+tasks:
+  build:
+    desc: "Builds the application for Linux."
+    dir: "{{.APP_ROOT}}"
+    deps:
+      - task: common:go:mod:tidy
+      - task: common:build:public
+        vars:
+          BUILD_FLAGS:
+            ref: .BUILD_FLAGS
+          PRODUCTION:
+            ref: .PRODUCTION
+      - task: common:generate:icons
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o bin/{{.APP_NAME}}
+    vars:
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+    env:
+      GOOS: linux
+      CGO_ENABLED: 1
+      GOARCH: '{{.ARCH | default "amd64"}}'
+      PRODUCTION: '{{.PRODUCTION | default "false"}}'
+
+  package:
+    desc: "Packages the application for Linux."
+    dir: "{{.APP_ROOT}}"
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - echo "Packaging for Linux... (AppImage, Deb, RPM)"
+      # Placeholder for actual packaging commands
