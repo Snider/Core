@@ -6,8 +6,8 @@ title: Core.Help
 
 Core is an opinionated framework for building Go desktop apps with Wails, providing a small set of focused modules you can mix into your app. It ships with sensible defaults and a demo app that doubles as in‑app help.
 
-- Site: https://dappco.re
-- Repo: https://github.com/Snider/Core
+- Site: [https://dappco.re](https://dappco.re)
+- Repo: [https://github.com/Snider/Core](https://github.com/Snider/Core)
 
 ## Modules
 
@@ -49,7 +49,7 @@ import (
 
 // Register your service
 func Register(c *core.Core) error {
-	return c.RegisterService("demo", &Demo{core: c})
+    return c.RegisterService("demo", &Demo{core: c})
 }
 ```
 
@@ -64,14 +64,14 @@ import (
 
 // Open a window on startup
 func (d *API) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
-	d.OpenWindow(
-		OptName("main"),
-		OptHeight(900),
-		OptWidth(1280),
-		OptURL("/"),
-		OptTitle("Core"),
-	)
-	return nil
+    d.OpenWindow(
+        OptName("main"),
+        OptHeight(900),
+        OptWidth(1280),
+        OptURL("/"),
+        OptTitle("Core"),
+    )
+    return nil
 }
 ```
 

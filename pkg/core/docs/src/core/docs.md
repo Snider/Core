@@ -11,14 +11,15 @@ Renders MkDocs content inside your app. Opens specific sections in new windows f
 
 ## Setup
 ```go
+package demo
 import (
-  core "github.com/Snider/Core"
-  docs "github.com/Snider/Core/docs"
+	"github.com/Snider/Core"
+	"github.com/Snider/Core/docs"
 )
 
-app := core.New(
-  core.WithService(docs.Register),
-  core.WithServiceLock(),
+core.New(
+	core.WithService(docs.Register), 
+	core.WithServiceLock(),
 )
 ```
 
