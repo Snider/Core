@@ -24,14 +24,18 @@ Core is an opinionated framework for building Go desktop apps with Wails, provid
 package main
 
 import (
+    "github.com/wailsapp/wails/v3/pkg/application"
     core "github.com/Snider/Core"
 )
 
 func main() {
-	app := core.New(
-		core.WithServiceLock(),
-	)
-	_ = app // start via Wails in your main package
+    app := core.New(
+        core.WithServiceLock(),
+    )
+    wailsApp := application.NewWithOptions(&application.Options{
+        Bind: []interface{}{app},
+    })
+    wailsApp.Run()
 }
 ```
 
