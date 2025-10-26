@@ -34,4 +34,4 @@ app := core.New(
 
 ## Notes
 - Docs are built with MkDocs Material and included in the demo app assets.
-- You are viewing Core.Docs right now, this website is bundled into the app binary by default.
+- When viewed in the app, this documentation is served from Core.Docs and is bundled into the app binary by default.
