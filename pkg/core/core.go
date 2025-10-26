@@ -19,7 +19,29 @@ type Contract struct {
 	DisableLogging bool
 }
 type Option func(*Core) error
+
 type Message interface{}
+
+// Runtime is a helper struct embedded in services to provide access to the core application.
+type Runtime[T any] struct {
+	core *Core
+	opts T
+}
+
+// NewRuntime creates a new Runtime instance for a service.
+func NewRuntime[T any](c *Core, opts T) *Runtime[T] {
+	return &Runtime[T]{
+		core: c,
+		opts: opts,
+	}
+}
+
+// Core returns the central core instance.
+func (r *Runtime[T]) Core() *Core {
+	return r.core
+}
+
+// --- Core Application ---
 
 type Core struct {
 	once           sync.Once
@@ -113,7 +135,7 @@ func WithServiceLock() Option {
 
 // --- Core Methods ---
 
-func (c *Core) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
+func (c *Core) ServiceStartup(context.Context, application.ServiceOptions) error {
 	return c.ACTION(ActionServiceStartup{})
 }
 

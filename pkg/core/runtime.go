@@ -1,76 +1,58 @@
 package core
 
-// Runtime is a generic struct that provides a common foundation for all
-// Core services. It holds shared dependencies (like the Core pointer) and a
-// field for module-specific, type-safe configuration.
+// App is the runtime container that holds all instantiated services.
+// It holds the concrete service types so they can be registered with Wails.
+//type App struct {
+//	Config  *config.Service
+//	Display *display.Service
+//	Docs    *docs.Service
+//	Crypt   *crypt.Service
+//}
 //
-// T is the type of the module-specific options' struct.
-//
-// Example:
-//
-//	type MyModuleOptions struct {
-//		Retries int
+//// New creates and wires together all application services.
+//func New() (*App, error) {
+//	// 1. Instantiate services.
+//	configSvc, err := config.New()
+//	if err != nil {
+//		return nil, err
 //	}
 //
-//	// in practice, this would be a core.Core struct
-//	c := &core.Core{}
-//
-//	runtime := core.NewRuntime(c, MyModuleOptions{
-//		Retries: 3,
-//	})
-type Runtime[T any] struct {
-	core *Core
-
-	// Options hold the module-specific configuration of type T.
-	//
-	// Example:
-	//
-	//	type MyModuleOptions struct {
-	//		Retries int
-	//	}
-	//
-	//	// in practice, this would be a core.Core struct
-	//	c := &core.Core{}
-	//
-	//	runtime := core.NewRuntime(c, MyModuleOptions{
-	//		Retries: 3,
-	//	})
-	//
-	//	fmt.Println(runtime.Options.Retries) // Output: 3
-	Options T
-}
-
-// NewRuntime is a constructor for the generic Runtime.
-// It initialises a new runtime with the provided Core pointer and module options.
-//
-// Example:
-//
-//	type MyModuleOptions struct {
-//		Retries int
+//	displaySvc, err := display.New()
+//	if err != nil {
+//		return nil, err
 //	}
 //
-//	// in practice, this would be a core.Core struct
-//	c := &core.Core{}
+//	cryptSvc, err := crypt.New()
+//	if err != nil {
+//		return nil, err
+//	}
 //
-//	runtime := core.NewRuntime(c, MyModuleOptions{
-//		Retries: 3,
-//	})
-func NewRuntime[T any](c *Core, opts T) *Runtime[T] {
-	return &Runtime[T]{
-		core:    c,
-		Options: opts,
-	}
-}
-
-// Core returns the central Core instance, providing access to all core functionalities.
+//	// 2. Inject dependencies.
+//	docsSvc := docs.New(configSvc, displaySvc)
 //
-// Example:
+//	// 3. Assemble the application container.
+//	app := &App{
+//		Config:  configSvc,
+//		Display: displaySvc,
+//		Docs:    docsSvc,
+//		Crypt:   cryptSvc,
+//	}
 //
-//	// in practice, this would be a core.Core struct
-//	c := &core.Core{}
+//	return app, nil
+//}
 //
-//	runtime := core.NewRuntime(c, struct{}{})
-//	coreInstance := runtime.Core()
-func (r *Runtime[T]) Core() *Core {
-	return r.core
-}
+//func NewRuntime[T any](c *Core, opts T) *Runtime[T] {
+//	return &Runtime[T]{
+//		core:    c,
+//		Options: opts,
+//	}
+//}
+//
+//type Runtime[T any] struct {
+//	core    *Core
+//	Options T
+//}
+//
+//func (r *Runtime[T]) Core() *Core {
+//	return r.core
+//}
