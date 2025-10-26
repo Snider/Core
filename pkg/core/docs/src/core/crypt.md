@@ -36,6 +36,6 @@ app := core.New(
 - `Verify(pub *Key, data, sig []byte) error`
 
 ## Notes
-- Uses [ProtonMail](https://pr.tn/ref/VZFX8H2VDCFG) OpenPGP fork.
+- Uses [Proton Mail](https://pr.tn/ref/VZFX8H2VDCFG) OpenPGP fork.
 
 
