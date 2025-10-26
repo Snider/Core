@@ -9,7 +9,7 @@ nav:
   - Config: core/config.md
   - Crypt: core/crypt.md
   - Display: core/display.md
-  - Docs: core/docs.md
+  - Help: core/help.md
   - IO: core/io.md
   - Workspace: core/workspace.md
 

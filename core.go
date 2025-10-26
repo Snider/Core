@@ -56,8 +56,8 @@ type Config = core.Config
 // Display is the public interface for the display service.
 type Display = core.Display
 
-// Docs is the public interface for the documentation service.
-type Docs = core.Docs
+// Help is the public interface for the help service.
+type Help = core.Help
 
 // Crypt is the public interface for the cryptography service.
 type Crypt = core.Crypt

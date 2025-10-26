@@ -11,8 +11,6 @@ Stores and retrieves configuration, including window positions/sizes and user pr
 
 ## Setup
 ```go
-package main
-
 import (
   core "github.com/Snider/Core"
   config "github.com/Snider/Core/config"
@@ -33,4 +31,3 @@ app := core.New(
 - `Register(c *core.Core) error`
 - `Get(path string, out any) error`
 - `Set(path string, v any) error`
-

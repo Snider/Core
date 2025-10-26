@@ -17,8 +17,8 @@ type Display interface {
 	OpenWindow(opts ...any) error // Simplified for now
 }
 
-// Docs manages the in-app documentation.
-type Docs interface {
+// Help manages the in-app documentation and help system.
+type Help interface {
 	Show() error
 	ShowAt(anchor string) error
 }

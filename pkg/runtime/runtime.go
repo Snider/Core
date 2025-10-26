@@ -5,7 +5,7 @@ import (
 	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
-	"github.com/Snider/Core/pkg/docs"
+	"github.com/Snider/Core/pkg/help"
 )
 
 // App is the runtime container that holds all instantiated services.
@@ -13,7 +13,7 @@ import (
 type App struct {
 	Config  *config.Service
 	Display *display.Service
-	Docs    *docs.Service
+	Help    *help.Service
 	Crypt   *crypt.Service
 }
 
@@ -36,13 +36,13 @@ func New() (*App, error) {
 	}
 
 	// 2. Inject dependencies.
-	docsSvc := docs.New(configSvc, displaySvc)
+	helpSvc, _ := help.New(configSvc, displaySvc)
 
 	// 3. Assemble the application container.
 	app := &App{
 		Config:  configSvc,
 		Display: displaySvc,
-		Docs:    docsSvc,
+		Help:    helpSvc,
 		Crypt:   cryptSvc,
 	}
 

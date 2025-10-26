@@ -7,6 +7,7 @@ import (
 	"github.com/Snider/Core/config"
 	"github.com/Snider/Core/crypt"
 	"github.com/Snider/Core/display"
+	"github.com/Snider/Core/help"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -27,6 +28,7 @@ func main() {
 		core.WithService(config.New),
 		core.WithService(display.New),
 		core.WithService(crypt.New),
+		core.WithService(help.New),
 		core.WithServiceLock(),
 	)
 

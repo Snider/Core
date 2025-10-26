@@ -15,7 +15,7 @@ Core is an opinionated framework for building Go desktop apps with Wails, provid
 - Core.Config — app and UI state persistence
 - Core.Crypt — keys, encrypt/decrypt, sign/verify
 - Core.Display — windows, tray, window state
-- Core.Docs — in‑app help and deep‑links
+- Core.Help — in‑app help and deep‑links
 - Core.IO — local/remote filesystem helpers
 - Core.Workspace — projects and paths
 
