@@ -45,7 +45,7 @@ import (
 
 // Register your service
 func Register(c *core.Core) error {
-	return c.RegisterModule("demo", &Demo{core: c})
+	return c.RegisterService("demo", &Demo{core: c})
 }
 ```
 
