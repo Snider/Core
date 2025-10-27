@@ -1,0 +1,42 @@
+version: '3'
+
+includes:
+  common: "./build/Taskfile.yml"
+  windows: "./build/windows/Taskfile.yml"
+  darwin: "./build/darwin/Taskfile.yml"
+  linux: "./build/linux/Taskfile.yml"
+
+vars:
+  APP_NAME: "core"
+  BIN_DIR: "./build/bin"
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+
+tasks:
+  build:
+    summary: Builds the application
+    cmds:
+      - task: "{{OS}}:build"
+
+  package:
+    summary: Packages a production build of the application
+    cmds:
+      - task: "{{OS}}:package"
+
+  run:
+    summary: Runs the application
+    cmds:
+      - task: "{{OS}}:run"
+
+  # This is the main dev task called by the Makefile.
+  # It delegates to the actual wails command below.
+  dev:
+    summary: Runs the application in development mode
+    cmds:
+      - task: dev:wails
+
+  # This task contains the real wails dev command.
+  # This avoids the recursive loop and provides a clear target.
+  dev:wails:
+    internal: true
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
