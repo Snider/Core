@@ -7,6 +7,9 @@ all:
 dev:
 	(cd cmd/core-app && task dev)
 
+pre-commit:
+	coderabbit review --prompt-only
+
 development-docs:
 	@echo "Running development documentation Website..."
 	@(cd pkg/core/docs && mkdocs serve -w src)

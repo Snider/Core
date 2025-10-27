@@ -38,7 +38,7 @@ var (
 			Foreground(lipgloss.Color("#3b82f6")). // Tailwind blue-500
 			Underline(true)
 
-	taglineStyle = lipgloss.NewStyle().
+	taglineStyle = lipgloss.NewNewStyle().
 			Foreground(lipgloss.Color("#e2e8f0")).
 			PaddingTop(2).PaddingLeft(8).PaddingBottom(1). // vertical spacing around the tagline
 			Align(lipgloss.Center)                         // centre it under the big words
@@ -55,6 +55,9 @@ var rootCmd = &cobra.Command{
 			"managing various aspects of Core.Framework applications."),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default behaviour if no subcommand is given
+		if !cmd.HasSubCommands() && len(args) == 0 {
+			showBanner()
+		}
 		err := cmd.Help()
 		if err != nil {
 			return
@@ -70,11 +73,14 @@ func Execute() {
 }
 
 func init() {
-	// Here you can define global flags and configuration that apply to all commands.
+	// Here you can define global flags and command setup.
 	if os.Getenv("CORE_DEV_TOOLS") == "true" {
 		initDevTools()
 	}
+}
 
+// showBanner generates and prints the ASCII art banner.
+func showBanner() {
 	coreFig := figure.NewFigure("Core", "big", true)
 	frameworkFig := figure.NewFigure("Framework", "big", true)
 
@@ -121,11 +127,8 @@ func initDevTools() {
 		}
 		return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 	}
-	// go-prompt will block, so we run it in a goroutine for this example
-	// In a real app, you'd likely manage its lifecycle more carefully.
-	// The prompt.New function returns a Prompt object, which then has a Run method.
-	// For a simple blocking run, you can call .Run() directly on the New object.
-	go prompt.New(executor, completer, prompt.OptionPrefix(">>> ")).Run()
+	// go-prompt will now run synchronously for the demo.
+	prompt.New(executor, completer, prompt.OptionPrefix(">>> ")).Run()
 
 	// Example usage for lipgloss
 	// Using the global descriptionStyle for consistency

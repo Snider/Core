@@ -17,7 +17,7 @@ var tviewCmd = &cobra.Command{
 	Short: "Runs a tview example to demonstrate its capabilities",
 	Long:  `This command launches a simple tview application to showcase its full-screen terminal UI features.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Starting tview example...")
+		// Removed: fmt.Println("Starting tview example...") to prevent visual artifacts
 		app := tview.NewApplication()
 		box := tview.NewBox().
 			SetBorder(true).
