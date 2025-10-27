@@ -1,0 +1,13 @@
+version: '3'
+
+tasks:
+  build:
+    summary: Builds the core executable
+    cmds:
+      - go build -o ./bin/core .
+
+  build:dev:
+    summary: Builds and runs the core executable in development mode
+    cmds:
+      - go build -o ./bin/core .
+      - CORE_DEV_TOOLS="false" ./bin/core
