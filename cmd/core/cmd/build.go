@@ -129,6 +129,12 @@ func updateFileSelect(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.fileCursor++
 			}
 		case "enter":
+			// Guard against empty files or out-of-bounds cursor
+			if len(m.files) == 0 || m.fileCursor < 0 || m.fileCursor >= len(m.files) {
+				// If the guard fails, attempt to reload files for the current path
+				return m, loadFilesCmd(m.currentPath)
+			}
+
 			selectedEntry := m.files[m.fileCursor]
 			fullPath := filepath.Join(m.currentPath, selectedEntry.Name())
 			if selectedEntry.IsDir() {
@@ -136,9 +142,17 @@ func updateFileSelect(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				return m, loadFilesCmd(m.currentPath)
 			} else {
 				// User selected a file
-				m.selectedFile = fullPath
-				m.view = buildOutputState
-				return m, buildWailsCmd(m.selectedFile)
+				ext := strings.ToLower(filepath.Ext(selectedEntry.Name()))
+				if ext == ".html" || ext == ".htm" {
+					m.selectedFile = fullPath
+					m.view = buildOutputState
+					return m, buildWailsCmd(m.selectedFile)
+				} else {
+					// If not an HTML file, show an error and stay in file selection
+					m.buildLog = fmt.Sprintf("Error: Selected file '%s' is not an HTML file (.html or .htm).", selectedEntry.Name())
+					m.view = buildOutputState // Temporarily show error in build output view
+					return m, nil
+				}
 			}
 		case "backspace", "h":
 			parentPath := filepath.Dir(m.currentPath)
@@ -182,6 +196,9 @@ func (m model) View() string {
 		sb.WriteString(fmt.Sprintf("Select an HTML file for Wails build (Current: %s)\n\n", m.currentPath))
 		for i, entry := range m.files {
 			cursor := " "
+			if entry.IsDir() {
+				cursor = "/"
+			}
 			if m.fileCursor == i {
 				cursor = ">"
 			}
@@ -232,8 +249,16 @@ func buildWailsCmd(htmlPath string) tea.Cmd {
 			return errorMsg(fmt.Errorf("wails3 executable not found in PATH: %w", err))
 		}
 
-		// Assuming the Wails project is in cmd/core-app relative to the core CLI tool
-		wailsProjectDir := "../core-app"
+		var wailsProjectDir string
+		execPath, err := os.Executable()
+		if err != nil {
+			// If os.Executable fails, return an error as we cannot reliably locate the Wails project.
+			return errorMsg(fmt.Errorf("failed to determine executable path: %w. Cannot reliably locate Wails project directory.", err))
+		} else {
+			execDir := filepath.Dir(execPath)
+			// Join execDir with "../core-app" and clean the path
+			wailsProjectDir = filepath.Clean(filepath.Join(execDir, "../core-app"))
+		}
 
 		// Get the directory and base name of the selected HTML file
 		assetDir := filepath.Dir(htmlPath)
