@@ -1,0 +1,290 @@
+# CodeRabbit Configuration Template
+# Complete reference: https://docs.coderabbit.ai/reference/configuration
+language: "en-GB"
+tone_instructions: "You are a Zen Rabit, master of chill."
+early_access: true
+enable_free_tier: true
+reviews:
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  high_level_summary_in_walkthrough: false
+  auto_title_placeholder: "@coderabbitai"
+  auto_title_instructions: ""
+  fail_commit_status: false
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true
+  estimate_code_review_effort: false
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  labeling_instructions: []
+  auto_apply_labels: true
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+  in_progress_fortune: true
+  poem: true
+  path_filters: ["cmd/core-**/*","!cmd/core-app/*", "*/public/bindings/*"]
+  path_instructions: []
+  abort_on_close: true
+  disable_cache: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords: []
+
+    # List of labels to control which PRs/MRs to review. Labels starting with '!' are negative matches. Examples: ['bug', 'feature'] - reviews PRs with 'bug' OR 'feature' label. ['!wip'] - reviews all PRs except those with 'wip' label. ['bug', '!wip'] - reviews PRs with 'bug' label but not if they have 'wip' label.
+    # Default: []
+    labels: ["bug", "feature", "!wip"]
+    drafts: false
+    base_branches: []
+    ignore_usernames: []
+  finishing_touches:
+    docstrings:
+      # Docstrings - Allow CodeRabbit to generate docstrings for PRs/MRs.
+      # Default: true
+      enabled: true
+    # Unit Tests - Options for generating unit tests for your PRs/MRs.
+    # Default: {}
+    unit_tests:
+      # Unit Tests - Allow CodeRabbit to generate unit tests for PRs/MRs.
+      # Default: true
+      enabled: true
+  # Configuration for pre merge checks
+  # Default: {}
+  pre_merge_checks:
+    # Docstring Coverage - Checks if the code has sufficient docstrings.
+    # Default: {}
+    docstrings:
+      # Mode - Determines how strictly the docstring coverage check is enforced. Warning will only generate a warning and does not require the user to resolve the check. Error requires the user to resolve issues before merging the pull request. If set to error and the request changes workflow is enabled, the pull request will be blocked until the issues are resolved.
+      # Options: off, warning, error
+      # Default: "warning"
+      mode: "warning"
+      # Percentage threshold for docstring coverage check.
+      # Default: 80
+      threshold: 80
+    # Title Check - Checks if the pull request title is appropriate and follows best practices.
+    # Default: {}
+    title:
+      # Mode - Determines how strictly the title check is enforced. Warning will only generate a warning and does not require the user to resolve the check. Error requires the user to resolve issues before merging the pull request. If set to error and the request changes workflow is enabled, the pull request will be blocked until the issues are resolved.
+      # Options: off, warning, error
+      # Default: "warning"
+      mode: "warning"
+
+      # Requirements - Requirements for the pull request title. Example: 'Title should be concise and descriptive, ideally under 50 characters.'
+      # Default: ""
+      requirements: ""
+
+    # Description Check - Checks if the pull request description is appropriate and follows best practices.
+    # Default: {}
+    description:
+
+      # Mode - Determines how strictly the description check is enforced. Warning will only generate a warning and does not require the user to resolve the check. Error requires the user to resolve issues before merging the pull request. If set to error and the request changes workflow is enabled, the pull request will be blocked until the issues are resolved.
+      # Options: off, warning, error
+      # Default: "warning"
+      mode: "warning"
+
+    # Linked Issue Assessment - Checks if the pull request addresses the linked issues. Generate an assessment of how well the changes address the linked issues.
+    # Default: {}
+    issue_assessment:
+
+      # Mode - Determines how strictly the issue assessment check is enforced. Warning will only generate a warning and does not require the user to resolve the check. Error requires the user to resolve issues before merging the pull request. If set to error and the request changes workflow is enabled, the pull request will be blocked until the issues are resolved.
+      # Options: off, warning, error
+      # Default: "warning"
+      mode: "warning"
+
+    # Custom Pre-merge Checks - Add unique checks to enforce your team's standards before merging a pull request. Each check must have a unique name (up to 50 characters) and clear instructions (up to 10000 characters). Use these to automatically verify coding, security, documentation, or business rules and maintain code quality.
+    # Default: []
+    custom_checks: []
+
+  # Tools that provide additional context to code reviews.
+  # Default: {}
+  tools:
+
+    # Enable ast-grep - ast-grep is a code analysis tool that helps you to find patterns in your codebase using abstract syntax trees patterns. - v0.39.6
+    # Default: {}
+    ast-grep:
+
+      # List of rules directories.
+      # Default: []
+      rule_dirs: []
+
+      # List of utils directories.
+      # Default: []
+      util_dirs: []
+
+      # Use ast-grep essentials package.
+      # Default: true
+      essential_rules: true
+
+      # Predefined packages to be used.
+      # Default: []
+      packages: []
+
+    # ShellCheck is a static analysis tool that finds bugs in your shell scripts.
+    # Default: {}
+    shellcheck:
+
+      # Enable ShellCheck - ShellCheck is a static analysis tool that finds bugs in your shell. - Enable ShellCheck integration. - v0.11.0
+      # Default: true
+      enabled: true
+
+    # Ruff is a Python linter and code formatter.
+    # Default: {}
+    ruff:
+
+      # Enable Ruff - Ruff is a Python linter and code formatter. - Enable Ruff integration. - v0.14.1
+      # Default: true
+      enabled: true
+
+    # markdownlint-cli2 is a static analysis tool to enforce standards and consistency for Markdown files.
+    # Default: {}
+    markdownlint:
+
+      # Enable markdownlint - markdownlint-cli2 is a static analysis tool to enforce standards and consistency for Markdown files. - Enable markdownlint integration. - v0.18.1
+      # Default: true
+      enabled: true
+
+    # GitHub Checks integration configuration.
+    # Default: {}
+    github-checks:
+
+      # Enable GitHub Checks - Enable integration, defaults to true - Enable GitHub Checks integration.
+      # Default: true
+      enabled: true
+
+      # Time in milliseconds to wait for all GitHub Checks to conclude. Default 90 seconds, max 15 minutes (900000ms).
+      # Default: 90000
+      timeout_ms: 90000
+
+    # LanguageTool is a style and grammar checker for 30+ languages.
+    # Default: {}
+    languagetool:
+
+      # Enable LanguageTool - Enable LanguageTool integration.
+      # Default: true
+      enabled: true
+
+      # IDs of rules to be enabled. The rule won't run unless 'level' is set to a level that activates the rule.
+      # Default: []
+      enabled_rules: []
+
+      # IDs of rules to be disabled. Note: EN_UNPAIRED_BRACKETS, and EN_UNPAIRED_QUOTES are always disabled.
+      # Default: []
+      disabled_rules: []
+
+      # IDs of categories to be enabled.
+      # Default: []
+      enabled_categories: []
+
+      # IDs of categories to be disabled. Note: TYPOS, TYPOGRAPHY, and CASING are always disabled.
+      # Default: []
+      disabled_categories: []
+
+      # Only the rules and categories whose IDs are specified with 'enabledRules' or 'enabledCategories' are enabled.
+      # Default: false
+      enabled_only: false
+
+      # If set to 'picky', additional rules will be activated, i.e. rules that you might only find useful when checking formal text.
+      # Options: default, picky
+      # Default: "default"
+      level: "default"
+
+    # Biome is a fast formatter, linter, and analyzer for web projects.
+    # Default: {}
+    biome:
+
+      # Enable Biome - Biome is a fast formatter, linter, and analyzer for web projects. - Enable Biome integration. - v2.1.2
+      # Default: true
+      enabled: true
+
+    # Hadolint is a Dockerfile linter.
+    # Default: {}
+    hadolint:
+
+      # Enable Hadolint - Hadolint is a Dockerfile linter. - Enable Hadolint integration. - v2.14.0
+      # Default: true
+      enabled: true
+
+    # SwiftLint integration configuration object.
+    # Default: {}
+    swiftlint:
+
+      # Enable SwiftLint - SwiftLint is a Swift linter. - Enable SwiftLint integration. - v0.57.0
+      # Default: true
+      enabled: true
+
+      # Optional path to the SwiftLint configuration file relative to the repository. This is useful when the configuration file is named differently than the default '.swiftlint.yml' or '.swiftlint.yaml'.
+      config_file: "example-value"
+
+    # PHPStan is a tool to analyze PHP code.
+    # Default: {}
+    phpstan:
+      enabled: false
+    phpmd:
+      enabled: false
+    phpcs:
+      enabled: false
+    golangci-lint:
+      enabled: true
+      # Optional path to the golangci-lint configuration file relative to the repository. Useful when the configuration file is named differently than the default '.golangci.yml', '.golangci.yaml', '.golangci.toml', '.golangci.json'.
+      config_file: "example-value"
+    yamllint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    checkov:
+      enabled: true
+    detekt:
+      enabled: false
+    eslint:
+      enabled: true
+    flake8:
+      enabled: false
+    rubocop:
+      enabled: false
+    buf:
+      enabled: false
+    regal:
+      enabled: false
+    actionlint:
+      enabled: true
+    pmd:
+      enabled: true
+      config_file: "example-value"
+    clang:
+      enabled: false
+    cppcheck:
+      enabled: false
+    semgrep:
+      enabled: false
+      config_file: "example-value"
+    circleci:
+      enabled: false
+    clippy:
+      enabled: false
+    sqlfluff:
+      enabled: false
+    prismaLint:
+      enabled: false
+    pylint:
+      enabled: false
+    oxc:
+      enabled: true
+    shopifyThemeCheck:
+      enabled: false
+    luacheck:
+      enabled: false
+    brakeman:
+      enabled: false
+    dotenvLint:
+      enabled: true
+    htmlhint:
+      enabled: true
+    checkmake:
+      enabled: true
+    osvScanner:
+      enabled: true
+
+

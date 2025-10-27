@@ -146,18 +146,27 @@ func (c *Core) Service(name string) any {
 }
 
 // ServiceFor retrieves a registered service by name and asserts its type to the given interface T.
-func ServiceFor[T any](c *Core, name string) T {
+func ServiceFor[T any](c *Core, name string) (T, error) {
+	var zero T
 	raw := c.Service(name)
 	if raw == nil {
-		var zero T // Return zero value of T (nil for interfaces)
-		return zero
+		return zero, fmt.Errorf("service '%s' not found", name)
 	}
 	typed, ok := raw.(T)
 	if !ok {
-		var zero T // Return zero value of T (nil for interfaces)
-		return zero
+		return zero, fmt.Errorf("service '%s' is of type %T, but expected %T", name, raw, zero)
 	}
-	return typed // Return a pointer to the interface
+	return typed, nil
+}
+
+// MustServiceFor retrieves a registered service by name and asserts its type to the given interface T.
+// It panics if the service is not found or cannot be cast to T.
+func MustServiceFor[T any](c *Core, name string) T {
+	svc, err := ServiceFor[T](c, name)
+	if err != nil {
+		panic(err)
+	}
+	return svc
 }
 
 // App returns the global application instance.
@@ -170,11 +179,7 @@ func App() *application.App {
 
 // Config returns the registered Config service.
 func (c *Core) Config() Config {
-	cfg := ServiceFor[Config](c, "config")
-	if cfg == nil {
-		// This indicates a missing dependency. Panic or return a default/error config.
-		panic("core.Config() called but config service is not registered")
-	}
+	cfg := MustServiceFor[Config](c, "config")
 	return cfg
 }
 

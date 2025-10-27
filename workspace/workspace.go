@@ -1,4 +1,4 @@
-// package workspace provides the public API for the Workspace service.
+// Package workspace package workspace provides the public API for the Workspace service.
 package workspace
 
 import (

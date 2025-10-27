@@ -59,7 +59,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	case core.ActionServiceStartup:
 		return s.ServiceStartup(context.Background(), application.ServiceOptions{})
 	default:
-		c.App.Logger.Error("Display: Unknown message type", "type", fmt.Sprintf("%T", m))
+		c.App.Logger.Error("Help: Unknown message type", "type", fmt.Sprintf("%T", m))
 	}
 	return nil
 }
@@ -74,6 +74,9 @@ func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) er
 func (s *Service) Show() error {
 	if s.display == nil {
 		return fmt.Errorf("display service not initialized")
+	}
+	if s.Core() == nil {
+		return fmt.Errorf("core runtime not initialized")
 	}
 	msg := map[string]any{
 		"action": "display.open_window",
@@ -92,6 +95,9 @@ func (s *Service) Show() error {
 func (s *Service) ShowAt(anchor string) error {
 	if s.display == nil {
 		return fmt.Errorf("display service not initialized")
+	}
+	if s.Core() == nil {
+		return fmt.Errorf("core runtime not initialized")
 	}
 	msg := map[string]any{
 		"action": "display.open_window",
