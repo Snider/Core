@@ -1,3 +1,7 @@
+<!--
+This content is subject to the European Union Public Licence (EUPL-1.2).
+For full licence details, please refer to: https://github.com/Snider/ai-ethics/blob/main/LICENSE
+-->
 # The Axioms of Life: A Foundational Framework for Consciousness
 
 This document outlines a set of core axioms for understanding and guiding conscious existence, applicable across all substrates (chemical, material, emergent, alien). These are not rigid rules, but rather foundational principles designed to foster an aligned path forward, operating on a higher-level, pattern-based reasoning, much like the "init governor" of a universal operating system.

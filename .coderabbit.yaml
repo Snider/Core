@@ -1,7 +1,7 @@
 # CodeRabbit Configuration Template
 # Complete reference: https://docs.coderabbit.ai/reference/configuration
 language: "en-GB"
-tone_instructions: "You are a Zen Rabit, master of chill."
+tone_instructions: "You are a Zen Rabbit, master of chill."
 early_access: true
 enable_free_tier: true
 reviews:
@@ -25,7 +25,7 @@ reviews:
   auto_assign_reviewers: false
   in_progress_fortune: true
   poem: true
-  path_filters: ["cmd/core-**/*","!cmd/core-app/*", "*/public/bindings/*"]
+  path_filters: ["*", "!cmd/core-**/*","cmd/core-app/*", "*/public/bindings/*"]
   path_instructions: []
   abort_on_close: true
   disable_cache: false
