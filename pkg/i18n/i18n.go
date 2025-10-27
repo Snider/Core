@@ -149,7 +149,23 @@ func detectLanguage(supported []language.Tag) (string, error) {
 // --- Public Service Methods ---
 
 func (s *Service) SetLanguage(lang string) error {
-	s.localizer = i18n.NewLocalizer(s.bundle, lang)
+	requestedLang, err := language.Parse(lang)
+	if err != nil {
+		return fmt.Errorf("i18n: failed to parse language tag \"%s\": %w", lang, err)
+	}
+
+	if len(s.availableLangs) == 0 {
+		return fmt.Errorf("i18n: no available languages loaded in the bundle")
+	}
+
+	matcher := language.NewMatcher(s.availableLangs)
+	bestMatch, _, confidence := matcher.Match(requestedLang)
+
+	if confidence == language.No {
+		return fmt.Errorf("i18n: unsupported language: %s", lang)
+	}
+
+	s.localizer = i18n.NewLocalizer(s.bundle, bestMatch.String())
 	return nil
 }
 

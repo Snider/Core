@@ -12,8 +12,8 @@ Simple wrappers around OpenPGP for common crypto tasks.
 ## Setup
 ```go
 import (
-  core "github.com/Snider/Core"
-  crypt "github.com/Snider/Core/crypt"
+	"github.com/Snider/Core"
+	"github.com/Snider/Core/crypt"
 )
 
 app := core.New(

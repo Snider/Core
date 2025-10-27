@@ -47,17 +47,17 @@ func newWorkspaceService() (*Service, error) {
 // New is the constructor for static dependency injection.
 // It creates a Service instance without initializing the core.Runtime field.
 // Dependencies are passed directly here.
-func New(medium io.Medium) (*Service, error) {
+func New() (*Service, error) {
 	s, err := newWorkspaceService()
 	if err != nil {
 		return nil, err
 	}
-	s.medium = medium
+	//s.medium = medium
 	// Initialize the service after creation.
 	// Note: ServiceStartup will now get config from s.Runtime.Config()
-	if err := s.ServiceStartup(context.Background(), application.ServiceOptions{}); err != nil {
-		return nil, fmt.Errorf("workspace service startup failed: %w", err)
-	}
+	//if err := s.ServiceStartup(context.Background(), application.ServiceOptions{}); err != nil {
+	//	return nil, fmt.Errorf("workspace service startup failed: %w", err)
+	//}
 	return s, nil
 }
 
@@ -77,8 +77,8 @@ func Register(c *core.Core) (any, error) {
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	switch m := msg.(type) {
 	case map[string]any:
-		if action, ok := m["action"].(string); ok && action == "display.open_windows" {
-			return nil //s.handleOpenWindowAction(m)
+		if action, ok := m["action"].(string); ok && action == "workspace.switch_workspace" {
+			return s.SwitchWorkspace(m["name"].(string))
 		}
 	case core.ActionServiceStartup:
 		return s.ServiceStartup(context.Background(), application.ServiceOptions{})

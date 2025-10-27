@@ -33,13 +33,11 @@ func newHelpService() (*Service, error) {
 // New is the constructor for static dependency injection.
 // It creates a Service instance without initialising the core.Runtime field.
 // Dependencies are passed directly here.
-func New(cfg core.Config, disp core.Display) (*Service, error) {
+func New() (*Service, error) {
 	s, err := newHelpService()
 	if err != nil {
 		return nil, err
 	}
-	s.config = cfg
-	s.display = disp
 	return s, nil
 }
 

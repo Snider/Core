@@ -25,12 +25,11 @@ func newDisplayService() (*Service, error) {
 
 // New is the constructor for static dependency injection.
 // It creates a Service instance without initializing the core.Runtime field.
-func New(cfg core.Config) (*Service, error) {
+func New() (*Service, error) {
 	s, err := newDisplayService()
 	if err != nil {
 		return nil, err
 	}
-	s.config = cfg
 	return s, nil
 }
 

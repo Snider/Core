@@ -12,15 +12,24 @@ Stores and retrieves configuration, including window positions/sizes and user pr
 ## Setup
 ```go
 import (
-  core "github.com/Snider/Core"
-  config "github.com/Snider/Core/config"
+  "github.com/Snider/Core"
+  "github.com/Snider/Core/config"
 )
-
+// Example of static dependency injection
+configService, err := config.New()
+if err != nil {
+  // handle error
+}
 app := core.New(
-  core.WithService(config.Register),
+  core.WithService(configService),
   core.WithServiceLock(),
 )
 
+// Example of dynamic dependency injection (used with core.WithService)
+// app := core.New(
+//   core.WithService(config.Register),
+//   core.WithServiceLock(),
+// )
 ```
 
 ## Use
@@ -28,6 +37,8 @@ app := core.New(
 - Read/write your own settings via the config API.
 
 ## API
-- `Register(c *core.Core) error`
-- `Get(path string, out any) error`
-- `Set(path string, v any) error`
+- `New() (*Service, error)`
+- `Register(c *core.Core) (any, error)`
+- `(s *Service) Save() error`
+- `(s *Service) Get(key string, out any) error`
+- `(s *Service) Set(key string, v any) error`
