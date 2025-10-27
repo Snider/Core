@@ -1,0 +1,15 @@
+version: '3'
+
+includes:
+  cmd: "./cmd/Taskfile.yml"
+
+tasks:
+  build:
+    summary: Builds the core executable
+    cmds:
+      - task: cmd:build
+
+  build:dev:
+    summary: Builds the core executable
+    cmds:
+      - task: cmd:build:dev
