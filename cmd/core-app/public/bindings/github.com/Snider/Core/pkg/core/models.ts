@@ -9,6 +9,11 @@ import { Create as $Create } from "@wailsio/runtime";
 // @ts-ignore: Unused imports
 import * as application$0 from "../../../../wailsapp/wails/v3/pkg/application/models.js";
 
+/**
+ * Config provides access to application configuration.
+ */
+export type Config = any;
+
 export class Core {
     "App": application$0.App | null;
 

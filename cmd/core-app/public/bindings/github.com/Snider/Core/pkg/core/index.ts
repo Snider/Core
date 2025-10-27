@@ -11,5 +11,6 @@ export {
 } from "./models.js";
 
 export type {
+    Config,
     Message
 } from "./models.js";

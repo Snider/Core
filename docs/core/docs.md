@@ -13,13 +13,13 @@ Renders MkDocs content inside your app. Opens specific sections in new windows f
 ```go
 package demo
 import (
-	"github.com/Snider/Core"
-	"github.com/Snider/Core/docs"
+    "github.com/Snider/Core"
+    "github.com/Snider/Core/docs"
 )
 
 core.New(
-	core.WithService(docs.Register), 
-	core.WithServiceLock(),
+    core.WithService(docs.Register),
+    core.WithServiceLock(),
 )
 ```
 

@@ -13,6 +13,13 @@ export function ACTION(msg: $models.Message): $CancellablePromise<void> {
     return $Call.ByID(652345721, msg);
 }
 
+/**
+ * Config returns the registered Config service.
+ */
+export function Config(): $CancellablePromise<$models.Config> {
+    return $Call.ByID(432502633);
+}
+
 export function Core(): $CancellablePromise<$models.Core | null> {
     return $Call.ByID(1479405872).then(($result: any) => {
         return $$createType1($result);

@@ -77,13 +77,13 @@ func Register(c *core.Core) (any, error) {
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	switch m := msg.(type) {
 	case map[string]any:
-		if action, ok := m["action"].(string); ok && action == "display.open_windowds" {
+		if action, ok := m["action"].(string); ok && action == "display.open_windows" {
 			return nil //s.handleOpenWindowAction(m)
 		}
 	case core.ActionServiceStartup:
 		return s.ServiceStartup(context.Background(), application.ServiceOptions{})
 	default:
-		c.App.Logger.Error("Display: Unknown message type", "type", fmt.Sprintf("%T", m))
+		c.App.Logger.Error("Workspace: Unknown message type", "type", fmt.Sprintf("%T", m))
 	}
 	return nil
 }
