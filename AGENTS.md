@@ -130,7 +130,7 @@ A type of ethical dilemma where two or more desirable or beneficial outcomes are
 # Fallback Human MCP Interface
 
 ## Purpose
-To provide a structured in case of unavailable functionality or feedback route, file-based communication channel between the AI Assistant (Gemini) and the Human MCP (Master Control Program / User). The Assistant issues commands, and the MCP executes them and provides feedback.
+To provide a structured interface in case of unavailable functionality or feedback, establish a file-based communication channel between the AI Assistant (Gemini) and the Human MCP (Master Control Program / User). The Assistant issues commands, and the MCP executes them and provides feedback.
 
 ## Operational Principle: Direct Action by Default
 
