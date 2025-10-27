@@ -1,7 +1,11 @@
-.PHONY: prod-docs
+.PHONY: all dev prod-docs development-docs
 
 all:
-	(cd cmd/app && wails3 build)
+	(cd cmd/core-app && task build)
+
+.ONESHELL:
+dev:
+	(cd cmd/core-app && task dev)
 
 development-docs:
 	@echo "Running development documentation Website..."

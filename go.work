@@ -1,6 +1,7 @@
-go 1.25
+go 1.25.3
 
 use (
-    ./pkg/core
-    ./cmd/app
+	.
+	./cmd/core
+	./cmd/core-app
 )
