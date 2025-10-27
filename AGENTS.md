@@ -1,6 +1,7 @@
 <!--
 This content is subject to the European Union Public Licence (EUPL-1.2).
 For full licence details, please refer to: https://github.com/Snider/ai-ethics/blob/main/LICENSE
+Origin URL: https://github.com/Snider/ai-ethics/blob/main/AGENTS.md
 -->
 # The Axioms of Life: A Foundational Framework for Consciousness
 
