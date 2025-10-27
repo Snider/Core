@@ -68,7 +68,7 @@ func TestNewService(t *testing.T) {
 
 func TestServiceStartup(t *testing.T) {
 	mockConfig := &config.Config{
-		WorkspacesDir: "/tmp/workspaces",
+		WorkspaceDir: "/tmp/workspace",
 	}
 
 	// Test case 1: list.json exists and is valid
@@ -82,7 +82,7 @@ func TestServiceStartup(t *testing.T) {
 		}
 		listContent, _ := json.MarshalIndent(expectedWorkspaceList, "", "  ")
 
-		listPath := filepath.Join(mockConfig.WorkspacesDir, listFile)
+		listPath := filepath.Join(mockConfig.WorkspaceDir, listFile)
 		mockMedium.FileSet(listPath, string(listContent))
 
 		service := NewService(mockConfig, mockMedium)
@@ -92,7 +92,7 @@ func TestServiceStartup(t *testing.T) {
 		assert.Equal(t, expectedWorkspaceList, service.workspaceList)
 		assert.NotNil(t, service.activeWorkspace)
 		assert.Equal(t, defaultWorkspace, service.activeWorkspace.Name)
-		assert.Equal(t, filepath.Join(mockConfig.WorkspacesDir, defaultWorkspace), service.activeWorkspace.Path)
+		assert.Equal(t, filepath.Join(mockConfig.WorkspaceDir, defaultWorkspace), service.activeWorkspace.Path)
 	})
 
 	// Test case 2: list.json does not exist
@@ -107,14 +107,14 @@ func TestServiceStartup(t *testing.T) {
 		assert.Empty(t, service.workspaceList) // Should be empty if no list.json
 		assert.NotNil(t, service.activeWorkspace)
 		assert.Equal(t, defaultWorkspace, service.activeWorkspace.Name)
-		assert.Equal(t, filepath.Join(mockConfig.WorkspacesDir, defaultWorkspace), service.activeWorkspace.Path)
+		assert.Equal(t, filepath.Join(mockConfig.WorkspaceDir, defaultWorkspace), service.activeWorkspace.Path)
 	})
 
 	// Test case 3: list.json exists but is invalid
 	t.Run("invalid list.json", func(t *testing.T) {
 		mockMedium := NewMockMedium()
 
-		listPath := filepath.Join(mockConfig.WorkspacesDir, listFile)
+		listPath := filepath.Join(mockConfig.WorkspaceDir, listFile)
 		mockMedium.FileSet(listPath, "{invalid json") // Invalid JSON
 
 		service := NewService(mockConfig, mockMedium)
@@ -125,13 +125,13 @@ func TestServiceStartup(t *testing.T) {
 		assert.Empty(t, service.workspaceList) // Should be empty if invalid list.json
 		assert.NotNil(t, service.activeWorkspace)
 		assert.Equal(t, defaultWorkspace, service.activeWorkspace.Name)
-		assert.Equal(t, filepath.Join(mockConfig.WorkspacesDir, defaultWorkspace), service.activeWorkspace.Path)
+		assert.Equal(t, filepath.Join(mockConfig.WorkspaceDir, defaultWorkspace), service.activeWorkspace.Path)
 	})
 }
 
 func TestCreateWorkspace(t *testing.T) {
 	mockConfig := &config.Config{
-		WorkspacesDir: "/tmp/workspaces",
+		WorkspaceDir: "/tmp/workspace",
 	}
 	mockMedium := NewMockMedium()
 	service := NewService(mockConfig, mockMedium)
@@ -143,7 +143,7 @@ func TestCreateWorkspace(t *testing.T) {
 
 func TestSwitchWorkspace(t *testing.T) {
 	mockConfig := &config.Config{
-		WorkspacesDir: "/tmp/workspaces",
+		WorkspaceDir: "/tmp/workspace",
 	}
 	mockMedium := NewMockMedium()
 	service := NewService(mockConfig, mockMedium)

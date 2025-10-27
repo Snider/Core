@@ -7,77 +7,30 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// --- Core Structs & Types ---
-
-type Contract struct {
-	DontPanic      bool
-	DisableLogging bool
-}
-type Option func(*Core) error
-
-type Message interface{}
-
-// Runtime is a helper struct embedded in services to provide access to the core application.
-type Runtime[T any] struct {
-	core *Core
-	opts T
-}
-
-// NewRuntime creates a new Runtime instance for a service.
-func NewRuntime[T any](c *Core, opts T) *Runtime[T] {
-	return &Runtime[T]{
-		core: c,
-		opts: opts,
-	}
-}
-
-// Core returns the central core instance.
-func (r *Runtime[T]) Core() *Core {
-	return r.core
-}
-
-// --- Core Application ---
-
-type Core struct {
-	once           sync.Once
-	initErr        error
-	App            *application.App
-	assets         embed.FS
-	serviceLock    bool
-	ipcMu          sync.RWMutex
-	ipcHandlers    []func(*Core, Message) error
-	serviceMu      sync.RWMutex
-	services       map[string]any
-	servicesLocked bool
-}
-
-var instance *Core
-
 // New initialises a Core instance using the provided options and performs the necessary setup.
-func New(opts ...Option) *Core {
+func New(opts ...Option) (*Core, error) {
 	c := &Core{
 		services: make(map[string]any),
 	}
 	for _, o := range opts {
 		if err := o(c); err != nil {
-			return nil
+			return nil, err
 		}
 	}
 	c.once.Do(func() {
 		c.initErr = nil
 	})
 	if c.initErr != nil {
-		return nil
+		return nil, c.initErr
 	}
 	if c.serviceLock {
 		c.servicesLocked = true
 	}
-	return c
+	return c, nil
 }
 
 // WithService creates an Option that registers a service. It automatically discovers
@@ -86,6 +39,7 @@ func New(opts ...Option) *Core {
 func WithService(factory func(*Core) (any, error)) Option {
 	return func(c *Core) error {
 		serviceInstance, err := factory(c)
+
 		if err != nil {
 			return fmt.Errorf("core: failed to create service: %w", err)
 		}
@@ -191,22 +145,37 @@ func (c *Core) Service(name string) any {
 	return api
 }
 
-func ServiceFor[T any](c *Core, name string) *T {
+// ServiceFor retrieves a registered service by name and asserts its type to the given interface T.
+func ServiceFor[T any](c *Core, name string) T {
 	raw := c.Service(name)
-	typed, ok := raw.(*T)
-	if !ok {
-		return nil
+	if raw == nil {
+		var zero T // Return zero value of T (nil for interfaces)
+		return zero
 	}
-	return typed
+	typed, ok := raw.(T)
+	if !ok {
+		var zero T // Return zero value of T (nil for interfaces)
+		return zero
+	}
+	return typed // Return a pointer to the interface
 }
 
 // App returns the global application instance.
 func App() *application.App {
-	app := ServiceFor[application.App](instance, "App")
-	if instance == nil || app == nil {
+	if instance == nil {
 		panic("core.App() called before core.Setup() was successfully initialized")
 	}
-	return app
+	return instance.App
+}
+
+// Config returns the registered Config service.
+func (c *Core) Config() Config {
+	cfg := ServiceFor[Config](c, "config")
+	if cfg == nil {
+		// This indicates a missing dependency. Panic or return a default/error config.
+		panic("core.Config() called but config service is not registered")
+	}
+	return cfg
 }
 
 func (c *Core) Core() *Core { return c }

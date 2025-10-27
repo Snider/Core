@@ -15,5 +15,8 @@ type Service = impl.Service
 // New is the public constructor for the Crypt service.
 var New = impl.New
 
+// Register is the public factory for the dynamic core.WithService pattern.
+var Register = impl.Register
+
 // Crypt is the public interface for the Crypt service.
 type Crypt = core.Crypt

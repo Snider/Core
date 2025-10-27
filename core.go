@@ -5,65 +5,65 @@ package core
 
 import (
 	// Import the internal core package which contains the actual definitions.
-	core "github.com/Snider/Core/pkg/core"
+	impl "github.com/Snider/Core/pkg/core"
 )
 
 // --- Primary Types & Constructors ---
 
 // Core is the main application container.
-type Core = core.Core
+type Core = impl.Core
 
 // New is the primary constructor for the Core framework.
-var New = core.New
+var New = impl.New
 
 // --- Core Options ---
 
 // WithService is a helper function to create a service option.
-var WithService = core.WithService
+var WithService = impl.WithService
 
 // WithWails provides the Wails application instance to the core.
-var WithWails = core.WithWails
+var WithWails = impl.WithWails
 
 // WithAssets provides the application's assets to the core.
-var WithAssets = core.WithAssets
+var WithAssets = impl.WithAssets
 
 // WithServiceLock prevents new services from being registered after startup.
-var WithServiceLock = core.WithServiceLock
+var WithServiceLock = impl.WithServiceLock
 
 // --- Service Runtime ---
 
 // Runtime is a helper struct embedded in services to provide access to the core application.
-type Runtime[T any] = core.Runtime[T]
+type Runtime[T any] = impl.Runtime[T]
 
 // NewRuntime creates a new Runtime instance for a service.
 func NewRuntime[T any](c *Core, opts T) *Runtime[T] {
-	return core.NewRuntime(c, opts)
+	return impl.NewRuntime(c, opts)
 }
 
 // --- Messages & Actions ---
 
 // Message is the interface for all IPC messages.
-type Message = core.Message
+type Message = impl.Message
 
 // ActionServiceStartup is a message sent when services should perform their startup tasks.
-type ActionServiceStartup = core.ActionServiceStartup
+type ActionServiceStartup = impl.ActionServiceStartup
 
 // --- Service Interfaces (from pkg/core/interfaces.go) ---
 
 // Config is the public interface for the configuration service.
-type Config = core.Config
+type Config = *impl.Config
 
 // Display is the public interface for the display service.
-type Display = core.Display
+type Display = impl.Display
 
 // Help is the public interface for the help service.
-type Help = core.Help
+type Help = impl.Help
 
 // Crypt is the public interface for the cryptography service.
-type Crypt = core.Crypt
+type Crypt = impl.Crypt
 
 // I18n is the public interface for the internationalization service.
-type I18n = core.I18n
+type I18n = impl.I18n
 
 // Workspace is the public interface for the workspace service.
-type Workspace = core.Workspace
+type Workspace = impl.Workspace

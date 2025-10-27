@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/Snider/Core/pkg/core"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/wailsapp/wails/v3/pkg/application"
 	"golang.org/x/text/language"
 )
 
@@ -26,8 +28,8 @@ type Service struct {
 	availableLangs []language.Tag
 }
 
-// New is the factory function for the core.WithService pattern.
-func New(c *core.Core) (any, error) {
+// newI18nService contains the common logic for initializing a Service struct.
+func newI18nService() (*Service, error) {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
@@ -43,36 +45,63 @@ func New(c *core.Core) (any, error) {
 		}
 	}
 
-	// --- Determine initial language ---
-	configSvc := core.ServiceFor[core.Config](c, "config")
-	initialLang := ""
-	if configSvc != nil {
-		var lang string
-		_ = configSvc.Get("language", &lang)
-		if lang != "" {
-			initialLang = lang
-		}
-	}
-
-	if initialLang == "" {
-		detectedLang, _ := detectLanguage(availableLangs)
-		if detectedLang != "" {
-			initialLang = detectedLang
-		}
-	}
-
-	if initialLang == "" {
-		initialLang = "en"
-	}
-
 	s := &Service{
-		Runtime:        core.NewRuntime(c, Options{}),
 		bundle:         bundle,
 		availableLangs: availableLangs,
 	}
-	s.SetLanguage(initialLang)
-
+	// Language will be set during ServiceStartup after config is available.
 	return s, nil
+}
+
+// New is the constructor for static dependency injection.
+// It creates a Service instance without initializing the core.Runtime field.
+// Dependencies are passed directly here.
+func New() (*Service, error) {
+	s, err := newI18nService()
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+// Register is the constructor for dynamic dependency injection (used with core.WithService).
+// It creates a Service instance and initializes its core.Runtime field.
+// Dependencies are injected during ServiceStartup.
+func Register(c *core.Core) (any, error) {
+	s, err := newI18nService()
+	if err != nil {
+		return nil, err
+	}
+	s.Runtime = core.NewRuntime(c, Options{})
+	return s, nil
+}
+
+// HandleIPCEvents processes IPC messages, including injecting dependencies on startup.
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+	switch m := msg.(type) {
+	case core.ActionServiceStartup:
+		return s.ServiceStartup(context.Background(), application.ServiceOptions{})
+	default:
+		c.App.Logger.Error("Display: Unknown message type", "type", fmt.Sprintf("%T", m))
+	}
+	return nil
+}
+
+// ServiceStartup is called when the app starts, after dependencies are injected.
+func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) error {
+	// Determine initial language after config is available.
+	initialLang := "en"
+	var lang string
+	_ = s.Config().Get("language", &lang)
+	if lang != "" {
+		initialLang = lang
+	}
+	err := s.SetLanguage(initialLang)
+	if err != nil {
+		return err
+	}
+	s.Core().App.Logger.Info("I18n service started")
+	return nil
 }
 
 // --- Language Management ---

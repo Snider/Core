@@ -6,26 +6,35 @@ import (
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
 	"github.com/Snider/Core/pkg/help"
+	"github.com/Snider/Core/pkg/i18n"
+	"github.com/Snider/Core/pkg/io"
+	"github.com/Snider/Core/pkg/workspace"
+	// Import the ABSTRACT contracts (interfaces).
+	//"github.com/Snider/Core/pkg/core"
 )
 
 // App is the runtime container that holds all instantiated services.
-// It holds the concrete service types so they can be registered with Wails.
-type App struct {
+// Its fields are the concrete types, allowing Wails to bind them directly.
+type Runtime struct {
 	Config  *config.Service
 	Display *display.Service
 	Help    *help.Service
 	Crypt   *crypt.Service
+	I18n    *i18n.Service
+	//IO        core.IO // IO is a library, not a service, so it's not injected here directly.
+	Workspace *workspace.Service
 }
 
-// New creates and wires together all application services.
-func New() (*App, error) {
-	// 1. Instantiate services.
+// New creates and wires together all application services using static dependency injection.
+// This is the composition root for the static initialization modality.
+func New() (*Runtime, error) {
+	// 1. Instantiate services that have no direct service dependencies (or only simple ones).
 	configSvc, err := config.New()
 	if err != nil {
 		return nil, err
 	}
 
-	displaySvc, err := display.New()
+	displaySvc, err := display.New(configSvc)
 	if err != nil {
 		return nil, err
 	}
@@ -35,15 +44,34 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	// 2. Inject dependencies.
-	helpSvc, _ := help.New(configSvc, displaySvc)
+	// 2. Instantiate services that have dependencies and inject them.
+	// i18n needs config
+	i18nSvc, err := i18n.New(configSvc)
+	if err != nil {
+		return nil, err
+	}
 
-	// 3. Assemble the application container.
-	app := &App{
+	// help needs config and display
+	helpSvc, err := help.New(configSvc, displaySvc)
+	if err != nil {
+		return nil, err
+	}
+
+	// workspace needs config and io.Medium (io.Local is a concrete instance)
+	workspaceSvc, err := workspace.New(configSvc, io.Local)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Assemble the application container, exposing the concrete types.
+	app := &Runtime{
 		Config:  configSvc,
 		Display: displaySvc,
 		Help:    helpSvc,
 		Crypt:   cryptSvc,
+		I18n:    i18nSvc,
+		//IO:        io.Local, // Assign io.Local directly
+		Workspace: workspaceSvc,
 	}
 
 	return app, nil

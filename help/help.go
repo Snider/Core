@@ -16,5 +16,8 @@ type Service = impl.Service
 // New is the public constructor for the Help service.
 var New = impl.New
 
+// Register is the public factory for the dynamic core.WithService pattern.
+var Register = impl.Register
+
 // Help is the public interface for the Help service.
 type Help = core.Help

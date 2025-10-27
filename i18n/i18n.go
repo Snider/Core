@@ -15,5 +15,8 @@ type Service = impl.Service
 // New is the public factory for the core.WithService pattern.
 var New = impl.New
 
+// Register is the public factory for the dynamic core.WithService pattern.
+var Register = impl.Register
+
 // I18n is the public interface for the I18n service.
 type I18n = core.I18n

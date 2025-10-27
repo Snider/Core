@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"github.com/Snider/Core/pkg/crypt/lthn"
 	"github.com/Snider/Core/pkg/crypt/openpgp"
 	"github.com/Snider/Core/pkg/io"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 const (
@@ -28,62 +30,108 @@ type Workspace struct {
 // Service manages user workspaces.
 type Service struct {
 	*core.Runtime[Options]
-	config          core.Config
 	activeWorkspace *Workspace
 	workspaceList   map[string]string // Maps Workspace ID to Public Key
 	medium          io.Medium
 }
 
-// New is the factory function for the core.WithService pattern.
-func New(c *core.Core) (any, error) {
-	configSvc := core.ServiceFor[core.Config](c, "config")
-	// The medium is not a registered service, so we use the local one by default.
-	medium := io.Local
-
+// newWorkspaceService contains the common logic for initializing a Service struct.
+// It no longer takes config and medium as arguments.
+func newWorkspaceService() (*Service, error) {
 	s := &Service{
-		Runtime:       core.NewRuntime(c, Options{}),
-		config:        configSvc,
 		workspaceList: make(map[string]string),
-		medium:        medium,
 	}
-
-	// Initialize the service after creation.
-	if err := s.ServiceStartup(); err != nil {
-		return nil, fmt.Errorf("workspace service startup failed: %w", err)
-	}
-
 	return s, nil
 }
 
+// New is the constructor for static dependency injection.
+// It creates a Service instance without initializing the core.Runtime field.
+// Dependencies are passed directly here.
+func New(medium io.Medium) (*Service, error) {
+	s, err := newWorkspaceService()
+	if err != nil {
+		return nil, err
+	}
+	s.medium = medium
+	// Initialize the service after creation.
+	// Note: ServiceStartup will now get config from s.Runtime.Config()
+	if err := s.ServiceStartup(context.Background(), application.ServiceOptions{}); err != nil {
+		return nil, fmt.Errorf("workspace service startup failed: %w", err)
+	}
+	return s, nil
+}
+
+// Register is the constructor for dynamic dependency injection (used with core.WithService).
+// It creates a Service instance and initializes its core.Runtime field.
+// Dependencies are injected during ServiceStartup.
+func Register(c *core.Core) (any, error) {
+	s, err := newWorkspaceService()
+	if err != nil {
+		return nil, err
+	}
+	s.Runtime = core.NewRuntime(c, Options{})
+	return s, nil
+}
+
+// HandleIPCEvents processes IPC messages, including injecting dependencies on startup.
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+	switch m := msg.(type) {
+	case map[string]any:
+		if action, ok := m["action"].(string); ok && action == "display.open_windowds" {
+			return nil //s.handleOpenWindowAction(m)
+		}
+	case core.ActionServiceStartup:
+		return s.ServiceStartup(context.Background(), application.ServiceOptions{})
+	default:
+		c.App.Logger.Error("Display: Unknown message type", "type", fmt.Sprintf("%T", m))
+	}
+	return nil
+}
+
+// getWorkspaceDir retrieves the WorkspaceDir from the config service.
+func (s *Service) getWorkspaceDir() (string, error) {
+	var workspaceDir string
+	if err := s.Config().Get("workspaceDir", &workspaceDir); err != nil {
+		return "", fmt.Errorf("failed to get WorkspaceDir from config: %w", err)
+	}
+	return workspaceDir, nil
+}
+
 // ServiceStartup initializes the service, loading the workspace list.
-func (s *Service) ServiceStartup() error {
-	// The config service might not be fully available during initial registration,
-	// so we check for nil.
-	if s.config == nil {
-		return nil
+func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) error {
+	var err error
+	workspaceDir, err := s.getWorkspaceDir()
+	if err != nil {
+		return err
 	}
 
-	listPath := filepath.Join(s.config.WorkspacesDir, listFile)
-
-	if s.medium.IsFile(listPath) {
-		content, err := s.medium.FileGet(listPath)
-		if err != nil {
-			return fmt.Errorf("failed to read workspace list: %w", err)
-		}
-		if err := json.Unmarshal([]byte(content), &s.workspaceList); err != nil {
-			fmt.Printf("Warning: could not parse workspace list: %v\n", err)
-			s.workspaceList = make(map[string]string)
-		}
+	listPath := filepath.Join(workspaceDir, listFile)
+	if listPath != "" {
 	}
+	//if s.medium.IsFile(listPath) {
+	//	content, err := s.medium.FileGet(listPath)
+	//	if err != nil {
+	//		return fmt.Errorf("failed to read workspace list: %w", err)
+	//	}
+	//	if err := json.Unmarshal([]byte(content), &s.workspaceList); err != nil {
+	//		fmt.Printf("Warning: could not parse workspace list: %v\n", err)
+	//		s.workspaceList = make(map[string]string)
+	//	}
+	//}
 
 	return s.SwitchWorkspace(defaultWorkspace)
 }
 
 // CreateWorkspace creates a new, obfuscated workspace on the local medium.
 func (s *Service) CreateWorkspace(identifier, password string) (string, error) {
+	workspaceDir, err := s.getWorkspaceDir()
+	if err != nil {
+		return "", err
+	}
+
 	realName := lthn.Hash(identifier)
 	workspaceID := lthn.Hash(fmt.Sprintf("workspace/%s", realName))
-	workspacePath := filepath.Join(s.config.WorkspacesDir, workspaceID)
+	workspacePath := filepath.Join(workspaceDir, workspaceID)
 
 	if _, exists := s.workspaceList[workspaceID]; exists {
 		return "", fmt.Errorf("workspace for this identifier already exists")
@@ -117,7 +165,7 @@ func (s *Service) CreateWorkspace(identifier, password string) (string, error) {
 		return "", fmt.Errorf("failed to marshal workspace list: %w", err)
 	}
 
-	listPath := filepath.Join(s.config.WorkspacesDir, listFile)
+	listPath := filepath.Join(workspaceDir, listFile)
 	if err := s.medium.FileSet(listPath, string(listData)); err != nil {
 		return "", fmt.Errorf("failed to write workspace list file: %w", err)
 	}
@@ -127,16 +175,21 @@ func (s *Service) CreateWorkspace(identifier, password string) (string, error) {
 
 // SwitchWorkspace changes the active workspace.
 func (s *Service) SwitchWorkspace(name string) error {
+	workspaceDir, err := s.getWorkspaceDir()
+	if err != nil {
+		return err
+	}
+
 	if name != defaultWorkspace {
 		if _, exists := s.workspaceList[name]; !exists {
 			return fmt.Errorf("workspace '%s' does not exist", name)
 		}
 	}
 
-	path := filepath.Join(s.config.WorkspacesDir, name)
-	if err := s.medium.EnsureDir(path); err != nil {
-		return fmt.Errorf("failed to ensure workspace directory exists: %w", err)
-	}
+	path := filepath.Join(workspaceDir, name)
+	//if err := s.medium.EnsureDir(path); err != nil {
+	//	return fmt.Errorf("failed to ensure workspace directory exists: %w", err)
+	//}
 
 	s.activeWorkspace = &Workspace{
 		Name: name,
@@ -156,13 +209,11 @@ func (s *Service) WorkspaceFileGet(filename string) (string, error) {
 }
 
 // WorkspaceFileSet writes a file to the active workspace.
-func (s *Service) WorkspaceFileSet(filename, content string) error {
+func (s *Service) WorkspaceFileSet(filename, content string) (string, error) {
 	if s.activeWorkspace == nil {
-		return fmt.Errorf("no active workspace")
+		return "", fmt.Errorf("no active workspace")
 	}
 	path := filepath.Join(s.activeWorkspace.Path, filename)
-	return s.medium.FileSet(path, content)
+	return path, nil
+	//return s.medium.FileSet(path, content)
 }
-
-// Ensure Service implements the core.Workspace interface.
-var _ core.Workspace = (*Service)(nil)

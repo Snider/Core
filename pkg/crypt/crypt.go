@@ -35,11 +35,26 @@ const (
 	MD5    HashType = "md5"
 )
 
-// New is a factory function that creates a new crypt Service.
-func New(c *core.Core) (any, error) {
-	return &Service{
-		Runtime: core.NewRuntime(c, Options{}),
-	}, nil
+// newCryptService contains the common logic for initializing a Service struct.
+func newCryptService() (*Service, error) {
+	return &Service{}, nil
+}
+
+// New is the constructor for static dependency injection.
+// It creates a Service instance without initializing the core.Runtime field.
+func New() (*Service, error) {
+	return newCryptService()
+}
+
+// Register is the constructor for dynamic dependency injection (used with core.WithService).
+// It creates a Service instance and initializes its core.Runtime field.
+func Register(c *core.Core) (any, error) {
+	s, err := newCryptService()
+	if err != nil {
+		return nil, err
+	}
+	s.Runtime = core.NewRuntime(c, Options{})
+	return s, nil
 }
 
 // --- Hashing ---

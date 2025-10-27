@@ -20,26 +20,25 @@ const configFileName = "config.json"
 type Options struct{}
 
 // Service provides access to the application's configuration.
+// It handles loading, saving, and providing access to configuration values.
 type Service struct {
-	*core.Runtime[Options]
-
-	// Non-persistent fields, derived at runtime.
-	ConfigPath    string `json:"-"`
-	UserHomeDir   string `json:"-"`
-	RootDir       string `json:"-"`
-	CacheDir      string `json:"-"`
-	ConfigDir     string `json:"-"`
-	DataDir       string `json:"-"`
-	WorkspacesDir string `json:"-"`
+	*core.Runtime[Options] `json:"-"`
 
 	// Persistent fields, saved to config.json.
+	ConfigPath   string   `json:"configPath,omitempty"`
+	UserHomeDir  string   `json:"userHomeDir,omitempty"`
+	RootDir      string   `json:"rootDir,omitempty"`
+	CacheDir     string   `json:"cacheDir,omitempty"`
+	ConfigDir    string   `json:"configDir,omitempty"`
+	DataDir      string   `json:"dataDir,omitempty"`
+	WorkspaceDir string   `json:"workspaceDir,omitempty"`
 	DefaultRoute string   `json:"default_route"`
 	Features     []string `json:"features"`
 	Language     string   `json:"language"`
 }
 
-// New is the factory function for the core.WithService pattern.
-func New(c *core.Core) (any, error) {
+// createServiceInstance contains the common logic for initializing a Service struct.
+func createServiceInstance() (*Service, error) {
 	// --- Path and Directory Setup ---
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -58,20 +57,19 @@ func New(c *core.Core) (any, error) {
 	}
 
 	s := &Service{
-		Runtime:       core.NewRuntime(c, Options{}),
-		UserHomeDir:   userHomeDir,
-		RootDir:       rootDir,
-		CacheDir:      cacheDir,
-		ConfigDir:     filepath.Join(userHomeDir, "config"),
-		DataDir:       filepath.Join(userHomeDir, "data"),
-		WorkspacesDir: filepath.Join(userHomeDir, "workspaces"),
-		DefaultRoute:  "/",
-		Features:      []string{},
-		Language:      "en",
+		UserHomeDir:  userHomeDir,
+		RootDir:      rootDir,
+		CacheDir:     cacheDir,
+		ConfigDir:    filepath.Join(userHomeDir, "config"),
+		DataDir:      filepath.Join(userHomeDir, "data"),
+		WorkspaceDir: filepath.Join(userHomeDir, "workspace"),
+		DefaultRoute: "/",
+		Features:     []string{},
+		Language:     "en",
 	}
 	s.ConfigPath = filepath.Join(s.ConfigDir, configFileName)
 
-	dirs := []string{s.RootDir, s.ConfigDir, s.DataDir, s.CacheDir, s.WorkspacesDir, s.UserHomeDir}
+	dirs := []string{s.RootDir, s.ConfigDir, s.DataDir, s.CacheDir, s.WorkspaceDir, s.UserHomeDir}
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("could not create directory %s: %w", dir, err)
@@ -94,6 +92,27 @@ func New(c *core.Core) (any, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
+	return s, nil
+}
+
+// New is the constructor for static dependency injection.
+// It creates a Service instance without initializing the core.Runtime field.
+func New() (*Service, error) {
+	return createServiceInstance()
+}
+
+// Register is the constructor for dynamic dependency injection (used with core.WithService).
+// It creates a Service instance and initializes its core.Runtime field.
+func Register(c *core.Core) (any, error) {
+	s, err := createServiceInstance()
+	if err != nil {
+		return nil, err
+	}
+	// Defensive check: createServiceInstance should not return nil service with nil error
+	if s == nil {
+		return nil, errors.New("config: createServiceInstance returned a nil service instance with no error")
+	}
+	s.Runtime = core.NewRuntime(c, Options{})
 	return s, nil
 }
 

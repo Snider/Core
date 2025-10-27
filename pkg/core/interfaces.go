@@ -1,20 +1,61 @@
 package core
 
-import "io"
+import (
+	"embed"
+	"io"
+	"sync"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
 
 // This file defines the public API contracts (interfaces) for the services
 // in the Core framework. Services depend on these interfaces, not on
 // concrete implementations.
 
+type Contract struct {
+	DontPanic      bool
+	DisableLogging bool
+}
+type Option func(*Core) error
+type Message interface{}
+type Core struct {
+	once           sync.Once
+	initErr        error
+	App            *application.App
+	assets         embed.FS
+	serviceLock    bool
+	ipcMu          sync.RWMutex
+	ipcHandlers    []func(*Core, Message) error
+	serviceMu      sync.RWMutex
+	services       map[string]any
+	servicesLocked bool
+}
+
+var instance *Core
+
 // Config provides access to application configuration.
 type Config interface {
-	Get(path string, out any) error
-	Set(path string, v any) error
+	Get(key string, out any) error
+	Set(key string, v any) error
+}
+
+// WindowConfig represents the configuration for a window.
+type WindowConfig struct {
+	Name   string
+	Title  string
+	URL    string
+	Width  int
+	Height int // Add other common window options here as needed
+}
+
+// WindowOption configures window creation.
+type WindowOption interface {
+	apply(*WindowConfig)
 }
 
 // Display manages windows and UI.
 type Display interface {
-	OpenWindow(opts ...any) error // Simplified for now
+	OpenWindow(opts ...WindowOption) error
 }
 
 // Help manages the in-app documentation and help system.

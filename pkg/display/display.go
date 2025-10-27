@@ -15,13 +15,34 @@ type Options struct{}
 // Service manages windowing, dialogs, and other visual elements.
 type Service struct {
 	*core.Runtime[Options]
+	config core.Config
 }
 
-// New is a factory function that creates a new display Service.
-func New(c *core.Core) (any, error) {
-	return &Service{
-		Runtime: core.NewRuntime(c, Options{}),
-	}, nil
+// newDisplayService contains the common logic for initializing a Service struct.
+func newDisplayService() (*Service, error) {
+	return &Service{}, nil
+}
+
+// New is the constructor for static dependency injection.
+// It creates a Service instance without initializing the core.Runtime field.
+func New(cfg core.Config) (*Service, error) {
+	s, err := newDisplayService()
+	if err != nil {
+		return nil, err
+	}
+	s.config = cfg
+	return s, nil
+}
+
+// Register is the constructor for dynamic dependency injection (used with core.WithService).
+// It creates a Service instance and initializes its core.Runtime field.
+func Register(c *core.Core) (any, error) {
+	s, err := newDisplayService()
+	if err != nil {
+		return nil, err
+	}
+	s.Runtime = core.NewRuntime(c, Options{})
+	return s, nil
 }
 
 func (s *Service) ServiceName() string { return "github.com/Snider/Core/display" }

@@ -1,6 +1,6 @@
 module github.com/Snider/Core
 
-go 1.25.3
+go 1.25
 
 require (
 	github.com/ProtonMail/go-crypto v1.3.0
