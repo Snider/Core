@@ -36,7 +36,7 @@ reviews:
 
     # List of labels to control which PRs/MRs to review. Labels starting with '!' are negative matches. Examples: ['bug', 'feature'] - reviews PRs with 'bug' OR 'feature' label. ['!wip'] - reviews all PRs except those with 'wip' label. ['bug', '!wip'] - reviews PRs with 'bug' label but not if they have 'wip' label.
     # Default: []
-    labels: ["bug", "feature", "!wip"]
+    labels: ["bug", "feature", "documentation", "enhancement", "!wip"]
     drafts: false
     base_branches: []
     ignore_usernames: []
