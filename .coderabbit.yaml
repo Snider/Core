@@ -25,7 +25,6 @@ reviews:
   auto_assign_reviewers: false
   in_progress_fortune: true
   poem: true
-  path_filters: ["*", "!cmd/core-**/*","cmd/core-app/*", "*/public/bindings/*"]
   path_instructions: []
   abort_on_close: true
   disable_cache: false
