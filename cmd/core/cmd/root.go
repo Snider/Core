@@ -38,7 +38,7 @@ var (
 			Foreground(lipgloss.Color("#3b82f6")). // Tailwind blue-500
 			Underline(true)
 
-	taglineStyle = lipgloss.NewNewStyle().
+	taglineStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#e2e8f0")).
 			PaddingTop(2).PaddingLeft(8).PaddingBottom(1). // vertical spacing around the tagline
 			Align(lipgloss.Center)                         // centre it under the big words
