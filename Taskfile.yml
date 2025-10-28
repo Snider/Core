@@ -5,3 +5,8 @@ tasks:
     desc: "Run all Go tests recursively for the entire project."
     cmds:
       - go test ./...
+
+  review:
+    desc: "Run CodeRabbit review to get feedback on the current changes."
+    cmds:
+      - coderabbit review --prompt-only
