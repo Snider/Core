@@ -1,4 +1,4 @@
-// package help provides the public API for the Help service.
+// package help provides the public API for the help service.
 package help
 
 import (
@@ -9,15 +9,19 @@ import (
 	"github.com/Snider/Core/pkg/core"
 )
 
-// Service is the public type for the Help service. It is a type alias
+// Options is the public type for the Options service. It is a type alias
+// to the underlying implementation, making it transparent to the user.
+type Options = impl.Options
+
+// Service is the public type for the Service service. It is a type alias
 // to the underlying implementation, making it transparent to the user.
 type Service = impl.Service
 
-// New is the public constructor for the Help service.
+// New is a public function that points to the real function in the implementation package.
 var New = impl.New
 
-// Register is the public factory for the dynamic core.WithService pattern.
+// Register is a public function that points to the real function in the implementation package.
 var Register = impl.Register
 
-// Help is the public interface for the Help service.
+// Help is the public interface for the help service.
 type Help = core.Help
