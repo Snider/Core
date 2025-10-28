@@ -1,23 +1,27 @@
-// Package display provides the public API for the Display service.
+// package display provides the public API for the display service.
 package display
 
 import (
 	// Import the internal implementation with an alias.
 	impl "github.com/Snider/Core/pkg/display"
+
 	// Import the core contracts to re-export the interface.
 	"github.com/Snider/Core/pkg/core"
 )
 
-// Service is the public type for the Display service. It is a type alias
+// Options is the public type for the Options service. It is a type alias
+// to the underlying implementation, making it transparent to the user.
+type Options = impl.Options
+
+// Service is the public type for the Service service. It is a type alias
 // to the underlying implementation, making it transparent to the user.
 type Service = impl.Service
 
-// New is the public constructor for the Display service. It is a variable
-// that points to the real constructor in the implementation package.
+// New is a public function that points to the real function in the implementation package.
 var New = impl.New
 
-// Register is the public factory for the dynamic core.WithService pattern.
+// Register is a public function that points to the real function in the implementation package.
 var Register = impl.Register
 
-// Display is the public interface for the Display service.
+// Display is the public interface for the display service.
 type Display = core.Display

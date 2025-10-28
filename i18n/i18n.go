@@ -1,4 +1,4 @@
-// package i18n provides the public API for the I18n service.
+// package i18n provides the public API for the i18n service.
 package i18n
 
 import (
@@ -9,14 +9,19 @@ import (
 	"github.com/Snider/Core/pkg/core"
 )
 
-// Service is the public type for the I18n service.
-type Service = impl.Service
-
-// New is the public factory for the core.WithService pattern.
+// New is a public function that points to the real function in the implementation package.
 var New = impl.New
 
-// Register is the public factory for the dynamic core.WithService pattern.
+// Register is a public function that points to the real function in the implementation package.
 var Register = impl.Register
 
-// I18n is the public interface for the I18n service.
+// Options is the public type for the Options service. It is a type alias
+// to the underlying implementation, making it transparent to the user.
+type Options = impl.Options
+
+// Service is the public type for the Service service. It is a type alias
+// to the underlying implementation, making it transparent to the user.
+type Service = impl.Service
+
+// I18n is the public interface for the i18n service.
 type I18n = core.I18n
