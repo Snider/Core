@@ -26,8 +26,14 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/leaanthony/clir v1.7.0 h1:xiAnhl7ryPwuH3ERwPWZp/pCHk8wTeiwuAOt6MiNyAw=
 github.com/leaanthony/clir v1.7.0/go.mod h1:k/RBkdkFl18xkkACMCLt09bhiZnrGORoxmomeMvDpE0=
+github.com/leaanthony/debme v1.2.1 h1:9Tgwf+kjcrbMQ4WnPcEIUcQuIZYqdWftzZkBr+i/oOc=
+github.com/leaanthony/debme v1.2.1/go.mod h1:3V+sCm5tYAgQymvSOfYQ5Xx2JCr+OXiD9Jkw3otUjiA=
+github.com/leaanthony/gosod v1.0.4 h1:YLAbVyd591MRffDgxUOU1NwLhT9T1/YiwjKZpkNFeaI=
+github.com/leaanthony/gosod v1.0.4/go.mod h1:GKuIL0zzPj3O1SdWQOdgURSuhkF+Urizzxh26t9f1cw=
+github.com/leaanthony/slicer v1.5.0/go.mod h1:FwrApmf8gOrpzEWM2J/9Lh79tyq8KTX5AzRtwV7m4AY=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
 github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
+github.com/matryer/is v1.4.0/go.mod h1:8I/i5uYgLzgsgEloJE1U6xx5HkBQpAZvepWuujKwMRU=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-localereader v0.0.1 h1:ygSAOl7ZXTx4RdPYinUpg6W99U8jWvWi9Ye2JC/oIi4=

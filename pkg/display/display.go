@@ -89,15 +89,7 @@ func (s *Service) handleOpenWindowAction(msg map[string]any) error {
 func (s *Service) ShowEnvironmentDialog() {
 	envInfo := s.Core().App.Env.Info()
 
-	details := fmt.Sprintf(`Environment Information:
-
-Operating System: %s
-Architecture: %s
-Debug Mode: %t
-
-Dark Mode: %t
-
-Platform Information:`,
+	details := fmt.Sprintf(`Environment Information:\n\nOperating System: %s\nArchitecture: %s\nDebug Mode: %t\n\nDark Mode: %t\n\nPlatform Information:`,
 		envInfo.OS,
 		envInfo.Arch,
 		envInfo.Debug,
@@ -127,15 +119,35 @@ func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) er
 	s.systemTray()
 
 	// This will be updated to use the restored OpenWindow method
-	mainOpts := application.WebviewWindowOptions{
+	return s.OpenWindow()
+}
+
+// OpenWindow creates a new window with the default options.
+func (s *Service) OpenWindow(opts ...core.WindowOption) error {
+	// Default options
+	winOpts := &core.WindowConfig{
 		Name:   "main",
 		Title:  "Core",
-		Height: 900,
 		Width:  1280,
+		Height: 800,
 		URL:    "/",
 	}
-	s.Core().App.Window.NewWithOptions(mainOpts)
 
+	// Apply options
+	for _, opt := range opts {
+		opt.Apply(winOpts)
+	}
+
+	// Create Wails window options
+	wailsOpts := application.WebviewWindowOptions{
+		Name:   winOpts.Name,
+		Title:  winOpts.Title,
+		Width:  winOpts.Width,
+		Height: winOpts.Height,
+		URL:    winOpts.URL,
+	}
+
+	s.Core().App.Window.NewWithOptions(wailsOpts)
 	return nil
 }
 

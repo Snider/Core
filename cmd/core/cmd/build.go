@@ -1,299 +1,339 @@
 package cmd
 
 import (
+	"embed"
+	"encoding/json"
 	"fmt"
-	"io/fs"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/leaanthony/clir"
+	"github.com/leaanthony/debme"
+	"github.com/leaanthony/gosod"
+	"golang.org/x/net/html"
 )
 
-// AddBuildCommand adds the build command to the clir app.
+//go:embed all:tmpl/gui
+var guiTemplate embed.FS
+
+// AddBuildCommand adds the new build command and its subcommands to the clir app.
 func AddBuildCommand(app *clir.Cli) {
-	buildCmd := app.NewSubCommand("build", "Build a Wails application")
-	buildCmd.LongDescription("This command allows you to build a Wails application, optionally selecting a custom HTML entry point.")
-	buildCmd.Action(func() error {
-		p := tea.NewProgram(initialModel())
-		if _, err := p.Run(); err != nil {
-			return fmt.Errorf("Alas, there's been an error: %w", err)
+	buildCmd := app.NewSubCommand("build", "Builds a web application into a standalone desktop app.")
+
+	// --- `build from-path` command ---
+	fromPathCmd := buildCmd.NewSubCommand("from-path", "Build from a local directory.")
+	var fromPath string
+	fromPathCmd.StringFlag("path", "The path to the static web application files.", &fromPath)
+	fromPathCmd.Action(func() error {
+		if fromPath == "" {
+			return fmt.Errorf("the --path flag is required")
 		}
-		return nil
+		return runBuild(fromPath)
+	})
+
+	// --- `build pwa` command ---
+	pwaCmd := buildCmd.NewSubCommand("pwa", "Build from a live PWA URL.")
+	var pwaURL string
+	pwaCmd.StringFlag("url", "The URL of the PWA to build.", &pwaURL)
+	pwaCmd.Action(func() error {
+		if pwaURL == "" {
+			return fmt.Errorf("a URL argument is required")
+		}
+		return runPwaBuild(pwaURL)
 	})
 }
 
-// viewState represents the current view of the TUI.
-type viewState int
+// --- PWA Build Logic ---
 
-const (
-	mainMenuState viewState = iota
-	fileSelectState
-	buildOutputState
-)
+func runPwaBuild(pwaURL string) error {
+	fmt.Printf("Starting PWA build from URL: %s\n", pwaURL)
 
-type model struct {
-	view     viewState
-	choices  []string
-	cursor   int
-	selected map[int]struct{}
-
-	// For file selection
-	currentPath  string
-	files        []fs.DirEntry
-	fileCursor   int
-	selectedFile string
-
-	// For build output
-	buildLog string
-}
-
-func initialModel() model {
-	return model{
-		view:        mainMenuState,
-		choices:     []string{"Wails Build", "Exit"},
-		selected:    make(map[int]struct{}),
-		currentPath: ".", // Start in current directory for file selection
+	tempDir, err := os.MkdirTemp("", "core-pwa-build-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
+	// defer os.RemoveAll(tempDir) // Keep temp dir for debugging
+	fmt.Printf("Downloading PWA to temporary directory: %s\n", tempDir)
+
+	if err := downloadPWA(pwaURL, tempDir); err != nil {
+		return fmt.Errorf("failed to download PWA: %w", err)
+	}
+
+	return runBuild(tempDir)
 }
 
-func (m model) Init() tea.Cmd {
+func downloadPWA(baseURL, destDir string) error {
+	// Fetch the main HTML page
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch URL %s: %w", baseURL, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Find the manifest URL from the HTML
+	manifestURL, err := findManifestURL(string(body), baseURL)
+	if err != nil {
+		// If no manifest, it's not a PWA, but we can still try to package it as a simple site.
+		fmt.Println("Warning: no manifest file found. Proceeding with basic site download.")
+		if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
+			return fmt.Errorf("failed to write index.html: %w", err)
+		}
+		return nil
+	}
+
+	fmt.Printf("Found manifest: %s\n", manifestURL)
+
+	// Fetch and parse the manifest
+	manifest, err := fetchManifest(manifestURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch or parse manifest: %w", err)
+	}
+
+	// Download all assets listed in the manifest
+	assets := collectAssets(manifest, manifestURL)
+	for _, assetURL := range assets {
+		if err := downloadAsset(assetURL, destDir); err != nil {
+			fmt.Printf("Warning: failed to download asset %s: %v\n", assetURL, err)
+		}
+	}
+
+	// Also save the root index.html
+	if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
+		return fmt.Errorf("failed to write index.html: %w", err)
+	}
+
+	fmt.Println("PWA download complete.")
 	return nil
 }
 
-// Messages for asynchronous operations
-type filesLoadedMsg []fs.DirEntry
-type errorMsg error
-type buildFinishedMsg string
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
-		}
-	case filesLoadedMsg:
-		m.files = msg
-		m.fileCursor = 0
-		return m, nil
-	case errorMsg:
-		m.buildLog = fmt.Sprintf("Error: %v", msg)
-		m.view = buildOutputState
-		return m, nil
-	case buildFinishedMsg:
-		m.buildLog = string(msg)
-		m.view = buildOutputState
-		return m, nil
+func findManifestURL(htmlContent, baseURL string) (string, error) {
+	doc, err := html.Parse(strings.NewReader(htmlContent))
+	if err != nil {
+		return "", err
 	}
 
-	switch m.view {
-	case mainMenuState:
-		return updateMainMenu(msg, m)
-	case fileSelectState:
-		return updateFileSelect(msg, m)
-	case buildOutputState:
-		return updateBuildOutput(msg, m)
-	}
-	return m, nil
-}
-
-func updateMainMenu(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-		case "enter":
-			switch m.choices[m.cursor] {
-			case "Wails Build":
-				m.view = fileSelectState
-				return m, loadFilesCmd(m.currentPath)
-			case "Exit":
-				return m, tea.Quit
-			}
-		}
-	}
-	return m, nil
-}
-
-func updateFileSelect(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
-			m.view = mainMenuState
-			return m, nil
-		case "up", "k":
-			if m.fileCursor > 0 {
-				m.fileCursor--
-			}
-		case "down", "j":
-			if m.fileCursor < len(m.files)-1 {
-				m.fileCursor++
-			}
-		case "enter":
-			// Guard against empty files or out-of-bounds cursor
-			if len(m.files) == 0 || m.fileCursor < 0 || m.fileCursor >= len(m.files) {
-				// If the guard fails, attempt to reload files for the current path
-				return m, loadFilesCmd(m.currentPath)
-			}
-
-			selectedEntry := m.files[m.fileCursor]
-			fullPath := filepath.Join(m.currentPath, selectedEntry.Name())
-			if selectedEntry.IsDir() {
-				m.currentPath = fullPath
-				return m, loadFilesCmd(m.currentPath)
-			} else {
-				// User selected a file
-				ext := strings.ToLower(filepath.Ext(selectedEntry.Name()))
-				if ext == ".html" || ext == ".htm" {
-					m.selectedFile = fullPath
-					m.view = buildOutputState
-					return m, buildWailsCmd(m.selectedFile)
-				} else {
-					// If not an HTML file, show an error and stay in file selection
-					m.buildLog = fmt.Sprintf("Error: Selected file '%s' is not an HTML file (.html or .htm).", selectedEntry.Name())
-					m.view = buildOutputState // Temporarily show error in build output view
-					return m, nil
+	var manifestPath string
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "link" {
+			var rel, href string
+			for _, a := range n.Attr {
+				if a.Key == "rel" {
+					rel = a.Val
+				}
+				if a.Key == "href" {
+					href = a.Val
 				}
 			}
-		case "backspace", "h":
-			parentPath := filepath.Dir(m.currentPath)
-			if parentPath == m.currentPath { // Already at root or current dir is "."
-				return m, nil
+			if rel == "manifest" && href != "" {
+				manifestPath = href
+				return
 			}
-			m.currentPath = parentPath
-			return m, loadFilesCmd(m.currentPath)
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
 		}
 	}
-	return m, nil
+	f(doc)
+
+	if manifestPath == "" {
+		return "", fmt.Errorf("no <link rel=\"manifest\"> tag found")
+	}
+
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	manifestURL, err := base.Parse(manifestPath)
+	if err != nil {
+		return "", err
+	}
+
+	return manifestURL.String(), nil
 }
 
-func updateBuildOutput(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
-			m.view = mainMenuState
-			m.buildLog = "" // Clear build log
-			return m, nil
-		}
+func fetchManifest(manifestURL string) (map[string]interface{}, error) {
+	resp, err := http.Get(manifestURL)
+	if err != nil {
+		return nil, err
 	}
-	return m, nil
+	defer resp.Body.Close()
+
+	var manifest map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
+		return nil, err
+	}
+	return manifest, nil
 }
 
-func (m model) View() string {
-	sb := strings.Builder{}
-	switch m.view {
-	case mainMenuState:
-		sb.WriteString("Core CLI - Main Menu\n\n")
-		for i, choice := range m.choices {
-			cursor := " "
-			if m.cursor == i {
-				cursor = ">"
-			}
-			sb.WriteString(fmt.Sprintf("%s %s\n", cursor, choice))
+func collectAssets(manifest map[string]interface{}, manifestURL string) []string {
+	var assets []string
+	base, _ := url.Parse(manifestURL)
+
+	// Add start_url
+	if startURL, ok := manifest["start_url"].(string); ok {
+		if resolved, err := base.Parse(startURL); err == nil {
+			assets = append(assets, resolved.String())
 		}
-		sb.WriteString("\nPress q to quit.\n")
-	case fileSelectState:
-		sb.WriteString(fmt.Sprintf("Select an HTML file for Wails build (Current: %s)\n\n", m.currentPath))
-		for i, entry := range m.files {
-			cursor := " "
-			if entry.IsDir() {
-				cursor = "/"
-			}
-			if m.fileCursor == i {
-				cursor = ">"
-			}
-			name := entry.Name()
-			if entry.IsDir() {
-				name += "/"
-			}
-			sb.WriteString(fmt.Sprintf("%s %s\n", cursor, name))
-		}
-		sb.WriteString("\nPress Enter to select/enter, Backspace to go up, Esc to return to main menu, q to quit.\n")
-	case buildOutputState:
-		sb.WriteString("Wails Build Output:\n\n")
-		sb.WriteString(m.buildLog)
-		sb.WriteString("\n\nPress Esc to return to main menu, q to quit.\n")
 	}
-	return sb.String()
+
+	// Add icons
+	if icons, ok := manifest["icons"].([]interface{}); ok {
+		for _, icon := range icons {
+			if iconMap, ok := icon.(map[string]interface{}); ok {
+				if src, ok := iconMap["src"].(string); ok {
+					if resolved, err := base.Parse(src); err == nil {
+						assets = append(assets, resolved.String())
+					}
+				}
+			}
+		}
+	}
+
+	return assets
 }
 
-// --- Commands ---
-
-func loadFilesCmd(path string) tea.Cmd {
-	return func() tea.Msg {
-		entries, err := os.ReadDir(path)
-		if err != nil {
-			return errorMsg(fmt.Errorf("failed to read directory %s: %w", path, err))
-		}
-
-		// Sort entries: directories first, then files, alphabetically
-		sort.Slice(entries, func(i, j int) bool {
-			if entries[i].IsDir() && !entries[j].IsDir() {
-				return true
-			}
-			if !entries[i].IsDir() && entries[j].IsDir() {
-				return false
-			}
-			return entries[i].Name() < entries[j].Name()
-		})
-
-		return filesLoadedMsg(entries)
+func downloadAsset(assetURL, destDir string) error {
+	resp, err := http.Get(assetURL)
+	if err != nil {
+		return err
 	}
+	defer resp.Body.Close()
+
+	u, err := url.Parse(assetURL)
+	if err != nil {
+		return err
+	}
+
+	path := filepath.Join(destDir, filepath.FromSlash(u.Path))
+	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
+		return err
+	}
+
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
 
-func buildWailsCmd(htmlPath string) tea.Cmd {
-	return func() tea.Msg {
-		// Find the wails3 executable
-		wailsExec, err := exec.LookPath("wails3")
-		if err != nil {
-			return errorMsg(fmt.Errorf("wails3 executable not found in PATH: %w", err))
-		}
+// --- Standard Build Logic ---
 
-		var wailsProjectDir string
-		execPath, err := os.Executable()
-		if err != nil {
-			// If os.Executable fails, return an error as we cannot reliably locate the Wails project.
-			return errorMsg(fmt.Errorf("failed to determine executable path: %w. Cannot reliably locate Wails project directory.", err))
-		} else {
-			execDir := filepath.Dir(execPath)
-			// Join execDir with "../core-app" and clean the path
-			wailsProjectDir = filepath.Clean(filepath.Join(execDir, "../core-app"))
-		}
+func runBuild(fromPath string) error {
+	fmt.Printf("Starting build from path: %s\n", fromPath)
 
-		// Get the directory and base name of the selected HTML file
-		assetDir := filepath.Dir(htmlPath)
-		assetPath := filepath.Base(htmlPath)
-
-		// Construct the wails3 build command
-		// This assumes wails3 build supports overriding assetdir/assetpath via flags.
-		cmdArgs := []string{
-			"build",
-			"-config", filepath.Join(wailsProjectDir, "build", "config.yml"),
-			"--assetdir", assetDir,
-			"--assetpath", assetPath,
-		}
-
-		cmd := exec.Command(wailsExec, cmdArgs...)
-		cmd.Dir = wailsProjectDir // Run command from the Wails project directory
-
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			return buildFinishedMsg(fmt.Sprintf("Wails build failed: %v\n%s", err, string(out)))
-		}
-
-		return buildFinishedMsg(fmt.Sprintf("Wails build successful!\n%s", string(out)))
+	info, err := os.Stat(fromPath)
+	if err != nil {
+		return fmt.Errorf("invalid path specified: %w", err)
 	}
+	if !info.IsDir() {
+		return fmt.Errorf("path specified must be a directory")
+	}
+
+	buildDir := ".core/build/app"
+	htmlDir := filepath.Join(buildDir, "html")
+	appName := filepath.Base(fromPath)
+	if strings.HasPrefix(appName, "core-pwa-build-") {
+		appName = "pwa-app"
+	}
+	outputExe := appName
+
+	if err := os.RemoveAll(buildDir); err != nil {
+		return fmt.Errorf("failed to clean build directory: %w", err)
+	}
+
+	// 1. Generate the project from the embedded template
+	fmt.Println("Generating application from template...")
+	templateFS, err := debme.FS(guiTemplate, "tmpl/gui")
+	if err != nil {
+		return fmt.Errorf("failed to anchor template filesystem: %w", err)
+	}
+	sod := gosod.New(templateFS)
+	if sod != nil {
+		return fmt.Errorf("failed to create new sod instance: %w", sod)
+	}
+
+	templateData := map[string]string{"AppName": appName}
+	if err := sod.Extract(buildDir, templateData); err != nil {
+		return fmt.Errorf("failed to extract template: %w", err)
+	}
+
+	// 2. Copy the user's web app files
+	fmt.Println("Copying application files...")
+	if err := copyDir(fromPath, htmlDir); err != nil {
+		return fmt.Errorf("failed to copy application files: %w", err)
+	}
+
+	// 3. Compile the application
+	fmt.Println("Compiling application...")
+
+	// Run go mod tidy
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = buildDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("go mod tidy failed: %w", err)
+	}
+
+	// Run go build
+	cmd = exec.Command("go", "build", "-o", outputExe)
+	cmd.Dir = buildDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("go build failed: %w", err)
+	}
+
+	fmt.Printf("\nBuild successful! Executable created at: %s/%s\n", buildDir, outputExe)
+	return nil
+}
+
+// copyDir recursively copies a directory from src to dst.
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		_, err = io.Copy(dstFile, srcFile)
+		return err
+	})
 }
