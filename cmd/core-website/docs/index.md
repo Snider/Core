@@ -26,8 +26,7 @@ Core is an opinionated framework for building Go desktop apps with Wails, provid
 import (
     "github.com/wailsapp/wails/v3/pkg/application"
     "github.com/Snider/Core"
-    "core.io.in"
-    "dappco.re/display"
+    "github.com/Snider/Core/display"
 )
 
 func main() {
