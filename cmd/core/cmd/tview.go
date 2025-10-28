@@ -4,20 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/leaanthony/clir"
 	"github.com/rivo/tview"
-	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(tviewCmd)
-}
-
-var tviewCmd = &cobra.Command{
-	Use:   "tview-example",
-	Short: "Runs a tview example to demonstrate its capabilities",
-	Long:  `This command launches a simple tview application to showcase its full-screen terminal UI features.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// Removed: fmt.Println("Starting tview example...") to prevent visual artifacts
+// AddTviewCommand adds the tview-example command to the clir app.
+func AddTviewCommand(app *clir.Cli) {
+	tviewCmd := app.NewSubCommand("tview-example", "Runs a tview example to demonstrate its capabilities")
+	tviewCmd.LongDescription("This command launches a simple tview application to showcase its full-screen terminal UI features.")
+	tviewCmd.Action(func() error {
 		app := tview.NewApplication()
 		box := tview.NewBox().
 			SetBorder(true).
@@ -26,5 +21,6 @@ var tviewCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error running tview app: %v\n", err)
 			os.Exit(1)
 		}
-	},
+		return nil
+	})
 }

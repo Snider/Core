@@ -10,8 +10,21 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/spf13/cobra"
+	"github.com/leaanthony/clir"
 )
+
+// AddBuildCommand adds the build command to the clir app.
+func AddBuildCommand(app *clir.Cli) {
+	buildCmd := app.NewSubCommand("build", "Build a Wails application")
+	buildCmd.LongDescription("This command allows you to build a Wails application, optionally selecting a custom HTML entry point.")
+	buildCmd.Action(func() error {
+		p := tea.NewProgram(initialModel())
+		if _, err := p.Run(); err != nil {
+			return fmt.Errorf("Alas, there's been an error: %w", err)
+		}
+		return nil
+	})
+}
 
 // viewState represents the current view of the TUI.
 type viewState int
@@ -283,21 +296,4 @@ func buildWailsCmd(htmlPath string) tea.Cmd {
 
 		return buildFinishedMsg(fmt.Sprintf("Wails build successful!\n%s", string(out)))
 	}
-}
-
-var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Build a Wails application",
-	Long:  `This command allows you to build a Wails application, optionally selecting a custom HTML entry point.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		p := tea.NewProgram(initialModel())
-		if _, err := p.Run(); err != nil {
-			fmt.Printf("Alas, there's been an error: %v", err)
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(buildCmd)
 }
