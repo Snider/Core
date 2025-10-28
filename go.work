@@ -3,5 +3,6 @@ go 1.25.3
 use (
 	.
 	./cmd/core
-	./cmd/core-app
+	./cmd/core-gui
+	./cmd/core-static-di
 )

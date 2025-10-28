@@ -1,4 +1,4 @@
-module core-app
+module core-gui
 
 go 1.25
 
