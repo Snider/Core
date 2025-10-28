@@ -147,7 +147,7 @@ func (s *Service) Get(key string, out any) error {
 				targetVal := outVal.Elem()
 				srcVal := val.Field(i)
 
-				if !targetVal.Type().AssignableTo(srcVal.Type()) {
+				if !srcVal.Type().AssignableTo(targetVal.Type()) {
 					return fmt.Errorf("cannot assign config value of type %s to output of type %s", srcVal.Type(), targetVal.Type())
 				}
 				targetVal.Set(srcVal)

@@ -13,6 +13,9 @@ import (
 // to the underlying implementation, making it transparent to the user.
 type Service = impl.Service
 
+// Options is the public type for the Config service options.
+type Options = impl.Options
+
 // New is the public constructor for the Config service. It is a variable
 // that points to the real constructor in the implementation package.
 var New = impl.New
