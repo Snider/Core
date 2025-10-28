@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"mvdan.cc/sh/v3/syntax"
 	// "github.com/rivo/tview" // Disabled for now due to console issues
-	figure "github.com/common-nighthawk/go-figure"
+	"github.com/common-nighthawk/go-figure"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +55,7 @@ var rootCmd = &cobra.Command{
 			"managing various aspects of Core.Framework applications."),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default behaviour if no subcommand is given
-		if !cmd.HasSubCommands() && len(args) == 0 {
+		if len(args) == 0 {
 			showBanner()
 		}
 		err := cmd.Help()

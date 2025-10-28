@@ -1,7 +1,7 @@
 wails3
 build/
-!cmd/core-app/build
-cmd/core-app/build/bin
+!cmd/core-gui/build
+cmd/core-gui/build/bin
 .task
 vendor/
 .idea
@@ -12,6 +12,6 @@ node_modules/
 .env.*.local
 coverage/
 *.cache
-/cmd/core-app/public/dist/assets/index-CXPsZVIz.js
-/cmd/core-app/public/dist/index.html
+/cmd/core-gui/public/dist/assets/index-CXPsZVIz.js
+/cmd/core-gui/public/dist/index.html
 /cmd/core/bin/
