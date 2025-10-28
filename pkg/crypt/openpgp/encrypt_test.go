@@ -43,10 +43,14 @@ func generateTestKeys(t *testing.T, name, passphrase string) (string, string, fu
 	if err := entity.Serialize(pubKeyWriter); err != nil {
 		t.Fatalf("Failed to serialize public key: %v", err)
 	}
-	pubKeyWriter.Close()
-	pubKeyFile.Close()
+	if err := pubKeyWriter.Close(); err != nil {
+		t.Fatalf("Failed to close public key writer: %v", err)
+	}
+	if err := pubKeyFile.Close(); err != nil {
+		t.Fatalf("Failed to close public key file: %v", err)
+	}
 
-	// --- Save Encrypted Private Key ---
+	// --- Save Private Key (unencrypted for test setup) ---
 	privKeyPath := filepath.Join(tempDir, name+".asc")
 	privKeyFile, err := os.Create(privKeyPath)
 	if err != nil {
@@ -57,17 +61,16 @@ func generateTestKeys(t *testing.T, name, passphrase string) (string, string, fu
 		t.Fatalf("Failed to create armored writer for private key: %v", err)
 	}
 
-	// Encrypt the private key before serializing it.
-	if err := entity.PrivateKey.Encrypt([]byte(passphrase)); err != nil {
-		t.Fatalf("Failed to encrypt private key: %v", err)
-	}
-
-	// Serialize just the private key packet.
-	if err := entity.PrivateKey.Serialize(privKeyWriter); err != nil {
+	// Serialize the whole entity with an unencrypted private key.
+	if err := entity.SerializePrivate(privKeyWriter, nil); err != nil {
 		t.Fatalf("Failed to serialize private key: %v", err)
 	}
-	privKeyWriter.Close()
-	privKeyFile.Close()
+	if err := privKeyWriter.Close(); err != nil {
+		t.Fatalf("Failed to close private key writer: %v", err)
+	}
+	if err := privKeyFile.Close(); err != nil {
+		t.Fatalf("Failed to close private key file: %v", err)
+	}
 
 	cleanup := func() { os.RemoveAll(tempDir) }
 	return pubKeyPath, privKeyPath, cleanup
