@@ -13,10 +13,6 @@ import (
 // to the underlying implementation, making it transparent to the user.
 type Options = impl.Options
 
-// Workspace is the public type for the Workspace service. It is a type alias
-// to the underlying implementation, making it transparent to the user.
-type Workspace = impl.Workspace
-
 // Service is the public type for the Service service. It is a type alias
 // to the underlying implementation, making it transparent to the user.
 type Service = impl.Service

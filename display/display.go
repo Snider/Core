@@ -17,6 +17,10 @@ type Options = impl.Options
 // to the underlying implementation, making it transparent to the user.
 type Service = impl.Service
 
+// WindowOption is the public type for the WindowOption service. It is a type alias
+// to the underlying implementation, making it transparent to the user.
+type WindowOption = impl.WindowOption
+
 // New is a public function that points to the real function in the implementation package.
 var New = impl.New
 

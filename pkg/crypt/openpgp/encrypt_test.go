@@ -9,6 +9,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
 // generateTestKeys creates a new PGP entity and saves the public and private keys to temporary files.
@@ -20,14 +21,13 @@ func generateTestKeys(t *testing.T, name, passphrase string) (string, string, fu
 		t.Fatalf("Failed to create temp dir for keys: %v", err)
 	}
 
-	entity, err := openpgp.NewEntity(name, "", name, nil)
-	if err != nil {
-		t.Fatalf("Failed to create new PGP entity: %v", err)
+	config := &packet.Config{
+		RSABits: 2048, // Use a reasonable key size for tests
 	}
 
-	// Encrypt the private key with the passphrase
-	if err := entity.PrivateKey.Encrypt([]byte(passphrase)); err != nil {
-		t.Fatalf("Failed to encrypt private key: %v", err)
+	entity, err := openpgp.NewEntity(name, "", name, config)
+	if err != nil {
+		t.Fatalf("Failed to create new PGP entity: %v", err)
 	}
 
 	// --- Save Public Key ---
@@ -36,30 +36,37 @@ func generateTestKeys(t *testing.T, name, passphrase string) (string, string, fu
 	if err != nil {
 		t.Fatalf("Failed to create public key file: %v", err)
 	}
-	w, err := armor.Encode(pubKeyFile, openpgp.PublicKeyType, nil)
+	pubKeyWriter, err := armor.Encode(pubKeyFile, openpgp.PublicKeyType, nil)
 	if err != nil {
 		t.Fatalf("Failed to create armored writer for public key: %v", err)
 	}
-	if err := entity.Serialize(w); err != nil {
+	if err := entity.Serialize(pubKeyWriter); err != nil {
 		t.Fatalf("Failed to serialize public key: %v", err)
 	}
-	w.Close()
+	pubKeyWriter.Close()
 	pubKeyFile.Close()
 
-	// --- Save Private Key ---
+	// --- Save Encrypted Private Key ---
 	privKeyPath := filepath.Join(tempDir, name+".asc")
 	privKeyFile, err := os.Create(privKeyPath)
 	if err != nil {
 		t.Fatalf("Failed to create private key file: %v", err)
 	}
-	w, err = armor.Encode(privKeyFile, openpgp.PrivateKeyType, nil)
+	privKeyWriter, err := armor.Encode(privKeyFile, openpgp.PrivateKeyType, nil)
 	if err != nil {
 		t.Fatalf("Failed to create armored writer for private key: %v", err)
 	}
-	if err := entity.SerializePrivate(w, nil); err != nil {
+
+	// Encrypt the private key before serializing it.
+	if err := entity.PrivateKey.Encrypt([]byte(passphrase)); err != nil {
+		t.Fatalf("Failed to encrypt private key: %v", err)
+	}
+
+	// Serialize just the private key packet.
+	if err := entity.PrivateKey.Serialize(privKeyWriter); err != nil {
 		t.Fatalf("Failed to serialize private key: %v", err)
 	}
-	w.Close()
+	privKeyWriter.Close()
 	privKeyFile.Close()
 
 	cleanup := func() { os.RemoveAll(tempDir) }

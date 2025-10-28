@@ -209,11 +209,10 @@ func (s *Service) WorkspaceFileGet(filename string) (string, error) {
 }
 
 // WorkspaceFileSet writes a file to the active workspace.
-func (s *Service) WorkspaceFileSet(filename, content string) (string, error) {
+func (s *Service) WorkspaceFileSet(filename, content string) error {
 	if s.activeWorkspace == nil {
-		return "", fmt.Errorf("no active workspace")
+		return fmt.Errorf("no active workspace")
 	}
 	path := filepath.Join(s.activeWorkspace.Path, filename)
-	return path, nil
-	//return s.medium.FileSet(path, content)
+	return s.medium.FileSet(path, content)
 }

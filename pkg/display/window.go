@@ -75,11 +75,11 @@ func (s *Service) NewWithURL(url string) (*application.WebviewWindow, error) {
 	)
 }
 
-// OpenWindow is a convenience method that creates and shows a window from a set of options.
-func (s *Service) OpenWindow(opts ...WindowOption) error {
-	_, err := s.NewWithOptions(opts...)
-	return err
-}
+//// OpenWindow is a convenience method that creates and shows a window from a set of options.
+//func (s *Service) OpenWindow(opts ...WindowOption) error {
+//	_, err := s.NewWithOptions(opts...)
+//	return err
+//}
 
 // SelectDirectory opens a directory selection dialog and returns the selected path.
 func (s *Service) SelectDirectory() (string, error) {

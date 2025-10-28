@@ -50,7 +50,7 @@ type WindowConfig struct {
 
 // WindowOption configures window creation.
 type WindowOption interface {
-	apply(*WindowConfig)
+	Apply(*WindowConfig)
 }
 
 // Display manages windows and UI.

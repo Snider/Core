@@ -67,10 +67,10 @@ func Execute() error {
 	// Add the top-level commands
 	devCmd := app.NewSubCommand("dev", "Development tools for Core Framework")
 	AddAPICommands(devCmd)
-
+	AddTestGenCommand(devCmd)
+	AddSyncCommand(devCmd)
 	AddBuildCommand(app)
 	AddTviewCommand(app)
-
 	// Run the application
 	return app.Run()
 }
