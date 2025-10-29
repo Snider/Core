@@ -183,4 +183,10 @@ func (c *Core) Config() Config {
 	return cfg
 }
 
+// Display returns the registered Display service.
+func (c *Core) Display() Display {
+	display := MustServiceFor[Display](c, "display")
+	return display
+}
+
 func (c *Core) Core() *Core { return c }

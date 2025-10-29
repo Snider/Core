@@ -2,11 +2,30 @@ version: '3'
 
 tasks:
   test:
+    watch: true
+    run: when_changed
+    sources:
+      - "./pkg/**/*"
+      - "**/*.go"
     desc: "Run all Go tests recursively for the entire project."
     cmds:
-      - go test ./...
+      - clear # Clear the terminal for better readability
+      - go test -coverprofile=coverage.txt ./...
 
   review:
     desc: "Run CodeRabbit review to get feedback on the current changes."
     cmds:
       - coderabbit review --prompt-only
+
+  bugs:
+    desc: "Run a CodeRabbit review followed by the full test suite."
+    cmds:
+      - task: go:mod:tidy
+      - go test ./...
+      - task: review
+
+  go:mod:tidy:
+    summary: Runs `go mod tidy`
+    internal: true
+    cmds:
+      - go mod tidy

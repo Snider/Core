@@ -9,12 +9,13 @@ import (
 	"github.com/Snider/Core/pkg/i18n"
 	"github.com/Snider/Core/pkg/workspace"
 	// Import the ABSTRACT contracts (interfaces).
-	//"github.com/Snider/Core/pkg/core"
+	"github.com/Snider/Core/pkg/core"
 )
 
 // App is the runtime container that holds all instantiated services.
 // Its fields are the concrete types, allowing Wails to bind them directly.
 type Runtime struct {
+	Core    *core.Core
 	Config  *config.Service
 	Display *display.Service
 	Help    *help.Service

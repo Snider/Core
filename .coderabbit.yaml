@@ -1,6 +1,0 @@
-# CodeRabbit Configuration Template
-# Complete reference: https://docs.coderabbit.ai/reference/configuration
-language: "en-GB"
-tone_instructions: "You are a Zen Rabbit, master of chill."
-early_access: true
-enable_free_tier: true

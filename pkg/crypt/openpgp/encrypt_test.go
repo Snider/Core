@@ -18,7 +18,7 @@ func generateTestKeys(t *testing.T, name, passphrase string) (string, string, fu
 
 	tempDir, err := os.MkdirTemp("", "pgp-keys-*")
 	if err != nil {
-		t.Fatalf("Failed to create temp dir for keys: %v", err)
+		t.Fatalf("test setup: failed to create temp dir for keys: %v", err)
 	}
 
 	config := &packet.Config{
@@ -27,49 +27,49 @@ func generateTestKeys(t *testing.T, name, passphrase string) (string, string, fu
 
 	entity, err := openpgp.NewEntity(name, "", name, config)
 	if err != nil {
-		t.Fatalf("Failed to create new PGP entity: %v", err)
+		t.Fatalf("test setup: failed to create new PGP entity: %v", err)
 	}
 
 	// --- Save Public Key ---
 	pubKeyPath := filepath.Join(tempDir, name+".pub")
 	pubKeyFile, err := os.Create(pubKeyPath)
 	if err != nil {
-		t.Fatalf("Failed to create public key file: %v", err)
+		t.Fatalf("test setup: failed to create public key file: %v", err)
 	}
 	pubKeyWriter, err := armor.Encode(pubKeyFile, openpgp.PublicKeyType, nil)
 	if err != nil {
-		t.Fatalf("Failed to create armored writer for public key: %v", err)
+		t.Fatalf("test setup: failed to create armored writer for public key: %v", err)
 	}
 	if err := entity.Serialize(pubKeyWriter); err != nil {
-		t.Fatalf("Failed to serialize public key: %v", err)
+		t.Fatalf("test setup: failed to serialize public key: %v", err)
 	}
 	if err := pubKeyWriter.Close(); err != nil {
-		t.Fatalf("Failed to close public key writer: %v", err)
+		t.Fatalf("test setup: failed to close public key writer: %v", err)
 	}
 	if err := pubKeyFile.Close(); err != nil {
-		t.Fatalf("Failed to close public key file: %v", err)
+		t.Fatalf("test setup: failed to close public key file: %v", err)
 	}
 
 	// --- Save Private Key (unencrypted for test setup) ---
 	privKeyPath := filepath.Join(tempDir, name+".asc")
 	privKeyFile, err := os.Create(privKeyPath)
 	if err != nil {
-		t.Fatalf("Failed to create private key file: %v", err)
+		t.Fatalf("test setup: failed to create private key file: %v", err)
 	}
 	privKeyWriter, err := armor.Encode(privKeyFile, openpgp.PrivateKeyType, nil)
 	if err != nil {
-		t.Fatalf("Failed to create armored writer for private key: %v", err)
+		t.Fatalf("test setup: failed to create armored writer for private key: %v", err)
 	}
 
 	// Serialize the whole entity with an unencrypted private key.
 	if err := entity.SerializePrivate(privKeyWriter, nil); err != nil {
-		t.Fatalf("Failed to serialize private key: %v", err)
+		t.Fatalf("test setup: failed to serialize private key: %v", err)
 	}
 	if err := privKeyWriter.Close(); err != nil {
-		t.Fatalf("Failed to close private key writer: %v", err)
+		t.Fatalf("test setup: failed to close private key writer: %v", err)
 	}
 	if err := privKeyFile.Close(); err != nil {
-		t.Fatalf("Failed to close private key file: %v", err)
+		t.Fatalf("test setup: failed to close private key file: %v", err)
 	}
 
 	cleanup := func() { os.RemoveAll(tempDir) }
@@ -86,7 +86,7 @@ func TestEncryptDecryptPGP(t *testing.T) {
 	var encryptedBuf bytes.Buffer
 	encryptedMessage, err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, nil, nil)
 	if err != nil {
-		t.Fatalf("EncryptPGP() failed: %v", err)
+		t.Fatalf("EncryptPGP() failed unexpectedly: %v", err)
 	}
 
 	if !strings.Contains(encryptedMessage, "-----BEGIN PGP MESSAGE-----") {
@@ -96,11 +96,11 @@ func TestEncryptDecryptPGP(t *testing.T) {
 	// --- Test Decryption ---
 	decryptedMessage, err := DecryptPGP(recipientPriv, encryptedMessage, "recipient-pass", nil)
 	if err != nil {
-		t.Fatalf("DecryptPGP() failed: %v", err)
+		t.Fatalf("DecryptPGP() failed unexpectedly: %v", err)
 	}
 
 	if decryptedMessage != originalMessage {
-		t.Errorf("Decrypted message does not match original. got=%q, want=%q", decryptedMessage, originalMessage)
+		t.Errorf("Decrypted message mismatch: got=%q, want=%q", decryptedMessage, originalMessage)
 	}
 }
 
@@ -118,17 +118,17 @@ func TestSignAndVerifyPGP(t *testing.T) {
 	signerPass := "signer-pass"
 	encryptedMessage, err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, &signerPriv, &signerPass)
 	if err != nil {
-		t.Fatalf("EncryptPGP() with signing failed: %v", err)
+		t.Fatalf("EncryptPGP() with signing failed unexpectedly: %v", err)
 	}
 
 	// --- Decrypt and Verify ---
 	decryptedMessage, err := DecryptPGP(recipientPriv, encryptedMessage, "recipient-pass", &signerPub)
 	if err != nil {
-		t.Fatalf("DecryptPGP() with verification failed: %v", err)
+		t.Fatalf("DecryptPGP() with verification failed unexpectedly: %v", err)
 	}
 
 	if decryptedMessage != originalMessage {
-		t.Errorf("Decrypted message does not match original. got=%q, want=%q", decryptedMessage, originalMessage)
+		t.Errorf("Decrypted message mismatch after signing: got=%q, want=%q", decryptedMessage, originalMessage)
 	}
 }
 
@@ -150,7 +150,7 @@ func TestVerificationFailure(t *testing.T) {
 	signerPass := "signer-pass"
 	encryptedMessage, err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, &signerPriv, &signerPass)
 	if err != nil {
-		t.Fatalf("EncryptPGP() with signing failed: %v", err)
+		t.Fatalf("EncryptPGP() with signing failed unexpectedly: %v", err)
 	}
 
 	// --- Attempt to Decrypt and Verify with the WRONG public key ---

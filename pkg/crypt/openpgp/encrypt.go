@@ -123,12 +123,13 @@ func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signer
 		return "", fmt.Errorf("openpgp: failed to finalize armored writer: %w", err)
 	}
 
-	// To get the string output, we need to have written to a buffer
+	// To get the string output, we must have been writing to a buffer.
 	if buf, ok := writer.(*bytes.Buffer); ok {
 		return buf.String(), nil
 	}
 
-	return "", nil // No string to return if not writing to a buffer
+	// If the writer was not a buffer, we cannot return the string. This is an API misuse.
+	return "", fmt.Errorf("openpgp: writer is not a *bytes.Buffer, cannot return encrypted string")
 }
 
 // DecryptPGP decrypts an armored PGP message.
@@ -175,9 +176,10 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", fmt.Errorf("openpgp: failed to read PGP message: %w", err)
 	}
 
-	plaintext, err := io.ReadAll(md.UnverifiedBody)
-	if err != nil {
-		return "", fmt.Errorf("openpgp: failed to read plaintext message body: %w", err)
+	// Buffer the unverified body. Do not return or act on it until signature checks pass.
+	plaintextBuffer := new(bytes.Buffer)
+	if _, err := io.Copy(plaintextBuffer, md.UnverifiedBody); err != nil {
+		return "", fmt.Errorf("openpgp: failed to buffer plaintext message body: %w", err)
 	}
 
 	// 5. Handle optional signature verification
@@ -199,5 +201,5 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		}
 	}
 
-	return string(plaintext), nil
+	return plaintextBuffer.String(), nil
 }
