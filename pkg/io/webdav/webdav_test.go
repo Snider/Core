@@ -18,6 +18,7 @@ func TestNew(t *testing.T) {
 	service, err := New(cfg)
 	assert.Error(t, err)
 	assert.Nil(t, service, "New() should return a nil service instance on connection error")
+	assert.Contains(t, err.Error(), "dial tcp 192.0.2.1:1: i/o timeout", "Expected connection error message")
 }
 
 // Functional tests for WebDAV operations (Read, Write, EnsureDir, IsFile, etc.)

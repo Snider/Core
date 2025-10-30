@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,31 +24,43 @@ func TestNew(t *testing.T) {
 
 	// Verify services are properly wired through Core
 	configFromCore := runtime.Core.Service("config")
+	assert.NotNil(t, configFromCore, "Config should be registered in Core")
 	assert.Equal(t, runtime.Config, configFromCore, "Config from Core should match direct reference")
 
 	displayFromCore := runtime.Core.Service("display")
+	assert.NotNil(t, displayFromCore, "Display should be registered in Core")
 	assert.Equal(t, runtime.Display, displayFromCore, "Display from Core should match direct reference")
 
 	helpFromCore := runtime.Core.Service("help")
+	assert.NotNil(t, helpFromCore, "Help should be registered in Core")
 	assert.Equal(t, runtime.Help, helpFromCore, "Help from Core should match direct reference")
 
 	cryptFromCore := runtime.Core.Service("crypt")
+	assert.NotNil(t, cryptFromCore, "Crypt should be registered in Core")
 	assert.Equal(t, runtime.Crypt, cryptFromCore, "Crypt from Core should match direct reference")
 
 	i18nFromCore := runtime.Core.Service("i18n")
+	assert.NotNil(t, i18nFromCore, "I18n should be registered in Core")
 	assert.Equal(t, runtime.I18n, i18nFromCore, "I18n from Core should match direct reference")
 
 	workspaceFromCore := runtime.Core.Service("workspace")
+	assert.NotNil(t, workspaceFromCore, "Workspace should be registered in Core")
 	assert.Equal(t, runtime.Workspace, workspaceFromCore, "Workspace from Core should match direct reference")
 }
 
-// TestNewServiceInitializationError is a placeholder for testing error paths in New.
-// TODO: Implement this test once the New function is refactored to allow for
-// mockable service initializations (e.g., using dependency injection).
-// The test should inject a failing service factory and assert that New returns
-// the expected error and a nil runtime.
+// TestNewServiceInitializationError tests the error path in New.
 func TestNewServiceInitializationError(t *testing.T) {
-	t.Skip("TODO: Implement once service initialization is mockable")
+	factories := map[string]ServiceFactory{
+		"failing": func() (any, error) {
+			return nil, errors.New("initialization failed")
+		},
+	}
+
+	runtime, err := newWithFactories(factories)
+
+	assert.Error(t, err)
+	assert.Nil(t, runtime)
+	assert.Contains(t, err.Error(), "failed to create service failing: initialization failed")
 }
 
 // Removed TestRuntimeOptions and TestRuntimeCore as these methods no longer exist on the Runtime struct.

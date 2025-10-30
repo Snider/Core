@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"fmt"
+
 	// Import the CONCRETE implementations from the internal packages.
 	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/crypt"
@@ -15,75 +17,58 @@ import (
 // App is the runtime container that holds all instantiated services.
 // Its fields are the concrete types, allowing Wails to bind them directly.
 type Runtime struct {
-	Core    *core.Core
-	Config  *config.Service
-	Display *display.Service
-	Help    *help.Service
-	Crypt   *crypt.Service
-	I18n    *i18n.Service
-	//IO        core.IO // IO is a library, not a service, so it's not injected here directly.
+	Core      *core.Core
+	Config    *config.Service
+	Display   *display.Service
+	Help      *help.Service
+	Crypt     *crypt.Service
+	I18n      *i18n.Service
 	Workspace *workspace.Service
 }
 
-// New creates and wires together all application services using static dependency injection.
-// This is the composition root for the static initialization modality.
-func New() (*Runtime, error) {
-	// 1. Instantiate services that have no direct service dependencies (or only simple ones).
-	configSvc, err := config.New()
+// ServiceFactory defines a function that creates a service instance.
+type ServiceFactory func() (any, error)
+
+// newWithFactories creates a new Runtime instance using the provided service factories.
+func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
+	services := make(map[string]any)
+	coreOpts := []core.Option{}
+
+	for name, factory := range factories {
+		svc, err := factory()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create service %s: %w", name, err)
+		}
+		services[name] = svc
+		coreOpts = append(coreOpts, core.WithService(func(c *core.Core) (any, error) { return svc, nil }))
+	}
+
+	coreInstance, err := core.New(coreOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	displaySvc, err := display.New()
-	if err != nil {
-		return nil, err
-	}
-
-	cryptSvc, err := crypt.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. Instantiate services that have dependencies and inject them.
-	// i18n needs config
-	i18nSvc, err := i18n.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// help needs config and display
-	helpSvc, err := help.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// workspace needs config and io.Medium (io.Local is a concrete instance)
-	workspaceSvc, err := workspace.New()
-	if err != nil {
-		return nil, err
-	}
-	coreInstance, err := core.New(
-		core.WithService(func(c *core.Core) (any, error) { return configSvc, nil }),
-		core.WithService(func(c *core.Core) (any, error) { return displaySvc, nil }),
-		core.WithService(func(c *core.Core) (any, error) { return helpSvc, nil }),
-		core.WithService(func(c *core.Core) (any, error) { return cryptSvc, nil }),
-		core.WithService(func(c *core.Core) (any, error) { return i18nSvc, nil }),
-		core.WithService(func(c *core.Core) (any, error) { return workspaceSvc, nil }),
-	)
-	if err != nil {
-		return nil, err
-	}
-	// 3. Assemble the application container, exposing the concrete types.
 	app := &Runtime{
-		Core:    coreInstance,
-		Config:  configSvc,
-		Display: displaySvc,
-		Help:    helpSvc,
-		Crypt:   cryptSvc,
-		I18n:    i18nSvc,
-		//IO:        io.Local, // Assign io.Local directly
-		Workspace: workspaceSvc,
+		Core:      coreInstance,
+		Config:    services["config"].(*config.Service),
+		Display:   services["display"].(*display.Service),
+		Help:      services["help"].(*help.Service),
+		Crypt:     services["crypt"].(*crypt.Service),
+		I18n:      services["i18n"].(*i18n.Service),
+		Workspace: services["workspace"].(*workspace.Service),
 	}
 
 	return app, nil
+}
+
+// New creates and wires together all application services using static dependency injection.
+func New() (*Runtime, error) {
+	return newWithFactories(map[string]ServiceFactory{
+		"config":    func() (any, error) { return config.New() },
+		"display":   func() (any, error) { return display.New() },
+		"help":      func() (any, error) { return help.New() },
+		"crypt":     func() (any, error) { return crypt.New() },
+		"i18n":      func() (any, error) { return i18n.New() },
+		"workspace": func() (any, error) { return workspace.New() },
+	})
 }

@@ -37,6 +37,7 @@ tasks:
   cov-view:
     desc: "Open the coverage report in your browser."
     cmds:
+      - task: cov
       - go tool cover -html=coverage.txt
 
   sync:

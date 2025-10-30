@@ -171,23 +171,7 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", err
 	}
 
-	// 2. Decrypt all private keys in the key ring.
-	for _, entity := range entityList {
-		if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
-			if err := entity.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-				return "", fmt.Errorf("openpgp: failed to decrypt private key: %w", err)
-			}
-		}
-		for _, subkey := range entity.Subkeys {
-			if subkey.PrivateKey != nil && subkey.PrivateKey.Encrypted {
-				if err := subkey.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-					return "", fmt.Errorf("openpgp: failed to decrypt subkey: %w", err)
-				}
-			}
-		}
-	}
-
-	// 3. Decode the armored message
+	// 2. Decode the armored message
 	block, err := armor.Decode(strings.NewReader(message))
 	if err != nil {
 		return "", fmt.Errorf("openpgp: failed to decode armored message: %w", err)
@@ -196,18 +180,21 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", fmt.Errorf("openpgp: invalid message type: got %s, want PGP MESSAGE", block.Type)
 	}
 
-	// If signature verification is required, add signer's public key to keyring
+	// 3. If signature verification is required, add signer's public key to keyring
+	var signerEntity *openpgp.Entity
 	keyring := entityList
 	if signerPath != nil {
-		signer, err := readRecipientEntity(*signerPath)
+		signerEntity, err = readRecipientEntity(*signerPath)
 		if err != nil {
 			return "", fmt.Errorf("openpgp: failed to read signer public key: %w", err)
 		}
-		keyring = append(keyring, signer)
+		keyring = append(keyring, signerEntity)
 	}
 
 	// 4. Decrypt the message body
-	md, err := openpgp.ReadMessage(block.Body, keyring, nil, nil)
+	md, err := openpgp.ReadMessage(block.Body, keyring, func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
+		return []byte(passphrase), nil
+	}, nil)
 	if err != nil {
 		return "", fmt.Errorf("openpgp: failed to read PGP message: %w", err)
 	}
@@ -228,11 +215,9 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		if md.SignatureError != nil {
 			return "", fmt.Errorf("openpgp: signature verification failed: %w", md.SignatureError)
 		}
-		// Note: signer is now from keyring constructed above
-		signerFromKeyring := keyring[len(keyring)-1]
-		if md.SignedByKeyId != signerFromKeyring.PrimaryKey.KeyId {
+		if signerEntity != nil && md.SignedByKeyId != signerEntity.PrimaryKey.KeyId {
 			match := false
-			for _, subkey := range signerFromKeyring.Subkeys {
+			for _, subkey := range signerEntity.Subkeys {
 				if subkey.PublicKey != nil && subkey.PublicKey.KeyId == md.SignedByKeyId {
 					match = true
 					break
