@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/pkg/sftp"
 	"github.com/skeema/knownhosts"
@@ -14,6 +16,12 @@ import (
 
 // New creates a new, connected instance of the SFTP storage medium.
 func New(cfg ConnectionConfig) (*Medium, error) {
+	// Validate port
+	port, err := strconv.Atoi(cfg.Port)
+	if err != nil || port < 1 || port > 65535 {
+		return nil, fmt.Errorf("invalid port: %s", cfg.Port)
+	}
+
 	var authMethods []ssh.AuthMethod
 
 	if cfg.KeyFile != "" {
@@ -37,10 +45,16 @@ func New(cfg ConnectionConfig) (*Medium, error) {
 		return nil, fmt.Errorf("failed to read known_hosts: %w", err)
 	}
 
+	// Set a default timeout if one is not provided.
+	if cfg.Timeout == 0 {
+		cfg.Timeout = 30 * time.Second
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            cfg.User,
 		Auth:            authMethods,
 		HostKeyCallback: kh.HostKeyCallback(),
+		Timeout:         cfg.Timeout,
 	}
 
 	addr := net.JoinHostPort(cfg.Host, cfg.Port)

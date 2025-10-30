@@ -16,3 +16,4 @@ coverage/
 /cmd/core-gui/public/dist/index.html
 /cmd/core/bin/
 /coverage.txt
+/bin/core

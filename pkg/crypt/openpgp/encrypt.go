@@ -13,16 +13,16 @@ import (
 )
 
 // readRecipientEntity reads an armored PGP public key from the given path.
-func readRecipientEntity(path string) (*openpgp.Entity, error) {
+func readRecipientEntity(path string) (entity *openpgp.Entity, err error) {
 	recipientFile, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("openpgp: failed to open recipient public key file at %s: %w", path, err)
 	}
-	defer func(recipientFile *os.File) {
-		if err := recipientFile.Close(); err != nil {
-			fmt.Printf("openpgp: warning - failed to close recipient key file: %v\n", err)
+	defer func() {
+		if closeErr := recipientFile.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("openpgp: failed to close recipient key file: %w", closeErr)
 		}
-	}(recipientFile)
+	}()
 
 	block, err := armor.Decode(recipientFile)
 	if err != nil {
@@ -33,7 +33,7 @@ func readRecipientEntity(path string) (*openpgp.Entity, error) {
 		return nil, fmt.Errorf("openpgp: invalid key type in %s: expected public key, got %s", path, block.Type)
 	}
 
-	entity, err := openpgp.ReadEntity(packet.NewReader(block.Body))
+	entity, err = openpgp.ReadEntity(packet.NewReader(block.Body))
 	if err != nil {
 		return nil, fmt.Errorf("openpgp: failed to read entity from public key: %w", err)
 	}
@@ -41,16 +41,16 @@ func readRecipientEntity(path string) (*openpgp.Entity, error) {
 }
 
 // readSignerEntity reads and decrypts an armored PGP private key.
-func readSignerEntity(path, passphrase string) (*openpgp.Entity, error) {
+func readSignerEntity(path, passphrase string) (entity *openpgp.Entity, err error) {
 	signerFile, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("openpgp: failed to open signer private key file at %s: %w", path, err)
 	}
-	defer func(signerFile *os.File) {
-		if err := signerFile.Close(); err != nil {
-			fmt.Printf("openpgp: warning - failed to close signer key file: %v\n", err)
+	defer func() {
+		if closeErr := signerFile.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("openpgp: failed to close signer key file: %w", closeErr)
 		}
-	}(signerFile)
+	}()
 
 	block, err := armor.Decode(signerFile)
 	if err != nil {
@@ -61,15 +61,24 @@ func readSignerEntity(path, passphrase string) (*openpgp.Entity, error) {
 		return nil, fmt.Errorf("openpgp: invalid key type in %s: expected private key, got %s", path, block.Type)
 	}
 
-	entity, err := openpgp.ReadEntity(packet.NewReader(block.Body))
+	entity, err = openpgp.ReadEntity(packet.NewReader(block.Body))
 	if err != nil {
 		return nil, fmt.Errorf("openpgp: failed to read entity from private key: %w", err)
 	}
 
-	// Only decrypt if the key is actually encrypted.
+	// Decrypt the primary private key.
 	if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
 		if err := entity.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-			return nil, fmt.Errorf("openpgp: failed to decrypt private key, check your passphrase: %w", err)
+			return nil, fmt.Errorf("openpgp: failed to decrypt private key: %w", err)
+		}
+	}
+
+	// Decrypt all subkeys.
+	for _, subkey := range entity.Subkeys {
+		if subkey.PrivateKey != nil && subkey.PrivateKey.Encrypted {
+			if err := subkey.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+				return nil, fmt.Errorf("openpgp: failed to decrypt subkey: %w", err)
+			}
 		}
 	}
 
@@ -77,18 +86,18 @@ func readSignerEntity(path, passphrase string) (*openpgp.Entity, error) {
 }
 
 // readRecipientKeyRing reads an armored PGP key ring from the given path.
-func readRecipientKeyRing(path string) (openpgp.EntityList, error) {
+func readRecipientKeyRing(path string) (entityList openpgp.EntityList, err error) {
 	recipientFile, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("openpgp: failed to open recipient key file at %s: %w", path, err)
 	}
-	defer func(recipientFile *os.File) {
-		if err := recipientFile.Close(); err != nil {
-			fmt.Printf("openpgp: warning - failed to close recipient key file: %v\n", err)
+	defer func() {
+		if closeErr := recipientFile.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("openpgp: failed to close recipient key file: %w", closeErr)
 		}
-	}(recipientFile)
+	}()
 
-	entityList, err := openpgp.ReadArmoredKeyRing(recipientFile)
+	entityList, err = openpgp.ReadArmoredKeyRing(recipientFile)
 	if err != nil {
 		return nil, fmt.Errorf("openpgp: failed to read armored key ring from %s: %w", path, err)
 	}
@@ -109,12 +118,16 @@ func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signer
 	}
 
 	// 2. Set up the list of recipients
-	to := []*openpgp.Entity{recipientEntity}
+	to := openpgp.EntityList{recipientEntity}
 
 	// 3. Handle optional signing
 	var signer *openpgp.Entity
 	if signerPath != nil {
-		signer, err = readSignerEntity(*signerPath, *signerPassphrase)
+		var passphrase string
+		if signerPassphrase != nil {
+			passphrase = *signerPassphrase
+		}
+		signer, err = readSignerEntity(*signerPath, passphrase)
 		if err != nil {
 			return fmt.Errorf("openpgp: failed to prepare signer: %w", err)
 		}
@@ -158,15 +171,7 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", err
 	}
 
-	// 2. Decrypt the private key
-	entity := entityList[0]
-	if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
-		if err := entity.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-			return "", fmt.Errorf("openpgp: failed to decrypt private key, check your passphrase: %w", err)
-		}
-	}
-
-	// 3. Decode the armored message
+	// 2. Decode the armored message
 	block, err := armor.Decode(strings.NewReader(message))
 	if err != nil {
 		return "", fmt.Errorf("openpgp: failed to decode armored message: %w", err)
@@ -175,8 +180,21 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", fmt.Errorf("openpgp: invalid message type: got %s, want PGP MESSAGE", block.Type)
 	}
 
+	// 3. If signature verification is required, add signer's public key to keyring
+	var signerEntity *openpgp.Entity
+	keyring := entityList
+	if signerPath != nil {
+		signerEntity, err = readRecipientEntity(*signerPath)
+		if err != nil {
+			return "", fmt.Errorf("openpgp: failed to read signer public key: %w", err)
+		}
+		keyring = append(keyring, signerEntity)
+	}
+
 	// 4. Decrypt the message body
-	md, err := openpgp.ReadMessage(block.Body, entityList, nil, nil)
+	md, err := openpgp.ReadMessage(block.Body, keyring, func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
+		return []byte(passphrase), nil
+	}, nil)
 	if err != nil {
 		return "", fmt.Errorf("openpgp: failed to read PGP message: %w", err)
 	}
@@ -194,15 +212,20 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 			return "", fmt.Errorf("openpgp: signature verification failed: message is not signed")
 		}
 
-		signer, err := readRecipientEntity(*signerPath) // Signer is verified with their public key
-		if err != nil {
-			return "", fmt.Errorf("openpgp: failed to read signer public key: %w", err)
-		}
 		if md.SignatureError != nil {
 			return "", fmt.Errorf("openpgp: signature verification failed: %w", md.SignatureError)
 		}
-		if md.SignedByKeyId != signer.PrimaryKey.KeyId {
-			return "", fmt.Errorf("openpgp: signature from unexpected key id: got %d, want %d", md.SignedByKeyId, signer.PrimaryKey.KeyId)
+		if signerEntity != nil && md.SignedByKeyId != signerEntity.PrimaryKey.KeyId {
+			match := false
+			for _, subkey := range signerEntity.Subkeys {
+				if subkey.PublicKey != nil && subkey.PublicKey.KeyId == md.SignedByKeyId {
+					match = true
+					break
+				}
+			}
+			if !match {
+				return "", fmt.Errorf("openpgp: signature from unexpected key id: got %d, want one of signer key IDs", md.SignedByKeyId)
+			}
 		}
 	}
 

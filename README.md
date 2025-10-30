@@ -25,7 +25,7 @@ app := core.New(
 
 ## Tasks
 
-This project uses [Task](https://taskfile.dev/) for task automation. The following tasks are available:
+This project uses [Task](https://taskfile.dev/) for task automation. The root `Taskfile.yml` includes the `Taskfile.yml` from `cmd/core-gui` and `cmd/core` under the `gui` and `cli` namespaces respectively. The following tasks are available:
 
 ### General
 
@@ -44,6 +44,7 @@ This project uses [Task](https://taskfile.dev/) for task automation. The followi
 
 - `task cli:build`: Builds the CLI application.
 - `task cli:build:dev`: Builds the CLI application for development.
+- `task cli:run`: Builds and runs the CLI application.
 
 ## Docs (MkDocs)
 The help site and in‑app docs are built with MkDocs Material and live under `pkg/v1/core/docs`.
