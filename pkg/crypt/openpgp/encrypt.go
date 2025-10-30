@@ -196,8 +196,18 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", fmt.Errorf("openpgp: invalid message type: got %s, want PGP MESSAGE", block.Type)
 	}
 
+	// If signature verification is required, add signer's public key to keyring
+	keyring := entityList
+	if signerPath != nil {
+		signer, err := readRecipientEntity(*signerPath)
+		if err != nil {
+			return "", fmt.Errorf("openpgp: failed to read signer public key: %w", err)
+		}
+		keyring = append(keyring, signer)
+	}
+
 	// 4. Decrypt the message body
-	md, err := openpgp.ReadMessage(block.Body, entityList, nil, nil)
+	md, err := openpgp.ReadMessage(block.Body, keyring, nil, nil)
 	if err != nil {
 		return "", fmt.Errorf("openpgp: failed to read PGP message: %w", err)
 	}
@@ -215,16 +225,14 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 			return "", fmt.Errorf("openpgp: signature verification failed: message is not signed")
 		}
 
-		signer, err := readRecipientEntity(*signerPath) // Signer is verified with their public key
-		if err != nil {
-			return "", fmt.Errorf("openpgp: failed to read signer public key: %w", err)
-		}
 		if md.SignatureError != nil {
 			return "", fmt.Errorf("openpgp: signature verification failed: %w", md.SignatureError)
 		}
-		if md.SignedByKeyId != signer.PrimaryKey.KeyId {
+		// Note: signer is now from keyring constructed above
+		signerFromKeyring := keyring[len(keyring)-1]
+		if md.SignedByKeyId != signerFromKeyring.PrimaryKey.KeyId {
 			match := false
-			for _, subkey := range signer.Subkeys {
+			for _, subkey := range signerFromKeyring.Subkeys {
 				if subkey.PublicKey != nil && subkey.PublicKey.KeyId == md.SignedByKeyId {
 					match = true
 					break
