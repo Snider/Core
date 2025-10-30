@@ -1,5 +1,9 @@
 version: '3'
 
+includes:
+  gui: ./cmd/core-gui/Taskfile.yml
+  cli: ./cmd/core/Taskfile.yml
+
 tasks:
   test:
     watch: true
@@ -36,38 +40,12 @@ tasks:
     cmds:
       - go tool cover -html=coverage.txt
 
-  gui:build:
-    dir: cmd/core-gui
-    summary: Builds the GUI application
+  sync:
+    desc: "Updates the public API Go files to match the exported interface of the modules."
     cmds:
-      - task: build
+      - task: cli:sync
 
-  gui:package:
-    dir: cmd/core-gui
-    summary: Packages a production build of the GUI application
+  test-gen:
+    desc: "Generates tests for the public API."
     cmds:
-      - task: package
-
-  gui:run:
-    dir: cmd/core-gui
-    summary: Runs the GUI application
-    cmds:
-      - task: run
-
-  gui:dev:
-    dir: cmd/core-gui
-    summary: Runs the GUI application in development mode
-    cmds:
-      - task: dev
-
-  cli:build:
-    dir: cmd/core
-    summary: Builds the CLI application
-    cmds:
-      - task: build
-
-  cli:build:dev:
-    dir: cmd/core
-    summary: Builds the CLI application for development
-    cmds:
-      - task: build:dev
+      - task: cli:test-gen
