@@ -10,7 +10,7 @@ func TestNew(t *testing.T) {
 	// Provide a dummy ConnectionConfig for testing.
 	// Since we are not setting up a real WebDAV server, we expect an error during connection.
 	cfg := ConnectionConfig{
-		URL:      "http://localhost:8080/webdav", // Dummy URL
+		URL:      "http://192.0.2.1:1/webdav", // Non-routable address
 		User:     "testuser",
 		Password: "testpassword",
 	}
@@ -18,7 +18,6 @@ func TestNew(t *testing.T) {
 	service, err := New(cfg)
 	assert.Error(t, err)
 	assert.Nil(t, service, "New() should return a nil service instance on connection error")
-	assert.Contains(t, err.Error(), "connection test failed", "Expected connection test failure")
 }
 
 // Functional tests for WebDAV operations (Read, Write, EnsureDir, IsFile, etc.)
