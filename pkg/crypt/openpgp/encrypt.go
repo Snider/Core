@@ -100,9 +100,7 @@ func readRecipientKeyRing(path string) (openpgp.EntityList, error) {
 }
 
 // EncryptPGP encrypts a string using PGP, writing the armored, encrypted
-// result to the provided io.Writer. Callers who need the encrypted data as a
-// string should pass a *bytes.Buffer as the writer and then call its String()
-// method after this function returns.
+// result to the provided io.Writer.
 func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signerPassphrase *string) error {
 	// 1. Read the recipient's public key
 	recipientEntity, err := readRecipientEntity(recipientPath)
