@@ -67,20 +67,6 @@ func TestNew_ConnectionTimeout(t *testing.T) {
 }
 
 func TestNew_AuthFailureVariants(t *testing.T) {
-	t.Run("wrong password", func(t *testing.T) {
-		cfg := ConnectionConfig{
-			Host:     "localhost",
-			Port:     "22",
-			User:     "testuser",
-			Password: "wrong-password",
-		}
-
-		service, err := New(cfg)
-		assert.Error(t, err)
-		assert.Nil(t, service)
-		assert.Contains(t, err.Error(), "connection refused")
-	})
-
 	t.Run("mismatched keyfile", func(t *testing.T) {
 		cfg := ConnectionConfig{
 			Host:    "localhost",

@@ -9,7 +9,7 @@ tasks:
     desc: "Run all Go tests recursively for the entire project."
     cmds:
       - clear # Clear the terminal for better readability
-      - go test -coverprofile=coverage.txt ./...
+      - go test ./...
 
   review:
     desc: "Run CodeRabbit review to get feedback on the current changes."
