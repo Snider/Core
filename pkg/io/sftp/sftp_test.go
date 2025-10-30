@@ -50,6 +50,20 @@ func TestNew_InvalidPort(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid port")
 }
 
+func TestNew_ConnectionTimeout(t *testing.T) {
+	cfg := ConnectionConfig{
+		Host:     "192.0.2.0", // Non-routable IP to simulate timeout
+		Port:     "22",
+		User:     "testuser",
+		Password: "password",
+	}
+
+	service, err := New(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, service)
+	assert.Contains(t, err.Error(), "i/o timeout")
+}
+
 func TestNew_AuthFailureVariants(t *testing.T) {
 	t.Run("wrong password", func(t *testing.T) {
 		cfg := ConnectionConfig{

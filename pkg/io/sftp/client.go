@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/sftp"
 	"github.com/skeema/knownhosts"
@@ -14,6 +15,12 @@ import (
 
 // New creates a new, connected instance of the SFTP storage medium.
 func New(cfg ConnectionConfig) (*Medium, error) {
+	// Validate port
+	port, err := strconv.Atoi(cfg.Port)
+	if err != nil || port < 1 || port > 65535 {
+		return nil, fmt.Errorf("invalid port: %s", cfg.Port)
+	}
+
 	var authMethods []ssh.AuthMethod
 
 	if cfg.KeyFile != "" {

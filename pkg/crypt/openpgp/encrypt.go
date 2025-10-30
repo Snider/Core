@@ -66,10 +66,19 @@ func readSignerEntity(path, passphrase string) (entity *openpgp.Entity, err erro
 		return nil, fmt.Errorf("openpgp: failed to read entity from private key: %w", err)
 	}
 
-	// Only decrypt if the key is actually encrypted.
+	// Decrypt the primary private key.
 	if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
 		if err := entity.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-			return nil, fmt.Errorf("openpgp: failed to decrypt private key, check your passphrase: %w", err)
+			return nil, fmt.Errorf("openpgp: failed to decrypt private key: %w", err)
+		}
+	}
+
+	// Decrypt all subkeys.
+	for _, subkey := range entity.Subkeys {
+		if subkey.PrivateKey != nil && subkey.PrivateKey.Encrypted {
+			if err := subkey.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+				return nil, fmt.Errorf("openpgp: failed to decrypt subkey: %w", err)
+			}
 		}
 	}
 
@@ -114,7 +123,11 @@ func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signer
 	// 3. Handle optional signing
 	var signer *openpgp.Entity
 	if signerPath != nil {
-		signer, err = readSignerEntity(*signerPath, *signerPassphrase)
+		var passphrase string
+		if signerPassphrase != nil {
+			passphrase = *signerPassphrase
+		}
+		signer, err = readSignerEntity(*signerPath, passphrase)
 		if err != nil {
 			return fmt.Errorf("openpgp: failed to prepare signer: %w", err)
 		}
@@ -158,11 +171,19 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 		return "", err
 	}
 
-	// 2. Decrypt the private key
-	entity := entityList[0]
-	if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
-		if err := entity.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-			return "", fmt.Errorf("openpgp: failed to decrypt private key, check your passphrase: %w", err)
+	// 2. Decrypt all private keys in the key ring.
+	for _, entity := range entityList {
+		if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
+			if err := entity.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+				return "", fmt.Errorf("openpgp: failed to decrypt private key: %w", err)
+			}
+		}
+		for _, subkey := range entity.Subkeys {
+			if subkey.PrivateKey != nil && subkey.PrivateKey.Encrypted {
+				if err := subkey.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+					return "", fmt.Errorf("openpgp: failed to decrypt subkey: %w", err)
+				}
+			}
 		}
 	}
 

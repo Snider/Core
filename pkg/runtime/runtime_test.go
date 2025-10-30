@@ -13,6 +13,7 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, runtime)
 
 	// Assert that key services are initialized (e.g., Config, Display, Help, Crypt, I18n, Workspace)
+	assert.NotNil(t, runtime.Core, "Core service should be initialized")
 	assert.NotNil(t, runtime.Config, "Config service should be initialized")
 	assert.NotNil(t, runtime.Display, "Display service should be initialized")
 	assert.NotNil(t, runtime.Help, "Help service should be initialized")
