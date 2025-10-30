@@ -40,7 +40,8 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 			return nil, fmt.Errorf("failed to create service %s: %w", name, err)
 		}
 		services[name] = svc
-		coreOpts = append(coreOpts, core.WithService(func(c *core.Core) (any, error) { return svc, nil }))
+		svcCopy := svc
+		coreOpts = append(coreOpts, core.WithService(func(c *core.Core) (any, error) { return svcCopy, nil }))
 	}
 
 	coreInstance, err := core.New(coreOpts...)
@@ -48,14 +49,39 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 		return nil, err
 	}
 
+	configSvc, ok := services["config"].(*config.Service)
+	if !ok {
+		return nil, fmt.Errorf("config service has unexpected type")
+	}
+	displaySvc, ok := services["display"].(*display.Service)
+	if !ok {
+		return nil, fmt.Errorf("display service has unexpected type")
+	}
+	helpSvc, ok := services["help"].(*help.Service)
+	if !ok {
+		return nil, fmt.Errorf("help service has unexpected type")
+	}
+	cryptSvc, ok := services["crypt"].(*crypt.Service)
+	if !ok {
+		return nil, fmt.Errorf("crypt service has unexpected type")
+	}
+	i18nSvc, ok := services["i18n"].(*i18n.Service)
+	if !ok {
+		return nil, fmt.Errorf("i18n service has unexpected type")
+	}
+	workspaceSvc, ok := services["workspace"].(*workspace.Service)
+	if !ok {
+		return nil, fmt.Errorf("workspace service has unexpected type")
+	}
+
 	app := &Runtime{
 		Core:      coreInstance,
-		Config:    services["config"].(*config.Service),
-		Display:   services["display"].(*display.Service),
-		Help:      services["help"].(*help.Service),
-		Crypt:     services["crypt"].(*crypt.Service),
-		I18n:      services["i18n"].(*i18n.Service),
-		Workspace: services["workspace"].(*workspace.Service),
+		Config:    configSvc,
+		Display:   displaySvc,
+		Help:      helpSvc,
+		Crypt:     cryptSvc,
+		I18n:      i18nSvc,
+		Workspace: workspaceSvc,
 	}
 
 	return app, nil

@@ -80,3 +80,51 @@ func TestNew_AuthFailure_NonexistentKeyfile(t *testing.T) {
 	assert.Nil(t, service)
 	assert.ErrorIs(t, err, os.ErrNotExist)
 }
+
+func TestNew_AuthFailure_InvalidKeyFormat(t *testing.T) {
+	// Create a temporary file with invalid key content
+	tmpFile, err := os.CreateTemp("", "invalid_key")
+	assert.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	_, err = tmpFile.WriteString("not a valid ssh key")
+	assert.NoError(t, err)
+	tmpFile.Close()
+
+	cfg := ConnectionConfig{
+		Host:    "localhost",
+		Port:    "22",
+		User:    "testuser",
+		KeyFile: tmpFile.Name(),
+	}
+
+	service, err := New(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, service)
+	assert.Contains(t, err.Error(), "unable to parse private key")
+}
+
+func TestNew_MultipleAuthMethods(t *testing.T) {
+	// Create a temporary file with invalid key content to ensure key-based auth is attempted
+	tmpFile, err := os.CreateTemp("", "dummy_key")
+	assert.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	_, err = tmpFile.WriteString("not a valid ssh key")
+	assert.NoError(t, err)
+	tmpFile.Close()
+
+	cfg := ConnectionConfig{
+		Host:     "localhost",
+		Port:     "22",
+		User:     "testuser",
+		Password: "password",
+		KeyFile:  tmpFile.Name(),
+	}
+
+	service, err := New(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, service)
+	// We expect the key file to be prioritized, so we should get a parse error, not a "no auth method" error.
+	assert.Contains(t, err.Error(), "unable to parse private key")
+}

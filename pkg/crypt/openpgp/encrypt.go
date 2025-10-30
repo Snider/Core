@@ -118,7 +118,7 @@ func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signer
 	}
 
 	// 2. Set up the list of recipients
-	to := []*openpgp.Entity{recipientEntity}
+	to := openpgp.EntityList{recipientEntity}
 
 	// 3. Handle optional signing
 	var signer *openpgp.Entity
