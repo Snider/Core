@@ -164,7 +164,7 @@ func (s *Service) EncryptPGP(writer io.Writer, recipientPath, data string, signe
 
 	// Copy the encrypted data to the original writer.
 	if _, err := writer.Write(buf.Bytes()); err != nil {
-		return buf.String(), err
+		return "", err
 	}
 
 	return buf.String(), nil

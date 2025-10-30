@@ -22,9 +22,60 @@ func TestNew(t *testing.T) {
 	assert.Contains(t, err.Error(), "no authentication method provided", "Expected authentication error")
 }
 
-// Functional tests for SFTP operations (Read, Write, EnsureDir, IsFile, etc.)
-// would require a running SFTP server or a sophisticated mock.
-// These are typically integration tests rather than unit tests.
-func TestSFTPFunctional(t *testing.T) {
-	t.Skip("Skipping SFTP functional tests as they require an SFTP server setup.")
+func TestNew_InvalidHost(t *testing.T) {
+	cfg := ConnectionConfig{
+		Host:     "non-resolvable-host.domain.invalid",
+		Port:     "22",
+		User:     "testuser",
+		Password: "password",
+	}
+
+	service, err := New(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, service)
+	assert.Contains(t, err.Error(), "dial tcp: lookup non-resolvable-host.domain.invalid")
+}
+
+func TestNew_InvalidPort(t *testing.T) {
+	cfg := ConnectionConfig{
+		Host:     "localhost",
+		Port:     "99999", // Invalid port number
+		User:     "testuser",
+		Password: "password",
+	}
+
+	service, err := New(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, service)
+	assert.Contains(t, err.Error(), "invalid port")
+}
+
+func TestNew_AuthFailureVariants(t *testing.T) {
+	t.Run("wrong password", func(t *testing.T) {
+		cfg := ConnectionConfig{
+			Host:     "localhost",
+			Port:     "22",
+			User:     "testuser",
+			Password: "wrong-password",
+		}
+
+		service, err := New(cfg)
+		assert.Error(t, err)
+		assert.Nil(t, service)
+		assert.Contains(t, err.Error(), "connection refused")
+	})
+
+	t.Run("mismatched keyfile", func(t *testing.T) {
+		cfg := ConnectionConfig{
+			Host:    "localhost",
+			Port:    "22",
+			User:    "testuser",
+			KeyFile: "/path/to/nonexistent/keyfile",
+		}
+
+		service, err := New(cfg)
+		assert.Error(t, err)
+		assert.Nil(t, service)
+		assert.Contains(t, err.Error(), "no such file or directory")
+	})
 }
