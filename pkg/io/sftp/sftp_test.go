@@ -2,13 +2,28 @@ package sftp
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
+// setupTest creates a temporary home directory and a dummy known_hosts file
+// to prevent tests from failing in CI environments where the file doesn't exist.
+func setupTest(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	sshDir := filepath.Join(homeDir, ".ssh")
+	err := os.Mkdir(sshDir, 0700)
+	assert.NoError(t, err)
+	knownHostsFile := filepath.Join(sshDir, "known_hosts")
+	err = os.WriteFile(knownHostsFile, []byte{}, 0600)
+	assert.NoError(t, err)
+}
+
 func TestNew(t *testing.T) {
+	setupTest(t)
 	// Provide a dummy ConnectionConfig for testing.
 	// Since we are not setting up a real SFTP server, we expect an error during connection.
 	cfg := ConnectionConfig{
@@ -25,6 +40,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestNew_InvalidHost(t *testing.T) {
+	setupTest(t)
 	cfg := ConnectionConfig{
 		Host:     "non-resolvable-host.domain.invalid",
 		Port:     "22",
@@ -39,6 +55,7 @@ func TestNew_InvalidHost(t *testing.T) {
 }
 
 func TestNew_InvalidPort(t *testing.T) {
+	setupTest(t)
 	cfg := ConnectionConfig{
 		Host:     "localhost",
 		Port:     "99999", // Invalid port number
@@ -53,6 +70,7 @@ func TestNew_InvalidPort(t *testing.T) {
 }
 
 func TestNew_ConnectionTimeout(t *testing.T) {
+	setupTest(t)
 	cfg := ConnectionConfig{
 		Host:     "192.0.2.0", // Non-routable IP to simulate timeout
 		Port:     "22",
@@ -68,6 +86,7 @@ func TestNew_ConnectionTimeout(t *testing.T) {
 }
 
 func TestNew_AuthFailure_NonexistentKeyfile(t *testing.T) {
+	setupTest(t)
 	cfg := ConnectionConfig{
 		Host:    "localhost",
 		Port:    "22",
@@ -82,14 +101,23 @@ func TestNew_AuthFailure_NonexistentKeyfile(t *testing.T) {
 }
 
 func TestNew_AuthFailure_InvalidKeyFormat(t *testing.T) {
+	setupTest(t)
 	// Create a temporary file with invalid key content
 	tmpFile, err := os.CreateTemp("", "invalid_key")
 	assert.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+			t.Logf("Failed to remove temporary file: %v", err)
+		}
+	}(tmpFile.Name())
 
 	_, err = tmpFile.WriteString("not a valid ssh key")
 	assert.NoError(t, err)
-	tmpFile.Close()
+	err = tmpFile.Close()
+	if err != nil {
+		return
+	}
 
 	cfg := ConnectionConfig{
 		Host:    "localhost",
@@ -105,14 +133,23 @@ func TestNew_AuthFailure_InvalidKeyFormat(t *testing.T) {
 }
 
 func TestNew_MultipleAuthMethods(t *testing.T) {
+	setupTest(t)
 	// Create a temporary file with invalid key content to ensure key-based auth is attempted
 	tmpFile, err := os.CreateTemp("", "dummy_key")
 	assert.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+			t.Logf("Failed to remove temporary file: %v", err)
+		}
+	}(tmpFile.Name())
 
 	_, err = tmpFile.WriteString("not a valid ssh key")
 	assert.NoError(t, err)
-	tmpFile.Close()
+	err = tmpFile.Close()
+	if err != nil {
+		return
+	}
 
 	cfg := ConnectionConfig{
 		Host:     "localhost",
