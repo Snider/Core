@@ -8,8 +8,11 @@ tasks:
   test:
     desc: "Run all Go tests recursively for the entire project."
     cmds:
-      - clear # Clear the terminal for better readability
-      - go test ./...
+      - cmd: clear
+        platforms: [linux, darwin]
+      - cmd: cls
+        platforms: [windows]
+      - cmd: go test ./...
 
   review:
     desc: "Run CodeRabbit review to get feedback on the current changes."
