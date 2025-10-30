@@ -1,7 +1,51 @@
 version: '3'
 
+includes:
+  gui: ./cmd/core-gui/Taskfile.yml
+  cli: ./cmd/core/Taskfile.yml
+
 tasks:
   test:
     desc: "Run all Go tests recursively for the entire project."
     cmds:
+      - clear # Clear the terminal for better readability
       - go test ./...
+
+  review:
+    desc: "Run CodeRabbit review to get feedback on the current changes."
+    cmds:
+      - coderabbit review --prompt-only
+
+  check:
+    desc: "Run a CodeRabbit review followed by the full test suite."
+    cmds:
+      - task: go:mod:tidy
+      - go test ./... # make sure the code compiles before asking coderabbit to review it
+      - task: review
+
+  go:mod:tidy:
+    summary: Runs `go mod tidy`
+    internal: true
+    cmds:
+      - go mod tidy
+
+  cov:
+    desc: "Generate coverage profile (coverage.txt)"
+    cmds:
+      - go test -coverprofile=coverage.txt ./...
+
+  cov-view:
+    desc: "Open the coverage report in your browser."
+    cmds:
+      - task: cov
+      - go tool cover -html=coverage.txt
+
+  sync:
+    desc: "Updates the public API Go files to match the exported interface of the modules."
+    cmds:
+      - task: cli:sync
+
+  test-gen:
+    desc: "Generates tests for the public API."
+    cmds:
+      - task: cli:test-gen

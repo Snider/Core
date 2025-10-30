@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"fmt"
+
 	// Import the CONCRETE implementations from the internal packages.
 	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/crypt"
@@ -9,69 +11,94 @@ import (
 	"github.com/Snider/Core/pkg/i18n"
 	"github.com/Snider/Core/pkg/workspace"
 	// Import the ABSTRACT contracts (interfaces).
-	//"github.com/Snider/Core/pkg/core"
+	"github.com/Snider/Core/pkg/core"
 )
 
 // App is the runtime container that holds all instantiated services.
 // Its fields are the concrete types, allowing Wails to bind them directly.
 type Runtime struct {
-	Config  *config.Service
-	Display *display.Service
-	Help    *help.Service
-	Crypt   *crypt.Service
-	I18n    *i18n.Service
-	//IO        core.IO // IO is a library, not a service, so it's not injected here directly.
+	Core      *core.Core
+	Config    *config.Service
+	Display   *display.Service
+	Help      *help.Service
+	Crypt     *crypt.Service
+	I18n      *i18n.Service
 	Workspace *workspace.Service
 }
 
-// New creates and wires together all application services using static dependency injection.
-// This is the composition root for the static initialization modality.
-func New() (*Runtime, error) {
-	// 1. Instantiate services that have no direct service dependencies (or only simple ones).
-	configSvc, err := config.New()
+// ServiceFactory defines a function that creates a service instance.
+type ServiceFactory func() (any, error)
+
+// newWithFactories creates a new Runtime instance using the provided service factories.
+func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
+	services := make(map[string]any)
+	coreOpts := []core.Option{}
+
+	for _, name := range []string{"config", "display", "help", "crypt", "i18n", "workspace"} {
+		factory, ok := factories[name]
+		if !ok {
+			return nil, fmt.Errorf("service %s factory not provided", name)
+		}
+		svc, err := factory()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create service %s: %w", name, err)
+		}
+		services[name] = svc
+		svcCopy := svc
+		coreOpts = append(coreOpts, core.WithService(func(c *core.Core) (any, error) { return svcCopy, nil }))
+	}
+
+	coreInstance, err := core.New(coreOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	displaySvc, err := display.New()
-	if err != nil {
-		return nil, err
+	configSvc, ok := services["config"].(*config.Service)
+	if !ok {
+		return nil, fmt.Errorf("config service has unexpected type")
+	}
+	displaySvc, ok := services["display"].(*display.Service)
+	if !ok {
+		return nil, fmt.Errorf("display service has unexpected type")
+	}
+	helpSvc, ok := services["help"].(*help.Service)
+	if !ok {
+		return nil, fmt.Errorf("help service has unexpected type")
+	}
+	cryptSvc, ok := services["crypt"].(*crypt.Service)
+	if !ok {
+		return nil, fmt.Errorf("crypt service has unexpected type")
+	}
+	i18nSvc, ok := services["i18n"].(*i18n.Service)
+	if !ok {
+		return nil, fmt.Errorf("i18n service has unexpected type")
+	}
+	workspaceSvc, ok := services["workspace"].(*workspace.Service)
+	if !ok {
+		return nil, fmt.Errorf("workspace service has unexpected type")
 	}
 
-	cryptSvc, err := crypt.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. Instantiate services that have dependencies and inject them.
-	// i18n needs config
-	i18nSvc, err := i18n.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// help needs config and display
-	helpSvc, err := help.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// workspace needs config and io.Medium (io.Local is a concrete instance)
-	workspaceSvc, err := workspace.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. Assemble the application container, exposing the concrete types.
 	app := &Runtime{
-		Config:  configSvc,
-		Display: displaySvc,
-		Help:    helpSvc,
-		Crypt:   cryptSvc,
-		I18n:    i18nSvc,
-		//IO:        io.Local, // Assign io.Local directly
+		Core:      coreInstance,
+		Config:    configSvc,
+		Display:   displaySvc,
+		Help:      helpSvc,
+		Crypt:     cryptSvc,
+		I18n:      i18nSvc,
 		Workspace: workspaceSvc,
 	}
 
 	return app, nil
+}
+
+// New creates and wires together all application services using static dependency injection.
+func New() (*Runtime, error) {
+	return newWithFactories(map[string]ServiceFactory{
+		"config":    func() (any, error) { return config.New() },
+		"display":   func() (any, error) { return display.New() },
+		"help":      func() (any, error) { return help.New() },
+		"crypt":     func() (any, error) { return crypt.New() },
+		"i18n":      func() (any, error) { return i18n.New() },
+		"workspace": func() (any, error) { return workspace.New() },
+	})
 }

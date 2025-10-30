@@ -1,6 +1,8 @@
 package sftp
 
 import (
+	"time"
+
 	"github.com/pkg/sftp"
 )
 
@@ -16,4 +18,8 @@ type ConnectionConfig struct {
 	User     string
 	Password string // For password-based auth
 	KeyFile  string // Path to a private key for key-based auth
+
+	// Timeout specifies the duration for the network connection. If set to 0,
+	// a default timeout of 30 seconds will be used.
+	Timeout time.Duration
 }
