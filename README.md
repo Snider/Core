@@ -23,6 +23,28 @@ app := core.New(
 )
 ```
 
+## Tasks
+
+This project uses [Task](https://taskfile.dev/) for task automation. The following tasks are available:
+
+### General
+
+- `task test`: Run all Go tests recursively for the entire project.
+- `task review`: Run CodeRabbit review to get feedback on the current changes.
+- `task check`: Run `go mod tidy`, the full test suite, and a CodeRabbit review.
+
+### GUI Application (`cmd/core-gui`)
+
+- `task gui:build`: Builds the GUI application.
+- `task gui:package`: Packages a production build of the GUI application.
+- `task gui:run`: Runs the GUI application.
+- `task gui:dev`: Runs the GUI application in development mode.
+
+### CLI Application (`cmd/core`)
+
+- `task cli:build`: Builds the CLI application.
+- `task cli:build:dev`: Builds the CLI application for development.
+
 ## Docs (MkDocs)
 The help site and in‑app docs are built with MkDocs Material and live under `pkg/v1/core/docs`.
 

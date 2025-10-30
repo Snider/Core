@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Snider/Core/pkg/core/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +21,6 @@ type MockService struct {
 func (m *MockService) GetName() string {
 	return m.Name
 }
-
-// MockConfig is a mock implementation of the Config interface.
-type MockConfig struct{}
-
-func (m *MockConfig) Get(key string, out any) error { return nil }
-func (m *MockConfig) Set(key string, v any) error   { return nil }
 
 func TestNew(t *testing.T) {
 	c, err := New()
@@ -136,8 +131,8 @@ func TestMustServiceFor(t *testing.T) {
 	})
 
 	// Test type mismatch (should panic)
+	assert.NoError(t, c.RegisterService("stringservice", "hello"))
 	assert.Panics(t, func() {
-		assert.NoError(t, c.RegisterService("stringservice", "hello"))
 		MustServiceFor[MockServiceInterface](c, "stringservice")
 	})
 }
@@ -174,7 +169,7 @@ func TestCoreConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Register a mock config service
-	mockCfg := &MockConfig{}
+	mockCfg := &testutil.MockConfig{}
 	err = c.RegisterService("config", mockCfg)
 	assert.NoError(t, err)
 

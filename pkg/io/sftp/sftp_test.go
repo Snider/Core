@@ -22,17 +22,6 @@ func TestNew(t *testing.T) {
 	assert.Contains(t, err.Error(), "no authentication method provided", "Expected authentication error")
 }
 
-/*
-// TestRegister is commented out as the Register function is undefined.
-// This likely means the registration logic has been refactored or moved.
-func TestRegister(t *testing.T) {
-	coreInstance, _ := core.New()
-	service, err := Register(coreInstance)
-	assert.NoError(t, err)
-	assert.NotNil(t, service, "Register() should return a non-nil service instance")
-}
-*/
-
 // Functional tests for SFTP operations (Read, Write, EnsureDir, IsFile, etc.)
 // would require a running SFTP server or a sophisticated mock.
 // These are typically integration tests rather than unit tests.

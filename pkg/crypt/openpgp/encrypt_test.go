@@ -84,10 +84,11 @@ func TestEncryptDecryptPGP(t *testing.T) {
 
 	// --- Test Encryption ---
 	var encryptedBuf bytes.Buffer
-	encryptedMessage, err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, nil, nil)
+	err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, nil, nil)
 	if err != nil {
 		t.Fatalf("EncryptPGP() failed unexpectedly: %v", err)
 	}
+	encryptedMessage := encryptedBuf.String()
 
 	if !strings.Contains(encryptedMessage, "-----BEGIN PGP MESSAGE-----") {
 		t.Errorf("Encrypted message does not appear to be PGP armored")
@@ -116,10 +117,11 @@ func TestSignAndVerifyPGP(t *testing.T) {
 	// --- Encrypt and Sign ---
 	var encryptedBuf bytes.Buffer
 	signerPass := "signer-pass"
-	encryptedMessage, err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, &signerPriv, &signerPass)
+	err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, &signerPriv, &signerPass)
 	if err != nil {
 		t.Fatalf("EncryptPGP() with signing failed unexpectedly: %v", err)
 	}
+	encryptedMessage := encryptedBuf.String()
 
 	// --- Decrypt and Verify ---
 	decryptedMessage, err := DecryptPGP(recipientPriv, encryptedMessage, "recipient-pass", &signerPub)
@@ -148,10 +150,11 @@ func TestVerificationFailure(t *testing.T) {
 	// --- Encrypt and Sign with the actual signer key ---
 	var encryptedBuf bytes.Buffer
 	signerPass := "signer-pass"
-	encryptedMessage, err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, &signerPriv, &signerPass)
+	err := EncryptPGP(&encryptedBuf, recipientPub, originalMessage, &signerPriv, &signerPass)
 	if err != nil {
 		t.Fatalf("EncryptPGP() with signing failed unexpectedly: %v", err)
 	}
+	encryptedMessage := encryptedBuf.String()
 
 	// --- Attempt to Decrypt and Verify with the WRONG public key ---
 	_, err = DecryptPGP(recipientPriv, encryptedMessage, "recipient-pass", &unexpectedSignerPub)

@@ -76,12 +76,38 @@ func readSignerEntity(path, passphrase string) (*openpgp.Entity, error) {
 	return entity, nil
 }
 
-// EncryptPGP encrypts a string using PGP, writing the armored result to the writer.
-func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signerPassphrase *string) (string, error) {
+// readRecipientKeyRing reads an armored PGP key ring from the given path.
+func readRecipientKeyRing(path string) (openpgp.EntityList, error) {
+	recipientFile, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("openpgp: failed to open recipient key file at %s: %w", path, err)
+	}
+	defer func(recipientFile *os.File) {
+		if err := recipientFile.Close(); err != nil {
+			fmt.Printf("openpgp: warning - failed to close recipient key file: %v\n", err)
+		}
+	}(recipientFile)
+
+	entityList, err := openpgp.ReadArmoredKeyRing(recipientFile)
+	if err != nil {
+		return nil, fmt.Errorf("openpgp: failed to read armored key ring from %s: %w", path, err)
+	}
+	if len(entityList) == 0 {
+		return nil, fmt.Errorf("openpgp: no keys found in recipient key file %s", path)
+	}
+
+	return entityList, nil
+}
+
+// EncryptPGP encrypts a string using PGP, writing the armored, encrypted
+// result to the provided io.Writer. Callers who need the encrypted data as a
+// string should pass a *bytes.Buffer as the writer and then call its String()
+// method after this function returns.
+func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signerPassphrase *string) error {
 	// 1. Read the recipient's public key
 	recipientEntity, err := readRecipientEntity(recipientPath)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// 2. Set up the list of recipients
@@ -92,65 +118,46 @@ func EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signer
 	if signerPath != nil {
 		signer, err = readSignerEntity(*signerPath, *signerPassphrase)
 		if err != nil {
-			return "", fmt.Errorf("openpgp: failed to prepare signer: %w", err)
+			return fmt.Errorf("openpgp: failed to prepare signer: %w", err)
 		}
 	}
 
 	// 4. Create an armored writer and encrypt the message
 	armoredWriter, err := armor.Encode(writer, "PGP MESSAGE", nil)
 	if err != nil {
-		return "", fmt.Errorf("openpgp: failed to create armored writer: %w", err)
+		return fmt.Errorf("openpgp: failed to create armored writer: %w", err)
 	}
 
 	plaintext, err := openpgp.Encrypt(armoredWriter, to, signer, nil, nil)
 	if err != nil {
 		_ = armoredWriter.Close() // Attempt to close, but prioritize the encryption error.
-		return "", fmt.Errorf("openpgp: failed to begin encryption: %w", err)
+		return fmt.Errorf("openpgp: failed to begin encryption: %w", err)
 	}
 
 	_, err = plaintext.Write([]byte(data))
 	if err != nil {
 		_ = plaintext.Close()
 		_ = armoredWriter.Close()
-		return "", fmt.Errorf("openpgp: failed to write data to encryption stream: %w", err)
+		return fmt.Errorf("openpgp: failed to write data to encryption stream: %w", err)
 	}
 
-	// 5. Explicitly close the writers to finalize the message before reading.
+	// 5. Explicitly close the writers to finalize the message.
 	if err := plaintext.Close(); err != nil {
-		return "", fmt.Errorf("openpgp: failed to finalize plaintext writer: %w", err)
+		return fmt.Errorf("openpgp: failed to finalize plaintext writer: %w", err)
 	}
 	if err := armoredWriter.Close(); err != nil {
-		return "", fmt.Errorf("openpgp: failed to finalize armored writer: %w", err)
+		return fmt.Errorf("openpgp: failed to finalize armored writer: %w", err)
 	}
 
-	// To get the string output, we must have been writing to a buffer.
-	if buf, ok := writer.(*bytes.Buffer); ok {
-		return buf.String(), nil
-	}
-
-	// If the writer was not a buffer, we cannot return the string. This is an API misuse.
-	return "", fmt.Errorf("openpgp: writer is not a *bytes.Buffer, cannot return encrypted string")
+	return nil
 }
 
 // DecryptPGP decrypts an armored PGP message.
 func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (string, error) {
 	// 1. Read the recipient's private key
-	recipientFile, err := os.Open(recipientPath)
+	entityList, err := readRecipientKeyRing(recipientPath)
 	if err != nil {
-		return "", fmt.Errorf("openpgp: failed to open recipient private key file at %s: %w", recipientPath, err)
-	}
-	defer func(recipientFile *os.File) {
-		if err := recipientFile.Close(); err != nil {
-			fmt.Printf("openpgp: warning - failed to close recipient key file: %v\n", err)
-		}
-	}(recipientFile)
-
-	entityList, err := openpgp.ReadArmoredKeyRing(recipientFile)
-	if err != nil {
-		return "", fmt.Errorf("openpgp: failed to read armored key ring from %s: %w", recipientPath, err)
-	}
-	if len(entityList) == 0 {
-		return "", fmt.Errorf("openpgp: no keys found in recipient key file %s", recipientPath)
+		return "", err
 	}
 
 	// 2. Decrypt the private key

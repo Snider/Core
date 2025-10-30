@@ -3,9 +3,6 @@ version: '3'
 tasks:
   test:
     watch: true
-    run: when_changed
-    sources:
-      - "**/*.go"
     desc: "Run all Go tests recursively for the entire project."
     cmds:
       - clear # Clear the terminal for better readability
@@ -20,7 +17,7 @@ tasks:
     desc: "Run a CodeRabbit review followed by the full test suite."
     cmds:
       - task: go:mod:tidy
-      - go test ./...
+      - go test ./... # make sure the code compiles before asking coderabbit to review it
       - task: review
 
   go:mod:tidy:
@@ -28,3 +25,49 @@ tasks:
     internal: true
     cmds:
       - go mod tidy
+
+  cov:
+    desc: "Generate coverage profile (coverage.txt)"
+    cmds:
+      - go test -coverprofile=coverage.txt ./...
+
+  cov-view:
+    desc: "Open the coverage report in your browser."
+    cmds:
+      - go tool cover -html=coverage.txt
+
+  gui:build:
+    dir: cmd/core-gui
+    summary: Builds the GUI application
+    cmds:
+      - task: build
+
+  gui:package:
+    dir: cmd/core-gui
+    summary: Packages a production build of the GUI application
+    cmds:
+      - task: package
+
+  gui:run:
+    dir: cmd/core-gui
+    summary: Runs the GUI application
+    cmds:
+      - task: run
+
+  gui:dev:
+    dir: cmd/core-gui
+    summary: Runs the GUI application in development mode
+    cmds:
+      - task: dev
+
+  cli:build:
+    dir: cmd/core
+    summary: Builds the CLI application
+    cmds:
+      - task: build
+
+  cli:build:dev:
+    dir: cmd/core
+    summary: Builds the CLI application for development
+    cmds:
+      - task: build:dev
