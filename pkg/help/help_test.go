@@ -46,7 +46,8 @@ func setupService(t *testing.T) (*Service, *MockCore, *MockDisplay) {
 	assert.NoError(t, err)
 
 	app := application.New(application.Options{})
-	c, _ := core.New(core.WithWails(app))
+	c, err := core.New(core.WithWails(app))
+	assert.NoError(t, err)
 	mockCore := &MockCore{Core: c}
 	mockDisplay := &MockDisplay{}
 

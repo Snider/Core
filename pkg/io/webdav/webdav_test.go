@@ -21,8 +21,8 @@ func mockWebDAVServer() *httptest.Server {
 			// For IsFile test
 			if r.URL.Path == "/test.txt" {
 				w.WriteHeader(http.StatusMultiStatus)
-				fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8"?>
-<D:multistatus xmlns:D="DAV:">
+				fmt.Fprint(w, `<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<D:multistatus xmlns:D=\"DAV:\">
   <D:response>
     <D:href>/test.txt</D:href>
     <D:propstat>
@@ -37,8 +37,8 @@ func mockWebDAVServer() *httptest.Server {
 			}
 			if r.URL.Path == "/testdir/" {
 				w.WriteHeader(http.StatusMultiStatus)
-				fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8"?>
-<D:multistatus xmlns:D="DAV:">
+				fmt.Fprint(w, `<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<D:multistatus xmlns:D=\"DAV:\">
   <D:response>
     <D:href>/testdir/</D:href>
     <D:propstat>
@@ -97,7 +97,13 @@ func TestRead(t *testing.T) {
 	server := mockWebDAVServer()
 	defer server.Close()
 
-	medium := &Medium{client: server.Client(), baseURL: server.URL}
+	cfg := ConnectionConfig{
+		URL:      server.URL,
+		User:     "user",
+		Password: "password",
+	}
+	medium, err := New(cfg)
+	assert.NoError(t, err)
 	content, err := medium.Read("test.txt")
 	assert.NoError(t, err)
 	assert.Equal(t, "Hello, WebDAV!", content)
@@ -107,8 +113,14 @@ func TestWrite(t *testing.T) {
 	server := mockWebDAVServer()
 	defer server.Close()
 
-	medium := &Medium{client: server.Client(), baseURL: server.URL}
-	err := medium.Write("test.txt", "Hello, WebDAV!")
+	cfg := ConnectionConfig{
+		URL:      server.URL,
+		User:     "user",
+		Password: "password",
+	}
+	medium, err := New(cfg)
+	assert.NoError(t, err)
+	err = medium.Write("test.txt", "Hello, WebDAV!")
 	assert.NoError(t, err)
 }
 
@@ -116,8 +128,14 @@ func TestEnsureDir(t *testing.T) {
 	server := mockWebDAVServer()
 	defer server.Close()
 
-	medium := &Medium{client: server.Client(), baseURL: server.URL}
-	err := medium.EnsureDir("testdir")
+	cfg := ConnectionConfig{
+		URL:      server.URL,
+		User:     "user",
+		Password: "password",
+	}
+	medium, err := New(cfg)
+	assert.NoError(t, err)
+	err = medium.EnsureDir("testdir")
 	assert.NoError(t, err)
 }
 
@@ -125,7 +143,13 @@ func TestIsFile(t *testing.T) {
 	server := mockWebDAVServer()
 	defer server.Close()
 
-	medium := &Medium{client: server.Client(), baseURL: server.URL}
+	cfg := ConnectionConfig{
+		URL:      server.URL,
+		User:     "user",
+		Password: "password",
+	}
+	medium, err := New(cfg)
+	assert.NoError(t, err)
 	assert.True(t, medium.IsFile("test.txt"))
 	assert.False(t, medium.IsFile("testdir"))
 }
