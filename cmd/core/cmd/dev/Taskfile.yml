@@ -1,0 +1,26 @@
+version: '3'
+
+tasks:
+  docgen:
+    summary: Generates missing docstrings for the public API
+    deps: [build]
+    cmds:
+      - cmd: chmod +x ../../bin/core
+        platforms: [linux, darwin]
+      - "../../bin/core dev doc"
+
+  test-gen:
+    summary: Generates tests for the public API
+    deps: [ build ]
+    cmds:
+      - cmd: chmod +x {{.TASKFILE_DIR}}/bin/core
+        platforms: [ linux, darwin ]
+      - "{{.TASKFILE_DIR}}/bin/core dev test-gen"
+
+  sync:
+    summary: Updates the public API Go files
+    deps: [ build ]
+    cmds:
+      - cmd: chmod +x {{.TASKFILE_DIR}}/bin/core
+        platforms: [ linux, darwin ]
+      - "{{.TASKFILE_DIR}}/bin/core dev sync"

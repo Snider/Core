@@ -2,6 +2,7 @@ version: '3'
 
 includes:
   cmd: "./cmd/Taskfile.yml"
+  dev: "./cmd/dev/Taskfile.yml"
 
 tasks:
   build:
@@ -17,7 +18,7 @@ tasks:
   run:
     summary: Builds and runs the core executable
     cmds:
-      - task: build
+      - task: cmd:build
       - cmd: chmod +x {{.TASKFILE_DIR}}/bin/core
         platforms: [linux, darwin]
       - "{{.TASKFILE_DIR}}/bin/core {{.CLI_ARGS}}"
@@ -30,10 +31,3 @@ tasks:
         platforms: [linux, darwin]
       - "{{.TASKFILE_DIR}}/bin/core dev sync"
 
-  test-gen:
-    summary: Generates tests for the public API
-    deps: [build]
-    cmds:
-      - cmd: chmod +x {{.TASKFILE_DIR}}/bin/core
-        platforms: [linux, darwin]
-      - "{{.TASKFILE_DIR}}/bin/core dev test-gen"

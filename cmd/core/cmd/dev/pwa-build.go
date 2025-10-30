@@ -1,4 +1,4 @@
-package cmd
+package dev
 
 import (
 	"embed"
@@ -22,8 +22,8 @@ import (
 var guiTemplate embed.FS
 
 // AddBuildCommand adds the new build command and its subcommands to the clir app.
-func AddBuildCommand(app *clir.Cli) {
-	buildCmd := app.NewSubCommand("build", "Builds a web application into a standalone desktop app.")
+func AddBuildCommand(parent *clir.Command) {
+	buildCmd := parent.NewSubCommand("build", "Builds a web application into a standalone desktop app.")
 
 	// --- `build from-path` command ---
 	fromPathCmd := buildCmd.NewSubCommand("from-path", "Build from a local directory.")
@@ -81,31 +81,31 @@ func downloadPWA(baseURL, destDir string) error {
 	}
 
 	// Find the manifest URL from the HTML
-	manifestURL, err := findManifestURL(string(body), baseURL)
-	if err != nil {
-		// If no manifest, it's not a PWA, but we can still try to package it as a simple site.
-		fmt.Println("Warning: no manifest file found. Proceeding with basic site download.")
-		if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
-			return fmt.Errorf("failed to write index.html: %w", err)
-		}
-		return nil
-	}
-
-	fmt.Printf("Found manifest: %s\n", manifestURL)
-
-	// Fetch and parse the manifest
-	manifest, err := fetchManifest(manifestURL)
-	if err != nil {
-		return fmt.Errorf("failed to fetch or parse manifest: %w", err)
-	}
+	//manifestURL, err := findManifestURL(string(body), baseURL)
+	//if err != nil {
+	//	// If no manifest, it's not a PWA, but we can still try to package it as a simple site.
+	//	fmt.Println("Warning: no manifest file found. Proceeding with basic site download.")
+	//	if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
+	//		return fmt.Errorf("failed to write index.html: %w", err)
+	//	}
+	//	return nil
+	//}
+	//
+	//fmt.Printf("Found manifest: %s\n", manifestURL)
+	//
+	//// Fetch and parse the manifest
+	//manifest, err := fetchManifest(baseURL, manifestURL)
+	//if err != nil {
+	//	return fmt.Errorf("failed to fetch or parse manifest: %w", err)
+	//}
 
 	// Download all assets listed in the manifest
-	assets := collectAssets(manifest, manifestURL)
-	for _, assetURL := range assets {
-		if err := downloadAsset(assetURL, destDir); err != nil {
-			fmt.Printf("Warning: failed to download asset %s: %v\n", assetURL, err)
-		}
-	}
+	//assets := collectAssets(manifest, manifestURL)
+	//for _, assetURL := range assets {
+	//	if err := downloadAsset(assetURL, destDir); err != nil {
+	//		fmt.Printf("Warning: failed to download asset %s: %v\n", assetURL, err)
+	//	}
+	//}
 
 	// Also save the root index.html
 	if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
@@ -163,18 +163,18 @@ func findManifestURL(htmlContent, baseURL string) (string, error) {
 	return manifestURL.String(), nil
 }
 
-func fetchManifest(manifestURL string) (map[string]interface{}, error) {
+func fetchManifest(manifest map[string]interface{}, manifestURL string) (map[string]interface{}, error) {
 	resp, err := http.Get(manifestURL)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var manifest map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
+	var manifestData map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&manifestData); err != nil {
 		return nil, err
 	}
-	return manifest, nil
+	return manifestData, nil
 }
 
 func collectAssets(manifest map[string]interface{}, manifestURL string) []string {

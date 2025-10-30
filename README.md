@@ -1,5 +1,7 @@
 # Core
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Snider/Core?utm_source=oss&utm_medium=github&utm_campaign=Snider%2FCore&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
 
 More to come, follow us on Discord http://discord.dappco.re
