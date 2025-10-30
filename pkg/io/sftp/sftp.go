@@ -1,6 +1,8 @@
 package sftp
 
 import (
+	"time"
+
 	"github.com/pkg/sftp"
 )
 
@@ -16,4 +18,5 @@ type ConnectionConfig struct {
 	User     string
 	Password string // For password-based auth
 	KeyFile  string // Path to a private key for key-based auth
+	Timeout  time.Duration
 }

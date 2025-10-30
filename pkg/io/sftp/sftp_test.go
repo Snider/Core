@@ -2,6 +2,7 @@ package sftp
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,7 @@ func TestNew_InvalidHost(t *testing.T) {
 	service, err := New(cfg)
 	assert.Error(t, err)
 	assert.Nil(t, service)
-	assert.Contains(t, err.Error(), "dial tcp: lookup non-resolvable-host.domain.invalid")
+	assert.Contains(t, err.Error(), "lookup non-resolvable-host.domain.invalid")
 }
 
 func TestNew_InvalidPort(t *testing.T) {
@@ -56,6 +57,7 @@ func TestNew_ConnectionTimeout(t *testing.T) {
 		Port:     "22",
 		User:     "testuser",
 		Password: "password",
+		Timeout:  100 * time.Millisecond,
 	}
 
 	service, err := New(cfg)

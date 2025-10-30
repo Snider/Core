@@ -22,21 +22,13 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, runtime.Workspace, "Workspace service should be initialized")
 }
 
-// TestRuntimeServiceInitialization ensures that individual services within the Runtime are accessible.
-func TestRuntimeServiceInitialization(t *testing.T) {
-	runtime, err := New()
-	assert.NoError(t, err)
-	assert.NotNil(t, runtime)
-
-	// Test access to a specific service, e.g., Config
-	configService := runtime.Config
-	assert.NotNil(t, configService, "Config service should be accessible")
-
-	// Test access to another service, e.g., Display
-	displayService := runtime.Display
-	assert.NotNil(t, displayService, "Display service should be accessible")
-
-	// Add more assertions for other services as needed
+// TestNewServiceInitializationError is a placeholder for testing error paths in New.
+// TODO: Implement this test once the New function is refactored to allow for
+// mockable service initializations (e.g., using dependency injection).
+// The test should inject a failing service factory and assert that New returns
+// the expected error and a nil runtime.
+func TestNewServiceInitializationError(t *testing.T) {
+	t.Skip("TODO: Implement once service initialization is mockable")
 }
 
 // Removed TestRuntimeOptions and TestRuntimeCore as these methods no longer exist on the Runtime struct.

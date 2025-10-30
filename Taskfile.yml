@@ -6,7 +6,6 @@ includes:
 
 tasks:
   test:
-    watch: true
     desc: "Run all Go tests recursively for the entire project."
     cmds:
       - clear # Clear the terminal for better readability

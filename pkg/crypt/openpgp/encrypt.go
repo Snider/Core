@@ -234,7 +234,6 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 				return "", fmt.Errorf("openpgp: signature from unexpected key id: got %d, want one of signer key IDs", md.SignedByKeyId)
 			}
 		}
-		}
 	}
 
 	return plaintextBuffer.String(), nil
