@@ -136,8 +136,8 @@ func TestMustServiceFor(t *testing.T) {
 	})
 
 	// Test type mismatch (should panic)
+	assert.NoError(t, c.RegisterService("stringservice", "hello"))
 	assert.Panics(t, func() {
-		assert.NoError(t, c.RegisterService("stringservice", "hello"))
 		MustServiceFor[MockServiceInterface](c, "stringservice")
 	})
 }
