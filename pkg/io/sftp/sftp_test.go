@@ -7,19 +7,21 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // setupTest creates a temporary home directory and a dummy known_hosts file
 // to prevent tests from failing in CI environments where the file doesn't exist.
 func setupTest(t *testing.T) {
+	t.Helper()
 	homeDir := t.TempDir()
 	t.Setenv("HOME", homeDir)
 	sshDir := filepath.Join(homeDir, ".ssh")
 	err := os.Mkdir(sshDir, 0700)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	knownHostsFile := filepath.Join(sshDir, "known_hosts")
 	err = os.WriteFile(knownHostsFile, []byte{}, 0600)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestNew(t *testing.T) {
@@ -104,7 +106,7 @@ func TestNew_AuthFailure_InvalidKeyFormat(t *testing.T) {
 	setupTest(t)
 	// Create a temporary file with invalid key content
 	tmpFile, err := os.CreateTemp("", "invalid_key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer func(name string) {
 		err := os.Remove(name)
 		if err != nil {
@@ -113,11 +115,9 @@ func TestNew_AuthFailure_InvalidKeyFormat(t *testing.T) {
 	}(tmpFile.Name())
 
 	_, err = tmpFile.WriteString("not a valid ssh key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = tmpFile.Close()
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
 
 	cfg := ConnectionConfig{
 		Host:    "localhost",
@@ -136,7 +136,7 @@ func TestNew_MultipleAuthMethods(t *testing.T) {
 	setupTest(t)
 	// Create a temporary file with invalid key content to ensure key-based auth is attempted
 	tmpFile, err := os.CreateTemp("", "dummy_key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer func(name string) {
 		err := os.Remove(name)
 		if err != nil {
@@ -145,11 +145,9 @@ func TestNew_MultipleAuthMethods(t *testing.T) {
 	}(tmpFile.Name())
 
 	_, err = tmpFile.WriteString("not a valid ssh key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = tmpFile.Close()
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
 
 	cfg := ConnectionConfig{
 		Host:     "localhost",
