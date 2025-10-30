@@ -1,6 +1,7 @@
 package crypt
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -155,7 +156,18 @@ func (s *Service) Fletcher64(payload string) uint64 {
 
 // EncryptPGP encrypts data for a recipient, optionally signing it.
 func (s *Service) EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signerPassphrase *string) (string, error) {
-	return openpgp.EncryptPGP(writer, recipientPath, data, signerPath, signerPassphrase)
+	var buf bytes.Buffer
+	err := openpgp.EncryptPGP(&buf, recipientPath, data, signerPath, signerPassphrase)
+	if err != nil {
+		return "", err
+	}
+
+	// Copy the encrypted data to the original writer.
+	if _, err := writer.Write(buf.Bytes()); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }
 
 // DecryptPGP decrypts a PGP message, optionally verifying the signature.

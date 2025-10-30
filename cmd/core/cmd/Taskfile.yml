@@ -4,10 +4,10 @@ tasks:
   build:
     summary: Builds the core executable
     cmds:
-      - go build -o ./bin/core .
+      - go build -o {{.TASKFILE_DIR}}/../bin/core {{.TASKFILE_DIR}}/..
 
   build:dev:
     summary: Builds and runs the core executable in development mode
     cmds:
-      - go build -o ./bin/core .
-      - CORE_DEV_TOOLS="false" ./bin/core
+      - go build -o {{.TASKFILE_DIR}}/../bin/core {{.TASKFILE_DIR}}/..
+      - CORE_DEV_TOOLS="false" {{.TASKFILE_DIR}}/../bin/core
