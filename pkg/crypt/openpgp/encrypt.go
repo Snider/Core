@@ -223,7 +223,17 @@ func DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (
 			return "", fmt.Errorf("openpgp: signature verification failed: %w", md.SignatureError)
 		}
 		if md.SignedByKeyId != signer.PrimaryKey.KeyId {
-			return "", fmt.Errorf("openpgp: signature from unexpected key id: got %d, want %d", md.SignedByKeyId, signer.PrimaryKey.KeyId)
+			match := false
+			for _, subkey := range signer.Subkeys {
+				if subkey.PublicKey != nil && subkey.PublicKey.KeyId == md.SignedByKeyId {
+					match = true
+					break
+				}
+			}
+			if !match {
+				return "", fmt.Errorf("openpgp: signature from unexpected key id: got %d, want one of signer key IDs", md.SignedByKeyId)
+			}
+		}
 		}
 	}
 
