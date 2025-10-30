@@ -34,7 +34,11 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 	services := make(map[string]any)
 	coreOpts := []core.Option{}
 
-	for name, factory := range factories {
+	for _, name := range []string{"config", "display", "help", "crypt", "i18n", "workspace"} {
+		factory, ok := factories[name]
+		if !ok {
+			return nil, fmt.Errorf("service %s factory not provided", name)
+		}
 		svc, err := factory()
 		if err != nil {
 			return nil, fmt.Errorf("failed to create service %s: %w", name, err)

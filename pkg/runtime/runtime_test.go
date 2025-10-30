@@ -5,6 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Snider/Core/pkg/config"
+	"github.com/Snider/Core/pkg/crypt"
+	"github.com/Snider/Core/pkg/display"
+	"github.com/Snider/Core/pkg/help"
+	"github.com/Snider/Core/pkg/workspace"
 )
 
 // TestNew ensures that New correctly initializes a Runtime instance.
@@ -51,16 +57,19 @@ func TestNew(t *testing.T) {
 // TestNewServiceInitializationError tests the error path in New.
 func TestNewServiceInitializationError(t *testing.T) {
 	factories := map[string]ServiceFactory{
-		"failing": func() (any, error) {
-			return nil, errors.New("initialization failed")
-		},
+		"config":    func() (any, error) { return config.New() },
+		"display":   func() (any, error) { return display.New() },
+		"help":      func() (any, error) { return help.New() },
+		"crypt":     func() (any, error) { return crypt.New() },
+		"i18n":      func() (any, error) { return nil, errors.New("i18n service failed to initialize") }, // This factory will fail
+		"workspace": func() (any, error) { return workspace.New() },
 	}
 
 	runtime, err := newWithFactories(factories)
 
 	assert.Error(t, err)
 	assert.Nil(t, runtime)
-	assert.Contains(t, err.Error(), "failed to create service failing: initialization failed")
+	assert.Contains(t, err.Error(), "failed to create service i18n: i18n service failed to initialize")
 }
 
 // Removed TestRuntimeOptions and TestRuntimeCore as these methods no longer exist on the Runtime struct.
