@@ -1,6 +1,7 @@
 package sftp
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -66,18 +67,16 @@ func TestNew_ConnectionTimeout(t *testing.T) {
 	assert.Contains(t, err.Error(), "i/o timeout")
 }
 
-func TestNew_AuthFailureVariants(t *testing.T) {
-	t.Run("mismatched keyfile", func(t *testing.T) {
-		cfg := ConnectionConfig{
-			Host:    "localhost",
-			Port:    "22",
-			User:    "testuser",
-			KeyFile: "/path/to/nonexistent/keyfile",
-		}
+func TestNew_AuthFailure_NonexistentKeyfile(t *testing.T) {
+	cfg := ConnectionConfig{
+		Host:    "localhost",
+		Port:    "22",
+		User:    "testuser",
+		KeyFile: "/path/to/nonexistent/keyfile",
+	}
 
-		service, err := New(cfg)
-		assert.Error(t, err)
-		assert.Nil(t, service)
-		assert.Contains(t, err.Error(), "no such file or directory")
-	})
+	service, err := New(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, service)
+	assert.ErrorIs(t, err, os.ErrNotExist)
 }
