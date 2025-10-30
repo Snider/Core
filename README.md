@@ -8,6 +8,7 @@ More to come, follow us on Discord http://discord.dappco.re
 Repo: https://github.com/Snider/Core
 
 ## Quick start
+
 ```go
 import core "github.com/Snider/Core"
 
@@ -23,19 +24,27 @@ This project follows a Test-Driven Development (TDD) approach. We use [Task](htt
 The recommended workflow is:
 
 1.  **Generate Tests**: For any changes to the public API, first generate the necessary test stubs.
+
     ```bash
     task test-gen
     ```
+
 2.  **Run Tests (and watch them fail)**: Verify that the new tests fail as expected.
+
     ```bash
     task test
     ```
+
 3.  **Implement Your Feature**: Write the code to make the tests pass.
+
 4.  **Run Tests Again**: Ensure all tests now pass.
+
     ```bash
     task test
     ```
+
 5.  **Submit for Review**: Once your changes are complete and tests are passing, submit them for a CodeRabbit review.
+
     ```bash
     task review
     ```
