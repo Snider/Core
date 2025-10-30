@@ -62,9 +62,20 @@ func New() (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	coreInstance, err := core.New(
+		core.WithService(func(c *core.Core) (any, error) { return configSvc, nil }),
+		core.WithService(func(c *core.Core) (any, error) { return displaySvc, nil }),
+		core.WithService(func(c *core.Core) (any, error) { return helpSvc, nil }),
+		core.WithService(func(c *core.Core) (any, error) { return cryptSvc, nil }),
+		core.WithService(func(c *core.Core) (any, error) { return i18nSvc, nil }),
+		core.WithService(func(c *core.Core) (any, error) { return workspaceSvc, nil }),
+	)
+	if err != nil {
+		return nil, err
+	}
 	// 3. Assemble the application container, exposing the concrete types.
 	app := &Runtime{
+		Core:    coreInstance,
 		Config:  configSvc,
 		Display: displaySvc,
 		Help:    helpSvc,

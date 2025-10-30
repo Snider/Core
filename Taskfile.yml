@@ -5,7 +5,6 @@ tasks:
     watch: true
     run: when_changed
     sources:
-      - "./pkg/**/*"
       - "**/*.go"
     desc: "Run all Go tests recursively for the entire project."
     cmds:
@@ -17,7 +16,7 @@ tasks:
     cmds:
       - coderabbit review --prompt-only
 
-  bugs:
+  check:
     desc: "Run a CodeRabbit review followed by the full test suite."
     cmds:
       - task: go:mod:tidy
