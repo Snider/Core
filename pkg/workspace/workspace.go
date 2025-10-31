@@ -30,6 +30,7 @@ type Workspace struct {
 // Service manages user workspaces.
 type Service struct {
 	*core.Runtime[Options]
+	Config          core.Config
 	activeWorkspace *Workspace
 	workspaceList   map[string]string // Maps Workspace ID to Public Key
 	medium          io.Medium
@@ -91,7 +92,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 // getWorkspaceDir retrieves the WorkspaceDir from the config service.
 func (s *Service) getWorkspaceDir() (string, error) {
 	var workspaceDir string
-	if err := s.Config().Get("workspaceDir", &workspaceDir); err != nil {
+	if err := s.Config.Get("workspaceDir", &workspaceDir); err != nil {
 		return "", fmt.Errorf("failed to get WorkspaceDir from config: %w", err)
 	}
 	return workspaceDir, nil
@@ -215,4 +216,9 @@ func (s *Service) WorkspaceFileSet(filename, content string) error {
 	}
 	path := filepath.Join(s.activeWorkspace.Path, filename)
 	return s.medium.FileSet(path, content)
+}
+
+// SetMedium allows injecting an io.Medium for testing.
+func (s *Service) SetMedium(m io.Medium) {
+	s.medium = m
 }
