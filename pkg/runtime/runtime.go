@@ -120,5 +120,7 @@ func (r *Runtime) ServiceStartup(ctx context.Context, options application.Servic
 
 // ServiceShutdown is called by Wails at application shutdown.
 func (r *Runtime) ServiceShutdown(ctx context.Context) {
-	// Add any shutdown logic here.
+	if r.Core != nil {
+		r.Core.ServiceShutdown(ctx)
+	}
 }
