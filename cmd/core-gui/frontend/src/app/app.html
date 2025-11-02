@@ -1,0 +1,140 @@
+<wa-page mobile-breakpoint="960">
+
+  <!-- Shell: left nav + content -->
+  <div class="app-shell"
+       style="display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 56px - 56px);">
+    <!-- Left navigation drawer (collapsible) -->
+    <wa-drawer>
+      <nav slot="navigation">
+        <a routerLink="/" class="sidebar-link">Home</a>
+        <a routerLink="/domain-manager" class="sidebar-link">Send</a>
+        <a routerLink="/settings" class="sidebar-link">Settings</a>
+        <a routerLink="/" class="icon-item active" aria-label="Dashboard">
+          <i class="fas fa-home"></i>
+        </a>
+        <a routerLink="/team" class="icon-item" aria-label="Team">
+          <i class="fas fa-users"></i>
+        </a>
+        <a routerLink="/projects" class="icon-item" aria-label="Projects">
+          <i class="fas fa-briefcase"></i>
+        </a>
+        <a routerLink="/calendar" class="icon-item" aria-label="Calendar">
+          <i class="fas fa-calendar-alt"></i>
+        </a>
+        <a routerLink="/documents" class="icon-item" aria-label="Documents">
+          <i class="fas fa-file-alt"></i>
+        </a>
+        <a routerLink="/reports" class="icon-item" aria-label="Reports">
+          <i class="fas fa-chart-pie"></i>
+        </a>
+        <!-- Add more nav items as needed -->
+      </nav>
+
+
+    </wa-drawer>
+
+    <main>
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <app-footer slot="footer"></app-footer>
+</wa-page>
+
+
+<!--&lt;!&ndash; Top-level wrapper using Web Awesome (no Tailwind) &ndash;&gt;-->
+<!--<div class="app-frame">-->
+<!--  &lt;!&ndash; Mobile sidebar via Drawer &ndash;&gt;-->
+<!--  <wa-drawer #mobileSidebar class="mobile-sidebar" placement="start" style="&#45;&#45;size: 20rem;">-->
+<!--    <div class="sidebar-inner">-->
+<!--      <div class="brand-row">-->
+<!--        <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="Your Company" class="brand-logo" />-->
+<!--      </div>-->
+<!--      <nav class="nav-list">-->
+<!--        <a routerLink="/" class="nav-item active">-->
+<!--          <i class="fas fa-home"></i>-->
+<!--          <span>Dashboard</span>-->
+<!--        </a>-->
+<!--        <a routerLink="/team" class="nav-item">-->
+<!--          <i class="fas fa-users"></i>-->
+<!--          <span>Team</span>-->
+<!--        </a>-->
+<!--        <a routerLink="/projects" class="nav-item">-->
+<!--          <i class="fas fa-briefcase"></i>-->
+<!--          <span>Projects</span>-->
+<!--        </a>-->
+<!--        <a routerLink="/calendar" class="nav-item">-->
+<!--          <i class="fas fa-calendar-alt"></i>-->
+<!--          <span>Calendar</span>-->
+<!--        </a>-->
+<!--        <a routerLink="/documents" class="nav-item">-->
+<!--          <i class="fas fa-file-alt"></i>-->
+<!--          <span>Documents</span>-->
+<!--        </a>-->
+<!--        <a routerLink="/reports" class="nav-item">-->
+<!--          <i class="fas fa-chart-pie"></i>-->
+<!--          <span>Reports</span>-->
+<!--        </a>-->
+<!--      </nav>-->
+<!--    </div>-->
+<!--  </wa-drawer>-->
+
+
+<!--  &lt;!&ndash; Main column (left padding on lg for the fixed sidebar) &ndash;&gt;-->
+<!--  <div class="main-col">-->
+<!--    &lt;!&ndash; Topbar &ndash;&gt;-->
+<!--    <header class="topbar">-->
+<!--      <wa-button variant="text" size="small" class="lg-hidden" (click)="onToggleSidebar()" aria-label="Open sidebar">-->
+<!--        <i class="fas fa-bars"></i>-->
+<!--      </wa-button>-->
+
+<!--      <div class="topbar-sep lg-hidden" aria-hidden="true"></div>-->
+
+<!--      <div class="topbar-flex">-->
+<!--        <form class="search-form" role="search">-->
+<!--          <wa-input placeholder="Search" size="small" pill>-->
+<!--            <i slot="prefix" class="fas fa-search"></i>-->
+<!--          </wa-input>-->
+<!--        </form>-->
+
+<!--        <div class="topbar-actions">-->
+<!--          <wa-button variant="text" size="small" aria-label="View notifications">-->
+<!--            <i class="fas fa-bell"></i>-->
+<!--          </wa-button>-->
+
+<!--          <div class="lg-sep" aria-hidden="true"></div>-->
+
+<!--          &lt;!&ndash; Profile dropdown &ndash;&gt;-->
+<!--          <wa-dropdown>-->
+<!--            <wa-button slot="trigger" size="small" pill>-->
+<!--              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=48&h=48&q=80"-->
+<!--                   alt="" class="avatar" />-->
+<!--              <span class="user-name lg-only">Tom Cook</span>-->
+<!--              <i class="fas fa-chevron-down lg-only"></i>-->
+<!--            </wa-button>-->
+<!--            <wa-menu>-->
+<!--              <wa-menu-item>Your profile</wa-menu-item>-->
+<!--              <wa-menu-item>Sign out</wa-menu-item>-->
+<!--            </wa-menu>-->
+<!--          </wa-dropdown>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </header>-->
+
+<!--    &lt;!&ndash; Primary content area (single Angular outlet) &ndash;&gt;-->
+<!--    <main class="content">-->
+<!--      <router-outlet></router-outlet>-->
+<!--    </main>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Optional secondary aside on xl+ screens &ndash;&gt;-->
+<!--  <aside class="secondary-aside">-->
+<!--    &lt;!&ndash; Secondary column content (hidden on smaller screens) &ndash;&gt;-->
+<!--  </aside>-->
+
+<!--  &lt;!&ndash; Footer (existing component) &ndash;&gt;-->
+<!--  <app-footer></app-footer>-->
+<!--</div>-->
+
+
