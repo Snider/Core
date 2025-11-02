@@ -211,3 +211,7 @@ func (c *Core) Display() Display {
 }
 
 func (c *Core) Core() *Core { return c }
+
+func (c *Core) Assets() embed.FS {
+	return c.assets
+}

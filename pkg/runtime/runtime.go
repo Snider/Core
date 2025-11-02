@@ -31,8 +31,8 @@ type Runtime struct {
 // ServiceFactory defines a function that creates a service instance.
 type ServiceFactory func() (any, error)
 
-// newWithFactories creates a new Runtime instance using the provided service factories.
-func newWithFactories(app *application.App, factories map[string]ServiceFactory) (*Runtime, error) {
+// NewWithFactories creates a new Runtime instance using the provided service factories.
+func NewWithFactories(app *application.App, factories map[string]ServiceFactory) (*Runtime, error) {
 	services := make(map[string]any)
 	coreOpts := []core.Option{
 		core.WithWails(app),
@@ -99,7 +99,7 @@ func newWithFactories(app *application.App, factories map[string]ServiceFactory)
 
 // New creates and wires together all application services.
 func New(app *application.App) (*Runtime, error) {
-	return newWithFactories(app, map[string]ServiceFactory{
+	return NewWithFactories(app, map[string]ServiceFactory{
 		"config":    func() (any, error) { return config.New() },
 		"display":   func() (any, error) { return display.New() },
 		"help":      func() (any, error) { return help.New() },
