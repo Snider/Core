@@ -9,8 +9,8 @@ require (
 	github.com/leaanthony/debme v1.2.1
 	github.com/leaanthony/gosod v1.0.4
 	github.com/rivo/tview v0.42.0
-	golang.org/x/net v0.25.0
-	golang.org/x/text v0.21.0
+	golang.org/x/net v0.38.0
+	golang.org/x/text v0.23.0
 )
 
 require (
