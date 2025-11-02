@@ -1,22 +1,23 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 
-	// Import the CONCRETE implementations from the internal packages.
 	"github.com/Snider/Core/pkg/config"
+	"github.com/Snider/Core/pkg/core"
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
 	"github.com/Snider/Core/pkg/help"
 	"github.com/Snider/Core/pkg/i18n"
 	"github.com/Snider/Core/pkg/workspace"
-	// Import the ABSTRACT contracts (interfaces).
-	"github.com/Snider/Core/pkg/core"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// App is the runtime container that holds all instantiated services.
+// Runtime is the container that holds all instantiated services.
 // Its fields are the concrete types, allowing Wails to bind them directly.
 type Runtime struct {
+	app       *application.App
 	Core      *core.Core
 	Config    *config.Service
 	Display   *display.Service
@@ -30,9 +31,11 @@ type Runtime struct {
 type ServiceFactory func() (any, error)
 
 // newWithFactories creates a new Runtime instance using the provided service factories.
-func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
+func newWithFactories(app *application.App, factories map[string]ServiceFactory) (*Runtime, error) {
 	services := make(map[string]any)
-	coreOpts := []core.Option{}
+	coreOpts := []core.Option{
+		core.WithWails(app),
+	}
 
 	for _, name := range []string{"config", "display", "help", "crypt", "i18n", "workspace"} {
 		factory, ok := factories[name]
@@ -45,7 +48,7 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 		}
 		services[name] = svc
 		svcCopy := svc
-		coreOpts = append(coreOpts, core.WithService(func(c *core.Core) (any, error) { return svcCopy, nil }))
+		coreOpts = append(coreOpts, core.WithName(name, func(c *core.Core) (any, error) { return svcCopy, nil }))
 	}
 
 	coreInstance, err := core.New(coreOpts...)
@@ -53,6 +56,7 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 		return nil, err
 	}
 
+	// --- Type Assertions ---
 	configSvc, ok := services["config"].(*config.Service)
 	if !ok {
 		return nil, fmt.Errorf("config service has unexpected type")
@@ -78,7 +82,8 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 		return nil, fmt.Errorf("workspace service has unexpected type")
 	}
 
-	app := &Runtime{
+	rt := &Runtime{
+		app:       app,
 		Core:      coreInstance,
 		Config:    configSvc,
 		Display:   displaySvc,
@@ -88,12 +93,12 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 		Workspace: workspaceSvc,
 	}
 
-	return app, nil
+	return rt, nil
 }
 
-// New creates and wires together all application services using static dependency injection.
-func New() (*Runtime, error) {
-	return newWithFactories(map[string]ServiceFactory{
+// New creates and wires together all application services.
+func New(app *application.App) (*Runtime, error) {
+	return newWithFactories(app, map[string]ServiceFactory{
 		"config":    func() (any, error) { return config.New() },
 		"display":   func() (any, error) { return display.New() },
 		"help":      func() (any, error) { return help.New() },
@@ -101,4 +106,19 @@ func New() (*Runtime, error) {
 		"i18n":      func() (any, error) { return i18n.New() },
 		"workspace": func() (any, error) { return workspace.New() },
 	})
+}
+
+// ServiceName returns the name of the service. This is used by Wails to identify the service.
+func (r *Runtime) ServiceName() string {
+	return "Core"
+}
+
+// ServiceStartup is called by Wails at application startup.
+func (r *Runtime) ServiceStartup(ctx context.Context, options application.ServiceOptions) {
+	r.Core.ServiceStartup(ctx, options)
+}
+
+// ServiceShutdown is called by Wails at application shutdown.
+func (r *Runtime) ServiceShutdown(ctx context.Context) {
+	// Add any shutdown logic here.
 }

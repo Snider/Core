@@ -68,6 +68,19 @@ func WithService(factory func(*Core) (any, error)) Option {
 	}
 }
 
+// WithName creates an option that registers a service with a specific name.
+// This is useful when the service name cannot be inferred from the package path,
+// such as when using anonymous functions as factories.
+func WithName(name string, factory func(*Core) (any, error)) Option {
+	return func(c *Core) error {
+		serviceInstance, err := factory(c)
+		if err != nil {
+			return fmt.Errorf("core: failed to create service '%s': %w", name, err)
+		}
+		return c.RegisterService(name, serviceInstance)
+	}
+}
+
 func WithWails(app *application.App) Option {
 	return func(c *Core) error {
 		c.App = app
