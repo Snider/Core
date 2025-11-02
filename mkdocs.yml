@@ -1,0 +1,39 @@
+site_name: Core Library Documentation
+site_description: 'Developer documentation for the Core library, a framework for building Go desktop apps with Wails.'
+site_author: 'The Core Team'
+repo_url: 'https://github.com/Snider/Core'
+repo_name: 'Snider/Core'
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light vs dark mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+
+nav:
+  - 'Overview': 'index.md'
+  - 'Services':
+    - 'Runtime': 'services/runtime.md'
+    - 'Config': 'services/config.md'
+    - 'Crypt': 'services/crypt.md'
+    - 'Display': 'services/display.md'
+    - 'Error Handling': 'services/e.md'
+    - 'Help': 'services/help.md'
+    - 'I18n': 'services/i18n.md'
+    - 'IO': 'services/io.md'
+    - 'Workspace': 'services/workspace.md'
