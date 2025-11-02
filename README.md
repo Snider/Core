@@ -1,5 +1,7 @@
 # Core
 
+[![codecov](https://codecov.io/github/Snider/Core/branch/dev/graph/badge.svg?token=I4DVF9746V)](https://codecov.io/github/Snider/Core)
+
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
 
 More to come, follow us on Discord http://discord.dappco.re
