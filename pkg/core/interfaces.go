@@ -16,6 +16,21 @@ type Contract struct {
 	DontPanic      bool
 	DisableLogging bool
 }
+
+// Features provides a way to check if a feature is enabled.
+type Features struct {
+	Flags []string
+}
+
+// IsEnabled returns true if the given feature is enabled.
+func (f *Features) IsEnabled(feature string) bool {
+	for _, flag := range f.Flags {
+		if flag == feature {
+			return true
+		}
+	}
+	return false
+}
 type Option func(*Core) error
 type Message interface{}
 type Core struct {
@@ -23,6 +38,7 @@ type Core struct {
 	initErr        error
 	App            *application.App
 	assets         embed.FS
+	Features       *Features
 	serviceLock    bool
 	ipcMu          sync.RWMutex
 	ipcHandlers    []func(*Core, Message) error
