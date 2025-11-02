@@ -66,7 +66,7 @@ func TestNewServiceInitializationError(t *testing.T) {
 	}
 
 	// Pass nil for the application, as it is not required for this test.
-	runtime, err := newWithFactories(nil, factories)
+	runtime, err := NewWithFactories(nil, factories)
 
 	assert.Error(t, err)
 	assert.Nil(t, runtime)

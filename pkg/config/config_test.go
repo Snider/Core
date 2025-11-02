@@ -1,11 +1,10 @@
-package tdd
+package config
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +50,7 @@ func TestConfigService(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		serviceInstance, err := config.New()
+		serviceInstance, err := New()
 		require.NoError(t, err, "New() failed")
 
 		// Check that the config file was created
@@ -73,7 +72,7 @@ func TestConfigService(t *testing.T) {
 		customConfig := `{"language": "fr", "features": ["beta-testing"]}`
 		require.NoError(t, os.WriteFile(configPath, []byte(customConfig), 0644), "Failed to write custom config file")
 
-		serviceInstance, err := config.New()
+		serviceInstance, err := New()
 		require.NoError(t, err, "New() failed while loading existing config")
 
 		assert.Equal(t, "fr", serviceInstance.Language, "Expected language 'fr'")
@@ -85,7 +84,7 @@ func TestConfigService(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		s, err := config.New()
+		s, err := New()
 		require.NoError(t, err, "New() failed")
 
 		key := "language"
@@ -102,7 +101,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 	_, cleanup := setupTestEnv(t)
 	defer cleanup()
 
-	s, err := config.New()
+	s, err := New()
 	require.NoError(t, err)
 
 	// Test with no features enabled
@@ -129,7 +128,7 @@ func TestSet_Good(t *testing.T) {
 	_, cleanup := setupTestEnv(t)
 	defer cleanup()
 
-	s, err := config.New()
+	s, err := New()
 	require.NoError(t, err, "New() failed")
 
 	// Test setting a string value
@@ -153,7 +152,7 @@ func TestSet_Bad(t *testing.T) {
 	_, cleanup := setupTestEnv(t)
 	defer cleanup()
 
-	s, err := config.New()
+	s, err := New()
 	require.NoError(t, err, "New() failed")
 
 	// Test setting a value with the wrong type
@@ -169,7 +168,7 @@ func TestSet_Ugly(t *testing.T) {
 	_, cleanup := setupTestEnv(t)
 	defer cleanup()
 
-	s, err := config.New()
+	s, err := New()
 	require.NoError(t, err, "New() failed")
 
 	// This should not panic
@@ -197,11 +196,11 @@ func TestRegister_Good(t *testing.T) {
 	c, err := core.New()
 	require.NoError(t, err)
 
-	svc, err := config.Register(c)
+	svc, err := Register(c)
 	assert.NoError(t, err)
 	assert.NotNil(t, svc)
 
-	configSvc, ok := svc.(*config.Service)
+	configSvc, ok := svc.(*Service)
 	assert.True(t, ok)
 	assert.NotNil(t, configSvc.Runtime)
 }
