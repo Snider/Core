@@ -31,6 +31,7 @@ type Workspace struct {
 // Service manages user workspaces.
 type Service struct {
 	*core.Runtime[Options]
+	Config          core.Config
 	activeWorkspace *Workspace
 	workspaceList   map[string]string // Maps Workspace ID to Public Key
 	medium          io.Medium
@@ -224,4 +225,9 @@ func (s *Service) WorkspaceFileSet(filename, content string) error {
 		return e.E("workspace.WorkspaceFileSet", "failed to set file", err)
 	}
 	return nil
+}
+
+// SetMedium allows injecting an io.Medium for testing.
+func (s *Service) SetMedium(m io.Medium) {
+	s.medium = m
 }

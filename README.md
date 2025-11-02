@@ -1,5 +1,7 @@
 # Core
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Snider/Core?utm_source=oss&utm_medium=github&utm_campaign=Snider%2FCore&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
 
 More to come, follow us on Discord http://discord.dappco.re
@@ -20,6 +22,20 @@ app := core.New(
 ## Development Workflow
 
 This project follows a Test-Driven Development (TDD) approach. We use [Task](https://taskfile.dev/) for task automation to streamline the development process.
+
+### TDD Contract Testing
+
+To ensure the public API remains stable and predictable, we've introduced a dedicated test suite in the `tdd/` directory. These tests are designed to enforce the API's contract and are the starting point for any new feature development or bug fix that affects the public interface.
+
+#### "Good, Bad, Ugly" Testing Methodology
+
+We follow the "Good, Bad, Ugly" methodology for structuring our contract tests:
+
+*   **`_Good` tests**: Verify the "happy path." These tests use valid and expected inputs to ensure the function behaves as intended under normal conditions.
+*   **`_Bad` tests**: Focus on predictable errors. These tests use inputs that are expected to cause the function to fail in a controlled manner (e.g., passing a non-existent ID, invalid credentials). The goal is to verify that the function handles these errors gracefully and returns the expected error messages.
+*   **`_Ugly` tests**: Address edge cases and unexpected inputs. These tests aim to break the function by providing inputs it wasn't designed to handle (e.g., `nil` pointers, malformed data, concurrent access). The goal is to ensure the function is robust and doesn't panic or enter an unexpected state.
+
+This approach helps us build a resilient and well-documented API. All new contributions that modify the public API should include corresponding tests in the `tdd/` directory that follow this methodology.
 
 The recommended workflow is:
 
