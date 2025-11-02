@@ -1,57 +1,52 @@
----
-title: Core
----
+# Core Library Overview
 
-# Overview
+Core is an opinionated framework for building robust, production-grade Go desktop applications using the [Wails](https://wails.io/) framework. It provides a modular, service-based architecture that simplifies development and ensures maintainability.
 
-Core is a framework for building Go desktop apps with Wails. It provides a set of modules that can be used to quickly build robust and maintainable applications.
+## Key Features
 
-- Site: [https://dappco.re](https://dappco.re)
-- Help: [https://core.help](https://core.help)
-- Repo: [github.com:Snider/Core](https://github.com/Snider/Core)
+- **Modular Architecture**: Core is divided into a set of independent services, each responsible for a specific domain (e.g., `config`, `crypt`, `display`).
+- **Unified Runtime**: A central `Runtime` object initializes and manages the lifecycle of all services, providing a simple and consistent entry point for your application.
+- **Dependency Injection**: Services are designed to be testable and decoupled, with dependencies injected at runtime.
+- **Standardized Error Handling**: A custom error package (`pkg/e`) provides a consistent way to wrap and handle errors throughout the application.
+- **Automated Documentation**: This documentation site is automatically generated from the Go source code, ensuring it stays in sync with the public API.
 
-## Modules
+## Getting Started
 
-The Core framework is organized into the following modules, all located under the `pkg/` directory:
-
-- `pkg/config` — Application and UI state persistence.
-- `pkg/crypt` — Key management, encryption/decryption, and signing/verification.
-- `pkg/display` — Window and tray management.
-- `pkg/e` — Standardized error handling.
-- `pkg/help` — In-app help and documentation.
-- `pkg/i18n` — Internationalization and localization.
-- `pkg/io` — Local and remote filesystem abstractions.
-- `pkg/runtime` — Service container and application lifecycle management.
-- `pkg/workspace` — Workspace and project management.
-
-## Quick Start
-
-Here is a basic example of how to create a new Core application:
+To start using the Core library, initialize the runtime in your `main.go` file:
 
 ```go
 package main
 
 import (
-	"log"
+    "embed"
+    "log"
 
-	"github.com/Snider/Core/pkg/runtime"
-	"github.com/wailsapp/wails/v3/pkg/application"
+    "github.com/Snider/Core/pkg/runtime"
+    "github.com/wailsapp/wails/v3/pkg/application"
 )
 
+//go:embed all:public
+var assets embed.FS
+
 func main() {
-	rt, err := runtime.New()
-	if err != nil {
-		log.Fatal(err)
-	}
+    app := application.New(application.Options{
+        Assets: application.AssetOptions{
+            Handler: application.AssetFileServerFS(assets),
+        },
+    })
 
-	app := application.New(application.Options{
-		Services: []application.Service{
-			rt,
-		},
-	})
+    rt, err := runtime.New(app)
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	app.Run()
+    app.Services.Add(application.NewService(rt))
+
+    err = app.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
 }
 ```
 
-See the navigation on the left for more detailed information on each module.
+For more detailed information on each service, see the **Services** section in the navigation.

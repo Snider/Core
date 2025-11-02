@@ -2,18 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/leaanthony/clir"
-
-	"github.com/Snider/Core/cmd/core/cmd/dev"
 )
-
-// IsDevMode indicates if the application is running in development or CI mode.
-var IsDevMode bool
 
 // Define some global lipgloss styles for a Tailwind dark theme
 var (
@@ -41,20 +34,6 @@ var (
 
 // Execute creates the root CLI application and runs it.
 func Execute() error {
-	// Determine if in dev mode
-	executablePath, err := os.Executable()
-	if err == nil {
-		// Check if the executable path contains the build path for dev mode
-		if strings.Contains(executablePath, "Core/cmd/core/bin/") {
-			IsDevMode = true
-		}
-	}
-
-	// Check for DEV or CI environment variables
-	if os.Getenv("DEV") != "" || os.Getenv("CI") != "" {
-		IsDevMode = true
-	}
-
 	// Create a new clir instance, removing the description and version to avoid the default header.
 	app := clir.NewCli("core", "", "")
 
@@ -87,20 +66,18 @@ func Execute() error {
 
 	// Add the top-level commands
 	devCmd := app.NewSubCommand("dev", "Development tools for Core Framework")
-	dev.AddAPICommands(devCmd)
-	dev.AddTestGenCommand(devCmd)
-	dev.AddSyncCommand(devCmd)
-	dev.AddDocCommand(devCmd)
-	dev.AddBuildCommand(devCmd)
+	AddAPICommands(devCmd)
+	AddTestGenCommand(devCmd)
+	AddSyncCommand(devCmd)
+	AddDocGenCommand(devCmd)
+	AddBuildCommand(app)
+	AddTviewCommand(app)
 	// Run the application
 	return app.Run()
 }
 
 // showBanner generates and prints the ASCII art banner.
 func showBanner() {
-	if !IsDevMode {
-		return
-	}
 	coreFig := figure.NewFigure("Core", "big", true)
 	frameworkFig := figure.NewFigure("Framework", "big", true)
 

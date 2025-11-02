@@ -184,6 +184,15 @@ func (s *Service) Set(key string, v any) error {
 				if !fieldVal.CanSet() {
 					return fmt.Errorf("cannot set config field for key '%s'", key)
 				}
+				if v == nil {
+					switch fieldVal.Kind() {
+					case reflect.Pointer, reflect.Interface, reflect.Map, reflect.Slice, reflect.Func:
+						fieldVal.Set(reflect.Zero(fieldVal.Type()))
+						return s.Save()
+					default:
+						return fmt.Errorf("type mismatch for key '%s': expected %s, got nil", key, fieldVal.Type())
+					}
+				}
 				newVal := reflect.ValueOf(v)
 				if !newVal.Type().AssignableTo(fieldVal.Type()) {
 					return fmt.Errorf("type mismatch for key '%s': expected %s, got %s", key, fieldVal.Type(), newVal.Type())

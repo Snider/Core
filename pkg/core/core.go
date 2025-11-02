@@ -17,10 +17,8 @@ func New(opts ...Option) (*Core, error) {
 		services: make(map[string]any),
 	}
 	for _, o := range opts {
-		if o != nil {
-			if err := o(c); err != nil {
-				return nil, err
-			}
+		if err := o(c); err != nil {
+			return nil, err
 		}
 	}
 	c.once.Do(func() {
@@ -71,6 +69,9 @@ func WithService(factory func(*Core) (any, error)) Option {
 // WithName creates an option that registers a service with a specific name.
 // This is useful when the service name cannot be inferred from the package path,
 // such as when using anonymous functions as factories.
+// Note: Unlike WithService, this does not automatically discover or register
+// IPC handlers. If your service needs IPC handling, implement HandleIPCEvents
+// and register it manually.
 func WithName(name string, factory func(*Core) (any, error)) Option {
 	return func(c *Core) error {
 		serviceInstance, err := factory(c)
@@ -104,8 +105,12 @@ func WithServiceLock() Option {
 
 // --- Core Methods ---
 
-func (c *Core) ServiceStartup(context.Context, application.ServiceOptions) error {
+func (c *Core) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
 	return c.ACTION(ActionServiceStartup{})
+}
+
+func (c *Core) ServiceShutdown(ctx context.Context) error {
+	return c.ACTION(ActionServiceShutdown{})
 }
 
 func (c *Core) ACTION(msg Message) error {

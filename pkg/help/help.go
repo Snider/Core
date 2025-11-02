@@ -72,11 +72,11 @@ func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) er
 
 // Show displays the help window.
 func (s *Service) Show() error {
-	if s.Runtime == nil || s.Core() == nil {
-		return fmt.Errorf("core runtime not initialized")
-	}
 	if s.display == nil {
 		return fmt.Errorf("display service not initialized")
+	}
+	if s.Core() == nil {
+		return fmt.Errorf("core runtime not initialized")
 	}
 	msg := map[string]any{
 		"action": "display.open_window",
@@ -93,11 +93,11 @@ func (s *Service) Show() error {
 
 // ShowAt displays a specific section of the help documentation.
 func (s *Service) ShowAt(anchor string) error {
-	if s.Runtime == nil || s.Core() == nil {
-		return fmt.Errorf("core runtime not initialized")
-	}
 	if s.display == nil {
 		return fmt.Errorf("display service not initialized")
+	}
+	if s.Core() == nil {
+		return fmt.Errorf("core runtime not initialized")
 	}
 	msg := map[string]any{
 		"action": "display.open_window",
@@ -110,11 +110,6 @@ func (s *Service) ShowAt(anchor string) error {
 		},
 	}
 	return s.Core().ACTION(msg)
-}
-
-// SetDisplay allows injecting the display service for testing.
-func (s *Service) SetDisplay(d core.Display) {
-	s.display = d
 }
 
 // Ensure Service implements the core.Help interface.

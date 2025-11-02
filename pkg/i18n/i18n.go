@@ -178,11 +178,5 @@ func (s *Service) Translate(messageID string) string {
 	return translation
 }
 
-// SetBundle allows injecting a custom i18n.Bundle for testing.
-func (s *Service) SetBundle(bundle *i18n.Bundle, availableLangs []language.Tag) {
-	s.bundle = bundle
-	s.availableLangs = availableLangs
-}
-
 // Ensure Service implements the core.I18n interface.
 var _ core.I18n = (*Service)(nil)

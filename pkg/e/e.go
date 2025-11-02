@@ -39,6 +39,9 @@ type Error struct {
 // The 'msg' parameter should be a human-readable message that can be displayed to the user.
 // The 'err' parameter is the underlying error that is being wrapped.
 func E(op, msg string, err error) error {
+	if err == nil {
+		return &Error{Op: op, Msg: msg}
+	}
 	return &Error{Op: op, Msg: msg, Err: err}
 }
 

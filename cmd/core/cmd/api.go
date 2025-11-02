@@ -1,4 +1,4 @@
-package dev
+package cmd
 
 import (
 	"github.com/leaanthony/clir"

@@ -18,15 +18,23 @@ func setupTestEnv(t *testing.T) (string, func()) {
 	os.Setenv("HOME", tempHomeDir)
 
 	// Unset XDG vars to ensure HOME is used for path resolution, creating a hermetic test.
-	oldXdgData := os.Getenv("XDG_DATA_HOME")
-	oldXdgCache := os.Getenv("XDG_CACHE_HOME")
-	os.Unsetenv("XDG_DATA_HOME")
-	os.Unsetenv("XDG_CACHE_HOME")
+	oldXdgData, hadXdgData := os.LookupEnv("XDG_DATA_HOME")
+	oldXdgCache, hadXdgCache := os.LookupEnv("XDG_CACHE_HOME")
+	require.NoError(t, os.Unsetenv("XDG_DATA_HOME"))
+	require.NoError(t, os.Unsetenv("XDG_CACHE_HOME"))
 
 	cleanup := func() {
 		os.Setenv("HOME", oldHome)
-		os.Setenv("XDG_DATA_HOME", oldXdgData)
-		os.Setenv("XDG_CACHE_HOME", oldXdgCache)
+		if hadXdgData {
+			os.Setenv("XDG_DATA_HOME", oldXdgData)
+		} else {
+			os.Unsetenv("XDG_DATA_HOME")
+		}
+		if hadXdgCache {
+			os.Setenv("XDG_CACHE_HOME", oldXdgCache)
+		} else {
+			os.Unsetenv("XDG_CACHE_HOME")
+		}
 		os.RemoveAll(tempHomeDir)
 	}
 
@@ -86,6 +94,9 @@ func TestConfigService(t *testing.T) {
 }
 
 func TestIsFeatureEnabled(t *testing.T) {
+	_, cleanup := setupTestEnv(t)
+	defer cleanup()
+
 	s, err := New()
 	require.NoError(t, err)
 
@@ -110,4 +121,64 @@ func TestIsFeatureEnabled(t *testing.T) {
 	// Test with a nil slice
 	s.Features = nil
 	assert.False(t, s.IsFeatureEnabled("beta-feature"))
+}
+
+func TestSet_Good(t *testing.T) {
+	_, cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	s, err := New()
+	require.NoError(t, err, "New() failed")
+
+	// Test setting a string value
+	err = s.Set("language", "de")
+	assert.NoError(t, err)
+	var lang string
+	err = s.Get("language", &lang)
+	assert.NoError(t, err)
+	assert.Equal(t, "de", lang)
+
+	// Test setting a slice value
+	err = s.Set("features", []string{"new-feature"})
+	assert.NoError(t, err)
+	var features []string
+	err = s.Get("features", &features)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"new-feature"}, features)
+}
+
+func TestSet_Bad(t *testing.T) {
+	_, cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	s, err := New()
+	require.NoError(t, err, "New() failed")
+
+	// Test setting a value with the wrong type
+	err = s.Set("language", 123)
+	assert.Error(t, err)
+
+	// Test setting a non-existent key
+	err = s.Set("nonExistentKey", "value")
+	assert.Error(t, err)
+}
+
+func TestSet_Ugly(t *testing.T) {
+	_, cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	s, err := New()
+	require.NoError(t, err, "New() failed")
+
+	// This should not panic
+	assert.NotPanics(t, func() {
+		err = s.Set("features", nil)
+	})
+	assert.NoError(t, err)
+
+	// Verify the slice is now nil
+	var features []string
+	err = s.Get("features", &features)
+	assert.NoError(t, err)
+	assert.Nil(t, features)
 }
