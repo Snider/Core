@@ -45,7 +45,7 @@ func newWithFactories(factories map[string]ServiceFactory) (*Runtime, error) {
 		}
 		services[name] = svc
 		svcCopy := svc
-		coreOpts = append(coreOpts, core.WithService(func(c *core.Core) (any, error) { return svcCopy, nil }))
+		coreOpts = append(coreOpts, core.WithName(name, func(c *core.Core) (any, error) { return svcCopy, nil }))
 	}
 
 	coreInstance, err := core.New(coreOpts...)

@@ -2,12 +2,9 @@ package main
 
 import (
 	"embed"
+	"log"
 
-	"github.com/Snider/Core"
-	"github.com/Snider/Core/config"
-	"github.com/Snider/Core/crypt"
-	"github.com/Snider/Core/display"
-	"github.com/Snider/Core/help"
+	"github.com/Snider/Core/pkg/runtime"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -15,27 +12,22 @@ import (
 var assets embed.FS
 
 func main() {
+	rt, err := runtime.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	app := application.New(application.Options{
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
+		Services: []application.Service{
+			rt,
+		},
 	})
 
-	coreService := core.New(
-		core.WithWails(app),
-		core.WithAssets(assets),
-		core.WithService(config.New),
-		core.WithService(display.New),
-		core.WithService(crypt.New),
-		core.WithService(help.New),
-		core.WithServiceLock(),
-	)
-
-	app.RegisterService(application.NewService(coreService))
-
-	err := app.Run()
+	err = app.Run()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
