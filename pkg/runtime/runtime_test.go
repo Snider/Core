@@ -4,19 +4,19 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
 	"github.com/Snider/Core/pkg/help"
 	"github.com/Snider/Core/pkg/io"
 	"github.com/Snider/Core/pkg/workspace"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestNew ensures that New correctly initializes a Runtime instance.
 func TestNew(t *testing.T) {
-	runtime, err := New()
+	// Pass nil for the application, as it is not required for this test.
+	runtime, err := New(nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, runtime)
 
@@ -66,11 +66,10 @@ func TestNewServiceInitializationError(t *testing.T) {
 		"workspace": func() (any, error) { return workspace.New(io.Local) },
 	}
 
-	runtime, err := newWithFactories(factories)
+	// Pass nil for the application, as it is not required for this test.
+	runtime, err := newWithFactories(nil, factories)
 
 	assert.Error(t, err)
 	assert.Nil(t, runtime)
 	assert.Contains(t, err.Error(), "failed to create service i18n: i18n service failed to initialize")
 }
-
-// Removed TestRuntimeOptions and TestRuntimeCore as these methods no longer exist on the Runtime struct.

@@ -69,6 +69,7 @@ func Execute() error {
 	AddAPICommands(devCmd)
 	AddTestGenCommand(devCmd)
 	AddSyncCommand(devCmd)
+	AddDocGenCommand(devCmd)
 	AddBuildCommand(app)
 	AddTviewCommand(app)
 	// Run the application

@@ -1,79 +1,52 @@
----
-title: Core.Help
----
+# Core Library Overview
 
-# Overview
+Core is an opinionated framework for building robust, production-grade Go desktop applications using the [Wails](https://wails.io/) framework. It provides a modular, service-based architecture that simplifies development and ensures maintainability.
 
-Core is an opinionated framework for building Go desktop apps with Wails, providing a small set of focused modules you can mix into your app. It ships with sensible defaults and a demo app that doubles as in‑app help.
+## Key Features
 
-- Site: [https://dappco.re](https://dappco.re)
-- Help: [https://core.help](https://core.help)
-- Repo: [github.com:Snider/Core](https://github.com/Snider/Core)
+- **Modular Architecture**: Core is divided into a set of independent services, each responsible for a specific domain (e.g., `config`, `crypt`, `display`).
+- **Unified Runtime**: A central `Runtime` object initializes and manages the lifecycle of all services, providing a simple and consistent entry point for your application.
+- **Dependency Injection**: Services are designed to be testable and decoupled, with dependencies injected at runtime.
+- **Standardized Error Handling**: A custom error package (`pkg/e`) provides a consistent way to wrap and handle errors throughout the application.
+- **Automated Documentation**: This documentation site is automatically generated from the Go source code, ensuring it stays in sync with the public API.
 
-## Modules
+## Getting Started
 
-- Core — framework bootstrap and service container
-- Core.Config — app and UI state persistence
-- Core.Crypt — keys, encrypt/decrypt, sign/verify
-- Core.Display — windows, tray, window state
-- Core.Docs — in‑app help and deep‑links
-- Core.IO — local/remote filesystem helpers
-- Core.Workspace — projects and paths
+To start using the Core library, initialize the runtime in your `main.go` file:
 
-## Quick start
 ```go
 package main
 
 import (
+    "embed"
+    "log"
+
+    "github.com/Snider/Core/pkg/runtime"
     "github.com/wailsapp/wails/v3/pkg/application"
-    core "github.com/Snider/Core"
 )
+
+//go:embed all:public
+var assets embed.FS
 
 func main() {
-    app := core.New(
-        core.WithServiceLock(),
-    )
-    wailsApp := application.NewWithOptions(&application.Options{
-        Bind: []interface{}{app},
+    app := application.New(application.Options{
+        Assets: application.AssetOptions{
+            Handler: application.AssetFileServerFS(assets),
+        },
     })
-    wailsApp.Run()
+
+    rt, err := runtime.New(app)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    app.Services.Add(application.NewService(rt))
+
+    err = app.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
 }
 ```
 
-## Services
-```go
-package demo
-
-import (
-    core "github.com/Snider/Core"
-)
-
-// Register your service
-func Register(c *core.Core) error {
-    return c.RegisterService("demo", &Demo{core: c})
-}
-```
-
-## Display example
-```go
-package display
-
-import (
-    "context"
-    "github.com/wailsapp/wails/v3/pkg/application"
-)
-
-// Open a window on startup
-func (d *API) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
-    d.OpenWindow(
-        OptName("main"),
-        OptHeight(900),
-        OptWidth(1280),
-        OptURL("/"),
-        OptTitle("Core"),
-    )
-    return nil
-}
-```
-
-See the left nav for detailed pages on each module.
+For more detailed information on each service, see the **Services** section in the navigation.
