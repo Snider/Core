@@ -1,71 +1,93 @@
 package internal
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNew(t *testing.T) {
-	s, err := New()
-	assert.NoError(t, err)
-	assert.NotNil(t, s)
+// setupTestEnv creates a temporary home directory for testing and ensures a clean environment.
+func setupTestEnv(t *testing.T) (string, func()) {
+	tempHomeDir, err := os.MkdirTemp("", "test_home_*")
+	require.NoError(t, err, "Failed to create temp home directory")
+
+	oldHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempHomeDir)
+
+	// Unset XDG vars to ensure HOME is used for path resolution, creating a hermetic test.
+	oldXdgData := os.Getenv("XDG_DATA_HOME")
+	oldXdgCache := os.Getenv("XDG_CACHE_HOME")
+	os.Unsetenv("XDG_DATA_HOME")
+	os.Unsetenv("XDG_CACHE_HOME")
+
+	cleanup := func() {
+		os.Setenv("HOME", oldHome)
+		os.Setenv("XDG_DATA_HOME", oldXdgData)
+		os.Setenv("XDG_CACHE_HOME", oldXdgCache)
+		os.RemoveAll(tempHomeDir)
+	}
+
+	return tempHomeDir, cleanup
 }
 
-func TestSaveAndLoad(t *testing.T) {
-	// Create a temporary directory for the config file
-	tempDir, err := os.MkdirTemp("", "config-test")
-	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+func TestConfigService(t *testing.T) {
+	t.Run("New service creates default config", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
 
-	// Create a new config service
-	s, err := New()
-	assert.NoError(t, err)
+		serviceInstance, err := New()
+		require.NoError(t, err, "New() failed")
 
-	// Override the config path to use the temporary directory
-	s.ConfigPath = filepath.Join(tempDir, "config.json")
+		// Check that the config file was created
+		assert.FileExists(t, serviceInstance.ConfigPath, "config.json was not created")
 
-	// Set some config values
-	err = s.Set("language", "fr")
-	assert.NoError(t, err)
-	err = s.Set("default_route", "/home")
-	assert.NoError(t, err)
+		// Check default values
+		assert.Equal(t, "en", serviceInstance.Language, "Expected default language 'en'")
+	})
 
-	// Save the config
-	err = s.Save()
-	assert.NoError(t, err)
+	t.Run("New service loads existing config", func(t *testing.T) {
+		tempHomeDir, cleanup := setupTestEnv(t)
+		defer cleanup()
 
-	// Create a new config service to load the saved config
-	s2, err := New()
-	assert.NoError(t, err)
+		// Manually create a config file with non-default values
+		configDir := filepath.Join(tempHomeDir, appName, "config")
+		require.NoError(t, os.MkdirAll(configDir, os.ModePerm), "Failed to create test config dir")
+		configPath := filepath.Join(configDir, configFileName)
 
-	// Override the config path to use the temporary directory
-	s2.ConfigPath = s.ConfigPath
+		customConfig := `{"language": "fr", "features": ["beta-testing"]}`
+		require.NoError(t, os.WriteFile(configPath, []byte(customConfig), 0644), "Failed to write custom config file")
 
-	// Load the config
-	data, err := os.ReadFile(s2.ConfigPath)
-	assert.NoError(t, err)
-	err = json.Unmarshal(data, s2)
-	assert.NoError(t, err)
+		serviceInstance, err := New()
+		require.NoError(t, err, "New() failed while loading existing config")
 
-	// Check that the values were loaded correctly
-	var lang string
-	err = s2.Get("language", &lang)
-	assert.NoError(t, err)
-	assert.Equal(t, "fr", lang)
+		assert.Equal(t, "fr", serviceInstance.Language, "Expected language 'fr'")
+		assert.True(t, serviceInstance.IsFeatureEnabled("beta-testing"), "Expected 'beta-testing' feature to be enabled")
+		assert.False(t, serviceInstance.IsFeatureEnabled("alpha-testing"), "Did not expect 'alpha-testing' to be enabled")
+	})
 
-	var route string
-	err = s2.Get("default_route", &route)
-	assert.NoError(t, err)
-	assert.Equal(t, "/home", route)
+	t.Run("Set and Get", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		require.NoError(t, err, "New() failed")
+
+		key := "language"
+		expectedValue := "de"
+		require.NoError(t, s.Set(key, expectedValue), "Set() failed")
+
+		var actualValue string
+		require.NoError(t, s.Get(key, &actualValue), "Get() failed")
+		assert.Equal(t, expectedValue, actualValue, "Get() returned unexpected value")
+	})
 }
 
 func TestIsFeatureEnabled(t *testing.T) {
 	s, err := New()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Test with no features enabled
 	assert.False(t, s.IsFeatureEnabled("beta-feature"))

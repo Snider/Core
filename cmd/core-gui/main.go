@@ -12,19 +12,18 @@ import (
 var assets embed.FS
 
 func main() {
-	rt, err := runtime.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	app := application.New(application.Options{
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
-		Services: []application.Service{
-			rt,
-		},
 	})
+
+	rt, err := runtime.New(app)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app.Services.Add(application.NewService(rt))
 
 	err = app.Run()
 	if err != nil {
