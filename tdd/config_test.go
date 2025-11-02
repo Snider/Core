@@ -109,7 +109,8 @@ func TestIsFeatureEnabled(t *testing.T) {
 	assert.False(t, s.IsFeatureEnabled("beta-feature"))
 
 	// Enable a feature
-	s.Features = []string{"beta-feature", "alpha-testing"}
+	err = s.Set("features", []string{"beta-feature", "alpha-testing"})
+	require.NoError(t, err)
 
 	// Test for an enabled feature
 	assert.True(t, s.IsFeatureEnabled("beta-feature"))
@@ -122,10 +123,6 @@ func TestIsFeatureEnabled(t *testing.T) {
 
 	// Test with an empty string
 	assert.False(t, s.IsFeatureEnabled(""))
-
-	// Test with a nil slice
-	s.Features = nil
-	assert.False(t, s.IsFeatureEnabled("beta-feature"))
 }
 
 func TestSet_Good(t *testing.T) {
@@ -186,6 +183,11 @@ func TestSet_Ugly(t *testing.T) {
 	err = s.Get("features", &features)
 	assert.NoError(t, err)
 	assert.Nil(t, features)
+
+	// Test with a nil slice
+	err = s.Set("features", nil)
+	require.NoError(t, err)
+	assert.False(t, s.IsFeatureEnabled("beta-feature"))
 }
 
 func TestRegister_Good(t *testing.T) {

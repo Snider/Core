@@ -2,6 +2,7 @@ package tdd
 
 import (
 	"embed"
+	"io"
 	"testing"
 
 	"github.com/Snider/Core/pkg/core"
@@ -53,11 +54,19 @@ func TestCore_WithWails_Good(t *testing.T) {
 	assert.Equal(t, app, c.App)
 }
 
+//go:embed testdata
+var testFS embed.FS
+
 func TestCore_WithAssets_Good(t *testing.T) {
-	fs := embed.FS{}
-	c, err := core.New(core.WithAssets(fs))
+	c, err := core.New(core.WithAssets(testFS))
 	assert.NoError(t, err)
-	assert.NotNil(t, c.Assets())
+	assets := c.Assets()
+	file, err := assets.Open("testdata/test.txt")
+	assert.NoError(t, err)
+	defer file.Close()
+	content, err := io.ReadAll(file)
+	assert.NoError(t, err)
+	assert.Equal(t, "hello from testdata\n", string(content))
 }
 
 func TestCore_WithServiceLock_Good(t *testing.T) {
