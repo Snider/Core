@@ -23,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app.Services.Add(application.NewService(rt))
+	app.RegisterService(application.NewService(rt))
 
 	err = app.Run()
 	if err != nil {
