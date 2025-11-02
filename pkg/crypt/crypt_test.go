@@ -1,4 +1,4 @@
-package internal
+package crypt
 
 import (
 	"testing"
@@ -7,14 +7,16 @@ import (
 )
 
 func TestHash(t *testing.T) {
-	s := &Service{}
+	s, err := New()
+	assert.NoError(t, err)
 	payload := "hello"
 	hash := s.Hash(LTHN, payload)
 	assert.NotEmpty(t, hash)
 }
 
 func TestLuhn(t *testing.T) {
-	s := &Service{}
+	s, err := New()
+	assert.NoError(t, err)
 	assert.True(t, s.Luhn("79927398713"))
 	assert.False(t, s.Luhn("79927398714"))
 }

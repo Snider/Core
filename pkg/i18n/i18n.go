@@ -180,3 +180,8 @@ func (s *Service) Translate(messageID string) string {
 
 // Ensure Service implements the core.I18n interface.
 var _ core.I18n = (*Service)(nil)
+
+// SetBundle is a test helper to inject a bundle.
+func (s *Service) SetBundle(bundle *i18n.Bundle) {
+	s.bundle = bundle
+}
