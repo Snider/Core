@@ -42,13 +42,3 @@ tasks:
     cmds:
       - task: cov
       - go tool cover -html=coverage.txt
-
-  sync:
-    desc: "Updates the public API Go files to match the exported interface of the modules."
-    cmds:
-      - task: cli:sync
-
-  test-gen:
-    desc: "Generates tests for the public API."
-    cmds:
-      - task: cli:test-gen
