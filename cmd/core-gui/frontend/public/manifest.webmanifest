@@ -1,6 +1,6 @@
 {
-  "name": "angular-starter",
-  "short_name": "angular-starter",
+  "name": "Core Framework",
+  "short_name": "Core",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
