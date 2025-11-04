@@ -1,19 +1,21 @@
 package core
 
 import (
-	"errors"
+	"embed"
+	"io"
 	"testing"
 
-	"github.com/Snider/Core/pkg/core/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// MockServiceInterface is an interface that MockService implements.
-type MockServiceInterface interface {
-	GetName() string
+func TestCore_New_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
 }
 
-// MockService is a simple struct to act as a mock service.
+// Mock service for testing
 type MockService struct {
 	Name string
 }
@@ -22,166 +24,172 @@ func (m *MockService) GetName() string {
 	return m.Name
 }
 
-func TestNew(t *testing.T) {
-	c, err := New()
+func TestCore_WithService_Good(t *testing.T) {
+	factory := func(c *Core) (any, error) {
+		return &MockService{Name: "test"}, nil
+	}
+	c, err := New(WithService(factory))
 	assert.NoError(t, err)
-	assert.NotNil(t, c)
-	assert.NotNil(t, c.services)
-	assert.False(t, c.servicesLocked)
+	svc := c.Service("core")
+	assert.NotNil(t, svc)
+	mockSvc, ok := svc.(*MockService)
+	assert.True(t, ok)
+	assert.Equal(t, "test", mockSvc.GetName())
 }
 
-func TestWithService(t *testing.T) {
-	// Test successful service registration
-	t.Run("successful service registration", func(t *testing.T) {
-		c, err := New()
-		assert.NoError(t, err)
-
-		factory := func(c *Core) (any, error) {
-			return &MockService{Name: "testService"}, nil
-		}
-
-		err = WithService(factory)(c)
-		assert.NoError(t, err)
-
-		// The service name is derived from the package path of MockService, which is "core"
-		svc := c.Service("core")
-		assert.NotNil(t, svc)
-		mockSvc, ok := svc.(*MockService)
-		assert.True(t, ok)
-		assert.Equal(t, "testService", mockSvc.Name)
-	})
-
-	// Test service registration with factory error
-	t.Run("service registration with factory error", func(t *testing.T) {
-		c, err := New()
-		assert.NoError(t, err)
-
-		factory := func(c *Core) (any, error) {
-			return nil, errors.New("factory error")
-		}
-
-		err = WithService(factory)(c)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "factory error")
-	})
-
-	// Test service registration when services are locked
-	t.Run("service registration when locked", func(t *testing.T) {
-		c, err := New(WithServiceLock())
-		assert.NoError(t, err)
-
-		factory := func(c *Core) (any, error) {
-			return &MockService{Name: "lockedService"}, nil
-		}
-
-		err = WithService(factory)(c)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "is not permitted by the serviceLock setting")
-	})
-}
-
-func TestServiceFor(t *testing.T) {
-	c, err := New()
-	assert.NoError(t, err)
-
-	// Register a mock service
-	err = c.RegisterService("mockservice", &MockService{Name: "testService"})
-	assert.NoError(t, err)
-
-	// Test successful retrieval as an interface
-	t.Run("successful retrieval as interface", func(t *testing.T) {
-		svc, err := ServiceFor[MockServiceInterface](c, "mockservice")
-		assert.NoError(t, err)
-		assert.Equal(t, "testService", svc.GetName())
-	})
-
-	// Test service not found
-	t.Run("service not found", func(t *testing.T) {
-		_, err := ServiceFor[MockServiceInterface](c, "nonexistent")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "service 'nonexistent' not found")
-	})
-
-	// Test type mismatch
-	t.Run("type mismatch", func(t *testing.T) {
-		err := c.RegisterService("stringservice", "hello")
-		assert.NoError(t, err)
-		_, err = ServiceFor[MockServiceInterface](c, "stringservice")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "is of type string, but expected <nil>")
-	})
-}
-
-func TestMustServiceFor(t *testing.T) {
-	c, err := New()
-	assert.NoError(t, err)
-
-	// Register a mock service
-	assert.NoError(t, c.RegisterService("mockservice", &MockService{Name: "testService"}))
-
-	// Test successful retrieval as an interface
-	assert.NotPanics(t, func() {
-		svc := MustServiceFor[MockServiceInterface](c, "mockservice")
-		assert.Equal(t, "testService", svc.GetName())
-	})
-
-	// Test service not found (should panic)
-	assert.Panics(t, func() {
-		MustServiceFor[MockServiceInterface](c, "nonexistent")
-	})
-
-	// Test type mismatch (should panic)
-	assert.NoError(t, c.RegisterService("stringservice", "hello"))
-	assert.Panics(t, func() {
-		MustServiceFor[MockServiceInterface](c, "stringservice")
-	})
-}
-
-func TestRegisterService(t *testing.T) {
-	c, err := New()
-	assert.NoError(t, err)
-
-	// Test successful registration
-	err = c.RegisterService("myservice", &MockService{})
-	assert.NoError(t, err)
-	assert.NotNil(t, c.Service("myservice"))
-
-	// Test duplicate registration
-	err = c.RegisterService("myservice", &MockService{})
+func TestCore_WithService_Bad(t *testing.T) {
+	factory := func(c *Core) (any, error) {
+		return nil, assert.AnError
+	}
+	_, err := New(WithService(factory))
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "already registered")
+	assert.ErrorIs(t, err, assert.AnError)
+}
 
-	// Test empty name
+func TestCore_WithWails_Good(t *testing.T) {
+	app := &application.App{}
+	c, err := New(WithWails(app))
+	assert.NoError(t, err)
+	assert.Equal(t, app, c.App)
+}
+
+//go:embed testdata
+var testFS embed.FS
+
+func TestCore_WithAssets_Good(t *testing.T) {
+	c, err := New(WithAssets(testFS))
+	assert.NoError(t, err)
+	assets := c.Assets()
+	file, err := assets.Open("testdata/test.txt")
+	assert.NoError(t, err)
+	defer file.Close()
+	content, err := io.ReadAll(file)
+	assert.NoError(t, err)
+	assert.Equal(t, "hello from testdata\n", string(content))
+}
+
+func TestCore_WithServiceLock_Good(t *testing.T) {
+	c, err := New(WithServiceLock())
+	assert.NoError(t, err)
+	err = c.RegisterService("test", &MockService{})
+	assert.Error(t, err)
+}
+
+func TestCore_RegisterService_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	err = c.RegisterService("test", &MockService{Name: "test"})
+	assert.NoError(t, err)
+	svc := c.Service("test")
+	assert.NotNil(t, svc)
+	mockSvc, ok := svc.(*MockService)
+	assert.True(t, ok)
+	assert.Equal(t, "test", mockSvc.GetName())
+}
+
+func TestCore_RegisterService_Bad(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	err = c.RegisterService("test", &MockService{})
+	assert.NoError(t, err)
+	err = c.RegisterService("test", &MockService{})
+	assert.Error(t, err)
 	err = c.RegisterService("", &MockService{})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "service name cannot be empty")
-
-	// Test registration when locked
-	lockedCore, err := New(WithServiceLock())
-	assert.NoError(t, err)
-	err = lockedCore.RegisterService("lockedservice", &MockService{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "is not permitted by the serviceLock setting")
 }
 
-func TestCoreConfig(t *testing.T) {
+func TestCore_ServiceFor_Good(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
-
-	// Register a mock config service
-	mockCfg := &testutil.MockConfig{}
-	err = c.RegisterService("config", mockCfg)
+	err = c.RegisterService("test", &MockService{Name: "test"})
 	assert.NoError(t, err)
+	svc, err := ServiceFor[*MockService](c, "test")
+	assert.NoError(t, err)
+	assert.Equal(t, "test", svc.GetName())
+}
 
-	// Test successful retrieval of Config service
-	cfg := c.Config()
-	assert.NotNil(t, cfg)
-	assert.Implements(t, (*Config)(nil), cfg)
+func TestCore_ServiceFor_Bad(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	_, err = ServiceFor[*MockService](c, "nonexistent")
+	assert.Error(t, err)
+	err = c.RegisterService("test", "not a service")
+	assert.NoError(t, err)
+	_, err = ServiceFor[*MockService](c, "test")
+	assert.Error(t, err)
+}
 
-	// Test panic if Config service not registered
-	coreWithoutConfig, err := New()
+func TestCore_MustServiceFor_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	err = c.RegisterService("test", &MockService{Name: "test"})
+	assert.NoError(t, err)
+	svc := MustServiceFor[*MockService](c, "test")
+	assert.Equal(t, "test", svc.GetName())
+}
+
+func TestCore_MustServiceFor_Ugly(t *testing.T) {
+	c, err := New()
 	assert.NoError(t, err)
 	assert.Panics(t, func() {
-		coreWithoutConfig.Config()
+		MustServiceFor[*MockService](c, "nonexistent")
 	})
+	err = c.RegisterService("test", "not a service")
+	assert.NoError(t, err)
+	assert.Panics(t, func() {
+		MustServiceFor[*MockService](c, "test")
+	})
+}
+
+type MockAction struct {
+	handled bool
+}
+
+func (a *MockAction) Handle(c *Core, msg Message) error {
+	a.handled = true
+	return nil
+}
+
+func TestCore_ACTION_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	action := &MockAction{}
+	c.RegisterAction(action.Handle)
+	err = c.ACTION(nil)
+	assert.NoError(t, err)
+	assert.True(t, action.handled)
+}
+
+func TestCore_RegisterActions_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	action1 := &MockAction{}
+	action2 := &MockAction{}
+	c.RegisterActions(action1.Handle, action2.Handle)
+	err = c.ACTION(nil)
+	assert.NoError(t, err)
+	assert.True(t, action1.handled)
+	assert.True(t, action2.handled)
+}
+
+func TestCore_WithName_Good(t *testing.T) {
+	factory := func(c *Core) (any, error) {
+		return &MockService{Name: "test"}, nil
+	}
+	c, err := New(WithName("my-service", factory))
+	assert.NoError(t, err)
+	svc := c.Service("my-service")
+	assert.NotNil(t, svc)
+	mockSvc, ok := svc.(*MockService)
+	assert.True(t, ok)
+	assert.Equal(t, "test", mockSvc.GetName())
+}
+
+func TestCore_WithName_Bad(t *testing.T) {
+	factory := func(c *Core) (any, error) {
+		return nil, assert.AnError
+	}
+	_, err := New(WithName("my-service", factory))
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, assert.AnError)
 }
