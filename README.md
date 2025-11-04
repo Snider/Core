@@ -62,7 +62,7 @@ The project is organized into the following main directories:
 
 ## Prerequisites
 
-- [Go](https://go.dev/)
+- Go 1.25+ (this repo targets Go 1.25 and uses workspaces)
 - [Node.js](https://nodejs.org/)
 - [Wails](https://wails.io/)
 - [Task](https://taskfile.dev/)
@@ -127,11 +127,25 @@ These tasks are run from the root directory and operate on the CLI application.
 - `task cli:test-gen`: Generates tests for the public API.
 
 ## Docs (MkDocs)
-The help site and in‑app docs are built with MkDocs Material and live under `pkg/v1/core/docs`.
+The documentation site is powered by MkDocs Material and lives under `docs/` with configuration in `mkdocs.yml`.
 
-- Live preview: from `pkg/v1/core/docs` run
-  - `pip install -r requirements.txt`
-  - `mkdocs serve -o -c` (or `task dev` if you use Task)
-- Build static site: `mkdocs build --clean -d public` (or `task build`)
+- Install docs tooling:
+  - `pip install -r docs/requirements.txt`
+- Live preview from repository root:
+  - `mkdocs serve -o -c`
+- Build static site:
+  - `mkdocs build --clean`
 
-The demo app embeds the built docs from `public/` and can open specific sections in new windows using stable, short headings.
+## Releasing (GoReleaser)
+This repo includes a minimal GoReleaser config (`.goreleaser.yaml`). Tagged pushes like `v1.2.3` will build and publish archives via GitHub Actions (see `.github/workflows/release.yml`).
+
+- Local dry run: `goreleaser release --snapshot --clean`
+- Real release: create and push a version tag `vX.Y.Z`.
+
+## Go Workspaces
+This repository uses Go workspaces (`go.work`) targeting Go 1.25.
+
+- Add/remove modules with `go work use`.
+- Typical workflow:
+  - `go work sync`
+  - `go mod tidy` in modules as needed
