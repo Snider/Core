@@ -1,5 +1,9 @@
 # Core
 
+> NOTICE
+> The current version here is not the current version, which is in letheanVPN/desktop/services/core (from memory). This was a nice idea, but I'm reorganising the code bases. Check back later.
+
+
 [![codecov](https://codecov.io/github/Snider/Core/branch/dev/graph/badge.svg?token=I4DVF9746V)](https://codecov.io/github/Snider/Core)
 
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
