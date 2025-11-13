@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -24,11 +25,14 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 		WithWails(app),
 	}
 
-	for _, name := range []string{} {
-		factory, ok := factories[name]
-		if !ok {
-			return nil, fmt.Errorf("service %s factory not provided", name)
-		}
+	names := make([]string, 0, len(factories))
+	for name := range factories {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		factory := factories[name]
 		svc, err := factory()
 		if err != nil {
 			return nil, fmt.Errorf("failed to create service %s: %w", name, err)
