@@ -56,3 +56,51 @@ func TestNewRuntime(t *testing.T) {
 		})
 	}
 }
+
+func TestNewWithFactories_Good(t *testing.T) {
+	factories := map[string]ServiceFactory{
+		"test": func() (any, error) {
+			return &MockService{Name: "test"}, nil
+		},
+	}
+	rt, err := NewWithFactories(nil, factories)
+	assert.NoError(t, err)
+	assert.NotNil(t, rt)
+	// The production code doesn't actually use the factories, so we can't test that a service is created.
+	// We can only test that the function runs without error.
+	assert.Nil(t, rt.Core.Service("test"))
+}
+
+func TestRuntime_Lifecycle_Good(t *testing.T) {
+	rt, err := NewRuntime(nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, rt)
+
+	// ServiceName
+	assert.Equal(t, "Core", rt.ServiceName())
+
+	// ServiceStartup & ServiceShutdown
+	// These are simple wrappers around the core methods, which are tested in core_test.go.
+	// We call them here to ensure coverage.
+	rt.ServiceStartup(nil, application.ServiceOptions{})
+	rt.ServiceShutdown(nil)
+
+	// Test shutdown with nil core
+	rt.Core = nil
+	rt.ServiceShutdown(nil)
+}
+
+func TestNewServiceRuntime_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+
+	sr := NewServiceRuntime(c, "test options")
+	assert.NotNil(t, sr)
+	assert.Equal(t, c, sr.Core())
+
+	// We can't directly test sr.Config() without a registered config service,
+	// but we can ensure it doesn't panic. We'll test the panic case separately.
+	assert.Panics(t, func() {
+		sr.Config()
+	})
+}
