@@ -46,6 +46,106 @@ func TestCore_WithService_Bad(t *testing.T) {
 	assert.ErrorIs(t, err, assert.AnError)
 }
 
+type MockConfigService struct{}
+
+func (m *MockConfigService) Get(key string, out any) error { return nil }
+func (m *MockConfigService) Set(key string, v any) error   { return nil }
+
+type MockDisplayService struct{}
+
+func (m *MockDisplayService) OpenWindow(opts ...WindowOption) error { return nil }
+
+func TestCore_Services_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+
+	err = c.RegisterService("config", &MockConfigService{})
+	assert.NoError(t, err)
+
+	err = c.RegisterService("display", &MockDisplayService{})
+	assert.NoError(t, err)
+
+	assert.NotNil(t, c.Config())
+	assert.NotNil(t, c.Display())
+}
+
+func TestCore_Services_Ugly(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+
+	assert.Panics(t, func() {
+		c.Config()
+	})
+	assert.Panics(t, func() {
+		c.Display()
+	})
+}
+
+func TestCore_App_Good(t *testing.T) {
+	app := &application.App{}
+	c, err := New(WithWails(app))
+	assert.NoError(t, err)
+
+	// To test the global App() function, we need to set the global instance.
+	originalInstance := instance
+	instance = c
+	defer func() { instance = originalInstance }()
+
+	assert.Equal(t, app, App())
+}
+
+func TestCore_App_Ugly(t *testing.T) {
+	// This test ensures that calling App() before the core is initialized panics.
+	originalInstance := instance
+	instance = nil
+	defer func() { instance = originalInstance }()
+	assert.Panics(t, func() {
+		App()
+	})
+}
+
+func TestCore_Core_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+	assert.Equal(t, c, c.Core())
+}
+
+func TestFeatures_IsEnabled_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+
+	c.Features.Flags = []string{"feature1", "feature2"}
+
+	assert.True(t, c.Features.IsEnabled("feature1"))
+	assert.True(t, c.Features.IsEnabled("feature2"))
+	assert.False(t, c.Features.IsEnabled("feature3"))
+}
+
+type startupMessage struct{}
+type shutdownMessage struct{}
+
+func TestCore_ServiceLifecycle_Good(t *testing.T) {
+	c, err := New()
+	assert.NoError(t, err)
+
+	var messageReceived Message
+	handler := func(c *Core, msg Message) error {
+		messageReceived = msg
+		return nil
+	}
+	c.RegisterAction(handler)
+
+	// Test Startup
+	_ = c.ServiceStartup(nil, application.ServiceOptions{})
+	_, ok := messageReceived.(ActionServiceStartup)
+	assert.True(t, ok, "expected ActionServiceStartup message")
+
+	// Test Shutdown
+	_ = c.ServiceShutdown(nil)
+	_, ok = messageReceived.(ActionServiceShutdown)
+	assert.True(t, ok, "expected ActionServiceShutdown message")
+}
+
 func TestCore_WithWails_Good(t *testing.T) {
 	app := &application.App{}
 	c, err := New(WithWails(app))
