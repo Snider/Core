@@ -4,10 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/crypt"
-	"github.com/Snider/Core/pkg/display"
-	"github.com/Snider/Core/pkg/i18n"
 	"github.com/Snider/Core/pkg/runtime"
 	"github.com/Snider/Core/pkg/workspace"
 	"github.com/stretchr/testify/assert"
@@ -27,20 +24,14 @@ func TestNew(t *testing.T) {
 			name: "Good path",
 			app:  nil,
 			factories: map[string]runtime.ServiceFactory{
-				"config":    func() (any, error) { return &config.Service{}, nil },
-				"display":   func() (any, error) { return &display.Service{}, nil },
 				"crypt":     func() (any, error) { return &crypt.Service{}, nil },
-				"i18n":      func() (any, error) { return &i18n.Service{}, nil },
 				"workspace": func() (any, error) { return &workspace.Service{}, nil },
 			},
 			expectErr: false,
 			checkRuntime: func(t *testing.T, rt *runtime.Runtime) {
 				assert.NotNil(t, rt)
 				assert.NotNil(t, rt.Core)
-				assert.NotNil(t, rt.Config)
-				assert.NotNil(t, rt.Display)
 				assert.NotNil(t, rt.Crypt)
-				assert.NotNil(t, rt.I18n)
 				assert.NotNil(t, rt.Workspace)
 			},
 		},
@@ -48,10 +39,7 @@ func TestNew(t *testing.T) {
 			name: "Factory returns an error",
 			app:  nil,
 			factories: map[string]runtime.ServiceFactory{
-				"config":    func() (any, error) { return &config.Service{}, nil },
-				"display":   func() (any, error) { return &display.Service{}, nil },
 				"crypt":     func() (any, error) { return nil, errors.New("crypt service failed") },
-				"i18n":      func() (any, error) { return &i18n.Service{}, nil },
 				"workspace": func() (any, error) { return &workspace.Service{}, nil },
 			},
 			expectErr:    true,
@@ -61,23 +49,17 @@ func TestNew(t *testing.T) {
 			name: "Factory returns wrong type",
 			app:  nil,
 			factories: map[string]runtime.ServiceFactory{
-				"config":    func() (any, error) { return &config.Service{}, nil },
-				"display":   func() (any, error) { return "not a display service", nil },
-				"crypt":     func() (any, error) { return &crypt.Service{}, nil },
-				"i18n":      func() (any, error) { return &i18n.Service{}, nil },
+				"crypt":     func() (any, error) { return "not a crypt service", nil },
 				"workspace": func() (any, error) { return &workspace.Service{}, nil },
 			},
 			expectErr:    true,
-			expectErrStr: "display service has unexpected type",
+			expectErrStr: "crypt service has unexpected type",
 		},
 		{
 			name: "With non-nil app",
 			app:  &application.App{},
 			factories: map[string]runtime.ServiceFactory{
-				"config":    func() (any, error) { return &config.Service{}, nil },
-				"display":   func() (any, error) { return &display.Service{}, nil },
 				"crypt":     func() (any, error) { return &crypt.Service{}, nil },
-				"i18n":      func() (any, error) { return &i18n.Service{}, nil },
 				"workspace": func() (any, error) { return &workspace.Service{}, nil },
 			},
 			expectErr: false,
