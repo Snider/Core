@@ -8,7 +8,6 @@ import (
 	"github.com/Snider/Core/pkg/core"
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
-	"github.com/Snider/Core/pkg/help"
 	"github.com/Snider/Core/pkg/i18n"
 	"github.com/Snider/Core/pkg/workspace"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -21,7 +20,6 @@ type Runtime struct {
 	Core      *core.Core
 	Config    *config.Service
 	Display   *display.Service
-	Help      *help.Service
 	Crypt     *crypt.Service
 	I18n      *i18n.Service
 	Workspace *workspace.Service
@@ -37,7 +35,7 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 		core.WithWails(app),
 	}
 
-	for _, name := range []string{"config", "display", "help", "crypt", "i18n", "workspace"} {
+	for _, name := range []string{"config", "display", "crypt", "i18n", "workspace"} {
 		factory, ok := factories[name]
 		if !ok {
 			return nil, fmt.Errorf("service %s factory not provided", name)
@@ -65,10 +63,6 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 	if !ok {
 		return nil, fmt.Errorf("display service has unexpected type")
 	}
-	helpSvc, ok := services["help"].(*help.Service)
-	if !ok {
-		return nil, fmt.Errorf("help service has unexpected type")
-	}
 	cryptSvc, ok := services["crypt"].(*crypt.Service)
 	if !ok {
 		return nil, fmt.Errorf("crypt service has unexpected type")
@@ -87,7 +81,6 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 		Core:      coreInstance,
 		Config:    configSvc,
 		Display:   displaySvc,
-		Help:      helpSvc,
 		Crypt:     cryptSvc,
 		I18n:      i18nSvc,
 		Workspace: workspaceSvc,
@@ -101,7 +94,6 @@ func New(app *application.App) (*Runtime, error) {
 	return NewWithFactories(app, map[string]ServiceFactory{
 		"config":    func() (any, error) { return config.New() },
 		"display":   func() (any, error) { return display.New() },
-		"help":      func() (any, error) { return help.New() },
 		"crypt":     func() (any, error) { return crypt.New() },
 		"i18n":      func() (any, error) { return i18n.New() },
 		"workspace": func() (any, error) { return workspace.New() },
