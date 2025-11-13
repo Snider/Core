@@ -4,19 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Snider/Core/pkg/core"
-	"github.com/Snider/Core/pkg/crypt"
-	"github.com/Snider/Core/pkg/workspace"
+	"github.com/Snider/Core/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // Runtime is the container that holds all instantiated services.
 // Its fields are the concrete types, allowing Wails to bind them directly.
 type Runtime struct {
-	app       *application.App
-	Core      *core.Core
-	Crypt     *crypt.Service
-	Workspace *workspace.Service
+	app  *application.App
+	Core *core.Core
 }
 
 // ServiceFactory defines a function that creates a service instance.
@@ -29,7 +25,7 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 		core.WithWails(app),
 	}
 
-	for _, name := range []string{"crypt", "workspace"} {
+	for _, name := range []string{} {
 		factory, ok := factories[name]
 		if !ok {
 			return nil, fmt.Errorf("service %s factory not provided", name)
@@ -49,20 +45,10 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 	}
 
 	// --- Type Assertions ---
-	cryptSvc, ok := services["crypt"].(*crypt.Service)
-	if !ok {
-		return nil, fmt.Errorf("crypt service has unexpected type")
-	}
-	workspaceSvc, ok := services["workspace"].(*workspace.Service)
-	if !ok {
-		return nil, fmt.Errorf("workspace service has unexpected type")
-	}
 
 	rt := &Runtime{
-		app:       app,
-		Core:      coreInstance,
-		Crypt:     cryptSvc,
-		Workspace: workspaceSvc,
+		app:  app,
+		Core: coreInstance,
 	}
 
 	return rt, nil
@@ -70,10 +56,7 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 
 // New creates and wires together all application services.
 func New(app *application.App) (*Runtime, error) {
-	return NewWithFactories(app, map[string]ServiceFactory{
-		"crypt":     func() (any, error) { return crypt.New() },
-		"workspace": func() (any, error) { return workspace.New() },
-	})
+	return NewWithFactories(app, map[string]ServiceFactory{})
 }
 
 // ServiceName returns the name of the service. This is used by Wails to identify the service.
