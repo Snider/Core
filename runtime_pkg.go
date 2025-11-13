@@ -1,10 +1,9 @@
-package runtime
+package core
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/Snider/Core/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -12,7 +11,7 @@ import (
 // Its fields are the concrete types, allowing Wails to bind them directly.
 type Runtime struct {
 	app  *application.App
-	Core *core.Core
+	Core *Core
 }
 
 // ServiceFactory defines a function that creates a service instance.
@@ -21,8 +20,8 @@ type ServiceFactory func() (any, error)
 // NewWithFactories creates a new Runtime instance using the provided service factories.
 func NewWithFactories(app *application.App, factories map[string]ServiceFactory) (*Runtime, error) {
 	services := make(map[string]any)
-	coreOpts := []core.Option{
-		core.WithWails(app),
+	coreOpts := []Option{
+		WithWails(app),
 	}
 
 	for _, name := range []string{} {
@@ -36,10 +35,10 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 		}
 		services[name] = svc
 		svcCopy := svc
-		coreOpts = append(coreOpts, core.WithName(name, func(c *core.Core) (any, error) { return svcCopy, nil }))
+		coreOpts = append(coreOpts, WithName(name, func(c *Core) (any, error) { return svcCopy, nil }))
 	}
 
-	coreInstance, err := core.New(coreOpts...)
+	coreInstance, err := New(coreOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +53,8 @@ func NewWithFactories(app *application.App, factories map[string]ServiceFactory)
 	return rt, nil
 }
 
-// New creates and wires together all application services.
-func New(app *application.App) (*Runtime, error) {
+// NewRuntime creates and wires together all application services.
+func NewRuntime(app *application.App) (*Runtime, error) {
 	return NewWithFactories(app, map[string]ServiceFactory{})
 }
 

@@ -53,14 +53,14 @@ func TestCore_WithWails_Good(t *testing.T) {
 	assert.Equal(t, app, c.App)
 }
 
-//go:embed testdata
+//go:embed core/testdata
 var testFS embed.FS
 
 func TestCore_WithAssets_Good(t *testing.T) {
 	c, err := New(WithAssets(testFS))
 	assert.NoError(t, err)
 	assets := c.Assets()
-	file, err := assets.Open("testdata/test.txt")
+	file, err := assets.Open("core/testdata/test.txt")
 	assert.NoError(t, err)
 	defer file.Close()
 	content, err := io.ReadAll(file)

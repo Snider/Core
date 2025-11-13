@@ -13,7 +13,7 @@
 //     that is more informative than a raw stack trace.
 //   - Consistent error handling: Encourages a uniform approach to error
 //     handling across the entire codebase.
-package e
+package core
 
 import (
 	"fmt"

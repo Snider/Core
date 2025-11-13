@@ -52,7 +52,7 @@ func WithService(factory func(*Core) (any, error)) Option {
 		}
 		pkgPath := typeOfService.PkgPath()
 		parts := strings.Split(pkgPath, "/")
-		name := parts[len(parts)-1]
+		name := strings.ToLower(parts[len(parts)-1])
 
 		// --- IPC Handler Discovery ---
 		instanceValue := reflect.ValueOf(serviceInstance)
