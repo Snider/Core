@@ -2,7 +2,4 @@ go 1.25
 
 use (
 	.
-	./cmd/core
-	./cmd/core-gui
-	./cmd/examples/core-static-di
 )
