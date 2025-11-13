@@ -66,9 +66,31 @@ func TestNewWithFactories_Good(t *testing.T) {
 	rt, err := NewWithFactories(nil, factories)
 	assert.NoError(t, err)
 	assert.NotNil(t, rt)
-	// The production code doesn't actually use the factories, so we can't test that a service is created.
-	// We can only test that the function runs without error.
-	assert.Nil(t, rt.Core.Service("test"))
+	svc := rt.Core.Service("test")
+	assert.NotNil(t, svc)
+	mockSvc, ok := svc.(*MockService)
+	assert.True(t, ok)
+	assert.Equal(t, "test", mockSvc.Name)
+}
+
+func TestNewWithFactories_Bad(t *testing.T) {
+	factories := map[string]ServiceFactory{
+		"test": func() (any, error) {
+			return nil, assert.AnError
+		},
+	}
+	_, err := NewWithFactories(nil, factories)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, assert.AnError)
+}
+
+func TestNewWithFactories_Ugly(t *testing.T) {
+	factories := map[string]ServiceFactory{
+		"test": nil,
+	}
+	assert.Panics(t, func() {
+		_, _ = NewWithFactories(nil, factories)
+	})
 }
 
 func TestRuntime_Lifecycle_Good(t *testing.T) {
