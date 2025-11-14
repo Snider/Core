@@ -12,6 +12,14 @@ import (
 )
 
 // New initialises a Core instance using the provided options and performs the necessary setup.
+// It is the primary entry point for creating a new Core application.
+//
+// Example:
+//
+//	core, err := core.New(
+//		core.WithService(&MyService{}),
+//		core.WithAssets(assets),
+//	)
 func New(opts ...Option) (*Core, error) {
 	c := &Core{
 		services: make(map[string]any),
@@ -37,6 +45,20 @@ func New(opts ...Option) (*Core, error) {
 // WithService creates an Option that registers a service. It automatically discovers
 // the service name from its package path and registers its IPC handler if it
 // implements a method named `HandleIPCEvents`.
+//
+// Example:
+//
+//	// In myapp/services/calculator.go
+//	package services
+//
+//	type Calculator struct{}
+//
+//	func (s *Calculator) Add(a, b int) int { return a + b }
+//
+//	// In main.go
+//	import "myapp/services"
+//
+//	core.New(core.WithService(services.NewCalculator))
 func WithService(factory func(*Core) (any, error)) Option {
 	return func(c *Core) error {
 		serviceInstance, err := factory(c)
@@ -83,6 +105,8 @@ func WithName(name string, factory func(*Core) (any, error)) Option {
 	}
 }
 
+// WithWails creates an Option that injects the Wails application instance into the Core.
+// This is essential for services that need to interact with the Wails runtime.
 func WithWails(app *application.App) Option {
 	return func(c *Core) error {
 		c.App = app
@@ -90,6 +114,8 @@ func WithWails(app *application.App) Option {
 	}
 }
 
+// WithAssets creates an Option that registers the application's embedded assets.
+// This is necessary for the application to be able to serve its frontend.
 func WithAssets(fs embed.FS) Option {
 	return func(c *Core) error {
 		c.assets = fs
@@ -97,6 +123,9 @@ func WithAssets(fs embed.FS) Option {
 	}
 }
 
+// WithServiceLock creates an Option that prevents any further services from being
+// registered after the Core has been initialized. This is a security measure to
+// prevent late-binding of services that could have unintended consequences.
 func WithServiceLock() Option {
 	return func(c *Core) error {
 		c.serviceLock = true
@@ -106,14 +135,20 @@ func WithServiceLock() Option {
 
 // --- Core Methods ---
 
+// ServiceStartup is the entry point for the Core service's startup lifecycle.
+// It is called by Wails when the application starts.
 func (c *Core) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
 	return c.ACTION(ActionServiceStartup{})
 }
 
+// ServiceShutdown is the entry point for the Core service's shutdown lifecycle.
+// It is called by Wails when the application shuts down.
 func (c *Core) ServiceShutdown(ctx context.Context) error {
 	return c.ACTION(ActionServiceShutdown{})
 }
 
+// ACTION dispatches a message to all registered IPC handlers.
+// This is the primary mechanism for services to communicate with each other.
 func (c *Core) ACTION(msg Message) error {
 	c.ipcMu.RLock()
 	handlers := append([]func(*Core, Message) error(nil), c.ipcHandlers...)
@@ -128,18 +163,21 @@ func (c *Core) ACTION(msg Message) error {
 	return agg
 }
 
+// RegisterAction adds a new IPC handler to the Core.
 func (c *Core) RegisterAction(handler func(*Core, Message) error) {
 	c.ipcMu.Lock()
 	c.ipcHandlers = append(c.ipcHandlers, handler)
 	c.ipcMu.Unlock()
 }
 
+// RegisterActions adds multiple IPC handlers to the Core.
 func (c *Core) RegisterActions(handlers ...func(*Core, Message) error) {
 	c.ipcMu.Lock()
 	c.ipcHandlers = append(c.ipcHandlers, handlers...)
 	c.ipcMu.Unlock()
 }
 
+// RegisterService adds a new service to the Core.
 func (c *Core) RegisterService(name string, api any) error {
 	if c.servicesLocked {
 		return fmt.Errorf("core: service %q is not permitted by the serviceLock setting", name)
@@ -156,6 +194,8 @@ func (c *Core) RegisterService(name string, api any) error {
 	return nil
 }
 
+// Service retrieves a registered service by name.
+// It returns nil if the service is not found.
 func (c *Core) Service(name string) any {
 	c.serviceMu.RLock()
 	api, ok := c.services[name]
@@ -191,6 +231,7 @@ func MustServiceFor[T any](c *Core, name string) T {
 }
 
 // App returns the global application instance.
+// It panics if the Core has not been initialized.
 func App() *application.App {
 	if instance == nil {
 		panic("core.App() called before core.Setup() was successfully initialized")
@@ -210,8 +251,10 @@ func (c *Core) Display() Display {
 	return display
 }
 
+// Core returns the Core instance itself.
 func (c *Core) Core() *Core { return c }
 
+// Assets returns the embedded filesystem containing the application's assets.
 func (c *Core) Assets() embed.FS {
 	return c.assets
 }
