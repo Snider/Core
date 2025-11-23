@@ -30,12 +30,7 @@ func New(opts ...Option) (*Core, error) {
 			return nil, err
 		}
 	}
-	c.once.Do(func() {
-		c.initErr = nil
-	})
-	if c.initErr != nil {
-		return nil, c.initErr
-	}
+
 	if c.serviceLock {
 		c.servicesLocked = true
 	}
@@ -138,13 +133,43 @@ func WithServiceLock() Option {
 // ServiceStartup is the entry point for the Core service's startup lifecycle.
 // It is called by Wails when the application starts.
 func (c *Core) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
-	return c.ACTION(ActionServiceStartup{})
+	c.serviceMu.RLock()
+	startables := append([]Startable(nil), c.startables...)
+	c.serviceMu.RUnlock()
+
+	var agg error
+	for _, s := range startables {
+		if err := s.OnStartup(ctx); err != nil {
+			agg = errors.Join(agg, err)
+		}
+	}
+
+	if err := c.ACTION(ActionServiceStartup{}); err != nil {
+		agg = errors.Join(agg, err)
+	}
+
+	return agg
 }
 
 // ServiceShutdown is the entry point for the Core service's shutdown lifecycle.
 // It is called by Wails when the application shuts down.
 func (c *Core) ServiceShutdown(ctx context.Context) error {
-	return c.ACTION(ActionServiceShutdown{})
+	var agg error
+	if err := c.ACTION(ActionServiceShutdown{}); err != nil {
+		agg = errors.Join(agg, err)
+	}
+
+	c.serviceMu.RLock()
+	stoppables := append([]Stoppable(nil), c.stoppables...)
+	c.serviceMu.RUnlock()
+
+	for i := len(stoppables) - 1; i >= 0; i-- {
+		if err := stoppables[i].OnShutdown(ctx); err != nil {
+			agg = errors.Join(agg, err)
+		}
+	}
+
+	return agg
 }
 
 // ACTION dispatches a message to all registered IPC handlers.
@@ -191,6 +216,14 @@ func (c *Core) RegisterService(name string, api any) error {
 		return fmt.Errorf("core: service %q already registered", name)
 	}
 	c.services[name] = api
+
+	if s, ok := api.(Startable); ok {
+		c.startables = append(c.startables, s)
+	}
+	if s, ok := api.(Stoppable); ok {
+		c.stoppables = append(c.stoppables, s)
+	}
+
 	return nil
 }
 

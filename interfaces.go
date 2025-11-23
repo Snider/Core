@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"embed"
 	"io"
 	"sync"
@@ -46,6 +47,16 @@ type Option func(*Core) error
 // Any struct can be a message, allowing for structured data to be passed between services.
 type Message interface{}
 
+// Startable is an interface for services that need to perform initialization.
+type Startable interface {
+	OnStartup(ctx context.Context) error
+}
+
+// Stoppable is an interface for services that need to perform cleanup.
+type Stoppable interface {
+	OnShutdown(ctx context.Context) error
+}
+
 // Core is the central application object that manages services, assets, and communication.
 type Core struct {
 	once           sync.Once
@@ -59,6 +70,8 @@ type Core struct {
 	serviceMu      sync.RWMutex
 	services       map[string]any
 	servicesLocked bool
+	startables     []Startable
+	stoppables     []Stoppable
 }
 
 var instance *Core
