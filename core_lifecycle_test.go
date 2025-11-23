@@ -34,14 +34,6 @@ type MockLifecycle struct {
 	MockStoppable
 }
 
-func (m *MockLifecycle) OnStartup(ctx context.Context) error {
-	return m.MockStartable.OnStartup(ctx)
-}
-
-func (m *MockLifecycle) OnShutdown(ctx context.Context) error {
-	return m.MockStoppable.OnShutdown(ctx)
-}
-
 func TestCore_LifecycleInterfaces(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
