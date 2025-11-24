@@ -1,11 +1,11 @@
 .PHONY: all dev prod-docs development-docs
 
 all:
-	(cd cmd/core-app && task build)
+	(cd cmd/core-gui && task build)
 
 .ONESHELL:
 dev:
-	(cd cmd/core-app && task dev)
+	(cd cmd/core-gui && task dev)
 
 pre-commit:
 	coderabbit review --prompt-only

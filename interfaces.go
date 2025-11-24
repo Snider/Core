@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"embed"
-	"io"
 	"sync"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -82,61 +81,4 @@ type Config interface {
 	Get(key string, out any) error
 	// Set stores a configuration value by key.
 	Set(key string, v any) error
-}
-
-// WindowConfig represents the configuration for a window.
-type WindowConfig struct {
-	Name   string
-	Title  string
-	URL    string
-	Width  int
-	Height int // Add other common window options here as needed
-}
-
-// WindowOption configures window creation.
-type WindowOption interface {
-	// Apply applies the window option to the given configuration.
-	Apply(*WindowConfig)
-}
-
-// Display manages windows and UI.
-type Display interface {
-	// OpenWindow creates and displays a new window with the given options.
-	OpenWindow(opts ...WindowOption) error
-}
-
-// Help manages the in-app documentation and help system.
-type Help interface {
-	// Show displays the main help topic.
-	Show() error
-	// ShowAt displays the help topic for the given anchor.
-	ShowAt(anchor string) error
-}
-
-// Crypt provides cryptographic functions.
-type Crypt interface {
-	// EncryptPGP encrypts data using PGP and writes the result to the given writer.
-	EncryptPGP(writer io.Writer, recipientPath, data string, signerPath, signerPassphrase *string) (string, error)
-	// DecryptPGP decrypts a PGP message.
-	DecryptPGP(recipientPath, message, passphrase string, signerPath *string) (string, error)
-}
-
-// I18n provides internationalization and localization services.
-type I18n interface {
-	// Translate returns the translated string for the given key.
-	Translate(key string) string
-	// SetLanguage changes the active language.
-	SetLanguage(lang string) error
-}
-
-// Workspace manages user workspaces.
-type Workspace interface {
-	// CreateWorkspace creates a new workspace with the given identifier and password.
-	CreateWorkspace(identifier, password string) (string, error)
-	// SwitchWorkspace changes the active workspace.
-	SwitchWorkspace(name string) error
-	// WorkspaceFileGet retrieves the content of a file from the current workspace.
-	WorkspaceFileGet(filename string) (string, error)
-	// WorkspaceFileSet writes content to a file in the current workspace.
-	WorkspaceFileSet(filename, content string) error
 }

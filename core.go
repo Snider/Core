@@ -278,13 +278,6 @@ func (c *Core) Config() Config {
 	return cfg
 }
 
-// Display returns the registered Display service.
-func (c *Core) Display() Display {
-	display := MustServiceFor[Display](c, "display")
-	return display
-}
-
-// Core returns the Core instance itself.
 func (c *Core) Core() *Core { return c }
 
 // Assets returns the embedded filesystem containing the application's assets.
