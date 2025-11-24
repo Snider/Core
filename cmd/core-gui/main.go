@@ -4,7 +4,7 @@ import (
 	"embed"
 	"log"
 
-	"github.com/Snider/Core/runtime"
+	"github.com/Snider/Core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -18,7 +18,7 @@ func main() {
 		},
 	})
 
-	rt, err := runtime.New(app)
+	rt, err := core.NewRuntime(app)
 	if err != nil {
 		log.Fatal(err)
 	}
