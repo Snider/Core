@@ -2,4 +2,5 @@ go 1.25
 
 use (
 	.
+	./cmd/core-gui
 )
