@@ -4,7 +4,7 @@ import (
 	"embed"
 	"log"
 
-	"github.com/Snider/Core/runtime"
+	"github.com/Snider/Core
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	})
 
 	// 2. Instantiate all services using the static runtime
-	appServices, err := runtime.New()
+	appServices, err := core.New()
 	if err != nil {
 		log.Fatalf("Failed to build application with static runtime: %v", err)
 	}
