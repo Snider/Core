@@ -10,6 +10,7 @@ import (
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
 	"github.com/Snider/Core/pkg/help"
+	"github.com/Snider/Core/pkg/io"
 	"github.com/Snider/Core/pkg/workspace"
 )
 
@@ -62,7 +63,7 @@ func TestNewServiceInitializationError(t *testing.T) {
 		"help":      func() (any, error) { return help.New() },
 		"crypt":     func() (any, error) { return crypt.New() },
 		"i18n":      func() (any, error) { return nil, errors.New("i18n service failed to initialize") }, // This factory will fail
-		"workspace": func() (any, error) { return workspace.New() },
+		"workspace": func() (any, error) { return workspace.New(io.Local) },
 	}
 
 	runtime, err := newWithFactories(factories)

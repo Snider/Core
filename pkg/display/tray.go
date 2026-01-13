@@ -1,26 +1,33 @@
 package display
 
 import (
-	_ "embed"
+	"embed"
+	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// setupTray configures and creates the system tray icon and menu.
+//go:embed assets/apptray.png
+var assets embed.FS
+
+// systemTray configures and creates the system tray icon and menu.
 func (s *Service) systemTray() {
 
 	systray := s.Core().App.SystemTray.New()
 	systray.SetTooltip("Core")
 	systray.SetLabel("Core")
-	//appTrayIcon, _ := d.assets.ReadFile("assets/apptray.png")
-	//
-	//if runtime.GOOS == "darwin" {
-	//	systray.SetTemplateIcon(appTrayIcon)
-	//} else {
-	//	// Support for light/dark mode icons
-	//	systray.SetDarkModeIcon(appTrayIcon)
-	//	systray.SetIcon(appTrayIcon)
-	//}
+
+	// Load and set tray icon
+	appTrayIcon, err := assets.ReadFile("assets/apptray.png")
+	if err == nil {
+		if runtime.GOOS == "darwin" {
+			systray.SetTemplateIcon(appTrayIcon)
+		} else {
+			// Support for light/dark mode icons
+			systray.SetDarkModeIcon(appTrayIcon)
+			systray.SetIcon(appTrayIcon)
+		}
+	}
 	// Create a hidden window for the system tray menu to interact with
 	trayWindow, _ := s.NewWithStruct(&Window{
 		Name:      "system-tray",

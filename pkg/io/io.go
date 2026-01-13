@@ -1,5 +1,9 @@
 package io
 
+import (
+	"github.com/Snider/Core/pkg/io/local"
+)
+
 // Medium defines the standard interface for a storage backend.
 // This allows for different implementations (e.g., local disk, S3, SFTP)
 // to be used interchangeably.
@@ -23,5 +27,15 @@ type Medium interface {
 	FileSet(path, content string) error
 }
 
-// Pre-initialized, sandboxed medium for the local filesystem.
+// Local is a pre-initialized medium for the local filesystem.
+// It uses "/" as root, providing unsandboxed access to the filesystem.
+// For sandboxed access, create a new local.Medium with a specific root path.
 var Local Medium
+
+func init() {
+	var err error
+	Local, err = local.New("/")
+	if err != nil {
+		panic("io: failed to initialize Local medium: " + err.Error())
+	}
+}

@@ -87,7 +87,3 @@ func (s *Service) SelectDirectory() (string, error) {
 	dialog.SetTitle("Select Project Directory")
 	return dialog.PromptForSingleSelection()
 }
-
-var instance *Window
-
-func (s *Service) Window() *Window { return instance }

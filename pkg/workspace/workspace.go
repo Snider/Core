@@ -10,6 +10,7 @@ import (
 	"github.com/Snider/Core/pkg/crypt/lthn"
 	"github.com/Snider/Core/pkg/crypt/openpgp"
 	"github.com/Snider/Core/pkg/io"
+	"github.com/Snider/Core/pkg/io/local"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -46,18 +47,13 @@ func newWorkspaceService() (*Service, error) {
 
 // New is the constructor for static dependency injection.
 // It creates a Service instance without initializing the core.Runtime field.
-// Dependencies are passed directly here.
-func New() (*Service, error) {
+// The medium parameter is required for file operations.
+func New(medium io.Medium) (*Service, error) {
 	s, err := newWorkspaceService()
 	if err != nil {
 		return nil, err
 	}
-	//s.medium = medium
-	// Initialize the service after creation.
-	// Note: ServiceStartup will now get config from s.Runtime.Config()
-	//if err := s.ServiceStartup(context.Background(), application.ServiceOptions{}); err != nil {
-	//	return nil, fmt.Errorf("workspace service startup failed: %w", err)
-	//}
+	s.medium = medium
 	return s, nil
 }
 
@@ -70,6 +66,18 @@ func Register(c *core.Core) (any, error) {
 		return nil, err
 	}
 	s.Runtime = core.NewRuntime(c, Options{})
+
+	// Initialize the local medium for file operations
+	var workspaceDir string
+	if err := c.Config().Get("workspaceDir", &workspaceDir); err != nil {
+		return nil, fmt.Errorf("workspace: failed to get workspaceDir from config: %w", err)
+	}
+	medium, err := local.New(workspaceDir)
+	if err != nil {
+		return nil, fmt.Errorf("workspace: failed to create local medium: %w", err)
+	}
+	s.medium = medium
+
 	return s, nil
 }
 
@@ -99,25 +107,24 @@ func (s *Service) getWorkspaceDir() (string, error) {
 
 // ServiceStartup initializes the service, loading the workspace list.
 func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) error {
-	var err error
 	workspaceDir, err := s.getWorkspaceDir()
 	if err != nil {
 		return err
 	}
 
+	// Load existing workspace list if it exists
 	listPath := filepath.Join(workspaceDir, listFile)
-	if listPath != "" {
+	if s.medium.IsFile(listPath) {
+		content, err := s.medium.FileGet(listPath)
+		if err != nil {
+			return fmt.Errorf("failed to read workspace list: %w", err)
+		}
+		if err := json.Unmarshal([]byte(content), &s.workspaceList); err != nil {
+			// Log warning but continue with empty list
+			fmt.Printf("Warning: could not parse workspace list: %v\n", err)
+			s.workspaceList = make(map[string]string)
+		}
 	}
-	//if s.medium.IsFile(listPath) {
-	//	content, err := s.medium.FileGet(listPath)
-	//	if err != nil {
-	//		return fmt.Errorf("failed to read workspace list: %w", err)
-	//	}
-	//	if err := json.Unmarshal([]byte(content), &s.workspaceList); err != nil {
-	//		fmt.Printf("Warning: could not parse workspace list: %v\n", err)
-	//		s.workspaceList = make(map[string]string)
-	//	}
-	//}
 
 	return s.SwitchWorkspace(defaultWorkspace)
 }
@@ -187,9 +194,9 @@ func (s *Service) SwitchWorkspace(name string) error {
 	}
 
 	path := filepath.Join(workspaceDir, name)
-	//if err := s.medium.EnsureDir(path); err != nil {
-	//	return fmt.Errorf("failed to ensure workspace directory exists: %w", err)
-	//}
+	if err := s.medium.EnsureDir(path); err != nil {
+		return fmt.Errorf("failed to ensure workspace directory exists: %w", err)
+	}
 
 	s.activeWorkspace = &Workspace{
 		Name: name,
@@ -215,4 +222,18 @@ func (s *Service) WorkspaceFileSet(filename, content string) error {
 	}
 	path := filepath.Join(s.activeWorkspace.Path, filename)
 	return s.medium.FileSet(path, content)
+}
+
+// ListWorkspaces returns the list of workspace IDs.
+func (s *Service) ListWorkspaces() []string {
+	workspaces := make([]string, 0, len(s.workspaceList))
+	for id := range s.workspaceList {
+		workspaces = append(workspaces, id)
+	}
+	return workspaces
+}
+
+// ActiveWorkspace returns the currently active workspace, or nil if none is active.
+func (s *Service) ActiveWorkspace() *Workspace {
+	return s.activeWorkspace
 }

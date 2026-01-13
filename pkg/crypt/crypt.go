@@ -8,6 +8,7 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -16,6 +17,20 @@ import (
 	"github.com/Snider/Core/pkg/crypt/lthn"
 	"github.com/Snider/Core/pkg/crypt/openpgp"
 )
+
+// HandleIPCEvents processes IPC messages for the crypt service.
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+	switch msg.(type) {
+	case core.ActionServiceStartup:
+		// Crypt is stateless, no startup needed.
+		return nil
+	default:
+		if c.App != nil && c.App.Logger != nil {
+			c.App.Logger.Debug("Crypt: Unhandled message type", "type", fmt.Sprintf("%T", msg))
+		}
+	}
+	return nil
+}
 
 // Options holds configuration for the crypt service.
 type Options struct{}

@@ -13,6 +13,20 @@ import (
 	"github.com/adrg/xdg"
 )
 
+// HandleIPCEvents processes IPC messages for the config service.
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+	switch msg.(type) {
+	case core.ActionServiceStartup:
+		// Config initializes during Register(), no additional startup needed.
+		return nil
+	default:
+		if c.App != nil && c.App.Logger != nil {
+			c.App.Logger.Debug("Config: Unhandled message type", "type", fmt.Sprintf("%T", msg))
+		}
+	}
+	return nil
+}
+
 const appName = "lethean"
 const configFileName = "config.json"
 

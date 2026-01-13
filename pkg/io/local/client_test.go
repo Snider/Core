@@ -152,3 +152,43 @@ func TestIsFile(t *testing.T) {
 	// Test with path traversal attempt
 	assert.False(t, medium.IsFile("../bad_file.txt"))
 }
+
+func TestFileGetFileSet(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_fileget_fileset_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	fileName := "data.txt"
+	content := "Hello, FileGet/FileSet!"
+
+	// Test FileSet
+	err = medium.FileSet(fileName, content)
+	assert.NoError(t, err)
+
+	// Verify file was written
+	readContent, err := os.ReadFile(filepath.Join(testRoot, fileName))
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(readContent))
+
+	// Test FileGet
+	gotContent, err := medium.FileGet(fileName)
+	assert.NoError(t, err)
+	assert.Equal(t, content, gotContent)
+
+	// Test FileGet on non-existent file
+	_, err = medium.FileGet("nonexistent.txt")
+	assert.Error(t, err)
+
+	// Test FileSet with path traversal attempt
+	err = medium.FileSet("../bad.txt", "malicious")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "path traversal attempt detected")
+
+	// Test FileGet with path traversal attempt
+	_, err = medium.FileGet("../bad.txt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "path traversal attempt detected")
+}

@@ -129,4 +129,39 @@ func TestConfigService(t *testing.T) {
 			t.Errorf("Expected value '%s', got '%s'", expectedValue, actualValue)
 		}
 	})
+
+	t.Run("HandleIPCEvents with ActionServiceStartup", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		c := newTestCore(t)
+		serviceAny, err := Register(c)
+		if err != nil {
+			t.Fatalf("Register() failed: %v", err)
+		}
+
+		s := serviceAny.(*Service)
+		err = s.HandleIPCEvents(c, core.ActionServiceStartup{})
+		if err != nil {
+			t.Errorf("HandleIPCEvents(ActionServiceStartup) should not error, got: %v", err)
+		}
+	})
+
+	t.Run("HandleIPCEvents with unknown message type", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		c := newTestCore(t)
+		serviceAny, err := Register(c)
+		if err != nil {
+			t.Fatalf("Register() failed: %v", err)
+		}
+
+		s := serviceAny.(*Service)
+		// Pass an arbitrary type as unknown message
+		err = s.HandleIPCEvents(c, "unknown message")
+		if err != nil {
+			t.Errorf("HandleIPCEvents(unknown) should not error, got: %v", err)
+		}
+	})
 }

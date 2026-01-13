@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Snider/Core/pkg/core"
+	"github.com/Snider/Core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -37,64 +38,19 @@ func (m *mockConfig) Set(key string, v any) error {
 	return nil
 }
 
-// MockMedium implements the Medium interface for testing purposes.
-type MockMedium struct {
-	Files map[string]string
-	Dirs  map[string]bool
-}
-
-func NewMockMedium() *MockMedium {
-	return &MockMedium{
-		Files: make(map[string]string),
-		Dirs:  make(map[string]bool),
-	}
-}
-
-func (m *MockMedium) FileGet(path string) (string, error) {
-	content, ok := m.Files[path]
-	if !ok {
-		return "", assert.AnError // Simulate file not found error
-	}
-	return content, nil
-}
-
-func (m *MockMedium) FileSet(path, content string) error {
-	m.Files[path] = content
-	return nil
-}
-
-func (m *MockMedium) EnsureDir(path string) error {
-	m.Dirs[path] = true
-	return nil
-}
-
-func (m *MockMedium) IsFile(path string) bool {
-	_, exists := m.Files[path]
-	return exists
-}
-
-func (m *MockMedium) Read(path string) (string, error) {
-	return m.FileGet(path)
-}
-
-func (m *MockMedium) Write(path, content string) error {
-	return m.FileSet(path, content)
-}
-
 // newTestService creates a workspace service instance with mocked dependencies.
-func newTestService(t *testing.T, workspaceDir string) (*Service, *MockMedium) {
+func newTestService(t *testing.T, workspaceDir string) (*Service, *io.MockMedium) {
 	coreInstance, err := core.New()
 	assert.NoError(t, err)
 
 	mockCfg := &mockConfig{values: map[string]interface{}{"workspaceDir": workspaceDir}}
 	coreInstance.RegisterService("config", mockCfg)
 
-	service, err := New()
+	mockMedium := io.NewMockMedium()
+	service, err := New(mockMedium)
 	assert.NoError(t, err)
 
 	service.Runtime = core.NewRuntime(coreInstance, Options{})
-	mockMedium := NewMockMedium()
-	service.medium = mockMedium
 
 	return service, mockMedium
 }
