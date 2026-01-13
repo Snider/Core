@@ -9,6 +9,7 @@ import (
 	"github.com/Snider/Core/pkg/display"
 	"github.com/Snider/Core/pkg/help"
 	"github.com/Snider/Core/pkg/i18n"
+	"github.com/Snider/Core/pkg/io"
 	"github.com/Snider/Core/pkg/workspace"
 	// Import the ABSTRACT contracts (interfaces).
 	"github.com/Snider/Core/pkg/core"
@@ -99,6 +100,6 @@ func New() (*Runtime, error) {
 		"help":      func() (any, error) { return help.New() },
 		"crypt":     func() (any, error) { return crypt.New() },
 		"i18n":      func() (any, error) { return i18n.New() },
-		"workspace": func() (any, error) { return workspace.New() },
+		"workspace": func() (any, error) { return workspace.New(io.Local) },
 	})
 }
