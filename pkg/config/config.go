@@ -340,3 +340,58 @@ func (s *Service) Set(key string, v any) error {
 
 	return fmt.Errorf("key '%s' not found in config", key)
 }
+
+// EnableFeature enables a feature by adding it to the features list.
+// If the feature is already enabled, this is a no-op.
+//
+// Example:
+//
+//	err := cfg.EnableFeature("dark_mode")
+//	if err != nil {
+//		log.Printf("Failed to enable feature: %v", err)
+//	}
+func (s *Service) EnableFeature(feature string) error {
+	// Check if feature is already enabled
+	for _, f := range s.Features {
+		if f == feature {
+			return nil // Already enabled
+		}
+	}
+	s.Features = append(s.Features, feature)
+	return s.Save()
+}
+
+// DisableFeature disables a feature by removing it from the features list.
+// If the feature is not enabled, this is a no-op.
+//
+// Example:
+//
+//	err := cfg.DisableFeature("dark_mode")
+//	if err != nil {
+//		log.Printf("Failed to disable feature: %v", err)
+//	}
+func (s *Service) DisableFeature(feature string) error {
+	for i, f := range s.Features {
+		if f == feature {
+			s.Features = append(s.Features[:i], s.Features[i+1:]...)
+			return s.Save()
+		}
+	}
+	return nil // Feature wasn't enabled, no-op
+}
+
+// IsFeatureEnabled checks if a feature is enabled.
+//
+// Example:
+//
+//	if cfg.IsFeatureEnabled("dark_mode") {
+//		// Apply dark mode styles
+//	}
+func (s *Service) IsFeatureEnabled(feature string) bool {
+	for _, f := range s.Features {
+		if f == feature {
+			return true
+		}
+	}
+	return false
+}

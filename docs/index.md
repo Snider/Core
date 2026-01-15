@@ -1,18 +1,16 @@
-# Core Library Overview
+# Core Framework
 
-Core is an opinionated framework for building robust, production-grade Go desktop applications using the [Wails](https://wails.io/) framework. It provides a modular, service-based architecture that simplifies development and ensures maintainability.
+Core is a Web3 Framework for building production-grade Go desktop applications using [Wails v3](https://wails.io/). It replaces Electron with a native Go backend while providing a modern, service-based architecture.
 
-## Key Features
+## Why Core?
 
-- **Modular Architecture**: Core is divided into a set of independent services, each responsible for a specific domain (e.g., `config`, `crypt`, `display`).
-- **Unified Runtime**: A central `Runtime` object initializes and manages the lifecycle of all services, providing a simple and consistent entry point for your application.
-- **Dependency Injection**: Services are designed to be testable and decoupled, with dependencies injected at runtime.
-- **Standardized Error Handling**: A custom error package (`pkg/e`) provides a consistent way to wrap and handle errors throughout the application.
-- **Automated Documentation**: This documentation site is automatically generated from the Go source code, ensuring it stays in sync with the public API.
+- **Native Performance**: Go backend with native webview, no Chromium bloat
+- **Service Architecture**: Modular, testable services with dependency injection
+- **MCP Integration**: Built-in Model Context Protocol support for AI tooling
+- **Cross-Platform**: macOS, Windows, and Linux from a single codebase
+- **TypeScript Bindings**: Auto-generated bindings for frontend integration
 
-## Getting Started
-
-To start using the Core library, initialize the runtime in your `main.go` file:
+## Quick Example
 
 ```go
 package main
@@ -21,32 +19,58 @@ import (
     "embed"
     "log"
 
-    "github.com/Snider/Core"
+    "github.com/Snider/Core/pkg/core"
+    "github.com/Snider/Core/pkg/display"
     "github.com/wailsapp/wails/v3/pkg/application"
 )
 
-//go:embed all:public
+//go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
-    app := application.New(application.Options{
-        Assets: application.AssetOptions{
-            Handler: application.AssetFileServerFS(assets),
-        },
-    })
-
-    rt, err := core.NewRuntime(app)
+    // Create the Core with services
+    c, err := core.New(
+        core.WithAssets(assets),
+        core.WithService(display.NewService),
+        core.WithServiceLock(),
+    )
     if err != nil {
         log.Fatal(err)
     }
 
-    app.RegisterService(application.NewService(rt))
+    // Create Wails app
+    app := application.New(application.Options{
+        Name: "MyApp",
+    })
 
-    err = app.Run()
-    if err != nil {
+    // Run
+    if err := app.Run(); err != nil {
         log.Fatal(err)
     }
 }
 ```
 
-For more detailed information on each service, see the **Services** section in the navigation.
+## Core Services
+
+| Service | Description |
+|---------|-------------|
+| **Core** | Central service container and lifecycle management |
+| **Display** | Window management, dialogs, tray, clipboard |
+| **WebView** | JavaScript execution, DOM interaction, screenshots |
+| **MCP** | Model Context Protocol server for AI tool integration |
+| **Config** | Application configuration and state persistence |
+| **Crypt** | Encryption, signing, key management |
+| **I18n** | Internationalization and localization |
+| **IO** | File system operations |
+| **Workspace** | Project and path management |
+
+## Getting Started
+
+1. [Installation](getting-started/installation.md) - Install Go, Wails, and Core
+2. [Quick Start](getting-started/quickstart.md) - Build your first app
+3. [Architecture](getting-started/architecture.md) - Understand the design
+
+## Links
+
+- **Repository**: [github.com/Snider/Core](https://github.com/Snider/Core)
+- **Issues**: [GitHub Issues](https://github.com/Snider/Core/issues)

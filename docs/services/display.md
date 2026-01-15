@@ -1,56 +1,243 @@
----
-title: display
----
-# Service: `display`
+# Display Service
 
-The `display` service manages the application's GUI windows, dialogs, and system tray interactions.
+The Display service (`pkg/display`) provides comprehensive window management, dialogs, system tray, clipboard, and notification functionality.
 
-## Types
+## Features
 
-### `type ActionOpenWindow`
+- Window creation, positioning, and lifecycle
+- System tray with menus
+- Native dialogs (open, save, confirm)
+- Clipboard operations
+- System notifications
+- Multi-monitor support
+- Layout management
 
-`ActionOpenWindow` is an IPC message used to request the creation of a new window.
+## Basic Usage
 
 ```go
-type ActionOpenWindow struct {
-    application.WebviewWindowOptions
+import "github.com/Snider/Core/pkg/display"
+
+// Register with Core
+c, _ := core.New(
+    core.WithService(display.NewService),
+)
+
+// Get service
+svc := core.MustServiceFor[*display.Service](c, "display")
+```
+
+## Window Management
+
+### Create Window
+
+```go
+info, err := svc.CreateWindow(display.CreateWindowOptions{
+    Name:   "settings",
+    Title:  "Settings",
+    URL:    "/settings",
+    Width:  800,
+    Height: 600,
+    X:      100,
+    Y:      100,
+})
+```
+
+### Position & Size
+
+```go
+// Move window
+svc.SetWindowPosition("main", 100, 100)
+
+// Resize window
+svc.SetWindowSize("main", 1200, 800)
+
+// Both at once
+svc.SetWindowBounds("main", 100, 100, 1200, 800)
+```
+
+### Window State
+
+```go
+svc.MaximizeWindow("main")
+svc.MinimizeWindow("main")
+svc.RestoreWindow("main")
+svc.FocusWindow("main")
+svc.SetWindowFullscreen("main", true)
+svc.SetWindowAlwaysOnTop("main", true)
+```
+
+### List Windows
+
+```go
+windows := svc.ListWindowInfos()
+for _, w := range windows {
+    fmt.Printf("%s: %dx%d at (%d,%d)\n",
+        w.Name, w.Width, w.Height, w.X, w.Y)
 }
 ```
 
-### `type WindowOption`
+## Dialogs
 
-`WindowOption` is a functional option type for configuring a window during creation.
+### File Dialogs
 
 ```go
-type WindowOption func(*application.WebviewWindowOptions) error
+// Open file
+path, err := svc.OpenSingleFileDialog(display.OpenFileOptions{
+    Title: "Select File",
+    Filters: []display.FileFilter{
+        {DisplayName: "Images", Pattern: "*.png;*.jpg"},
+    },
+})
+
+// Open multiple files
+paths, err := svc.OpenFileDialog(display.OpenFileOptions{
+    Title:         "Select Files",
+    AllowMultiple: true,
+})
+
+// Save file
+path, err := svc.SaveFileDialog(display.SaveFileOptions{
+    Title:           "Save As",
+    DefaultFilename: "document.txt",
+})
+
+// Select directory
+dir, err := svc.OpenDirectoryDialog(display.OpenDirectoryOptions{
+    Title: "Select Folder",
+})
 ```
 
-## Methods
+### Confirm Dialog
 
-### `func OpenWindow(opts ...WindowOption) error`
+```go
+confirmed, err := svc.ConfirmDialog("Delete File", "Are you sure?")
+if confirmed {
+    // User clicked Yes
+}
+```
 
-`OpenWindow` creates and shows a new window with the specified options.
+## System Tray
 
-### `func NewWithURL(url string) (*application.WebviewWindow, error)`
+```go
+// Set tooltip
+svc.SetTrayTooltip("My Application")
 
-`NewWithURL` creates a new window pointing to the specified URL using default settings.
+// Set label
+svc.SetTrayLabel("Running")
 
-### `func NewWithOptions(opts ...WindowOption) (*application.WebviewWindow, error)`
+// Set icon (PNG bytes)
+iconData, _ := os.ReadFile("icon.png")
+svc.SetTrayIcon(iconData)
 
-`NewWithOptions` creates a new window by applying a series of `WindowOption` functions.
+// Set menu
+svc.SetTrayMenu([]display.TrayMenuItem{
+    {Label: "Open", ActionID: "open"},
+    {Label: "Settings", ActionID: "settings"},
+    {IsSeparator: true},
+    {Label: "Quit", ActionID: "quit"},
+})
+```
 
-### `func SelectDirectory() (string, error)`
+## Clipboard
 
-`SelectDirectory` opens a native directory selection dialog and returns the selected path.
+```go
+// Write to clipboard
+svc.WriteClipboard("Hello, World!")
 
-### `func ShowEnvironmentDialog()`
+// Read from clipboard
+text, err := svc.ReadClipboard()
 
-`ShowEnvironmentDialog` displays a dialog containing detailed information about the application's runtime environment (OS, version, etc.).
+// Check if has content
+hasContent := svc.HasClipboard()
 
-### `func ServiceStartup(ctx context.Context, options application.ServiceOptions) error`
+// Clear clipboard
+svc.ClearClipboard()
+```
 
-`ServiceStartup` initializes the display service, setting up the main window, menu, and system tray.
+## Notifications
 
-### `func HandleIPCEvents(c *core.Core, msg core.Message) error`
+```go
+// Basic notification
+svc.ShowNotification(display.NotificationOptions{
+    Title:   "Download Complete",
+    Message: "Your file has been downloaded.",
+})
 
-`HandleIPCEvents` processes display-related IPC messages, such as `ActionOpenWindow`.
+// Convenience methods
+svc.ShowInfoNotification("Info", "Operation completed")
+svc.ShowWarningNotification("Warning", "Low disk space")
+svc.ShowErrorNotification("Error", "Connection failed")
+```
+
+## Multi-Monitor Support
+
+```go
+// List all screens
+screens := svc.GetScreens()
+
+// Get primary screen
+primary, _ := svc.GetPrimaryScreen()
+
+// Get screen at point
+screen, _ := svc.GetScreenAtPoint(500, 300)
+
+// Get screen for window
+screen, _ := svc.GetScreenForWindow("main")
+
+// Get work areas (excluding dock/taskbar)
+workAreas := svc.GetWorkAreas()
+```
+
+## Layout Management
+
+```go
+// Save current layout
+svc.SaveLayout("coding")
+
+// Restore layout
+svc.RestoreLayout("coding")
+
+// List saved layouts
+layouts := svc.ListLayouts()
+
+// Tile windows
+svc.TileWindows(display.TileModeGrid, nil)
+
+// Snap to edge
+svc.SnapWindow("main", display.SnapPositionLeft)
+
+// Apply workflow preset
+svc.ApplyWorkflowLayout(display.WorkflowCoding)
+```
+
+## Theme
+
+```go
+theme := svc.GetTheme()
+fmt.Println(theme.IsDark)
+```
+
+## Frontend Usage (TypeScript)
+
+```typescript
+import {
+    CreateWindow,
+    SetWindowPosition,
+    ShowNotification,
+    OpenFileDialog
+} from '@bindings/display/service';
+
+// Create window
+await CreateWindow({
+    name: "settings",
+    title: "Settings",
+    width: 800,
+    height: 600
+});
+
+// Show notification
+await ShowNotification({
+    title: "Success",
+    message: "Settings saved!"
+});
+```

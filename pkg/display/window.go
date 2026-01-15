@@ -57,7 +57,7 @@ func applyOptions(opts ...WindowOption) *Window {
 
 // NewWithStruct creates a new window using the provided options and returns its handle.
 func (s *Service) NewWithStruct(options *Window) (*application.WebviewWindow, error) {
-	return s.Core().App.Window.NewWithOptions(*options), nil
+	return s.app.Window().NewWithOptions(*options), nil
 }
 
 // NewWithOptions creates a new window by applying a series of options.

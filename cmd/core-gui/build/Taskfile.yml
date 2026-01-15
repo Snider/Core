@@ -9,7 +9,7 @@ tasks:
 
   install:public:deps:
     summary: Install public dependencies
-    dir: public
+    dir: frontend
     sources:
       - package.json
       - package-lock.json
@@ -24,7 +24,7 @@ tasks:
   build:public:
     label: build:public (PRODUCTION={{.PRODUCTION}})
     summary: Build the public folder
-    dir: public
+    dir: frontend
     sources:
       - "**/*"
     generates:
@@ -49,15 +49,15 @@ tasks:
       - task: go:mod:tidy
     sources:
       - "**/*.[jt]s"
-      - exclude: public/**/*
-      - public/bindings/**/*
+      - exclude: frontend/**/*
+      - frontend/bindings/**/*
       - "**/*.go"
       - go.mod
       - go.sum
     generates:
-      - public/bindings/**/*
+      - frontend/bindings/**/*
     cmds:
-      - wails3 generate bindings -d public/bindings -f '{{.BUILD_FLAGS}}' -clean=true -ts
+      - wails3 generate bindings -d frontend/bindings -f '{{.BUILD_FLAGS}}' -clean=true -ts
 
   generate:icons:
     summary: Generates Windows `.ico` and Mac `.icns` files from an image
@@ -72,7 +72,7 @@ tasks:
 
   dev:public:
     summary: Runs the frontend dev server for live development
-    dir: public
+    dir: frontend
     deps:
       - task: install:public:deps
     cmds:

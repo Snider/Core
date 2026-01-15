@@ -30,7 +30,7 @@ type Workspace struct {
 
 // Service manages user workspaces.
 type Service struct {
-	*core.Runtime[Options]
+	*core.ServiceRuntime[Options]
 	activeWorkspace *Workspace
 	workspaceList   map[string]string // Maps Workspace ID to Public Key
 	medium          io.Medium
@@ -58,14 +58,14 @@ func New(medium io.Medium) (*Service, error) {
 }
 
 // Register is the constructor for dynamic dependency injection (used with core.WithService).
-// It creates a Service instance and initializes its core.Runtime field.
+// It creates a Service instance and initializes its core.ServiceRuntime field.
 // Dependencies are injected during ServiceStartup.
 func Register(c *core.Core) (any, error) {
 	s, err := newWorkspaceService()
 	if err != nil {
 		return nil, err
 	}
-	s.Runtime = core.NewRuntime(c, Options{})
+	s.ServiceRuntime = core.NewServiceRuntime(c, Options{})
 
 	// Initialize the local medium for file operations
 	var workspaceDir string

@@ -1,13 +1,21 @@
-go 1.25
+go 1.25.5
 
 use (
 	.
 	./cmd/core-gui
+	./cmd/core-mcp
 	./cmd/examples/core-static-di
 	./pkg/config
 	./pkg/core
 	./pkg/display
+	./pkg/docs
 	./pkg/help
 	./pkg/i18n
+	./pkg/ide
+	./pkg/mcp
+	./pkg/module
+	./pkg/process
 	./pkg/updater
+	./pkg/webview
+	./pkg/ws
 )

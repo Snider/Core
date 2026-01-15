@@ -81,9 +81,9 @@ func TestConfigFormats(t *testing.T) {
 
 func TestGetConfigFormat(t *testing.T) {
 	testCases := []struct {
-		filename      string
-		expectedType  interface{}
-		expectError   bool
+		filename     string
+		expectedType interface{}
+		expectError  bool
 	}{
 		{"config.json", &JSONFormat{}, false},
 		{"config.yaml", &YAMLFormat{}, false},
@@ -104,4 +104,114 @@ func TestGetConfigFormat(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFormatLoadErrors(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "config-format-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	t.Run("JSON Load with non-existent file", func(t *testing.T) {
+		format := &JSONFormat{}
+		_, err := format.Load(tempDir + "/nonexistent.json")
+		if err == nil {
+			t.Error("Expected error for non-existent file")
+		}
+	})
+
+	t.Run("JSON Load with invalid JSON", func(t *testing.T) {
+		format := &JSONFormat{}
+		invalidPath := tempDir + "/invalid.json"
+		if err := os.WriteFile(invalidPath, []byte("not valid json"), 0644); err != nil {
+			t.Fatalf("Failed to write invalid file: %v", err)
+		}
+		_, err := format.Load(invalidPath)
+		if err == nil {
+			t.Error("Expected error for invalid JSON")
+		}
+	})
+
+	t.Run("YAML Load with non-existent file", func(t *testing.T) {
+		format := &YAMLFormat{}
+		_, err := format.Load(tempDir + "/nonexistent.yaml")
+		if err == nil {
+			t.Error("Expected error for non-existent file")
+		}
+	})
+
+	t.Run("INI Load with non-existent file", func(t *testing.T) {
+		format := &INIFormat{}
+		_, err := format.Load(tempDir + "/nonexistent.ini")
+		if err == nil {
+			t.Error("Expected error for non-existent file")
+		}
+	})
+
+	t.Run("XML Load with non-existent file", func(t *testing.T) {
+		format := &XMLFormat{}
+		_, err := format.Load(tempDir + "/nonexistent.xml")
+		if err == nil {
+			t.Error("Expected error for non-existent file")
+		}
+	})
+
+	t.Run("XML Load with invalid XML", func(t *testing.T) {
+		format := &XMLFormat{}
+		invalidPath := tempDir + "/invalid.xml"
+		if err := os.WriteFile(invalidPath, []byte("not valid xml <><>"), 0644); err != nil {
+			t.Fatalf("Failed to write invalid file: %v", err)
+		}
+		_, err := format.Load(invalidPath)
+		if err == nil {
+			t.Error("Expected error for invalid XML")
+		}
+	})
+
+	t.Run("YAML Load with invalid YAML", func(t *testing.T) {
+		format := &YAMLFormat{}
+		invalidPath := tempDir + "/invalid.yaml"
+		// Tabs in YAML cause errors
+		if err := os.WriteFile(invalidPath, []byte("key:\n\t- invalid indent"), 0644); err != nil {
+			t.Fatalf("Failed to write invalid file: %v", err)
+		}
+		_, err := format.Load(invalidPath)
+		if err == nil {
+			t.Error("Expected error for invalid YAML")
+		}
+	})
+}
+
+func TestSaveKeyValuesErrors(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "config-save-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	service := &Service{
+		ConfigDir: tempDir,
+	}
+
+	t.Run("SaveKeyValues with unsupported format", func(t *testing.T) {
+		err := service.SaveKeyValues("test.txt", map[string]interface{}{"key": "value"})
+		if err == nil {
+			t.Error("Expected error for unsupported format")
+		}
+	})
+
+	t.Run("LoadKeyValues with unsupported format", func(t *testing.T) {
+		_, err := service.LoadKeyValues("test.txt")
+		if err == nil {
+			t.Error("Expected error for unsupported format")
+		}
+	})
+
+	t.Run("LoadKeyValues with non-existent file", func(t *testing.T) {
+		_, err := service.LoadKeyValues("nonexistent.json")
+		if err == nil {
+			t.Error("Expected error for non-existent file")
+		}
+	})
 }

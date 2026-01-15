@@ -1,39 +1,73 @@
-site_name: Core Library Documentation
-site_description: 'Developer documentation for the Core library, a framework for building Go desktop apps with Wails.'
-site_author: 'The Core Team'
+site_name: Core Framework
+site_url: https://core.help
+site_description: 'A Web3 Framework for building Go desktop applications with Wails v3'
+site_author: 'Snider'
 repo_url: 'https://github.com/Snider/Core'
 repo_name: 'Snider/Core'
 
 theme:
   name: material
   palette:
-    # Palette toggle for light vs dark mode
     - scheme: default
+      primary: deep purple
+      accent: purple
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
+      primary: deep purple
+      accent: purple
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
   features:
     - navigation.tabs
     - navigation.sections
-    - toc.integrate
+    - navigation.expand
     - navigation.top
     - search.suggest
     - search.highlight
     - content.tabs.link
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
 
 nav:
-  - 'Overview': 'index.md'
-  - 'Services':
-    - 'Runtime': 'services/runtime.md'
-    - 'Config': 'services/config.md'
-    - 'Crypt': 'services/crypt.md'
-    - 'Display': 'services/display.md'
-    - 'Error Handling': 'services/e.md'
-    - 'Help': 'services/help.md'
-    - 'I18n': 'services/i18n.md'
-    - 'IO': 'services/io.md'
-    - 'Workspace': 'services/workspace.md'
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Architecture: getting-started/architecture.md
+  - Core Framework:
+    - Overview: core/overview.md
+    - Services: core/services.md
+    - Lifecycle: core/lifecycle.md
+    - IPC & Actions: core/ipc.md
+  - Services:
+    - Config: services/config.md
+    - Display: services/display.md
+    - WebView: services/webview.md
+    - MCP: services/mcp.md
+    - Crypt: services/crypt.md
+    - I18n: services/i18n.md
+    - IO: services/io.md
+    - Workspace: services/workspace.md
+    - Help: services/help.md
+  - Extensions:
+    - Plugin System: extensions/plugins.md
+    - Module System: extensions/modules.md
+  - GUI Application:
+    - Overview: gui/overview.md
+    - MCP Bridge: gui/mcp-bridge.md
+  - API Reference:
+    - Core: api/core.md
+    - Display: api/display.md
