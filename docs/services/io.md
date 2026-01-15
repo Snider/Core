@@ -1,64 +1,165 @@
----
-title: io
----
-# Service: `io`
+# IO Service
 
-The `io` service provides a standardized interface for interacting with different storage backends, such as the local disk, S3, or SFTP.
+The IO package (`pkg/io`) provides a unified interface for file operations across different storage backends (local filesystem, S3, SFTP, etc.).
 
-## Types
+## Features
 
-### `type Medium`
+- Abstract `Medium` interface for storage backends
+- Local filesystem implementation
+- Copy between different mediums
+- Mock implementation for testing
 
-`Medium` defines the standard interface for a storage backend.
+## Medium Interface
+
+All storage backends implement the `Medium` interface:
 
 ```go
 type Medium interface {
-	// Read retrieves the content of a file as a string.
-	Read(path string) (string, error)
-
-	// Write saves the given content to a file, overwriting it if it exists.
-	Write(path, content string) error
-
-	// EnsureDir makes sure a directory exists, creating it if necessary.
-	EnsureDir(path string) error
-
-	// IsFile checks if a path exists and is a regular file.
-	IsFile(path string) bool
-
-	// FileGet is a convenience function that reads a file from the medium.
-	FileGet(path string) (string, error)
-
-	// FileSet is a convenience function that writes a file to the medium.
-	FileSet(path, content string) error
+    Read(path string) (string, error)
+    Write(path, content string) error
+    EnsureDir(path string) error
+    IsFile(path string) bool
+    FileGet(path string) (string, error)
+    FileSet(path, content string) error
 }
 ```
 
-### `type MockMedium`
-
-`MockMedium` implements the `Medium` interface for testing purposes.
+## Local Filesystem
 
 ```go
-type MockMedium struct {
-	Files map[string]string
-	Dirs  map[string]bool
+import (
+    "github.com/Snider/Core/pkg/io"
+    "github.com/Snider/Core/pkg/io/local"
+)
+
+// Pre-initialized global medium (root = "/")
+content, err := io.Local.Read("/etc/hosts")
+
+// Create sandboxed medium
+medium, err := local.New("/app/data")
+content, err := medium.Read("config.json")  // Reads /app/data/config.json
+```
+
+## Basic Operations
+
+```go
+// Read file
+content, err := medium.Read("path/to/file.txt")
+
+// Write file
+err := medium.Write("path/to/file.txt", "content")
+
+// Check if file exists
+if medium.IsFile("config.json") {
+    // File exists
+}
+
+// Ensure directory exists
+err := medium.EnsureDir("path/to/dir")
+
+// Convenience methods
+content, err := medium.FileGet("file.txt")
+err := medium.FileSet("file.txt", "content")
+```
+
+## Helper Functions
+
+Package-level functions that work with any Medium:
+
+```go
+// Read from medium
+content, err := io.Read(medium, "file.txt")
+
+// Write to medium
+err := io.Write(medium, "file.txt", "content")
+
+// Ensure directory
+err := io.EnsureDir(medium, "path/to/dir")
+
+// Check if file
+exists := io.IsFile(medium, "file.txt")
+```
+
+## Copy Between Mediums
+
+```go
+localMedium, _ := local.New("/local/path")
+remoteMedium := s3.New(bucket, region)  // hypothetical S3 implementation
+
+// Copy from local to remote
+err := io.Copy(localMedium, "data.json", remoteMedium, "backup/data.json")
+```
+
+## Mock Medium for Testing
+
+```go
+import "github.com/Snider/Core/pkg/io"
+
+func TestMyFunction(t *testing.T) {
+    mock := io.NewMockMedium()
+
+    // Pre-populate files
+    mock.Files["config.json"] = `{"key": "value"}`
+    mock.Dirs["data"] = true
+
+    // Use in tests
+    myService := NewService(mock)
+
+    // Verify writes
+    err := myService.SaveData("test")
+    if mock.Files["data/test.json"] != expectedContent {
+        t.Error("unexpected content")
+    }
 }
 ```
 
-#### Methods
+## Creating Custom Backends
 
-- `EnsureDir(path string) error`: Mocks creating a directory.
-- `FileGet(path string) (string, error)`: Mocks reading a file.
-- `FileSet(path, content string) error`: Mocks writing a file.
-- `IsFile(path string) bool`: Mocks checking if a path is a file.
-- `Read(path string) (string, error)`: Mocks reading a file.
-- `Write(path, content string) error`: Mocks writing a file.
+Implement the `Medium` interface for custom storage:
 
-## Functions
+```go
+type S3Medium struct {
+    bucket string
+    client *s3.Client
+}
 
-- `Copy(sourceMedium Medium, sourcePath string, destMedium Medium, destPath string) error`: Copies a file from a source medium to a destination medium.
-- `EnsureDir(m Medium, path string) error`: Ensures a directory exists on the given medium.
-- `IsFile(m Medium, path string) bool`: Checks if a path is a file on the given medium.
-- `Read(m Medium, path string) (string, error)`: Retrieves the content of a file from the given medium.
-- `Write(m Medium, path, content string) error`: Saves content to a file on the given medium.
+func (m *S3Medium) Read(path string) (string, error) {
+    // Implement S3 read
+}
 
-Would you like to see some examples of how to use this service?
+func (m *S3Medium) Write(path, content string) error {
+    // Implement S3 write
+}
+
+// ... implement remaining methods
+```
+
+## Error Handling
+
+```go
+content, err := medium.Read("missing.txt")
+if err != nil {
+    // File not found or read error
+    log.Printf("Read failed: %v", err)
+}
+```
+
+## Frontend Usage
+
+The IO package is primarily used server-side. Frontend file operations should use the Display service dialogs or direct API calls:
+
+```typescript
+import { OpenFileDialog, SaveFileDialog } from '@bindings/display/service';
+
+// Open file picker
+const path = await OpenFileDialog({
+    title: "Select File",
+    filters: [{ displayName: "Text", pattern: "*.txt" }]
+});
+
+// Save file picker
+const savePath = await SaveFileDialog({
+    title: "Save As",
+    defaultFilename: "document.txt"
+});
+```

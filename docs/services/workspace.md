@@ -1,49 +1,152 @@
----
-title: workspace
----
-# Service: `workspace`
+# Workspace Service
 
-The `workspace` service manages user workspaces, which are isolated environments for user data and configuration.
+The Workspace service (`pkg/workspace`) manages isolated user workspaces with encrypted storage and PGP key pairs.
 
-## Types
+## Features
 
-### `type Workspace`
+- Isolated workspace environments
+- PGP key pair generation per workspace
+- Encrypted workspace identification
+- File operations within workspace context
+- Multiple workspace support
 
-`Workspace` represents a single user workspace.
+## Basic Usage
 
 ```go
-type Workspace struct {
-    Name string
-    Path string
+import "github.com/Snider/Core/pkg/workspace"
+
+// With IO medium (standalone)
+medium, _ := local.New("/app/workspaces")
+ws, err := workspace.New(medium)
+
+// With Core framework (recommended)
+c, _ := core.New(
+    core.WithService(workspace.Register),
+)
+ws := core.MustServiceFor[*workspace.Service](c, "workspace")
+```
+
+## Creating Workspaces
+
+```go
+// Create a new encrypted workspace
+workspaceID, err := ws.CreateWorkspace("my-project", "secure-password")
+// Returns obfuscated workspace ID
+
+// Workspace structure created:
+// workspaces/
+//   <workspace-id>/
+//     config/
+//     log/
+//     data/
+//     files/
+//     keys/
+//       key.pub   (PGP public key)
+//       key.priv  (PGP private key)
+```
+
+## Switching Workspaces
+
+```go
+// Switch to a workspace
+err := ws.SwitchWorkspace(workspaceID)
+
+// Switch to default workspace
+err := ws.SwitchWorkspace("default")
+```
+
+## Workspace File Operations
+
+```go
+// Write file to active workspace
+err := ws.WorkspaceFileSet("config/settings.json", jsonData)
+
+// Read file from active workspace
+content, err := ws.WorkspaceFileGet("config/settings.json")
+```
+
+## Listing Workspaces
+
+```go
+// Get all workspace IDs
+workspaces := ws.ListWorkspaces()
+for _, id := range workspaces {
+    fmt.Println(id)
 }
 ```
 
-## Methods
+## Active Workspace
 
-### `func CreateWorkspace(identifier, password string) (string, error)`
+```go
+// Get current workspace info
+active := ws.ActiveWorkspace()
+if active != nil {
+    fmt.Println("Name:", active.Name)
+    fmt.Println("Path:", active.Path)
+}
+```
 
-`CreateWorkspace` creates a new, secure workspace.
-- **identifier**: A unique name or ID for the workspace.
-- **password**: A password used to secure the workspace (if encryption is supported).
+## Workspace Structure
 
-Returns the workspace ID or path.
+Each workspace contains:
 
-### `func SwitchWorkspace(name string) error`
+| Directory | Purpose |
+|-----------|---------|
+| `config/` | Workspace configuration files |
+| `log/` | Workspace logs |
+| `data/` | Application data |
+| `files/` | User files |
+| `keys/` | PGP key pair |
 
-`SwitchWorkspace` changes the currently active workspace to the one specified by `name`.
+## Security Model
 
-### `func WorkspaceFileGet(filename string) (string, error)`
+Workspaces use a two-level hashing scheme:
 
-`WorkspaceFileGet` retrieves the content of a file located within the active workspace.
+1. **Real Name**: Hash of the identifier
+2. **Workspace ID**: Hash of `workspace/{real_name}`
 
-### `func WorkspaceFileSet(filename, content string) error`
+This prevents workspace enumeration while allowing consistent access.
 
-`WorkspaceFileSet` writes content to a file within the active workspace.
+## IPC Events
 
-### `func HandleIPCEvents(c *core.Core, msg core.Message) error`
+The workspace service responds to IPC messages:
 
-`HandleIPCEvents` processes workspace-related IPC messages.
+```go
+// Switch workspace via IPC
+c.ACTION(core.Message{
+    Type: "workspace.switch_workspace",
+    Data: map[string]any{
+        "name": workspaceID,
+    },
+})
+```
 
-### `func ServiceStartup(ctx context.Context, options application.ServiceOptions) error`
+## Frontend Usage (TypeScript)
 
-`ServiceStartup` initializes the workspace service and loads the list of available workspaces.
+```typescript
+import {
+    CreateWorkspace,
+    SwitchWorkspace,
+    WorkspaceFileGet,
+    WorkspaceFileSet,
+    ListWorkspaces,
+    ActiveWorkspace
+} from '@bindings/workspace/service';
+
+// Create workspace
+const wsId = await CreateWorkspace("my-project", "password");
+
+// Switch workspace
+await SwitchWorkspace(wsId);
+
+// Read/write files
+const config = await WorkspaceFileGet("config/app.json");
+await WorkspaceFileSet("config/app.json", JSON.stringify(newConfig));
+
+// List all workspaces
+const workspaces = await ListWorkspaces();
+
+// Get active workspace
+const active = await ActiveWorkspace();
+console.log(`Current: ${active.Name} at ${active.Path}`);
+```

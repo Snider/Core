@@ -37,7 +37,7 @@ func TestRegister(t *testing.T) {
 		assert.NotNil(t, service)
 	})
 
-	t.Run("returns Service type with Runtime", func(t *testing.T) {
+	t.Run("returns Service type with ServiceRuntime", func(t *testing.T) {
 		coreInstance, err := core.New()
 		require.NoError(t, err)
 
@@ -46,7 +46,7 @@ func TestRegister(t *testing.T) {
 
 		cryptService, ok := service.(*Service)
 		assert.True(t, ok)
-		assert.NotNil(t, cryptService.Runtime)
+		assert.NotNil(t, cryptService.ServiceRuntime)
 	})
 }
 
@@ -174,12 +174,13 @@ func TestLuhn(t *testing.T) {
 	})
 
 	t.Run("empty string", func(t *testing.T) {
-		// Empty string: sum=0, 0%10==0, so it returns true
-		assert.True(t, s.Luhn(""))
+		// Enchantrix treats empty string as invalid
+		assert.False(t, s.Luhn(""))
 	})
 
 	t.Run("single digit", func(t *testing.T) {
-		assert.True(t, s.Luhn("0"))
+		// Enchantrix requires minimum length for valid Luhn
+		assert.False(t, s.Luhn("0"))
 		assert.False(t, s.Luhn("1"))
 	})
 }
@@ -313,26 +314,178 @@ func TestHashTypeConstants(t *testing.T) {
 	})
 }
 
-// --- PGP Tests (basic, detailed tests in openpgp package) ---
+// --- IsHashAlgo Tests ---
+
+func TestIsHashAlgo(t *testing.T) {
+	s, _ := New()
+
+	t.Run("valid hash algorithms", func(t *testing.T) {
+		assert.True(t, s.IsHashAlgo("sha256"))
+		assert.True(t, s.IsHashAlgo("sha512"))
+		assert.True(t, s.IsHashAlgo("sha1"))
+		assert.True(t, s.IsHashAlgo("md5"))
+	})
+
+	t.Run("invalid hash algorithm", func(t *testing.T) {
+		assert.False(t, s.IsHashAlgo("invalid"))
+		assert.False(t, s.IsHashAlgo(""))
+	})
+}
+
+// --- RSA Tests ---
+
+func TestGenerateRSAKeyPair(t *testing.T) {
+	s, _ := New()
+
+	t.Run("generates valid key pair", func(t *testing.T) {
+		pubKey, privKey, err := s.GenerateRSAKeyPair(2048)
+		require.NoError(t, err)
+		assert.NotEmpty(t, pubKey)
+		assert.NotEmpty(t, privKey)
+		assert.Contains(t, pubKey, "PUBLIC KEY")
+		assert.Contains(t, privKey, "PRIVATE KEY")
+	})
+}
+
+func TestEncryptDecryptRSA(t *testing.T) {
+	s, _ := New()
+
+	t.Run("encrypt and decrypt roundtrip", func(t *testing.T) {
+		pubKey, privKey, err := s.GenerateRSAKeyPair(2048)
+		require.NoError(t, err)
+
+		plaintext := "hello RSA world"
+		ciphertext, err := s.EncryptRSA(pubKey, plaintext)
+		require.NoError(t, err)
+		assert.NotEmpty(t, ciphertext)
+		assert.NotEqual(t, plaintext, ciphertext)
+
+		decrypted, err := s.DecryptRSA(privKey, ciphertext)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decrypted)
+	})
+
+	t.Run("encrypt with invalid key fails", func(t *testing.T) {
+		_, err := s.EncryptRSA("invalid key", "data")
+		assert.Error(t, err)
+	})
+
+	t.Run("decrypt with invalid key fails", func(t *testing.T) {
+		_, err := s.DecryptRSA("invalid key", "data")
+		assert.Error(t, err)
+	})
+}
+
+// --- PGP Tests ---
+
+func TestGeneratePGPKeyPair(t *testing.T) {
+	s, _ := New()
+
+	t.Run("generates valid key pair", func(t *testing.T) {
+		pubKey, privKey, err := s.GeneratePGPKeyPair("Test User", "test@example.com", "test comment")
+		require.NoError(t, err)
+		assert.NotEmpty(t, pubKey)
+		assert.NotEmpty(t, privKey)
+		assert.Contains(t, pubKey, "PGP PUBLIC KEY")
+		assert.Contains(t, privKey, "PGP PRIVATE KEY")
+	})
+}
 
 func TestEncryptPGP(t *testing.T) {
-	t.Run("requires valid key paths", func(t *testing.T) {
-		s, _ := New()
-		var buf bytes.Buffer
+	s, _ := New()
 
-		// Should fail with invalid path
-		_, err := s.EncryptPGP(&buf, "/nonexistent/path", "test data", nil, nil)
+	t.Run("requires valid key", func(t *testing.T) {
+		var buf bytes.Buffer
+		err := s.EncryptPGP(&buf, "invalid key content", "test data")
+		assert.Error(t, err)
+	})
+
+	t.Run("encrypts with valid key", func(t *testing.T) {
+		pubKey, _, err := s.GeneratePGPKeyPair("Test", "test@test.com", "comment")
+		require.NoError(t, err)
+
+		var buf bytes.Buffer
+		err = s.EncryptPGP(&buf, pubKey, "test data")
+		require.NoError(t, err)
+		assert.NotEmpty(t, buf.String())
+	})
+}
+
+func TestEncryptPGPToString(t *testing.T) {
+	s, _ := New()
+
+	t.Run("encrypts to string", func(t *testing.T) {
+		pubKey, _, err := s.GeneratePGPKeyPair("Test", "test@test.com", "comment")
+		require.NoError(t, err)
+
+		ciphertext, err := s.EncryptPGPToString(pubKey, "test data")
+		require.NoError(t, err)
+		assert.NotEmpty(t, ciphertext)
+	})
+
+	t.Run("requires valid key", func(t *testing.T) {
+		_, err := s.EncryptPGPToString("invalid key", "data")
 		assert.Error(t, err)
 	})
 }
 
 func TestDecryptPGP(t *testing.T) {
-	t.Run("requires valid key paths", func(t *testing.T) {
-		s, _ := New()
+	s, _ := New()
 
-		// Should fail with invalid path
-		_, err := s.DecryptPGP("/nonexistent/path", "encrypted data", "passphrase", nil)
+	t.Run("requires valid key", func(t *testing.T) {
+		_, err := s.DecryptPGP("invalid key content", "encrypted data")
 		assert.Error(t, err)
+	})
+
+	t.Run("decrypts with valid key", func(t *testing.T) {
+		pubKey, privKey, err := s.GeneratePGPKeyPair("Test", "test@test.com", "comment")
+		require.NoError(t, err)
+
+		plaintext := "secret message"
+		ciphertext, err := s.EncryptPGPToString(pubKey, plaintext)
+		require.NoError(t, err)
+
+		decrypted, err := s.DecryptPGP(privKey, ciphertext)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decrypted)
+	})
+}
+
+func TestSignAndVerifyPGP(t *testing.T) {
+	s, _ := New()
+
+	t.Run("sign and verify roundtrip", func(t *testing.T) {
+		pubKey, privKey, err := s.GeneratePGPKeyPair("Test", "test@test.com", "comment")
+		require.NoError(t, err)
+
+		data := "data to sign"
+		signature, err := s.SignPGP(privKey, data)
+		require.NoError(t, err)
+		assert.NotEmpty(t, signature)
+
+		err = s.VerifyPGP(pubKey, data, signature)
+		assert.NoError(t, err)
+	})
+
+	t.Run("sign with invalid key fails", func(t *testing.T) {
+		_, err := s.SignPGP("invalid key", "data")
+		assert.Error(t, err)
+	})
+
+	t.Run("verify with invalid key fails", func(t *testing.T) {
+		err := s.VerifyPGP("invalid key", "data", "signature")
+		assert.Error(t, err)
+	})
+}
+
+func TestSymmetricallyEncryptPGP(t *testing.T) {
+	s, _ := New()
+
+	t.Run("encrypts with passphrase", func(t *testing.T) {
+		var buf bytes.Buffer
+		err := s.SymmetricallyEncryptPGP(&buf, "secret data", "my passphrase")
+		require.NoError(t, err)
+		assert.NotEmpty(t, buf.String())
 	})
 }
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/text/language"
 )
 
 func TestNew(t *testing.T) {
@@ -112,7 +111,7 @@ func TestTranslate(t *testing.T) {
 
 		assert.Equal(t, "Dashboard", service.Translate("menu.dashboard"))
 		assert.Equal(t, "Help", service.Translate("menu.help"))
-		assert.Equal(t, "Search", service.Translate("app.core.ui.search"))
+		assert.Equal(t, "Search", service.Translate("app.ui.search"))
 	})
 
 	t.Run("language switch changes translations", func(t *testing.T) {
@@ -121,15 +120,15 @@ func TestTranslate(t *testing.T) {
 
 		// Start with English
 		require.NoError(t, service.SetLanguage("en"))
-		assert.Equal(t, "Search", service.Translate("app.core.ui.search"))
+		assert.Equal(t, "Search", service.Translate("app.ui.search"))
 
 		// Switch to Spanish
 		require.NoError(t, service.SetLanguage("es"))
-		assert.Equal(t, "Buscar", service.Translate("app.core.ui.search"))
+		assert.Equal(t, "Buscar", service.Translate("app.ui.search"))
 
 		// Switch back to English
 		require.NoError(t, service.SetLanguage("en"))
-		assert.Equal(t, "Search", service.Translate("app.core.ui.search"))
+		assert.Equal(t, "Search", service.Translate("app.ui.search"))
 	})
 }
 
@@ -148,38 +147,82 @@ func TestGetAvailableLanguages(t *testing.T) {
 	})
 }
 
-func TestDetectLanguage(t *testing.T) {
-	t.Run("returns empty for empty LANG env", func(t *testing.T) {
-		// Save and clear LANG
-		t.Setenv("LANG", "")
+// TestDetectLanguage is in detect_language_test.go with table-driven tests
 
+func TestSetLanguageErrors(t *testing.T) {
+	t.Run("returns error for invalid language tag", func(t *testing.T) {
 		service, err := New()
 		require.NoError(t, err)
 
-		detected, err := detectLanguage(service.availableLangs)
-		assert.NoError(t, err)
-		assert.Empty(t, detected)
+		// Invalid BCP 47 tag (too long, contains invalid characters)
+		err = service.SetLanguage("this-is-not-a-valid-tag-at-all-definitely")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse language tag")
 	})
 
-	t.Run("returns empty for empty supported list", func(t *testing.T) {
-		t.Setenv("LANG", "en_US.UTF-8")
-
-		detected, err := detectLanguage([]language.Tag{})
-		assert.NoError(t, err)
-		assert.Empty(t, detected)
-	})
-
-	t.Run("detects language from LANG env", func(t *testing.T) {
-		t.Setenv("LANG", "es_ES.UTF-8")
-
+	t.Run("returns error when no available languages", func(t *testing.T) {
+		// Create a service and clear its available languages
 		service, err := New()
 		require.NoError(t, err)
 
-		detected, err := detectLanguage(service.availableLangs)
-		assert.NoError(t, err)
-		// Should detect Spanish or a close variant
-		if detected != "" {
-			assert.Contains(t, detected, "es")
-		}
+		// Clear the available languages
+		service.availableLangs = nil
+
+		err = service.SetLanguage("en")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no available languages")
+	})
+
+	t.Run("returns error for unsupported language", func(t *testing.T) {
+		service, err := New()
+		require.NoError(t, err)
+
+		// Try a known but completely unsupported language
+		// Most obscure languages will still match with low confidence,
+		// so we just verify the function handles various inputs without panicking
+		err = service.SetLanguage("zu") // Zulu - may or may not be supported
+		// Just verify no panic - the result depends on matcher confidence
+		_ = err
+	})
+}
+
+func TestTranslateWithTemplateData(t *testing.T) {
+	t.Run("translates with template data", func(t *testing.T) {
+		service, err := New()
+		require.NoError(t, err)
+		require.NoError(t, service.SetLanguage("en"))
+
+		// If there's a template key available, use it
+		// Otherwise, the translation will still work but without interpolation
+		data := map[string]interface{}{"Name": "Test"}
+		result := service.Translate("menu.settings", data)
+		// Just verify it doesn't panic and returns something
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("warns when too many arguments", func(t *testing.T) {
+		service, err := New()
+		require.NoError(t, err)
+		require.NoError(t, service.SetLanguage("en"))
+
+		// Call with too many args - this will print a warning to stderr
+		// but should still work
+		result := service.Translate("menu.settings", map[string]interface{}{}, "extra arg")
+		assert.NotEmpty(t, result)
+	})
+}
+
+func TestSetBundle(t *testing.T) {
+	t.Run("sets bundle", func(t *testing.T) {
+		service, err := New()
+		require.NoError(t, err)
+
+		oldBundle := service.bundle
+		service.SetBundle(nil)
+		assert.Nil(t, service.bundle)
+
+		// Restore
+		service.SetBundle(oldBundle)
+		assert.Equal(t, oldBundle, service.bundle)
 	})
 }

@@ -3,9 +3,13 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "lthn.io": {
+    "frontend": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -14,38 +18,56 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
             "tsConfig": "tsconfig.app.json",
+            "polyfills": ["src/polyfills.ts"],
+            "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
               },
               {
-                "glob": "@awesome.me/webawesome/**/*.*",
-                "input": "node_modules/",
+                "glob": "fa-{brands,jelly,thin,light,regular,solid}*.woff2",
+                "input": "node_modules/@fortawesome/fontawesome-free/webfonts",
+                "output": "webfonts"
+              },
+              {
+                "glob": "**/*.*",
+                "input": "node_modules/@awesome.me/webawesome/dist",
+                "output": "@awesome.me/webawesome"
+              },
+              {
+                "glob": "**/*.*",
+                "input": "bindings",
                 "output": "/"
               },
-              "src/sitemap.xml",
-              "src/robots.txt"
+              { "glob": "**/*", "input": "node_modules/monaco-editor", "output": "/assets/monaco/" },
+              { "glob": "**/*", "input": "../services/docs/static", "output": "docs" },
+              {
+                "glob": "**/*.json",
+                "input": "../services/core/i18n/locales",
+                "output": "assets/i18n"
+              }
+            ],
+            "scripts": [
+              "node_modules/@tailwindplus/elements/dist/index.js"
             ],
             "styles": [
-              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-              "src/styles.css"
-            ],
-            "scripts": [],
-            "define": {
-              "import.meta.vitest": "undefined"
-            }
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
+                  "maximumWarning": "500kB",
                   "maximumError": "1MB"
                 },
                 {
@@ -54,36 +76,24 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all",
-              "serviceWorker": "ngsw-config.json",
-              "server": "src/main.server.ts",
-              "outputMode": "server",
-              "ssr": {
-                "entry": "src/server.ts"
-              }
+              "outputHashing": "all"
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.development.ts"
-                }
-              ]
+              "sourceMap": true
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "lthn.io:build:production"
+              "buildTarget": "frontend:build:production"
             },
             "development": {
-              "buildTarget": "lthn.io:build:development"
+              "buildTarget": "frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -94,12 +104,8 @@
         "test": {
           "builder": "@angular/build:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing",
-              "src/test.ts"
-            ],
             "tsConfig": "tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
@@ -107,16 +113,7 @@
               }
             ],
             "styles": [
-              "src/styles.css"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
+              "src/styles.scss"
             ]
           }
         }
@@ -124,9 +121,6 @@
     }
   },
   "cli": {
-    "schematicCollections": [
-      "angular-eslint"
-    ],
     "analytics": false
   }
 }

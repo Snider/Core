@@ -181,3 +181,58 @@ func (s *Service) Translate(messageID string, args ...interface{}) string {
 func (s *Service) SetBundle(bundle *i18n.Bundle) {
 	s.bundle = bundle
 }
+
+// AvailableLanguages returns a list of available language codes.
+func (s *Service) AvailableLanguages() []string {
+	langs := make([]string, len(s.availableLangs))
+	for i, tag := range s.availableLangs {
+		langs[i] = tag.String()
+	}
+	return langs
+}
+
+// GetAllMessages returns all translation messages for the specified language.
+// The keys are message IDs and values are the translated strings.
+// If lang is empty, it uses the current language.
+func (s *Service) GetAllMessages(lang string) (map[string]string, error) {
+	messages := make(map[string]string)
+
+	// Default to English if no language specified
+	if lang == "" {
+		lang = "en"
+	}
+
+	// Try to find the locale file for the specified language
+	filePath := fmt.Sprintf("locales/%s.json", lang)
+	data, err := localeFS.ReadFile(filePath)
+	if err != nil {
+		// Try without region code (e.g., "en-US" -> "en")
+		if strings.Contains(lang, "-") {
+			baseLang := strings.Split(lang, "-")[0]
+			filePath = fmt.Sprintf("locales/%s.json", baseLang)
+			data, err = localeFS.ReadFile(filePath)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read locale file for language %s: %w", lang, err)
+		}
+	}
+
+	var rawMessages map[string]interface{}
+	if err := json.Unmarshal(data, &rawMessages); err != nil {
+		return nil, fmt.Errorf("failed to parse locale file: %w", err)
+	}
+
+	// Extract messages - handle both simple strings and complex message objects
+	for key, value := range rawMessages {
+		switch v := value.(type) {
+		case string:
+			messages[key] = v
+		case map[string]interface{}:
+			if other, ok := v["other"].(string); ok {
+				messages[key] = other
+			}
+		}
+	}
+
+	return messages, nil
+}

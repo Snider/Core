@@ -60,7 +60,7 @@ func TestNewServiceInitializationError(t *testing.T) {
 	factories := map[string]ServiceFactory{
 		"config":    func() (any, error) { return config.New() },
 		"display":   func() (any, error) { return display.New() },
-		"help":      func() (any, error) { return help.New() },
+		"help":      func() (any, error) { return help.New(help.Options{}) },
 		"crypt":     func() (any, error) { return crypt.New() },
 		"i18n":      func() (any, error) { return nil, errors.New("i18n service failed to initialize") }, // This factory will fail
 		"workspace": func() (any, error) { return workspace.New(io.Local) },
@@ -73,4 +73,27 @@ func TestNewServiceInitializationError(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to create service i18n: i18n service failed to initialize")
 }
 
-// Removed TestRuntimeOptions and TestRuntimeCore as these methods no longer exist on the Runtime struct.
+// TestMissingFactory tests error when a factory is not provided.
+func TestMissingFactory(t *testing.T) {
+	// Missing config factory
+	factories := map[string]ServiceFactory{
+		// "config" intentionally missing
+		"display":   func() (any, error) { return display.New() },
+		"help":      func() (any, error) { return help.New(help.Options{}) },
+		"crypt":     func() (any, error) { return crypt.New() },
+		"i18n":      func() (any, error) { return nil, nil },
+		"workspace": func() (any, error) { return workspace.New(io.Local) },
+	}
+
+	runtime, err := newWithFactories(factories)
+	assert.Error(t, err)
+	assert.Nil(t, runtime)
+	assert.Contains(t, err.Error(), "service config factory not provided")
+}
+
+// Note: TestWrongTypeFactory removed because the core.WithService option
+// requires services to implement specific interfaces (like Name() method).
+// The type assertion error paths (lines 58-80) are guarded by core.New()
+// which fails first for invalid service types, making those lines
+// unreachable in practice. This is defensive code that protects against
+// programming errors rather than runtime errors.

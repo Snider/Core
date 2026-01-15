@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 )
 
 // mockGithubClient is a mock implementation of the GithubClient interface for testing.
@@ -76,7 +77,7 @@ func ExampleCheckForUpdates() {
 			getLatestRelease: func(ctx context.Context, owner, repo, channel string) (*Release, error) {
 				return &Release{
 					TagName: "v1.1.0",
-					Assets:  []ReleaseAsset{{Name: fmt.Sprintf("test-asset-%s-%s", "linux", "amd64"), DownloadURL: "http://example.com/asset"}},
+					Assets:  []ReleaseAsset{{Name: fmt.Sprintf("test-asset-%s-%s", runtime.GOOS, runtime.GOARCH), DownloadURL: "http://example.com/asset"}},
 				}, nil
 			},
 		}
@@ -132,7 +133,7 @@ func ExampleCheckForUpdatesByTag() {
 				if channel == "stable" {
 					return &Release{
 						TagName: "v1.1.0",
-						Assets:  []ReleaseAsset{{Name: fmt.Sprintf("test-asset-%s-%s", "linux", "amd64"), DownloadURL: "http://example.com/asset"}},
+						Assets:  []ReleaseAsset{{Name: fmt.Sprintf("test-asset-%s-%s", runtime.GOOS, runtime.GOARCH), DownloadURL: "http://example.com/asset"}},
 					}, nil
 				}
 				return nil, nil
@@ -193,7 +194,7 @@ func ExampleCheckForUpdatesByPullRequest() {
 				if prNumber == 123 {
 					return &Release{
 						TagName: "v1.1.0-alpha.pr.123",
-						Assets:  []ReleaseAsset{{Name: fmt.Sprintf("test-asset-%s-%s", "linux", "amd64"), DownloadURL: "http://example.com/asset-pr"}},
+						Assets:  []ReleaseAsset{{Name: fmt.Sprintf("test-asset-%s-%s", runtime.GOOS, runtime.GOARCH), DownloadURL: "http://example.com/asset-pr"}},
 					}, nil
 				}
 				return nil, nil

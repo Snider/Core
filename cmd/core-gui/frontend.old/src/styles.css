@@ -1,0 +1,13 @@
+@import "@awesome.me/webawesome/dist/styles/webawesome.css";
+@import "@awesome.me/webawesome/dist/styles/themes/premium.css";
+@import "@awesome.me/webawesome/dist/styles/native.css";
+@import "@awesome.me/webawesome/dist/styles/utilities.css";
+@import "@awesome.me/webawesome/dist/styles/color/palettes/vogue.css";
+html,
+body {
+  min-height: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
