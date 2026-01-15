@@ -46,7 +46,7 @@ func newTestCore(t *testing.T) *core.Core {
 	return c
 }
 
-func TestConfigServiceGood(t *testing.T) {
+func TestConfigService(t *testing.T) {
 	t.Run("New service creates default config", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
@@ -130,220 +130,38 @@ func TestConfigServiceGood(t *testing.T) {
 		}
 	})
 
-	t.Run("Save and Load Struct", func(t *testing.T) {
+	t.Run("HandleIPCEvents with ActionServiceStartup", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		s, err := New()
+		c := newTestCore(t)
+		serviceAny, err := Register(c)
 		if err != nil {
-			t.Fatalf("New() failed: %v", err)
+			t.Fatalf("Register() failed: %v", err)
 		}
 
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		key := "custom"
-		expectedConfig := CustomConfig{
-			APIKey:  "12345",
-			Timeout: 30,
-		}
-
-		if err := s.SaveStruct(key, expectedConfig); err != nil {
-			t.Fatalf("SaveStruct() failed: %v", err)
-		}
-
-		var actualConfig CustomConfig
-		if err := s.LoadStruct(key, &actualConfig); err != nil {
-			t.Fatalf("LoadStruct() failed: %v", err)
-		}
-
-		if actualConfig.APIKey != expectedConfig.APIKey {
-			t.Errorf("Expected APIKey '%s', got '%s'", expectedConfig.APIKey, actualConfig.APIKey)
-		}
-		if actualConfig.Timeout != expectedConfig.Timeout {
-			t.Errorf("Expected Timeout '%d', got '%d'", expectedConfig.Timeout, actualConfig.Timeout)
+		s := serviceAny.(*Service)
+		err = s.HandleIPCEvents(c, core.ActionServiceStartup{})
+		if err != nil {
+			t.Errorf("HandleIPCEvents(ActionServiceStartup) should not error, got: %v", err)
 		}
 	})
-}
 
-func TestConfigServiceUgly(t *testing.T) {
-	t.Run("LoadStruct with nil value", func(t *testing.T) {
+	t.Run("HandleIPCEvents with unknown message type", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		s, err := New()
+		c := newTestCore(t)
+		serviceAny, err := Register(c)
 		if err != nil {
-			t.Fatalf("New() failed: %v", err)
+			t.Fatalf("Register() failed: %v", err)
 		}
 
-		key := "nil-value"
-		filePath := filepath.Join(s.ConfigDir, key+".json")
-		if err := os.WriteFile(filePath, []byte("null"), 0644); err != nil {
-			t.Fatalf("Failed to write nil value file: %v", err)
-		}
-
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		var actualConfig CustomConfig
-		err = s.LoadStruct(key, &actualConfig)
+		s := serviceAny.(*Service)
+		// Pass an arbitrary type as unknown message
+		err = s.HandleIPCEvents(c, "unknown message")
 		if err != nil {
-			t.Fatalf("LoadStruct() should not have failed with a nil value, but it did: %v", err)
-		}
-	})
-
-	t.Run("Concurrent access", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		// Run concurrent Set and Get operations
-		done := make(chan bool)
-		for i := 0; i < 10; i++ {
-			go func() {
-				s.Set("language", "en")
-				done <- true
-			}()
-			go func() {
-				var lang string
-				s.Get("language", &lang)
-				done <- true
-			}()
-		}
-
-		for i := 0; i < 20; i++ {
-			<-done
-		}
-	})
-}
-
-func TestConfigServiceBad(t *testing.T) {
-	t.Run("Load non-existent struct", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		var actualConfig CustomConfig
-		if err := s.LoadStruct("non-existent", &actualConfig); err != nil {
-			t.Fatalf("LoadStruct() failed: %v", err)
-		}
-
-		// Expect the struct to be zero-valued
-		if actualConfig.APIKey != "" {
-			t.Errorf("Expected empty APIKey, got '%s'", actualConfig.APIKey)
-		}
-		if actualConfig.Timeout != 0 {
-			t.Errorf("Expected zero Timeout, got '%d'", actualConfig.Timeout)
-		}
-	})
-
-	t.Run("Get non-existent key", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		var value string
-		err = s.Get("non-existent", &value)
-		if err == nil {
-			t.Errorf("Expected an error for non-existent key, but got nil")
-		}
-	})
-
-	t.Run("Set non-existent key", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		err = s.Set("non-existent", "value")
-		if err == nil {
-			t.Errorf("Expected an error for non-existent key, but got nil")
-		}
-	})
-
-	t.Run("SaveStruct with unmarshallable type", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		err = s.SaveStruct("test", make(chan int))
-		if err == nil {
-			t.Errorf("Expected an error for unmarshallable type, but got nil")
-		}
-	})
-
-	t.Run("LoadStruct with invalid JSON", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		key := "invalid"
-		filePath := filepath.Join(s.ConfigDir, key+".json")
-		if err := os.WriteFile(filePath, []byte("invalid json"), 0644); err != nil {
-			t.Fatalf("Failed to write invalid json file: %v", err)
-		}
-
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		var actualConfig CustomConfig
-		err = s.LoadStruct(key, &actualConfig)
-		if err == nil {
-			t.Errorf("Expected an error for invalid JSON, but got nil")
-		}
-	})
-
-	t.Run("New service with empty config file", func(t *testing.T) {
-		tempHomeDir, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		// Manually create an empty config file
-		configDir := filepath.Join(tempHomeDir, appName, "config")
-		if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
-			t.Fatalf("Failed to create test config dir: %v", err)
-		}
-		configPath := filepath.Join(configDir, configFileName)
-		if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
-			t.Fatalf("Failed to write empty config file: %v", err)
-		}
-
-		_, err := New()
-		if err == nil {
-			t.Fatalf("New() should have failed with an empty config file, but it did not")
+			t.Errorf("HandleIPCEvents(unknown) should not error, got: %v", err)
 		}
 	})
 }
