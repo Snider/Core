@@ -1,10 +1,11 @@
-module core-gui
+module github.com/Snider/Core/pkg/display
 
 go 1.25
 
-require github.com/wailsapp/wails/v3 v3.0.0-alpha.41
-
-replace github.com/Snider/Core => ../../
+require (
+	github.com/spf13/cobra v1.10.1
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.41
+)
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
@@ -23,6 +24,7 @@ require (
 	github.com/godbus/dbus/v5 v5.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
 	github.com/kevinburke/ssh_config v1.4.0 // indirect
@@ -39,6 +41,7 @@ require (
 	github.com/samber/lo v1.52.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/wailsapp/go-webview2 v1.0.23 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
