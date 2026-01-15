@@ -1,29 +1,35 @@
 package display
 
 import (
-	_ "embed"
+	"embed"
+	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// systemTray configures and creates the system tray icon and menu. This
-// function is called during the startup of the display service.
+//go:embed assets/apptray.png
+var assets embed.FS
+
+// systemTray configures and creates the system tray icon and menu.
 func (s *Service) systemTray() {
 
-	systray := s.app.SystemTray.New()
+	systray := s.Core().App.SystemTray.New()
 	systray.SetTooltip("Core")
 	systray.SetLabel("Core")
-	//appTrayIcon, _ := d.assets.ReadFile("assets/apptray.png")
-	//
-	//if runtime.GOOS == "darwin" {
-	//	systray.SetTemplateIcon(appTrayIcon)
-	//} else {
-	//	// Support for light/dark mode icons
-	//	systray.SetDarkModeIcon(appTrayIcon)
-	//	systray.SetIcon(appTrayIcon)
-	//}
+
+	// Load and set tray icon
+	appTrayIcon, err := assets.ReadFile("assets/apptray.png")
+	if err == nil {
+		if runtime.GOOS == "darwin" {
+			systray.SetTemplateIcon(appTrayIcon)
+		} else {
+			// Support for light/dark mode icons
+			systray.SetDarkModeIcon(appTrayIcon)
+			systray.SetIcon(appTrayIcon)
+		}
+	}
 	// Create a hidden window for the system tray menu to interact with
-	trayWindow := s.app.Window.NewWithOptions(application.WebviewWindowOptions{
+	trayWindow, _ := s.NewWithStruct(&Window{
 		Name:      "system-tray",
 		Title:     "System Tray Status",
 		URL:       "system-tray.html",
@@ -34,14 +40,14 @@ func (s *Service) systemTray() {
 	systray.AttachWindow(trayWindow).WindowOffset(5)
 
 	// --- Build Tray Menu ---
-	trayMenu := s.app.Menu.New()
+	trayMenu := s.Core().App.Menu.New()
 	trayMenu.Add("Open Desktop").OnClick(func(ctx *application.Context) {
-		for _, window := range s.app.Window.GetAll() {
+		for _, window := range s.Core().App.Window.GetAll() {
 			window.Show()
 		}
 	})
 	trayMenu.Add("Close Desktop").OnClick(func(ctx *application.Context) {
-		for _, window := range s.app.Window.GetAll() {
+		for _, window := range s.Core().App.Window.GetAll() {
 			window.Hide()
 		}
 	})
@@ -66,7 +72,7 @@ func (s *Service) systemTray() {
 
 	trayMenu.AddSeparator()
 	trayMenu.Add("Quit").OnClick(func(ctx *application.Context) {
-		s.app.Quit()
+		s.Core().App.Quit()
 	})
 
 	systray.SetMenu(trayMenu)

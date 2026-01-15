@@ -1,111 +1,89 @@
 package display
 
-import "github.com/wailsapp/wails/v3/pkg/application"
+import (
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
 
-// WindowConfig holds the configuration for a window. This struct is used to
-// create a new window with the specified options.
-type WindowConfig struct {
-	Name                string
-	Title               string
-	Width               int
-	Height              int
-	URL                 string
-	AlwaysOnTop         bool
-	Hidden              bool
-	MinimiseButtonState application.ButtonState
-	MaximiseButtonState application.ButtonState
-	CloseButtonState    application.ButtonState
-	Frameless           bool
+type WindowOption func(*application.WebviewWindowOptions) error
+
+type Window = application.WebviewWindowOptions
+
+func WindowName(s string) WindowOption {
+	return func(o *Window) error {
+		o.Name = s
+		return nil
+	}
+}
+func WindowTitle(s string) WindowOption {
+	return func(o *Window) error {
+		o.Title = s
+		return nil
+	}
 }
 
-// WindowOption is an interface for applying configuration options to a
-// WindowConfig.
-type WindowOption interface {
-	Apply(*WindowConfig)
+func WindowURL(s string) WindowOption {
+	return func(o *Window) error {
+		o.URL = s
+		return nil
+	}
 }
 
-// WindowOptionFunc is a function that implements the WindowOption interface.
-// This allows us to use ordinary functions as window options.
-type WindowOptionFunc func(*WindowConfig)
-
-// Apply calls the underlying function to apply the configuration.
-func (f WindowOptionFunc) Apply(c *WindowConfig) {
-	f(c)
+func WindowWidth(i int) WindowOption {
+	return func(o *Window) error {
+		o.Width = i
+		return nil
+	}
 }
 
-// WithName sets the name of the window.
-func WithName(name string) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.Name = name
-	})
+func WindowHeight(i int) WindowOption {
+	return func(o *Window) error {
+		o.Height = i
+		return nil
+	}
 }
 
-// WithTitle sets the title of the window.
-func WithTitle(title string) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.Title = title
-	})
+func applyOptions(opts ...WindowOption) *Window {
+	w := &Window{}
+	if opts == nil {
+		return w
+	}
+	for _, o := range opts {
+		if err := o(w); err != nil {
+			return nil
+		}
+	}
+	return w
 }
 
-// WithWidth sets the width of the window.
-func WithWidth(width int) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.Width = width
-	})
+// NewWithStruct creates a new window using the provided options and returns its handle.
+func (s *Service) NewWithStruct(options *Window) (*application.WebviewWindow, error) {
+	return s.Core().App.Window.NewWithOptions(*options), nil
 }
 
-// WithHeight sets the height of the window.
-func WithHeight(height int) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.Height = height
-	})
+// NewWithOptions creates a new window by applying a series of options.
+func (s *Service) NewWithOptions(opts ...WindowOption) (*application.WebviewWindow, error) {
+	return s.NewWithStruct(applyOptions(opts...))
 }
 
-// WithURL sets the URL that the window will load.
-func WithURL(url string) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.URL = url
-	})
+// NewWithURL creates a new default window pointing to the specified URL.
+func (s *Service) NewWithURL(url string) (*application.WebviewWindow, error) {
+	return s.NewWithOptions(
+		WindowURL(url),
+		WindowTitle("Core"),
+		WindowHeight(900),
+		WindowWidth(1280),
+	)
 }
 
-// WithAlwaysOnTop sets the window to always be on top of other windows.
-func WithAlwaysOnTop(alwaysOnTop bool) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.AlwaysOnTop = alwaysOnTop
-	})
-}
+//// OpenWindow is a convenience method that creates and shows a window from a set of options.
+//func (s *Service) OpenWindow(opts ...WindowOption) error {
+//	_, err := s.NewWithOptions(opts...)
+//	return err
+//}
 
-// WithHidden sets the window to be hidden when it is created.
-func WithHidden(hidden bool) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.Hidden = hidden
-	})
-}
-
-// WithMinimiseButtonState sets the state of the minimise button.
-func WithMinimiseButtonState(state application.ButtonState) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.MinimiseButtonState = state
-	})
-}
-
-// WithMaximiseButtonState sets the state of the maximise button.
-func WithMaximiseButtonState(state application.ButtonState) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.MaximiseButtonState = state
-	})
-}
-
-// WithCloseButtonState sets the state of the close button.
-func WithCloseButtonState(state application.ButtonState) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.CloseButtonState = state
-	})
-}
-
-// WithFrameless sets the window to be frameless.
-func WithFrameless(frameless bool) WindowOption {
-	return WindowOptionFunc(func(c *WindowConfig) {
-		c.Frameless = frameless
-	})
+// SelectDirectory opens a directory selection dialog and returns the selected path.
+func (s *Service) SelectDirectory() (string, error) {
+	dialog := application.OpenFileDialog()
+	dialog.SetTitle("Select Project Directory")
+	return dialog.PromptForSingleSelection()
 }

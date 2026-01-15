@@ -1,353 +1,303 @@
 package display
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/Snider/Core/pkg/core"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-func TestParseWindowOptions(t *testing.T) {
-	tests := []struct {
-		name string
-		msg  map[string]any
-		want application.WebviewWindowOptions
-	}{
-		{
-			name: "Valid options",
-			msg: map[string]any{
-				"name": "main",
-				"options": map[string]any{
-					"Title":  "My App",
-					"Width":  1024.0,
-					"Height": 768.0,
-				},
-			},
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "My App",
-				Width:  1024,
-				Height: 768,
-			},
-		},
-		{
-			name: "All options valid",
-			msg: map[string]any{
-				"name": "secondary",
-				"options": map[string]any{
-					"Title":  "Another Window",
-					"Width":  800.0,
-					"Height": 600.0,
-				},
-			},
-			want: application.WebviewWindowOptions{
-				Name:   "secondary",
-				Title:  "Another Window",
+// newTestCore creates a new core instance with essential services for testing.
+func newTestCore(t *testing.T) *core.Core {
+	coreInstance, err := core.New()
+	require.NoError(t, err)
+	return coreInstance
+}
+
+func TestNew(t *testing.T) {
+	t.Run("creates service successfully", func(t *testing.T) {
+		service, err := New()
+		assert.NoError(t, err)
+		assert.NotNil(t, service, "New() should return a non-nil service instance")
+	})
+
+	t.Run("returns independent instances", func(t *testing.T) {
+		service1, err1 := New()
+		service2, err2 := New()
+		assert.NoError(t, err1)
+		assert.NoError(t, err2)
+		assert.NotSame(t, service1, service2, "New() should return different instances")
+	})
+}
+
+func TestRegister(t *testing.T) {
+	t.Run("registers with core successfully", func(t *testing.T) {
+		coreInstance := newTestCore(t)
+		service, err := Register(coreInstance)
+		require.NoError(t, err)
+		assert.NotNil(t, service, "Register() should return a non-nil service instance")
+	})
+
+	t.Run("returns Service type", func(t *testing.T) {
+		coreInstance := newTestCore(t)
+		service, err := Register(coreInstance)
+		require.NoError(t, err)
+
+		displayService, ok := service.(*Service)
+		assert.True(t, ok, "Register() should return *Service type")
+		assert.NotNil(t, displayService.Runtime, "Runtime should be initialized")
+	})
+}
+
+func TestServiceName(t *testing.T) {
+	service, err := New()
+	require.NoError(t, err)
+
+	name := service.ServiceName()
+	assert.Equal(t, "github.com/Snider/Core/display", name)
+}
+
+// --- Window Option Tests ---
+
+func TestWindowName(t *testing.T) {
+	t.Run("sets window name", func(t *testing.T) {
+		opt := WindowName("test-window")
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, "test-window", window.Name)
+	})
+
+	t.Run("sets empty name", func(t *testing.T) {
+		opt := WindowName("")
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, "", window.Name)
+	})
+}
+
+func TestWindowTitle(t *testing.T) {
+	t.Run("sets window title", func(t *testing.T) {
+		opt := WindowTitle("My Application")
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, "My Application", window.Title)
+	})
+
+	t.Run("sets title with special characters", func(t *testing.T) {
+		opt := WindowTitle("App - v1.0 (Beta)")
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, "App - v1.0 (Beta)", window.Title)
+	})
+}
+
+func TestWindowURL(t *testing.T) {
+	t.Run("sets window URL", func(t *testing.T) {
+		opt := WindowURL("/dashboard")
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, "/dashboard", window.URL)
+	})
+
+	t.Run("sets full URL", func(t *testing.T) {
+		opt := WindowURL("https://example.com/page")
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, "https://example.com/page", window.URL)
+	})
+}
+
+func TestWindowWidth(t *testing.T) {
+	t.Run("sets window width", func(t *testing.T) {
+		opt := WindowWidth(1024)
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, 1024, window.Width)
+	})
+
+	t.Run("sets zero width", func(t *testing.T) {
+		opt := WindowWidth(0)
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, window.Width)
+	})
+
+	t.Run("sets large width", func(t *testing.T) {
+		opt := WindowWidth(3840)
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, 3840, window.Width)
+	})
+}
+
+func TestWindowHeight(t *testing.T) {
+	t.Run("sets window height", func(t *testing.T) {
+		opt := WindowHeight(768)
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, 768, window.Height)
+	})
+
+	t.Run("sets zero height", func(t *testing.T) {
+		opt := WindowHeight(0)
+		window := &Window{}
+
+		err := opt(window)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, window.Height)
+	})
+}
+
+func TestApplyOptions(t *testing.T) {
+	t.Run("applies no options", func(t *testing.T) {
+		window := applyOptions()
+		assert.NotNil(t, window)
+		assert.Equal(t, "", window.Name)
+		assert.Equal(t, "", window.Title)
+		assert.Equal(t, 0, window.Width)
+		assert.Equal(t, 0, window.Height)
+	})
+
+	t.Run("applies single option", func(t *testing.T) {
+		window := applyOptions(WindowTitle("Test"))
+		assert.NotNil(t, window)
+		assert.Equal(t, "Test", window.Title)
+	})
+
+	t.Run("applies multiple options", func(t *testing.T) {
+		window := applyOptions(
+			WindowName("main"),
+			WindowTitle("My App"),
+			WindowURL("/home"),
+			WindowWidth(1280),
+			WindowHeight(720),
+		)
+
+		assert.NotNil(t, window)
+		assert.Equal(t, "main", window.Name)
+		assert.Equal(t, "My App", window.Title)
+		assert.Equal(t, "/home", window.URL)
+		assert.Equal(t, 1280, window.Width)
+		assert.Equal(t, 720, window.Height)
+	})
+
+	t.Run("handles nil options slice", func(t *testing.T) {
+		window := applyOptions(nil...)
+		assert.NotNil(t, window)
+	})
+
+	t.Run("applies options in order", func(t *testing.T) {
+		// Later options should override earlier ones
+		window := applyOptions(
+			WindowTitle("First"),
+			WindowTitle("Second"),
+		)
+
+		assert.NotNil(t, window)
+		assert.Equal(t, "Second", window.Title)
+	})
+}
+
+// --- ActionOpenWindow Tests ---
+
+func TestActionOpenWindow(t *testing.T) {
+	t.Run("creates action with options", func(t *testing.T) {
+		action := ActionOpenWindow{
+			WebviewWindowOptions: application.WebviewWindowOptions{
+				Name:   "test",
+				Title:  "Test Window",
 				Width:  800,
 				Height: 600,
 			},
-		},
-		{
-			name: "Missing options",
-			msg: map[string]any{
-				"name": "main",
-			},
-			want: application.WebviewWindowOptions{
-				Name: "main",
-			},
-		},
-		{
-			name: "Empty message",
-			msg:  map[string]any{},
-			want: application.WebviewWindowOptions{},
-		},
-		{
-			name: "Invalid width type",
-			msg: map[string]any{
-				"name": "main",
-				"options": map[string]any{
-					"Title":  "My App",
-					"Width":  "not a number",
-					"Height": 768.0,
-				},
-			},
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "My App",
-				Height: 768,
-			},
-		},
-		{
-			name: "Invalid height type",
-			msg: map[string]any{
-				"name": "main",
-				"options": map[string]any{
-					"Title":  "My App",
-					"Width":  1024.0,
-					"Height": "not a number",
-				},
-			},
-			want: application.WebviewWindowOptions{
-				Name:  "main",
-				Title: "My App",
-				Width: 1024,
-			},
-		},
-		{
-			name: "Deeply nested and complex message",
-			msg: map[string]any{
-				"name": "main",
-				"options": map[string]any{
-					"Title":  "My App",
-					"Width":  1024.0,
-					"Height": 768.0,
-					"nested": map[string]any{
-						"another_level": "some_value",
-					},
-				},
-			},
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "My App",
-				Width:  1024,
-				Height: 768,
-			},
-		},
-	}
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := parseWindowOptions(tt.msg); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseWindowOptions() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+		assert.Equal(t, "test", action.Name)
+		assert.Equal(t, "Test Window", action.Title)
+		assert.Equal(t, 800, action.Width)
+		assert.Equal(t, 600, action.Height)
+	})
 }
 
-// mockWindowOption is a mock implementation of the WindowOption interface for testing.
-type mockWindowOption struct {
-	applyFunc func(*WindowConfig)
+// --- Integration Tests (require Wails runtime) ---
+
+func TestOpenWindow(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping OpenWindow test - requires running Wails application instance")
+	})
 }
 
-func (m *mockWindowOption) Apply(opts *WindowConfig) {
-	m.applyFunc(opts)
+func TestNewWithStruct(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping NewWithStruct test - requires running Wails application instance")
+	})
 }
 
-func TestBuildWailsWindowOptions(t *testing.T) {
-	tests := []struct {
-		name string
-		opts []WindowOption
-		want application.WebviewWindowOptions
-	}{
-		{
-			name: "Default options",
-			opts: []WindowOption{},
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "Core",
-				Width:  1280,
-				Height: 800,
-				URL:    "/",
-			},
-		},
-		{
-			name: "Chaining many options",
-			opts: func() []WindowOption {
-				opts := make([]WindowOption, 1000)
-				for i := 0; i < 1000; i++ {
-					opts[i] = WithTitle("Test")
-				}
-				return opts
-			}(),
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "Test",
-				Width:  1280,
-				Height: 800,
-				URL:    "/",
-			},
-		},
-		{
-			name: "Override options",
-			opts: []WindowOption{
-				&mockWindowOption{
-					applyFunc: func(opts *WindowConfig) {
-						opts.Name = "test"
-						opts.Title = "Test Window"
-						opts.Width = 1920
-						opts.Height = 1080
-						opts.URL = "/test"
-						opts.AlwaysOnTop = true
-						opts.Hidden = true
-						opts.MinimiseButtonState = application.ButtonHidden
-						opts.MaximiseButtonState = application.ButtonDisabled
-						opts.CloseButtonState = application.ButtonEnabled
-						opts.Frameless = true
-					},
-				},
-			},
-			want: application.WebviewWindowOptions{
-				Name:                "test",
-				Title:               "Test Window",
-				Width:               1920,
-				Height:              1080,
-				URL:                 "/test",
-				AlwaysOnTop:         true,
-				Hidden:              true,
-				MinimiseButtonState: application.ButtonHidden,
-				MaximiseButtonState: application.ButtonDisabled,
-				CloseButtonState:    application.ButtonEnabled,
-				Frameless:           true,
-			},
-		},
-		{
-			name: "Nil options",
-			opts: nil,
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "Core",
-				Width:  1280,
-				Height: 800,
-				URL:    "/",
-			},
-		},
-		{
-			name: "Empty options slice",
-			opts: []WindowOption{},
-			want: application.WebviewWindowOptions{
-				Name:   "main",
-				Title:  "Core",
-				Width:  1280,
-				Height: 800,
-				URL:    "/",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := buildWailsWindowOptions(tt.opts...); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildWailsWindowOptions() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+func TestNewWithOptions(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping NewWithOptions test - requires running Wails application instance")
+	})
 }
 
-func TestNewAndNewDisplayService(t *testing.T) {
-	s, err := New()
-	if err != nil {
-		t.Fatalf("New() error = %v, wantErr nil", err)
-	}
-	if s == nil {
-		t.Fatal("New() returned nil")
-	}
-
-	s, err = newDisplayService()
-	if err != nil {
-		t.Fatalf("newDisplayService() error = %v, wantErr nil", err)
-	}
-	if s == nil {
-		t.Fatal("newDisplayService() returned nil")
-	}
+func TestNewWithURL(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping NewWithURL test - requires running Wails application instance")
+	})
 }
 
-func TestWindowOptions(t *testing.T) {
-	config := &WindowConfig{}
-
-	WithName("test-name").Apply(config)
-	if config.Name != "test-name" {
-		t.Errorf("WithName() got = %v, want %v", config.Name, "test-name")
-	}
-
-	WithTitle("test-title").Apply(config)
-	if config.Title != "test-title" {
-		t.Errorf("WithTitle() got = %v, want %v", config.Title, "test-title")
-	}
-
-	WithWidth(100).Apply(config)
-	if config.Width != 100 {
-		t.Errorf("WithWidth() got = %v, want %v", config.Width, 100)
-	}
-
-	WithHeight(200).Apply(config)
-	if config.Height != 200 {
-		t.Errorf("WithHeight() got = %v, want %v", config.Height, 200)
-	}
-
-	WithURL("/testurl").Apply(config)
-	if config.URL != "/testurl" {
-		t.Errorf("WithURL() got = %v, want %v", config.URL, "/testurl")
-	}
-
-	WithAlwaysOnTop(true).Apply(config)
-	if !config.AlwaysOnTop {
-		t.Errorf("WithAlwaysOnTop() got = %v, want %v", config.AlwaysOnTop, true)
-	}
-
-	WithHidden(true).Apply(config)
-	if !config.Hidden {
-		t.Errorf("WithHidden() got = %v, want %v", config.Hidden, true)
-	}
-
-	WithMinimiseButtonState(application.ButtonHidden).Apply(config)
-	if config.MinimiseButtonState != application.ButtonHidden {
-		t.Errorf("WithMinimiseButtonState() got = %v, want %v", config.MinimiseButtonState, application.ButtonHidden)
-	}
-
-	WithMaximiseButtonState(application.ButtonDisabled).Apply(config)
-	if config.MaximiseButtonState != application.ButtonDisabled {
-		t.Errorf("WithMaximiseButtonState() got = %v, want %v", config.MaximiseButtonState, application.ButtonDisabled)
-	}
-
-	WithCloseButtonState(application.ButtonEnabled).Apply(config)
-	if config.CloseButtonState != application.ButtonEnabled {
-		t.Errorf("WithCloseButtonState() got = %v, want %v", config.CloseButtonState, application.ButtonEnabled)
-	}
-
-	WithFrameless(true).Apply(config)
-	if !config.Frameless {
-		t.Errorf("WithFrameless() got = %v, want %v", config.Frameless, true)
-	}
+func TestServiceStartup(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping ServiceStartup test - requires running Wails application instance")
+	})
 }
 
-func TestService_HandleOpenWindowAction(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	_ = s.handleOpenWindowAction(map[string]any{})
+func TestSelectDirectory(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping SelectDirectory test - requires running Wails application instance")
+	})
 }
 
-func TestService_ShowEnvironmentDialog(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	s.ShowEnvironmentDialog()
+func TestShowEnvironmentDialog(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping ShowEnvironmentDialog test - requires running Wails application instance")
+	})
 }
 
-func TestService_OpenWindow(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	_ = s.OpenWindow()
+func TestHandleIPCEvents(t *testing.T) {
+	t.Run("requires Wails runtime for full test", func(t *testing.T) {
+		t.Skip("Skipping HandleIPCEvents test - requires running Wails application instance")
+	})
 }
 
-func TestService_MonitorScreenChanges(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	s.monitorScreenChanges()
+func TestBuildMenu(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping buildMenu test - requires running Wails application instance")
+	})
 }
 
-func TestService_BuildMenu(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	s.buildMenu()
-}
-
-func TestService_SystemTray(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	s.systemTray()
-}
-
-func TestService_Startup(t *testing.T) {
-	t.Skip("Skipping test that requires a running Wails application.")
-	s, _ := New()
-	_ = s.Startup(nil)
+func TestSystemTray(t *testing.T) {
+	t.Run("requires Wails runtime", func(t *testing.T) {
+		t.Skip("Skipping systemTray test - requires running Wails application instance")
+	})
 }
