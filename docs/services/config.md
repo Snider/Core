@@ -1,37 +1,122 @@
----
-title: config
----
-# Service: `config`
+# Config Service
 
-The `config` service provides a unified interface for managing application configuration. It handles retrieving and setting configuration values, persistent storage, and feature flags.
+The Config service (`pkg/config`) provides unified configuration management with automatic persistence, feature flags, and XDG-compliant directory paths.
 
-## Interfaces
+## Features
 
-### `type Config`
+- JSON configuration with auto-save
+- Feature flag management
+- XDG Base Directory support
+- Struct serialization helpers
+- Type-safe get/set operations
 
-`Config` defines the contract for the configuration service.
+## Basic Usage
 
 ```go
-type Config interface {
-    // Get retrieves a configuration value by key and stores it in the 'out' variable.
-    Get(key string, out any) error
+import "github.com/Snider/Core/pkg/config"
 
-    // Set stores a configuration value by key.
-    Set(key string, v any) error
+// Standalone usage
+cfg, err := config.New()
+if err != nil {
+    log.Fatal(err)
 }
+
+// With Core framework
+c, _ := core.New(
+    core.WithService(config.Register),
+)
+cfg := core.MustServiceFor[*config.Service](c, "config")
 ```
 
-## Standard Implementation
+## Get & Set Values
 
-While `Config` is an interface, the standard implementation typically provides the following functionality:
+```go
+// Set a value (auto-saves)
+err := cfg.Set("language", "fr")
 
-- **Persistent Storage**: Saves configuration to disk (e.g., `config.json`).
-- **Feature Flags**: Checking if specific application features are enabled.
-- **Defaults**: Providing default values for configuration settings.
+// Get a value
+var lang string
+err := cfg.Get("language", &lang)
+```
 
-### Common Methods
+Available configuration keys:
 
-Although not part of the minimal `Config` interface, implementations often provide:
+| Key | Type | Description |
+|-----|------|-------------|
+| `language` | string | UI language code |
+| `default_route` | string | Default navigation route |
+| `configDir` | string | Config files directory |
+| `dataDir` | string | Data files directory |
+| `cacheDir` | string | Cache directory |
+| `workspaceDir` | string | Workspaces directory |
 
-- `Save() error`: Explicitly saves the current configuration to disk.
-- `IsFeatureEnabled(feature string) bool`: Checks if a feature flag is active.
+## Feature Flags
+
+```go
+// Enable a feature
+cfg.EnableFeature("dark_mode")
+
+// Check if enabled
+if cfg.IsFeatureEnabled("dark_mode") {
+    // Apply dark theme
+}
+
+// Disable a feature
+cfg.DisableFeature("dark_mode")
+```
+
+## Struct Serialization
+
+Store complex data structures in separate JSON files:
+
+```go
+type UserPrefs struct {
+    Theme         string `json:"theme"`
+    Notifications bool   `json:"notifications"`
+}
+
+// Save struct to config/user_prefs.json
+prefs := UserPrefs{Theme: "dark", Notifications: true}
+err := cfg.SaveStruct("user_prefs", prefs)
+
+// Load struct from file
+var loaded UserPrefs
+err := cfg.LoadStruct("user_prefs", &loaded)
+```
+
+## Directory Paths
+
+The service automatically creates XDG-compliant directories:
+
+```go
+// Access directory paths
+fmt.Println(cfg.ConfigDir)    // ~/.config/lethean or ~/lethean/config
+fmt.Println(cfg.DataDir)      // Data storage
+fmt.Println(cfg.CacheDir)     // Cache files
+fmt.Println(cfg.WorkspaceDir) // User workspaces
+```
+
+## Manual Save
+
+Changes are auto-saved, but you can save explicitly:
+
+```go
+err := cfg.Save()
+```
+
+## Frontend Usage (TypeScript)
+
+```typescript
+import { Get, Set, IsFeatureEnabled } from '@bindings/config/service';
+
+// Get configuration
+const lang = await Get("language");
+
+// Set configuration
+await Set("default_route", "/dashboard");
+
+// Check feature flag
+if (await IsFeatureEnabled("dark_mode")) {
+    applyDarkTheme();
+}
+```

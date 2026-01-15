@@ -6,7 +6,7 @@ require (
 	github.com/Snider/Borg v0.0.0-20251104114649-4529aba089cd
 	github.com/minio/selfupdate v0.6.0
 	github.com/spf13/cobra v1.10.1
-	golang.org/x/mod v0.29.0
+	golang.org/x/mod v0.30.0
 	golang.org/x/oauth2 v0.33.0
 )
 
@@ -35,5 +35,6 @@ require (
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

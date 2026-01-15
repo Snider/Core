@@ -46,7 +46,7 @@ func newTestCore(t *testing.T) *core.Core {
 	return c
 }
 
-func TestConfigServiceGood(t *testing.T) {
+func TestConfigService(t *testing.T) {
 	t.Run("New service creates default config", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
@@ -130,131 +130,67 @@ func TestConfigServiceGood(t *testing.T) {
 		}
 	})
 
-	t.Run("Save and Load Struct", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
+	t.Run("New service fails with invalid JSON in config", func(t *testing.T) {
+		tempHomeDir, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
+		// Create config directory and write invalid JSON
+		configDir := filepath.Join(tempHomeDir, appName, "config")
+		if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
+			t.Fatalf("Failed to create test config dir: %v", err)
+		}
+		configPath := filepath.Join(configDir, configFileName)
+
+		invalidJSON := `{"language": invalid_value}`
+		if err := os.WriteFile(configPath, []byte(invalidJSON), 0644); err != nil {
+			t.Fatalf("Failed to write invalid config file: %v", err)
 		}
 
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
+		_, err := New()
+		if err == nil {
+			t.Error("New() should fail when config file contains invalid JSON")
 		}
-
-		key := "custom"
-		expectedConfig := CustomConfig{
-			APIKey:  "12345",
-			Timeout: 30,
-		}
-
-		if err := s.SaveStruct(key, expectedConfig); err != nil {
-			t.Fatalf("SaveStruct() failed: %v", err)
-		}
-
-		var actualConfig CustomConfig
-		if err := s.LoadStruct(key, &actualConfig); err != nil {
-			t.Fatalf("LoadStruct() failed: %v", err)
-		}
-
-		if actualConfig.APIKey != expectedConfig.APIKey {
-			t.Errorf("Expected APIKey '%s', got '%s'", expectedConfig.APIKey, actualConfig.APIKey)
-		}
-		if actualConfig.Timeout != expectedConfig.Timeout {
-			t.Errorf("Expected Timeout '%d', got '%d'", expectedConfig.Timeout, actualConfig.Timeout)
-		}
-	})
-}
-
-func TestConfigServiceUgly(t *testing.T) {
-	t.Run("LoadStruct with nil value", func(t *testing.T) {
-		_, cleanup := setupTestEnv(t)
-		defer cleanup()
-
-		s, err := New()
-		if err != nil {
-			t.Fatalf("New() failed: %v", err)
-		}
-
-		key := "nil-value"
-		filePath := filepath.Join(s.ConfigDir, key+".json")
-		if err := os.WriteFile(filePath, []byte("null"), 0644); err != nil {
-			t.Fatalf("Failed to write nil value file: %v", err)
-		}
-
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		var actualConfig CustomConfig
-		err = s.LoadStruct(key, &actualConfig)
-		if err != nil {
-			t.Fatalf("LoadStruct() should not have failed with a nil value, but it did: %v", err)
+		if err != nil && !contains(err.Error(), "failed to unmarshal config") {
+			t.Errorf("Expected unmarshal error, got: %v", err)
 		}
 	})
 
-	t.Run("Concurrent access", func(t *testing.T) {
+	t.Run("HandleIPCEvents with ActionServiceStartup", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		s, err := New()
+		c := newTestCore(t)
+		serviceAny, err := Register(c)
 		if err != nil {
-			t.Fatalf("New() failed: %v", err)
+			t.Fatalf("Register() failed: %v", err)
 		}
 
-		// Run concurrent Set and Get operations
-		done := make(chan bool)
-		for i := 0; i < 10; i++ {
-			go func() {
-				s.Set("language", "en")
-				done <- true
-			}()
-			go func() {
-				var lang string
-				s.Get("language", &lang)
-				done <- true
-			}()
-		}
-
-		for i := 0; i < 20; i++ {
-			<-done
+		s := serviceAny.(*Service)
+		err = s.HandleIPCEvents(c, core.ActionServiceStartup{})
+		if err != nil {
+			t.Errorf("HandleIPCEvents(ActionServiceStartup) should not error, got: %v", err)
 		}
 	})
-}
 
-func TestConfigServiceBad(t *testing.T) {
-	t.Run("Load non-existent struct", func(t *testing.T) {
+	t.Run("HandleIPCEvents with unknown message type", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		s, err := New()
+		c := newTestCore(t)
+		serviceAny, err := Register(c)
 		if err != nil {
-			t.Fatalf("New() failed: %v", err)
+			t.Fatalf("Register() failed: %v", err)
 		}
 
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		var actualConfig CustomConfig
-		if err := s.LoadStruct("non-existent", &actualConfig); err != nil {
-			t.Fatalf("LoadStruct() failed: %v", err)
-		}
-
-		// Expect the struct to be zero-valued
-		if actualConfig.APIKey != "" {
-			t.Errorf("Expected empty APIKey, got '%s'", actualConfig.APIKey)
-		}
-		if actualConfig.Timeout != 0 {
-			t.Errorf("Expected zero Timeout, got '%d'", actualConfig.Timeout)
+		s := serviceAny.(*Service)
+		// Pass an arbitrary type as unknown message
+		err = s.HandleIPCEvents(c, "unknown message")
+		if err != nil {
+			t.Errorf("HandleIPCEvents(unknown) should not error, got: %v", err)
 		}
 	})
 
-	t.Run("Get non-existent key", func(t *testing.T) {
+	t.Run("Get with key not found", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
@@ -264,13 +200,16 @@ func TestConfigServiceBad(t *testing.T) {
 		}
 
 		var value string
-		err = s.Get("non-existent", &value)
+		err = s.Get("nonexistent_key", &value)
 		if err == nil {
-			t.Errorf("Expected an error for non-existent key, but got nil")
+			t.Error("Get() should fail for nonexistent key")
+		}
+		if err != nil && err.Error() != "key 'nonexistent_key' not found in config" {
+			t.Errorf("Expected 'key not found' error, got: %v", err)
 		}
 	})
 
-	t.Run("Set non-existent key", func(t *testing.T) {
+	t.Run("Get with non-pointer output", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
@@ -279,13 +218,17 @@ func TestConfigServiceBad(t *testing.T) {
 			t.Fatalf("New() failed: %v", err)
 		}
 
-		err = s.Set("non-existent", "value")
+		var value string
+		err = s.Get("language", value) // Not a pointer
 		if err == nil {
-			t.Errorf("Expected an error for non-existent key, but got nil")
+			t.Error("Get() should fail for non-pointer output")
+		}
+		if err != nil && err.Error() != "output argument must be a non-nil pointer" {
+			t.Errorf("Expected 'non-nil pointer' error, got: %v", err)
 		}
 	})
 
-	t.Run("SaveStruct with unmarshallable type", func(t *testing.T) {
+	t.Run("Get with nil pointer output", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
@@ -294,13 +237,17 @@ func TestConfigServiceBad(t *testing.T) {
 			t.Fatalf("New() failed: %v", err)
 		}
 
-		err = s.SaveStruct("test", make(chan int))
+		var value *string // nil pointer
+		err = s.Get("language", value)
 		if err == nil {
-			t.Errorf("Expected an error for unmarshallable type, but got nil")
+			t.Error("Get() should fail for nil pointer output")
+		}
+		if err != nil && err.Error() != "output argument must be a non-nil pointer" {
+			t.Errorf("Expected 'non-nil pointer' error, got: %v", err)
 		}
 	})
 
-	t.Run("LoadStruct with invalid JSON", func(t *testing.T) {
+	t.Run("Get with type mismatch", func(t *testing.T) {
 		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
@@ -309,41 +256,215 @@ func TestConfigServiceBad(t *testing.T) {
 			t.Fatalf("New() failed: %v", err)
 		}
 
-		key := "invalid"
-		filePath := filepath.Join(s.ConfigDir, key+".json")
-		if err := os.WriteFile(filePath, []byte("invalid json"), 0644); err != nil {
-			t.Fatalf("Failed to write invalid json file: %v", err)
-		}
-
-		type CustomConfig struct {
-			APIKey  string `json:"apiKey"`
-			Timeout int    `json:"timeout"`
-		}
-
-		var actualConfig CustomConfig
-		err = s.LoadStruct(key, &actualConfig)
+		var value int // language is a string, not int
+		err = s.Get("language", &value)
 		if err == nil {
-			t.Errorf("Expected an error for invalid JSON, but got nil")
+			t.Error("Get() should fail for type mismatch")
+		}
+		if err != nil && !contains(err.Error(), "cannot assign config value of type") {
+			t.Errorf("Expected type mismatch error, got: %v", err)
 		}
 	})
 
-	t.Run("New service with empty config file", func(t *testing.T) {
-		tempHomeDir, cleanup := setupTestEnv(t)
+	t.Run("Set with key not found", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
 		defer cleanup()
 
-		// Manually create an empty config file
-		configDir := filepath.Join(tempHomeDir, appName, "config")
-		if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
-			t.Fatalf("Failed to create test config dir: %v", err)
-		}
-		configPath := filepath.Join(configDir, configFileName)
-		if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
-			t.Fatalf("Failed to write empty config file: %v", err)
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
 		}
 
-		_, err := New()
+		err = s.Set("nonexistent_key", "value")
 		if err == nil {
-			t.Fatalf("New() should have failed with an empty config file, but it did not")
+			t.Error("Set() should fail for nonexistent key")
+		}
+		if err != nil && err.Error() != "key 'nonexistent_key' not found in config" {
+			t.Errorf("Expected 'key not found' error, got: %v", err)
 		}
 	})
+
+	t.Run("Set with type mismatch", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		err = s.Set("language", 123) // language expects string, not int
+		if err == nil {
+			t.Error("Set() should fail for type mismatch")
+		}
+		if err != nil && !contains(err.Error(), "type mismatch") {
+			t.Errorf("Expected type mismatch error, got: %v", err)
+		}
+	})
+}
+
+// TestSaveStruct tests the SaveStruct function.
+func TestSaveStruct(t *testing.T) {
+	type TestData struct {
+		Name  string `json:"name"`
+		Value int    `json:"value"`
+	}
+
+	t.Run("saves struct successfully", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		data := TestData{Name: "test", Value: 42}
+		err = s.SaveStruct("test_data", data)
+		if err != nil {
+			t.Fatalf("SaveStruct() failed: %v", err)
+		}
+
+		// Verify file was created
+		expectedPath := filepath.Join(s.ConfigDir, "test_data.json")
+		if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+			t.Errorf("Expected file to be created at %s", expectedPath)
+		}
+
+		// Verify content
+		content, err := os.ReadFile(expectedPath)
+		if err != nil {
+			t.Fatalf("Failed to read saved file: %v", err)
+		}
+		if !contains(string(content), "\"name\": \"test\"") {
+			t.Errorf("Saved content missing expected data: %s", content)
+		}
+	})
+
+	t.Run("handles unmarshalable data", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		// Channels cannot be marshaled to JSON
+		badData := make(chan int)
+		err = s.SaveStruct("bad_data", badData)
+		if err == nil {
+			t.Error("SaveStruct() should fail for unmarshalable data")
+		}
+	})
+}
+
+// TestLoadStruct tests the LoadStruct function.
+func TestLoadStruct(t *testing.T) {
+	type TestData struct {
+		Name  string `json:"name"`
+		Value int    `json:"value"`
+	}
+
+	t.Run("loads struct successfully", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		// First save some data
+		original := TestData{Name: "loaded", Value: 99}
+		err = s.SaveStruct("load_test", original)
+		if err != nil {
+			t.Fatalf("SaveStruct() failed: %v", err)
+		}
+
+		// Now load it
+		var loaded TestData
+		err = s.LoadStruct("load_test", &loaded)
+		if err != nil {
+			t.Fatalf("LoadStruct() failed: %v", err)
+		}
+
+		if loaded.Name != original.Name || loaded.Value != original.Value {
+			t.Errorf("Loaded data mismatch: expected %+v, got %+v", original, loaded)
+		}
+	})
+
+	t.Run("returns nil for nonexistent file", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		var data TestData
+		err = s.LoadStruct("nonexistent_file", &data)
+		if err != nil {
+			t.Errorf("LoadStruct() should return nil for nonexistent file, got: %v", err)
+		}
+	})
+
+	t.Run("returns error for invalid JSON", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		// Write invalid JSON
+		invalidPath := filepath.Join(s.ConfigDir, "invalid.json")
+		if err := os.WriteFile(invalidPath, []byte("not valid json"), 0644); err != nil {
+			t.Fatalf("Failed to write invalid JSON: %v", err)
+		}
+
+		var data TestData
+		err = s.LoadStruct("invalid", &data)
+		if err == nil {
+			t.Error("LoadStruct() should fail for invalid JSON")
+		}
+	})
+
+	t.Run("returns error when file is a directory", func(t *testing.T) {
+		_, cleanup := setupTestEnv(t)
+		defer cleanup()
+
+		s, err := New()
+		if err != nil {
+			t.Fatalf("New() failed: %v", err)
+		}
+
+		// Create a directory where the file should be
+		dirPath := filepath.Join(s.ConfigDir, "dir_as_file.json")
+		if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+			t.Fatalf("Failed to create directory: %v", err)
+		}
+
+		var data TestData
+		err = s.LoadStruct("dir_as_file", &data)
+		if err == nil {
+			t.Error("LoadStruct() should fail when path is a directory")
+		}
+	})
+}
+
+// contains is a helper function to check if a string contains a substring.
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

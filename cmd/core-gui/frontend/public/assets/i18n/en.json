@@ -1,0 +1,15 @@
+{
+  "menu.dashboard": "Dashboard",
+  "menu.mining": "Mining",
+  "menu.blockchain": "Blockchain",
+  "Developer": "Developer",
+  "Networking": "Networking",
+  "Settings": "Settings",
+  "menu.hub-client": "Client Hub",
+  "menu.hub-server": "Server Hub",
+  "menu.hub-developer": "Developer Hub",
+  "menu.hub-gateway": "Gateway Hub",
+  "menu.hub-admin": "Admin Hub",
+  "menu.your-profile": "Your Profile",
+  "menu.logout": "Logout"
+}
