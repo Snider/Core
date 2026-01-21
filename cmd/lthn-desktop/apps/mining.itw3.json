@@ -1,10 +1,10 @@
 {
   "code": "mining",
-  "type": "app",
+  "type": "core",
   "name": "Mining Module",
   "version": "0.1.0",
   "namespace": "mining",
-  "description": "Cryptocurrency mining management",
+  "description": "Native cryptocurrency mining management powered by Snider/Mining",
   "author": "Lethean",
   "contexts": ["miner", "default"],
   "menu": [
@@ -16,32 +16,34 @@
       "children": [
         {"id": "mining-dashboard", "label": "Dashboard", "route": "/mining/dashboard", "order": 1},
         {"id": "mining-pools", "label": "Pools", "route": "/mining/pools", "order": 2},
-        {"id": "mining-sep1", "separator": true, "order": 3},
-        {"id": "mining-start", "label": "Start Mining", "action": "mining:start", "order": 4},
-        {"id": "mining-stop", "label": "Stop Mining", "action": "mining:stop", "order": 5}
+        {"id": "mining-miners", "label": "Miners", "route": "/mining/miners", "order": 3},
+        {"id": "mining-sep1", "separator": true, "order": 4},
+        {"id": "mining-start", "label": "Start Mining", "action": "mining:start", "order": 5},
+        {"id": "mining-stop", "label": "Stop Mining", "action": "mining:stop", "order": 6}
       ]
     }
   ],
   "routes": [
     {"path": "/mining/dashboard", "component": "mining-dashboard", "title": "Mining Dashboard", "contexts": ["miner"]},
-    {"path": "/mining/pools", "component": "mining-pools", "title": "Mining Pools", "contexts": ["miner"]}
+    {"path": "/mining/pools", "component": "mining-pools", "title": "Mining Pools", "contexts": ["miner"]},
+    {"path": "/mining/miners", "component": "mining-miners", "title": "Miners", "contexts": ["miner"]}
   ],
   "api": [
-    {"method": "GET", "path": "/status", "description": "Get mining status"},
-    {"method": "POST", "path": "/start", "description": "Start mining"},
-    {"method": "POST", "path": "/stop", "description": "Stop mining"},
-    {"method": "GET", "path": "/pools", "description": "List configured pools"}
+    {"method": "GET", "path": "/health", "description": "Health check"},
+    {"method": "GET", "path": "/ready", "description": "Readiness check"},
+    {"method": "GET", "path": "/info", "description": "Get mining service info"},
+    {"method": "GET", "path": "/metrics", "description": "Get mining metrics"},
+    {"method": "GET", "path": "/miners", "description": "List running miners"},
+    {"method": "GET", "path": "/miners/available", "description": "List available miners"},
+    {"method": "POST", "path": "/miners/:miner_name/install", "description": "Install a miner"},
+    {"method": "DELETE", "path": "/miners/:miner_name/uninstall", "description": "Uninstall a miner"},
+    {"method": "DELETE", "path": "/miners/:miner_name", "description": "Stop a miner"},
+    {"method": "GET", "path": "/miners/:miner_name/stats", "description": "Get miner stats"},
+    {"method": "GET", "path": "/miners/:miner_name/logs", "description": "Get miner logs"},
+    {"method": "POST", "path": "/profiles", "description": "Create mining profile"},
+    {"method": "GET", "path": "/profiles", "description": "List mining profiles"},
+    {"method": "POST", "path": "/profiles/:id/start", "description": "Start mining with profile"}
   ],
-  "downloads": {
-    "x86_64": {
-      "darwin": {"url": "https://releases.example.com/mining/darwin-x86_64.tar.gz"},
-      "linux": {"url": "https://releases.example.com/mining/linux-x86_64.tar.gz"},
-      "windows": {"url": "https://releases.example.com/mining/windows-x86_64.zip"}
-    },
-    "aarch64": {
-      "darwin": {"url": "https://releases.example.com/mining/darwin-aarch64.tar.gz"}
-    }
-  },
   "config": {
     "defaultPool": "",
     "threads": 0,

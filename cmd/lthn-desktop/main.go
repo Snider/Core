@@ -33,6 +33,14 @@ func main() {
 	// This provides WebView access, console capture, window control, and process management
 	mcpBridge := NewMCPBridge(mcpPort, rt.Display)
 
+	// Create the Mining bridge for native miner management
+	miningBridge := NewMiningBridge()
+
+	// Register the mining module with the module registry
+	if err := rt.Module.Registry().RegisterGinModule(miningBridge.ModuleConfig(), miningBridge); err != nil {
+		log.Printf("Warning: failed to register mining module: %v", err)
+	}
+
 	// Collect all services including plugins
 	// Display service registered separately so Wails calls its Startup() for tray/window
 	services := []application.Service{
@@ -47,7 +55,8 @@ func main() {
 		application.NewService(rt.IDE),
 		application.NewService(rt.Module),
 		application.NewService(rt.Workspace),
-		application.NewService(mcpBridge), // MCP Bridge for Claude Code
+		application.NewService(mcpBridge),    // MCP Bridge for Claude Code
+		application.NewService(miningBridge), // Mining Bridge for native miner management
 	}
 	services = append(services, rt.PluginServices()...)
 
