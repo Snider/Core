@@ -9,8 +9,11 @@ import (
 	"github.com/Snider/Core/pkg/config"
 	"github.com/Snider/Core/pkg/crypt"
 	"github.com/Snider/Core/pkg/display"
+	"github.com/Snider/Core/pkg/docs"
 	"github.com/Snider/Core/pkg/help"
+	"github.com/Snider/Core/pkg/ide"
 	"github.com/Snider/Core/pkg/io"
+	"github.com/Snider/Core/pkg/module"
 	"github.com/Snider/Core/pkg/workspace"
 )
 
@@ -60,9 +63,12 @@ func TestNewServiceInitializationError(t *testing.T) {
 	factories := map[string]ServiceFactory{
 		"config":    func() (any, error) { return config.New() },
 		"display":   func() (any, error) { return display.New() },
+		"docs":      func() (any, error) { return docs.New(docs.Options{BaseURL: "https://docs.lethean.io"}) },
 		"help":      func() (any, error) { return help.New(help.Options{}) },
 		"crypt":     func() (any, error) { return crypt.New() },
 		"i18n":      func() (any, error) { return nil, errors.New("i18n service failed to initialize") }, // This factory will fail
+		"ide":       func() (any, error) { return ide.New() },
+		"module":    func() (any, error) { return module.NewService(module.Options{AppsDir: "apps"}) },
 		"workspace": func() (any, error) { return workspace.New(io.Local) },
 	}
 
@@ -79,9 +85,12 @@ func TestMissingFactory(t *testing.T) {
 	factories := map[string]ServiceFactory{
 		// "config" intentionally missing
 		"display":   func() (any, error) { return display.New() },
+		"docs":      func() (any, error) { return docs.New(docs.Options{BaseURL: "https://docs.lethean.io"}) },
 		"help":      func() (any, error) { return help.New(help.Options{}) },
 		"crypt":     func() (any, error) { return crypt.New() },
 		"i18n":      func() (any, error) { return nil, nil },
+		"ide":       func() (any, error) { return ide.New() },
+		"module":    func() (any, error) { return module.NewService(module.Options{AppsDir: "apps"}) },
 		"workspace": func() (any, error) { return workspace.New(io.Local) },
 	}
 
