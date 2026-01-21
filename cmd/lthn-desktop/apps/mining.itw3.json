@@ -1,0 +1,50 @@
+{
+  "code": "mining",
+  "type": "app",
+  "name": "Mining Module",
+  "version": "0.1.0",
+  "namespace": "mining",
+  "description": "Cryptocurrency mining management",
+  "author": "Lethean",
+  "contexts": ["miner", "default"],
+  "menu": [
+    {
+      "id": "mining",
+      "label": "Mining",
+      "order": 200,
+      "contexts": ["miner"],
+      "children": [
+        {"id": "mining-dashboard", "label": "Dashboard", "route": "/mining/dashboard", "order": 1},
+        {"id": "mining-pools", "label": "Pools", "route": "/mining/pools", "order": 2},
+        {"id": "mining-sep1", "separator": true, "order": 3},
+        {"id": "mining-start", "label": "Start Mining", "action": "mining:start", "order": 4},
+        {"id": "mining-stop", "label": "Stop Mining", "action": "mining:stop", "order": 5}
+      ]
+    }
+  ],
+  "routes": [
+    {"path": "/mining/dashboard", "component": "mining-dashboard", "title": "Mining Dashboard", "contexts": ["miner"]},
+    {"path": "/mining/pools", "component": "mining-pools", "title": "Mining Pools", "contexts": ["miner"]}
+  ],
+  "api": [
+    {"method": "GET", "path": "/status", "description": "Get mining status"},
+    {"method": "POST", "path": "/start", "description": "Start mining"},
+    {"method": "POST", "path": "/stop", "description": "Stop mining"},
+    {"method": "GET", "path": "/pools", "description": "List configured pools"}
+  ],
+  "downloads": {
+    "x86_64": {
+      "darwin": {"url": "https://releases.example.com/mining/darwin-x86_64.tar.gz"},
+      "linux": {"url": "https://releases.example.com/mining/linux-x86_64.tar.gz"},
+      "windows": {"url": "https://releases.example.com/mining/windows-x86_64.zip"}
+    },
+    "aarch64": {
+      "darwin": {"url": "https://releases.example.com/mining/darwin-aarch64.tar.gz"}
+    }
+  },
+  "config": {
+    "defaultPool": "",
+    "threads": 0,
+    "intensity": 50
+  }
+}

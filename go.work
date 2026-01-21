@@ -5,6 +5,7 @@ use (
 	./cmd/core-gui
 	./cmd/core-mcp
 	./cmd/examples/core-static-di
+	./cmd/lthn-desktop
 	./pkg/config
 	./pkg/core
 	./pkg/display

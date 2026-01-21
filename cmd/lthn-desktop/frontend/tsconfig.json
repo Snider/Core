@@ -1,0 +1,56 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@bindings/*": [
+        "bindings/*"
+      ],
+      "@lthn/ide/*": [
+        "bindings/github.com/Snider/Core/pkg/ide/*"
+      ],
+      "@lthn/docs/*": [
+        "bindings/github.com/Snider/Core/pkg/docs/*"
+      ],
+      "@lthn/core/*": [
+        "bindings/github.com/Snider/Core/pkg/*"
+      ],
+      "@lthn/*": [
+        "bindings/github.com/letheanVPN/desktop/services/*"
+      ],
+      "@lib/*": [
+        "src/lib/*"
+      ]
+    },
+    "allowJs": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve"
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}
