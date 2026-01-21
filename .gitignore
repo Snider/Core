@@ -17,3 +17,12 @@ coverage/
 /cmd/core/bin/
 /coverage.txt
 /bin/core
+
+# lthn-desktop build artifacts
+cmd/lthn-desktop/build/bin/
+cmd/lthn-desktop/frontend/dist/
+cmd/lthn-desktop/frontend.old/dist/
+
+# core-demo build artifacts
+cmd/core-demo/build/bin/
+cmd/core-demo/public/dist/

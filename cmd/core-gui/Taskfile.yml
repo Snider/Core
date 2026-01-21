@@ -7,9 +7,9 @@ includes:
   linux: "./build/linux/Taskfile.yml"
 
 vars:
-  APP_NAME: "core"
+  APP_NAME: "core-gui"
   BIN_DIR: "./build/bin"
-  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9246}}'
 
 tasks:
   build:

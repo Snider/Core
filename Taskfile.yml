@@ -1,8 +1,10 @@
 version: '3'
 
 includes:
-  gui: ./cmd/core-gui/Taskfile.yml
+  gui: ./cmd/lthn-desktop/Taskfile.yml
   cli: ./cmd/core/Taskfile.yml
+  demo: ./cmd/core-demo/Taskfile.yml
+  ide: ./cmd/core-gui/Taskfile.yml
 
 tasks:
   test:
