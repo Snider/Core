@@ -70,6 +70,16 @@ func Execute() error {
 	AddSyncCommand(devCmd)
 	AddBuildCommand(app)
 	AddTviewCommand(app)
+	AddWorkCommand(app)
+	AddHealthCommand(app)
+	AddIssuesCommand(app)
+	AddReviewsCommand(app)
+	AddCommitCommand(app)
+	AddPushCommand(app)
+	AddPullCommand(app)
+	AddImpactCommand(app)
+	AddDocsCommand(app)
+	AddCICommand(app)
 	// Run the application
 	return app.Run()
 }

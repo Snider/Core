@@ -12,6 +12,6 @@ func AddAPICommands(parent *clir.Command) {
 	// Add the 'sync' command to 'api'
 	AddSyncCommand(apiCmd)
 
-	// Add the 'test-gen' command to 'api'
-	AddTestGenCommand(apiCmd)
+	// TODO: Add the 'test-gen' command to 'api'
+	// AddTestGenCommand(apiCmd)
 }
