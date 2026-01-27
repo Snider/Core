@@ -31,20 +31,17 @@ func (m *MiningBridge) ServiceStartup(ctx context.Context, options application.S
 	// Create the mining manager
 	m.manager = mining.NewManager()
 
-	// Create the service - empty addresses since we're embedding, not serving standalone
-	service, err := mining.NewService(m.manager, "", "", "/api/mining")
+	// Create the service - we use a dummy address since we're not starting the server
+	// The Mining service will register routes on its Router which we can proxy to
+	service, err := mining.NewService(m.manager, "127.0.0.1:0", "127.0.0.1:0", "/api/mining")
 	if err != nil {
 		return err
 	}
 	m.service = service
 
-	// Start the service which initializes the router and sets up routes
-	// We use a background context since we don't want it to be canceled with the startup context
-	go func() {
-		// Note: ServiceStartup runs the HTTP server which we don't need when embedded
-		// The routes are already registered on m.service.Router
-		_ = m.service.ServiceStartup(context.Background())
-	}()
+	// Note: We don't call ServiceStartup() as that starts a standalone HTTP server
+	// The mining routes are already registered on m.service.Router by NewService
+	// Frontend can use the Wails-bound methods directly
 
 	return nil
 }

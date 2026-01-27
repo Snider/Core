@@ -202,6 +202,35 @@ export type HandlerFunc = any;
  */
 export type HandlersChain = HandlerFunc[];
 
+/**
+ * RouterGroup is used internally to configure router, a RouterGroup is associated with
+ * a prefix and an array of handlers (middleware).
+ */
+export class RouterGroup {
+    "Handlers": HandlersChain;
+
+    /** Creates a new RouterGroup instance. */
+    constructor($$source: Partial<RouterGroup> = {}) {
+        if (!("Handlers" in $$source)) {
+            this["Handlers"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new RouterGroup instance from a string or object.
+     */
+    static createFrom($$source: any = {}): RouterGroup {
+        const $$createField0_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Handlers" in $$parsedSource) {
+            $$parsedSource["Handlers"] = $$createField0_0($$parsedSource["Handlers"]);
+        }
+        return new RouterGroup($$parsedSource as Partial<RouterGroup>);
+    }
+}
+
 // Private type creation functions
 var $$createType0 = (function $$initCreateType0(...args: any[]): any {
     if ($$createType0 === $$initCreateType0) {
