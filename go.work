@@ -2,6 +2,7 @@ go 1.25.5
 
 use (
 	.
+	./cmd/core
 	./cmd/core-gui
 	./cmd/core-mcp
 	./cmd/examples/core-static-di
@@ -10,12 +11,14 @@ use (
 	./pkg/core
 	./pkg/display
 	./pkg/docs
+	./pkg/git
 	./pkg/help
 	./pkg/i18n
 	./pkg/ide
 	./pkg/mcp
 	./pkg/module
 	./pkg/process
+	./pkg/repos
 	./pkg/updater
 	./pkg/webview
 	./pkg/ws
