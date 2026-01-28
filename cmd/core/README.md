@@ -160,6 +160,52 @@ core docs sync --dry-run          # Preview without copying
 core docs sync --output ./site    # Custom output directory
 ```
 
+### Setup
+
+Bootstrap a workspace by cloning all repos from registry:
+
+```bash
+core setup                        # Clone all repos into packages/
+core setup --dry-run              # Show what would be cloned
+core setup --only module,product  # Filter by type
+```
+
+### Doctor
+
+Check development environment:
+
+```bash
+core doctor                       # Check all requirements
+core doctor --verbose             # Show version details
+```
+
+Checks: git, gh, php, composer, node, SSH keys, gh auth status.
+
+### Search
+
+Search GitHub for repositories:
+
+```bash
+core search --org host-uk                      # List all repos in org
+core search --org host-uk --pattern 'core-*'   # Filter by name pattern
+core search --org host-uk --type service       # Filter by type in name
+core search --org host-uk --refresh            # Bypass cache
+```
+
+Results are cached in `.core/cache/` for 1 hour.
+
+### Install
+
+Install individual repositories:
+
+```bash
+core install --repo host-uk/core-php           # Clone to packages/
+core install --repo host-uk/core-mcp --add     # Clone and add to repos.yaml
+core install --repo host-uk/core-api --dir .   # Clone to current directory
+```
+
+Uses `gh` with HTTPS (no SSH key required).
+
 ## Global Flags
 
 All commands support:
@@ -173,6 +219,23 @@ All commands support:
 - Go 1.25+
 - `gh` CLI for GitHub operations (issues, reviews, ci)
 - `claude` CLI for AI-assisted commits
+
+## Cache
+
+API responses are cached in the workspace `.core/` directory:
+
+```
+<workspace>/
+├── .core/
+│   └── cache/
+│       └── github/
+│           └── <org>/
+│               └── repos.json    # Cached repo list (1 hour TTL)
+├── repos.yaml
+└── packages/
+```
+
+The `.core/` directory should be gitignored.
 
 ## Architecture
 
@@ -189,11 +252,17 @@ cmd/core/
 │   ├── issues.go     # issues command
 │   ├── reviews.go    # reviews command
 │   ├── ci.go         # ci command
-│   └── docs.go       # docs command
+│   ├── docs.go       # docs command
+│   ├── setup.go      # setup command
+│   ├── doctor.go     # doctor command
+│   ├── search.go     # search command
+│   └── install.go    # install command
 ├── go.mod
 └── main.go
 
 pkg/
+├── cache/
+│   └── cache.go      # File-based cache with TTL
 ├── git/
 │   └── git.go        # Parallel git operations
 └── repos/
