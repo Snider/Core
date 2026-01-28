@@ -1,4 +1,4 @@
-# Minimal Goreleaser configuration for Snider/Core
+# Minimal Goreleaser configuration for host-uk/core
 # No functional changes to the codebase, just release automation.
 
 version: 2
@@ -79,7 +79,7 @@ changelog:
 
 release:
   github:
-    owner: Snider
-    name: Core
+    owner: host-uk
+    name: core
   draft: false
   prerelease: auto
