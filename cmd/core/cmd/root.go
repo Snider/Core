@@ -80,6 +80,8 @@ func Execute() error {
 	AddImpactCommand(app)
 	AddDocsCommand(app)
 	AddCICommand(app)
+	AddSetupCommand(app)
+	AddDoctorCommand(app)
 	// Run the application
 	return app.Run()
 }

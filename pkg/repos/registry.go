@@ -41,12 +41,13 @@ const (
 // Repo represents a single repository in the registry.
 type Repo struct {
 	Name        string   `yaml:"-"` // Set from map key
-	Type        RepoType `yaml:"type"`
+	Type        string   `yaml:"type"`
 	DependsOn   []string `yaml:"depends_on"`
 	Description string   `yaml:"description"`
 	Docs        bool     `yaml:"docs"`
 	CI          string   `yaml:"ci"`
 	Domain      string   `yaml:"domain,omitempty"`
+	Clone       *bool    `yaml:"clone,omitempty"` // nil = true, false = skip cloning
 
 	// Computed fields
 	Path string `yaml:"-"` // Full path to repo directory
@@ -153,7 +154,7 @@ func ScanDirectory(dir string) (*Registry, error) {
 		repo := &Repo{
 			Name: entry.Name(),
 			Path: repoPath,
-			Type: RepoTypeModule, // Default type
+			Type: "module", // Default type
 		}
 
 		reg.Repos[entry.Name()] = repo
@@ -231,7 +232,7 @@ func (r *Registry) Get(name string) (*Repo, bool) {
 }
 
 // ByType returns repos filtered by type.
-func (r *Registry) ByType(t RepoType) []*Repo {
+func (r *Registry) ByType(t string) []*Repo {
 	var repos []*Repo
 	for _, repo := range r.Repos {
 		if repo.Type == t {
