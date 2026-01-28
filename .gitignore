@@ -17,7 +17,7 @@ coverage/
 /cmd/core/bin/
 /coverage.txt
 /bin/core
-
+tasks
 # lthn-desktop build artifacts
 !cmd/lthn-desktop/build
 cmd/lthn-desktop/build/bin/
