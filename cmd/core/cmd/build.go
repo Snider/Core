@@ -403,7 +403,9 @@ func formatTargets(targets []build.Target) string {
 // getBuilder returns the appropriate builder for the project type.
 func getBuilder(projectType build.ProjectType) (build.Builder, error) {
 	switch projectType {
-	case build.ProjectTypeGo, build.ProjectTypeWails:
+	case build.ProjectTypeWails:
+		return builders.NewWailsBuilder(), nil
+	case build.ProjectTypeGo:
 		return builders.NewGoBuilder(), nil
 	case build.ProjectTypeNode:
 		return nil, fmt.Errorf("Node.js builder not yet implemented")
