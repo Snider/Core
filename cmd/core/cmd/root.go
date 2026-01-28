@@ -82,6 +82,8 @@ func Execute() error {
 	AddCICommand(app)
 	AddSetupCommand(app)
 	AddDoctorCommand(app)
+	AddSearchCommand(app)
+	AddInstallCommand(app)
 	// Run the application
 	return app.Run()
 }

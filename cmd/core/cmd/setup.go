@@ -144,9 +144,8 @@ func runSetup(registryPath, only string, dryRun bool) error {
 		fmt.Printf("  %s %s... ", dimStyle.Render("Cloning"), repo.Name)
 
 		repoPath := filepath.Join(basePath, repo.Name)
-		cloneURL := fmt.Sprintf("git@github.com:%s/%s.git", reg.Org, repo.Name)
 
-		err := gitClone(ctx, cloneURL, repoPath)
+		err := gitClone(ctx, reg.Org, repo.Name, repoPath)
 		if err != nil {
 			fmt.Printf("%s\n", errorStyle.Render("✗ "+err.Error()))
 			failed++
@@ -170,11 +169,36 @@ func runSetup(registryPath, only string, dryRun bool) error {
 	return nil
 }
 
-func gitClone(ctx context.Context, url, path string) error {
+func gitClone(ctx context.Context, org, repo, path string) error {
+	// Try gh clone first with HTTPS (works without SSH keys)
+	if ghAuthenticated() {
+		// Use HTTPS URL directly to bypass git_protocol config
+		httpsURL := fmt.Sprintf("https://github.com/%s/%s.git", org, repo)
+		cmd := exec.CommandContext(ctx, "gh", "repo", "clone", httpsURL, path)
+		output, err := cmd.CombinedOutput()
+		if err == nil {
+			return nil
+		}
+		errStr := strings.TrimSpace(string(output))
+		// Only fall through to SSH if it's an auth error
+		if !strings.Contains(errStr, "Permission denied") &&
+			!strings.Contains(errStr, "could not read") {
+			return fmt.Errorf("%s", errStr)
+		}
+	}
+
+	// Fallback to git clone via SSH
+	url := fmt.Sprintf("git@github.com:%s/%s.git", org, repo)
 	cmd := exec.CommandContext(ctx, "git", "clone", url, path)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s", strings.TrimSpace(string(output)))
 	}
 	return nil
+}
+
+func ghAuthenticated() bool {
+	cmd := exec.Command("gh", "auth", "status")
+	output, _ := cmd.CombinedOutput()
+	return strings.Contains(string(output), "Logged in")
 }
