@@ -68,6 +68,7 @@ func Execute() error {
 	devCmd := app.NewSubCommand("dev", "Development tools for Core Framework")
 	AddAPICommands(devCmd)
 	AddSyncCommand(devCmd)
+	AddAgenticCommands(devCmd)
 	AddBuildCommand(app)
 	AddTviewCommand(app)
 	AddWorkCommand(app)
