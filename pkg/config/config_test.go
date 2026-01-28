@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 )
 
 // setupTestEnv creates a temporary home directory for testing and ensures a clean environment.

@@ -1,3 +1,3 @@
-module github.com/Snider/Core/pkg/cache
+module github.com/host-uk/core/pkg/cache
 
 go 1.24

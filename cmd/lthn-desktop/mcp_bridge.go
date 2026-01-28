@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/Snider/Core/pkg/display"
-	"github.com/Snider/Core/pkg/mcp"
-	"github.com/Snider/Core/pkg/webview"
-	"github.com/Snider/Core/pkg/ws"
+	"github.com/host-uk/core/pkg/display"
+	"github.com/host-uk/core/pkg/mcp"
+	"github.com/host-uk/core/pkg/webview"
+	"github.com/host-uk/core/pkg/ws"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

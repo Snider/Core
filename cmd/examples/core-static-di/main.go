@@ -4,7 +4,7 @@ import (
 	"embed"
 	"log"
 
-	"github.com/Snider/Core
+	"github.com/host-uk/core
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

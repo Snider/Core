@@ -4,9 +4,9 @@ package core
 import (
 	"context"
 
-	"github.com/Snider/Core/pkg/plugin"
-	"github.com/Snider/Core/pkg/plugin/builtin/system"
-	"github.com/Snider/Core/pkg/runtime"
+	"github.com/host-uk/core/pkg/plugin"
+	"github.com/host-uk/core/pkg/plugin/builtin/system"
+	"github.com/host-uk/core/pkg/runtime"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

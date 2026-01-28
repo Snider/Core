@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/updater
+module github.com/host-uk/core/pkg/updater
 
 go 1.25
 

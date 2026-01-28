@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/Snider/Core/pkg/core"
-	"github.com/Snider/Core/pkg/crypt/lthn"
-	"github.com/Snider/Core/pkg/crypt/openpgp"
-	"github.com/Snider/Core/pkg/io"
-	"github.com/Snider/Core/pkg/io/local"
+	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/crypt/lthn"
+	"github.com/host-uk/core/pkg/crypt/openpgp"
+	"github.com/host-uk/core/pkg/io"
+	"github.com/host-uk/core/pkg/io/local"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"log"
 
-	core "github.com/Snider/Core"
+	core "github.com/host-uk/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 )
 
 // Options holds configuration for the IDE service.
@@ -50,7 +50,7 @@ func Register(c *core.Core) (any, error) {
 
 // ServiceName returns the canonical name for this service.
 func (s *Service) ServiceName() string {
-	return "github.com/Snider/Core/ide"
+	return "github.com/host-uk/core/ide"
 }
 
 // NewFile creates a new untitled file with the specified language.

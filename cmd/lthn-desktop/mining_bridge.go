@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/Snider/Core/pkg/module"
+	"github.com/host-uk/core/pkg/module"
 	"github.com/Snider/Mining/pkg/mining"
 	"github.com/gin-gonic/gin"
 	"github.com/wailsapp/wails/v3/pkg/application"

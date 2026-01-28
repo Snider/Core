@@ -3,7 +3,7 @@ package display
 import (
 	"testing"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -56,7 +56,7 @@ func TestServiceName(t *testing.T) {
 	require.NoError(t, err)
 
 	name := service.ServiceName()
-	assert.Equal(t, "github.com/Snider/Core/display", name)
+	assert.Equal(t, "github.com/host-uk/core/display", name)
 }
 
 // --- Window Option Tests ---

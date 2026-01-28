@@ -6,15 +6,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Snider/Core/pkg/config"
-	"github.com/Snider/Core/pkg/crypt"
-	"github.com/Snider/Core/pkg/display"
-	"github.com/Snider/Core/pkg/docs"
-	"github.com/Snider/Core/pkg/help"
-	"github.com/Snider/Core/pkg/ide"
-	"github.com/Snider/Core/pkg/io"
-	"github.com/Snider/Core/pkg/module"
-	"github.com/Snider/Core/pkg/workspace"
+	"github.com/host-uk/core/pkg/config"
+	"github.com/host-uk/core/pkg/crypt"
+	"github.com/host-uk/core/pkg/display"
+	"github.com/host-uk/core/pkg/docs"
+	"github.com/host-uk/core/pkg/help"
+	"github.com/host-uk/core/pkg/ide"
+	"github.com/host-uk/core/pkg/io"
+	"github.com/host-uk/core/pkg/module"
+	"github.com/host-uk/core/pkg/workspace"
 )
 
 // TestNew ensures that New correctly initializes a Runtime instance.

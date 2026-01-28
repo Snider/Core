@@ -101,10 +101,10 @@ package {{.ServiceName}}
 
 import (
 	// Import the internal implementation with an alias.
-	impl "github.com/Snider/Core/{{.ServiceName}}"
+	impl "github.com/host-uk/core/{{.ServiceName}}"
 
 	// Import the core contracts to re-export the interface.
-	"github.com/Snider/Core/core"
+	"github.com/host-uk/core/core"
 )
 
 {{range .Symbols}}

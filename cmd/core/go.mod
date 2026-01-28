@@ -1,10 +1,10 @@
-module github.com/Snider/Core/cmd/core
+module github.com/host-uk/core/cmd/core
 
 go 1.25.5
 
 require (
-	github.com/Snider/Core/pkg/git v0.0.0
-	github.com/Snider/Core/pkg/repos v0.0.0
+	github.com/host-uk/core/pkg/git v0.0.0
+	github.com/host-uk/core/pkg/repos v0.0.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/leaanthony/clir v1.7.0
@@ -37,7 +37,7 @@ require (
 )
 
 replace (
-	github.com/Snider/Core => ../../
-	github.com/Snider/Core/pkg/git => ../../pkg/git
-	github.com/Snider/Core/pkg/repos => ../../pkg/repos
+	github.com/host-uk/core => ../../
+	github.com/host-uk/core/pkg/git => ../../pkg/git
+	github.com/host-uk/core/pkg/repos => ../../pkg/repos
 )

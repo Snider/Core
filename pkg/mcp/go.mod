@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/mcp
+module github.com/host-uk/core/pkg/mcp
 
 go 1.25.5
 

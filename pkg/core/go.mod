@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/core
+module github.com/host-uk/core/pkg/core
 
 go 1.25
 

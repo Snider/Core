@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Snider/Core/pkg/display/cmd/demo-cli/cmd"
+	"github.com/host-uk/core/pkg/display/cmd/demo-cli/cmd"
 )
 
 func main() {

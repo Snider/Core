@@ -43,7 +43,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 	"github.com/adrg/xdg"
 )
 

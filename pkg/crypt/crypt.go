@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 	"github.com/Snider/Enchantrix/pkg/crypt"
 )
 
