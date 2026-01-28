@@ -93,10 +93,18 @@ func TestNewRelease_Good(t *testing.T) {
 
 func TestNewPublisherConfig_Good(t *testing.T) {
 	t.Run("creates config struct", func(t *testing.T) {
-		cfg := NewPublisherConfig("github", true, false)
+		cfg := NewPublisherConfig("github", true, false, nil)
 		assert.Equal(t, "github", cfg.Type)
 		assert.True(t, cfg.Prerelease)
 		assert.False(t, cfg.Draft)
+		assert.Nil(t, cfg.Extended)
+	})
+
+	t.Run("creates config with extended", func(t *testing.T) {
+		ext := map[string]any{"key": "value"}
+		cfg := NewPublisherConfig("docker", false, false, ext)
+		assert.Equal(t, "docker", cfg.Type)
+		assert.Equal(t, ext, cfg.Extended)
 	})
 }
 

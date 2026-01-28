@@ -57,12 +57,32 @@ type TargetConfig struct {
 
 // PublisherConfig holds configuration for a publisher.
 type PublisherConfig struct {
-	// Type is the publisher type (e.g., "github").
+	// Type is the publisher type (e.g., "github", "linuxkit", "docker").
 	Type string `yaml:"type"`
 	// Prerelease marks the release as a prerelease.
 	Prerelease bool `yaml:"prerelease"`
 	// Draft creates the release as a draft.
 	Draft bool `yaml:"draft"`
+
+	// LinuxKit-specific configuration
+	// Config is the path to the LinuxKit YAML configuration file.
+	Config string `yaml:"config,omitempty"`
+	// Formats are the output formats to build (iso, raw, qcow2, vmdk).
+	Formats []string `yaml:"formats,omitempty"`
+	// Platforms are the target platforms (linux/amd64, linux/arm64).
+	Platforms []string `yaml:"platforms,omitempty"`
+
+	// Docker-specific configuration
+	// Registry is the container registry (default: ghcr.io).
+	Registry string `yaml:"registry,omitempty"`
+	// Image is the image name in owner/repo format.
+	Image string `yaml:"image,omitempty"`
+	// Dockerfile is the path to the Dockerfile (default: Dockerfile).
+	Dockerfile string `yaml:"dockerfile,omitempty"`
+	// Tags are the image tags to apply.
+	Tags []string `yaml:"tags,omitempty"`
+	// BuildArgs are additional Docker build arguments.
+	BuildArgs map[string]string `yaml:"build_args,omitempty"`
 }
 
 // ChangelogConfig holds changelog generation settings.

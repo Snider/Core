@@ -21,12 +21,14 @@ type Release struct {
 
 // PublisherConfig holds configuration for a publisher.
 type PublisherConfig struct {
-	// Type is the publisher type (e.g., "github").
+	// Type is the publisher type (e.g., "github", "linuxkit", "docker").
 	Type string
 	// Prerelease marks the release as a prerelease.
 	Prerelease bool
 	// Draft creates the release as a draft.
 	Draft bool
+	// Extended holds publisher-specific configuration.
+	Extended any
 }
 
 // ReleaseConfig holds release configuration needed by publishers.
@@ -56,10 +58,11 @@ func NewRelease(version string, artifacts []build.Artifact, changelog, projectDi
 }
 
 // NewPublisherConfig creates a PublisherConfig.
-func NewPublisherConfig(pubType string, prerelease, draft bool) PublisherConfig {
+func NewPublisherConfig(pubType string, prerelease, draft bool, extended any) PublisherConfig {
 	return PublisherConfig{
 		Type:       pubType,
 		Prerelease: prerelease,
 		Draft:      draft,
+		Extended:   extended,
 	}
 }

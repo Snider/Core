@@ -84,7 +84,9 @@ func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 				return release, fmt.Errorf("release.Run: %w", err)
 			}
 
-			publisherCfg := publishers.NewPublisherConfig(pubCfg.Type, pubCfg.Prerelease, pubCfg.Draft)
+			// Build extended config for publisher-specific settings
+			extendedCfg := buildExtendedConfig(pubCfg)
+			publisherCfg := publishers.NewPublisherConfig(pubCfg.Type, pubCfg.Prerelease, pubCfg.Draft, extendedCfg)
 			if err := publisher.Publish(ctx, pubRelease, publisherCfg, cfg, dryRun); err != nil {
 				return release, fmt.Errorf("release.Run: publish to %s failed: %w", pubCfg.Type, err)
 			}
@@ -210,7 +212,59 @@ func getPublisher(pubType string) (publishers.Publisher, error) {
 	switch pubType {
 	case "github":
 		return publishers.NewGitHubPublisher(), nil
+	case "linuxkit":
+		return publishers.NewLinuxKitPublisher(), nil
+	case "docker":
+		return publishers.NewDockerPublisher(), nil
 	default:
 		return nil, fmt.Errorf("unsupported publisher type: %s", pubType)
 	}
+}
+
+// buildExtendedConfig builds a map of extended configuration for a publisher.
+func buildExtendedConfig(pubCfg PublisherConfig) map[string]any {
+	ext := make(map[string]any)
+
+	// LinuxKit-specific config
+	if pubCfg.Config != "" {
+		ext["config"] = pubCfg.Config
+	}
+	if len(pubCfg.Formats) > 0 {
+		ext["formats"] = toAnySlice(pubCfg.Formats)
+	}
+	if len(pubCfg.Platforms) > 0 {
+		ext["platforms"] = toAnySlice(pubCfg.Platforms)
+	}
+
+	// Docker-specific config
+	if pubCfg.Registry != "" {
+		ext["registry"] = pubCfg.Registry
+	}
+	if pubCfg.Image != "" {
+		ext["image"] = pubCfg.Image
+	}
+	if pubCfg.Dockerfile != "" {
+		ext["dockerfile"] = pubCfg.Dockerfile
+	}
+	if len(pubCfg.Tags) > 0 {
+		ext["tags"] = toAnySlice(pubCfg.Tags)
+	}
+	if len(pubCfg.BuildArgs) > 0 {
+		args := make(map[string]any)
+		for k, v := range pubCfg.BuildArgs {
+			args[k] = v
+		}
+		ext["build_args"] = args
+	}
+
+	return ext
+}
+
+// toAnySlice converts a string slice to an any slice.
+func toAnySlice(s []string) []any {
+	result := make([]any, len(s))
+	for i, v := range s {
+		result[i] = v
+	}
+	return result
 }
