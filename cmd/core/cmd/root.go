@@ -87,6 +87,7 @@ func Execute() error {
 	AddReleaseCommand(app)
 	AddContainerCommands(app)
 	AddTemplatesCommand(app)
+	AddPHPCommands(app)
 	// Run the application
 	return app.Run()
 }
