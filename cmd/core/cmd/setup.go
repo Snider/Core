@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Snider/Core/pkg/repos"
+	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 

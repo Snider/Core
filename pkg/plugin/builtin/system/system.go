@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Snider/Core/pkg/plugin"
+	"github.com/host-uk/core/pkg/plugin"
 )
 
 // Plugin is the built-in system information plugin.

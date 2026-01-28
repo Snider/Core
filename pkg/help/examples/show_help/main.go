@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Snider/Core/pkg/help" // Assuming this is the import path for the help module
+	"github.com/host-uk/core/pkg/help" // Assuming this is the import path for the help module
 )
 
 // MockLogger is a mock implementation of the help.Logger interface.

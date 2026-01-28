@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/webview
+module github.com/host-uk/core/pkg/webview
 
 go 1.25.5
 

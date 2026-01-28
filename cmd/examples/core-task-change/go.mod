@@ -3,11 +3,11 @@ module core-task-change
 go 1.25
 
 require (
-	github.com/Snider/Core v0.0.0-20251024151010-ccfd407949f1
+	github.com/host-uk/core v0.0.0-20251024151010-ccfd407949f1
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.36
 )
 
-replace github.com/Snider/Core => ../../
+replace github.com/host-uk/core => ../../
 
 require (
 	dario.cat/mergo v1.0.1 // indirect

@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Snider/Core/pkg/git"
-	"github.com/Snider/Core/pkg/repos"
+	"github.com/host-uk/core/pkg/git"
+	"github.com/host-uk/core/pkg/repos"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/leaanthony/clir"
 )

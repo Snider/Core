@@ -3,34 +3,34 @@ module core-gui
 go 1.25.5
 
 require (
-	github.com/Snider/Core v0.0.0-00010101000000-000000000000
-	github.com/Snider/Core/pkg/display v0.0.0
-	github.com/Snider/Core/pkg/mcp v0.0.0-00010101000000-000000000000
-	github.com/Snider/Core/pkg/webview v0.0.0-00010101000000-000000000000
-	github.com/Snider/Core/pkg/ws v0.0.0-00010101000000-000000000000
+	github.com/host-uk/core v0.0.0-00010101000000-000000000000
+	github.com/host-uk/core/pkg/display v0.0.0
+	github.com/host-uk/core/pkg/mcp v0.0.0-00010101000000-000000000000
+	github.com/host-uk/core/pkg/webview v0.0.0-00010101000000-000000000000
+	github.com/host-uk/core/pkg/ws v0.0.0-00010101000000-000000000000
 	github.com/gorilla/websocket v1.5.3
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.41
 )
 
 replace (
-	github.com/Snider/Core => ../../
-	github.com/Snider/Core/pkg/config => ../../pkg/config
-	github.com/Snider/Core/pkg/core => ../../pkg/core
-	github.com/Snider/Core/pkg/crypt => ../../pkg/crypt
-	github.com/Snider/Core/pkg/display => ../../pkg/display
-	github.com/Snider/Core/pkg/docs => ../../pkg/docs
-	github.com/Snider/Core/pkg/help => ../../pkg/help
-	github.com/Snider/Core/pkg/i18n => ../../pkg/i18n
-	github.com/Snider/Core/pkg/ide => ../../pkg/ide
-	github.com/Snider/Core/pkg/io => ../../pkg/io
-	github.com/Snider/Core/pkg/mcp => ../../pkg/mcp
-	github.com/Snider/Core/pkg/module => ../../pkg/module
-	github.com/Snider/Core/pkg/plugin => ../../pkg/plugin
-	github.com/Snider/Core/pkg/process => ../../pkg/process
-	github.com/Snider/Core/pkg/runtime => ../../pkg/runtime
-	github.com/Snider/Core/pkg/webview => ../../pkg/webview
-	github.com/Snider/Core/pkg/workspace => ../../pkg/workspace
-	github.com/Snider/Core/pkg/ws => ../../pkg/ws
+	github.com/host-uk/core => ../../
+	github.com/host-uk/core/pkg/config => ../../pkg/config
+	github.com/host-uk/core/pkg/core => ../../pkg/core
+	github.com/host-uk/core/pkg/crypt => ../../pkg/crypt
+	github.com/host-uk/core/pkg/display => ../../pkg/display
+	github.com/host-uk/core/pkg/docs => ../../pkg/docs
+	github.com/host-uk/core/pkg/help => ../../pkg/help
+	github.com/host-uk/core/pkg/i18n => ../../pkg/i18n
+	github.com/host-uk/core/pkg/ide => ../../pkg/ide
+	github.com/host-uk/core/pkg/io => ../../pkg/io
+	github.com/host-uk/core/pkg/mcp => ../../pkg/mcp
+	github.com/host-uk/core/pkg/module => ../../pkg/module
+	github.com/host-uk/core/pkg/plugin => ../../pkg/plugin
+	github.com/host-uk/core/pkg/process => ../../pkg/process
+	github.com/host-uk/core/pkg/runtime => ../../pkg/runtime
+	github.com/host-uk/core/pkg/webview => ../../pkg/webview
+	github.com/host-uk/core/pkg/workspace => ../../pkg/workspace
+	github.com/host-uk/core/pkg/ws => ../../pkg/ws
 )
 
 require (
@@ -38,14 +38,14 @@ require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
-	github.com/Snider/Core/pkg/config v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Core/pkg/core v0.0.0 // indirect
-	github.com/Snider/Core/pkg/docs v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Core/pkg/help v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Core/pkg/i18n v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Core/pkg/ide v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Core/pkg/module v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Core/pkg/process v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/config v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/core v0.0.0 // indirect
+	github.com/host-uk/core/pkg/docs v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/help v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/i18n v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/ide v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/module v0.0.0-00010101000000-000000000000 // indirect
+	github.com/host-uk/core/pkg/process v0.0.0-00010101000000-000000000000 // indirect
 	github.com/Snider/Enchantrix v0.0.2 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect

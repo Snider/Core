@@ -2,8 +2,8 @@
 package docs
 
 import (
-	"github.com/Snider/Core/pkg/core"
-	"github.com/Snider/Core/pkg/display"
+	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/display"
 )
 
 // Service manages documentation windows.

@@ -1,10 +1,10 @@
-module github.com/Snider/Core/pkg/docs
+module github.com/host-uk/core/pkg/docs
 
 go 1.25
 
 require (
-	github.com/Snider/Core/pkg/core v0.0.0
-	github.com/Snider/Core/pkg/display v0.0.0
+	github.com/host-uk/core/pkg/core v0.0.0
+	github.com/host-uk/core/pkg/display v0.0.0
 )
 
 require (
@@ -55,6 +55,6 @@ require (
 )
 
 replace (
-	github.com/Snider/Core/pkg/core => ../core
-	github.com/Snider/Core/pkg/display => ../display
+	github.com/host-uk/core/pkg/core => ../core
+	github.com/host-uk/core/pkg/display => ../display
 )

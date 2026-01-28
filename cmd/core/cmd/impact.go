@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/Snider/Core/pkg/repos"
+	"github.com/host-uk/core/pkg/repos"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/leaanthony/clir"
 )

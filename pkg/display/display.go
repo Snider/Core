@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
@@ -62,7 +62,7 @@ func Register(c *core.Core) (any, error) {
 
 // ServiceName returns the canonical name for this service.
 func (s *Service) ServiceName() string {
-	return "github.com/Snider/Core/display"
+	return "github.com/host-uk/core/display"
 }
 
 // ServiceStartup is called by Wails when the app starts. It initializes the display service

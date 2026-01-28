@@ -1,6 +1,6 @@
 package demo
 
-import "github.com/Snider/Core"
+import "github.com/host-uk/core"
 
 // this instance is the singleton instance of the demo module.
 var instance *API

@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/ws
+module github.com/host-uk/core/pkg/ws
 
 go 1.25.5
 

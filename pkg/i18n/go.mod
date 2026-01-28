@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/i18n
+module github.com/host-uk/core/pkg/i18n
 
 go 1.24.3
 

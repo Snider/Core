@@ -3,7 +3,7 @@ package module
 import (
 	"context"
 
-	"github.com/Snider/Core/pkg/core"
+	"github.com/host-uk/core/pkg/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -33,7 +33,7 @@ func NewService(opts Options) (*Service, error) {
 
 // ServiceName returns the canonical name.
 func (s *Service) ServiceName() string {
-	return "github.com/Snider/Core/module"
+	return "github.com/host-uk/core/module"
 }
 
 // ServiceStartup is called by Wails on app start.

@@ -1,4 +1,4 @@
-module github.com/Snider/Core/pkg/display
+module github.com/host-uk/core/pkg/display
 
 go 1.25
 

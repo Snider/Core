@@ -21,7 +21,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Snider/Core/pkg/mcp"
+	"github.com/host-uk/core/pkg/mcp"
 )
 
 func main() {

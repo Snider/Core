@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Snider/Core/pkg/core"
-	"github.com/Snider/Core/pkg/io"
+	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )

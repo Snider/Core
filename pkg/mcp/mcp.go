@@ -15,12 +15,12 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/Snider/Core/pkg/core"
-	"github.com/Snider/Core/pkg/display"
-	"github.com/Snider/Core/pkg/ide"
-	"github.com/Snider/Core/pkg/process"
-	"github.com/Snider/Core/pkg/webview"
-	"github.com/Snider/Core/pkg/ws"
+	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/display"
+	"github.com/host-uk/core/pkg/ide"
+	"github.com/host-uk/core/pkg/process"
+	"github.com/host-uk/core/pkg/webview"
+	"github.com/host-uk/core/pkg/ws"
 )
 
 // Service provides an MCP server that exposes Core functionality.
@@ -52,7 +52,7 @@ func New(c *core.Core) *Service {
 
 	// Try to get the IDE service if available
 	if c != nil {
-		ideSvc, _ := core.ServiceFor[*ide.Service](c, "github.com/Snider/Core/ide")
+		ideSvc, _ := core.ServiceFor[*ide.Service](c, "github.com/host-uk/core/ide")
 		s.ide = ideSvc
 	}
 

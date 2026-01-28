@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Snider/Core/cmd/core/cmd"
+	"github.com/host-uk/core/cmd/core/cmd"
 )
 
 func main() {
