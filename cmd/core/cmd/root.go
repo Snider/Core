@@ -85,6 +85,7 @@ func Execute() error {
 	AddSearchCommand(app)
 	AddInstallCommand(app)
 	AddReleaseCommand(app)
+	AddContainerCommands(app)
 	// Run the application
 	return app.Run()
 }
