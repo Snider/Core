@@ -21,7 +21,7 @@ func AddInstallCommand(parent *clir.Cli) {
 	installCmd.LongDescription("Clones a repository from GitHub.\n\n" +
 		"Examples:\n" +
 		"  core install --repo host-uk/core-php\n" +
-		"  core install --repo letheanvpn/lthn-mod-wallet\n" +
+		"  core install --repo LetheanNetwork/lthn-mod-wallet\n" +
 		"  core install --repo host-uk/core-tenant --dir ./packages")
 
 	installCmd.StringFlag("repo", "Repository to install (org/repo format)", &repo)
