@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -10,12 +11,37 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/build/builders"
 	"github.com/leaanthony/clir"
 	"github.com/leaanthony/debme"
 	"github.com/leaanthony/gosod"
 	"golang.org/x/net/html"
+)
+
+// Build command styles
+var (
+	buildHeaderStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#3b82f6")) // blue-500
+
+	buildTargetStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#e2e8f0")) // gray-200
+
+	buildSuccessStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#22c55e")) // green-500
+
+	buildErrorStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#ef4444")) // red-500
+
+	buildDimStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#6b7280")) // gray-500
 )
 
 //go:embed all:tmpl/gui
@@ -23,9 +49,36 @@ var guiTemplate embed.FS
 
 // AddBuildCommand adds the new build command and its subcommands to the clir app.
 func AddBuildCommand(app *clir.Cli) {
-	buildCmd := app.NewSubCommand("build", "Builds a web application into a standalone desktop app.")
+	buildCmd := app.NewSubCommand("build", "Build projects with auto-detection and cross-compilation")
+	buildCmd.LongDescription("Builds the current project with automatic type detection.\n" +
+		"Supports Go, Wails, Node.js, and PHP projects.\n" +
+		"Configuration can be provided via .core/build.yaml or command-line flags.")
 
-	// --- `build from-path` command ---
+	// Flags for the main build command
+	var buildType string
+	var ciMode bool
+	var targets string
+	var outputDir string
+	var doArchive bool
+	var doChecksum bool
+
+	buildCmd.StringFlag("type", "Builder type (go, wails, node, php) - auto-detected if not specified", &buildType)
+	buildCmd.BoolFlag("ci", "CI mode - minimal output with JSON artifact list at the end", &ciMode)
+	buildCmd.StringFlag("targets", "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)", &targets)
+	buildCmd.StringFlag("output", "Output directory for artifacts (default: dist)", &outputDir)
+	buildCmd.BoolFlag("archive", "Create archives (tar.gz for linux/darwin, zip for windows) - default: true", &doArchive)
+	buildCmd.BoolFlag("checksum", "Generate SHA256 checksums and CHECKSUMS.txt - default: true", &doChecksum)
+
+	// Set defaults for archive and checksum (true by default)
+	doArchive = true
+	doChecksum = true
+
+	// Default action for `core build` (no subcommand)
+	buildCmd.Action(func() error {
+		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum)
+	})
+
+	// --- `build from-path` command (legacy PWA/GUI build) ---
 	fromPathCmd := buildCmd.NewSubCommand("from-path", "Build from a local directory.")
 	var fromPath string
 	fromPathCmd.StringFlag("path", "The path to the static web application files.", &fromPath)
@@ -36,7 +89,7 @@ func AddBuildCommand(app *clir.Cli) {
 		return runBuild(fromPath)
 	})
 
-	// --- `build pwa` command ---
+	// --- `build pwa` command (legacy PWA build) ---
 	pwaCmd := buildCmd.NewSubCommand("pwa", "Build from a live PWA URL.")
 	var pwaURL string
 	pwaCmd.StringFlag("url", "The URL of the PWA to build.", &pwaURL)
@@ -46,6 +99,319 @@ func AddBuildCommand(app *clir.Cli) {
 		}
 		return runPwaBuild(pwaURL)
 	})
+}
+
+// runProjectBuild handles the main `core build` command with auto-detection.
+func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool) error {
+	// Get current working directory as project root
+	projectDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// Load configuration from .core/build.yaml (or defaults)
+	buildCfg, err := build.LoadConfig(projectDir)
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Detect project type if not specified
+	var projectType build.ProjectType
+	if buildType != "" {
+		projectType = build.ProjectType(buildType)
+	} else {
+		projectType, err = build.PrimaryType(projectDir)
+		if err != nil {
+			return fmt.Errorf("failed to detect project type: %w", err)
+		}
+		if projectType == "" {
+			return fmt.Errorf("no supported project type detected in %s\n"+
+				"Supported types: go (go.mod), wails (wails.json), node (package.json), php (composer.json)", projectDir)
+		}
+	}
+
+	// Determine targets
+	var buildTargets []build.Target
+	if targetsFlag != "" {
+		// Parse from command line
+		buildTargets, err = parseTargets(targetsFlag)
+		if err != nil {
+			return err
+		}
+	} else if len(buildCfg.Targets) > 0 {
+		// Use config targets
+		buildTargets = buildCfg.ToTargets()
+	} else {
+		// Fall back to current OS/arch
+		buildTargets = []build.Target{
+			{OS: runtime.GOOS, Arch: runtime.GOARCH},
+		}
+	}
+
+	// Determine output directory
+	if outputDir == "" {
+		outputDir = "dist"
+	}
+
+	// Determine binary name
+	binaryName := buildCfg.Project.Binary
+	if binaryName == "" {
+		binaryName = buildCfg.Project.Name
+	}
+	if binaryName == "" {
+		binaryName = filepath.Base(projectDir)
+	}
+
+	// Print build info (unless CI mode)
+	if !ciMode {
+		fmt.Printf("%s Building project\n", buildHeaderStyle.Render("Build:"))
+		fmt.Printf("  Type:    %s\n", buildTargetStyle.Render(string(projectType)))
+		fmt.Printf("  Output:  %s\n", buildTargetStyle.Render(outputDir))
+		fmt.Printf("  Binary:  %s\n", buildTargetStyle.Render(binaryName))
+		fmt.Printf("  Targets: %s\n", buildTargetStyle.Render(formatTargets(buildTargets)))
+		fmt.Println()
+	}
+
+	// Get the appropriate builder
+	builder, err := getBuilder(projectType)
+	if err != nil {
+		return err
+	}
+
+	// Create build config for the builder
+	cfg := &build.Config{
+		ProjectDir: projectDir,
+		OutputDir:  outputDir,
+		Name:       binaryName,
+		Version:    buildCfg.Project.Name, // Could be enhanced with git describe
+		LDFlags:    buildCfg.Build.LDFlags,
+	}
+
+	// Execute build
+	ctx := context.Background()
+	artifacts, err := builder.Build(ctx, cfg, buildTargets)
+	if err != nil {
+		if !ciMode {
+			fmt.Printf("%s Build failed: %v\n", buildErrorStyle.Render("Error:"), err)
+		}
+		return err
+	}
+
+	if !ciMode {
+		fmt.Printf("%s Built %d artifact(s)\n", buildSuccessStyle.Render("Success:"), len(artifacts))
+		fmt.Println()
+		for _, artifact := range artifacts {
+			relPath, err := filepath.Rel(projectDir, artifact.Path)
+			if err != nil {
+				relPath = artifact.Path
+			}
+			fmt.Printf("  %s %s %s\n",
+				buildSuccessStyle.Render("✓"),
+				buildTargetStyle.Render(relPath),
+				buildDimStyle.Render(fmt.Sprintf("(%s/%s)", artifact.OS, artifact.Arch)),
+			)
+		}
+	}
+
+	// Archive artifacts if enabled
+	var archivedArtifacts []build.Artifact
+	if doArchive && len(artifacts) > 0 {
+		if !ciMode {
+			fmt.Println()
+			fmt.Printf("%s Creating archives...\n", buildHeaderStyle.Render("Archive:"))
+		}
+
+		archivedArtifacts, err = build.ArchiveAll(artifacts)
+		if err != nil {
+			if !ciMode {
+				fmt.Printf("%s Archive failed: %v\n", buildErrorStyle.Render("Error:"), err)
+			}
+			return err
+		}
+
+		if !ciMode {
+			for _, artifact := range archivedArtifacts {
+				relPath, err := filepath.Rel(projectDir, artifact.Path)
+				if err != nil {
+					relPath = artifact.Path
+				}
+				fmt.Printf("  %s %s %s\n",
+					buildSuccessStyle.Render("✓"),
+					buildTargetStyle.Render(relPath),
+					buildDimStyle.Render(fmt.Sprintf("(%s/%s)", artifact.OS, artifact.Arch)),
+				)
+			}
+		}
+	}
+
+	// Compute checksums if enabled
+	var checksummedArtifacts []build.Artifact
+	if doChecksum && len(archivedArtifacts) > 0 {
+		if !ciMode {
+			fmt.Println()
+			fmt.Printf("%s Computing checksums...\n", buildHeaderStyle.Render("Checksum:"))
+		}
+
+		checksummedArtifacts, err = build.ChecksumAll(archivedArtifacts)
+		if err != nil {
+			if !ciMode {
+				fmt.Printf("%s Checksum failed: %v\n", buildErrorStyle.Render("Error:"), err)
+			}
+			return err
+		}
+
+		// Write CHECKSUMS.txt
+		checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
+		if err := build.WriteChecksumFile(checksummedArtifacts, checksumPath); err != nil {
+			if !ciMode {
+				fmt.Printf("%s Failed to write CHECKSUMS.txt: %v\n", buildErrorStyle.Render("Error:"), err)
+			}
+			return err
+		}
+
+		if !ciMode {
+			for _, artifact := range checksummedArtifacts {
+				relPath, err := filepath.Rel(projectDir, artifact.Path)
+				if err != nil {
+					relPath = artifact.Path
+				}
+				fmt.Printf("  %s %s\n",
+					buildSuccessStyle.Render("✓"),
+					buildTargetStyle.Render(relPath),
+				)
+				fmt.Printf("    %s\n", buildDimStyle.Render(artifact.Checksum))
+			}
+
+			relChecksumPath, err := filepath.Rel(projectDir, checksumPath)
+			if err != nil {
+				relChecksumPath = checksumPath
+			}
+			fmt.Printf("  %s %s\n",
+				buildSuccessStyle.Render("✓"),
+				buildTargetStyle.Render(relChecksumPath),
+			)
+		}
+	} else if doChecksum && len(artifacts) > 0 && !doArchive {
+		// Checksum raw binaries if archiving is disabled
+		if !ciMode {
+			fmt.Println()
+			fmt.Printf("%s Computing checksums...\n", buildHeaderStyle.Render("Checksum:"))
+		}
+
+		checksummedArtifacts, err = build.ChecksumAll(artifacts)
+		if err != nil {
+			if !ciMode {
+				fmt.Printf("%s Checksum failed: %v\n", buildErrorStyle.Render("Error:"), err)
+			}
+			return err
+		}
+
+		// Write CHECKSUMS.txt
+		checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
+		if err := build.WriteChecksumFile(checksummedArtifacts, checksumPath); err != nil {
+			if !ciMode {
+				fmt.Printf("%s Failed to write CHECKSUMS.txt: %v\n", buildErrorStyle.Render("Error:"), err)
+			}
+			return err
+		}
+
+		if !ciMode {
+			for _, artifact := range checksummedArtifacts {
+				relPath, err := filepath.Rel(projectDir, artifact.Path)
+				if err != nil {
+					relPath = artifact.Path
+				}
+				fmt.Printf("  %s %s\n",
+					buildSuccessStyle.Render("✓"),
+					buildTargetStyle.Render(relPath),
+				)
+				fmt.Printf("    %s\n", buildDimStyle.Render(artifact.Checksum))
+			}
+
+			relChecksumPath, err := filepath.Rel(projectDir, checksumPath)
+			if err != nil {
+				relChecksumPath = checksumPath
+			}
+			fmt.Printf("  %s %s\n",
+				buildSuccessStyle.Render("✓"),
+				buildTargetStyle.Render(relChecksumPath),
+			)
+		}
+	}
+
+	// Output results for CI mode
+	if ciMode {
+		// Determine which artifacts to output (prefer checksummed > archived > raw)
+		var outputArtifacts []build.Artifact
+		if len(checksummedArtifacts) > 0 {
+			outputArtifacts = checksummedArtifacts
+		} else if len(archivedArtifacts) > 0 {
+			outputArtifacts = archivedArtifacts
+		} else {
+			outputArtifacts = artifacts
+		}
+
+		// JSON output for CI
+		output, err := json.MarshalIndent(outputArtifacts, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal artifacts: %w", err)
+		}
+		fmt.Println(string(output))
+	}
+
+	return nil
+}
+
+// parseTargets parses a comma-separated list of OS/arch pairs.
+func parseTargets(targetsFlag string) ([]build.Target, error) {
+	parts := strings.Split(targetsFlag, ",")
+	var targets []build.Target
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		osArch := strings.Split(part, "/")
+		if len(osArch) != 2 {
+			return nil, fmt.Errorf("invalid target format %q, expected OS/arch (e.g., linux/amd64)", part)
+		}
+
+		targets = append(targets, build.Target{
+			OS:   strings.TrimSpace(osArch[0]),
+			Arch: strings.TrimSpace(osArch[1]),
+		})
+	}
+
+	if len(targets) == 0 {
+		return nil, fmt.Errorf("no valid targets specified")
+	}
+
+	return targets, nil
+}
+
+// formatTargets returns a human-readable string of targets.
+func formatTargets(targets []build.Target) string {
+	var parts []string
+	for _, t := range targets {
+		parts = append(parts, t.String())
+	}
+	return strings.Join(parts, ", ")
+}
+
+// getBuilder returns the appropriate builder for the project type.
+func getBuilder(projectType build.ProjectType) (build.Builder, error) {
+	switch projectType {
+	case build.ProjectTypeGo, build.ProjectTypeWails:
+		return builders.NewGoBuilder(), nil
+	case build.ProjectTypeNode:
+		return nil, fmt.Errorf("Node.js builder not yet implemented")
+	case build.ProjectTypePHP:
+		return nil, fmt.Errorf("PHP builder not yet implemented")
+	default:
+		return nil, fmt.Errorf("unsupported project type: %s", projectType)
+	}
 }
 
 // --- PWA Build Logic ---
