@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/Snider/Core/pkg/cache"
+	"github.com/Snider/Core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
@@ -17,19 +21,21 @@ func AddSearchCommand(parent *clir.Cli) {
 	var pattern string
 	var repoType string
 	var limit int
+	var refresh bool
 
 	searchCmd := parent.NewSubCommand("search", "Search GitHub for repos by pattern")
 	searchCmd.LongDescription("Searches GitHub for repositories matching a pattern.\n" +
-		"Uses gh CLI for authenticated search.\n\n" +
+		"Uses gh CLI for authenticated search. Results are cached for 1 hour.\n\n" +
 		"Examples:\n" +
 		"  core search --org host-uk --pattern 'core-*'\n" +
 		"  core search --org mycompany --pattern '*-mod-*'\n" +
-		"  core search --org letheanvpn --pattern '*'")
+		"  core search --org letheanvpn --refresh")
 
 	searchCmd.StringFlag("org", "GitHub organization to search (required)", &org)
 	searchCmd.StringFlag("pattern", "Repo name pattern (* for wildcard)", &pattern)
 	searchCmd.StringFlag("type", "Filter by type in name (mod, services, plug, website)", &repoType)
 	searchCmd.IntFlag("limit", "Max results (default 50)", &limit)
+	searchCmd.BoolFlag("refresh", "Bypass cache and fetch fresh data", &refresh)
 
 	searchCmd.Action(func() error {
 		if org == "" {
@@ -41,7 +47,7 @@ func AddSearchCommand(parent *clir.Cli) {
 		if limit == 0 {
 			limit = 50
 		}
-		return runSearch(org, pattern, repoType, limit)
+		return runSearch(org, pattern, repoType, limit, refresh)
 	})
 }
 
@@ -54,44 +60,71 @@ type ghRepo struct {
 	Language    string `json:"language"`
 }
 
-func runSearch(org, pattern, repoType string, limit int) error {
-	if !ghAuthenticated() {
-		return fmt.Errorf("gh CLI not authenticated. Run: gh auth login")
+func runSearch(org, pattern, repoType string, limit int, refresh bool) error {
+	// Initialize cache in workspace .core/ directory
+	var cacheDir string
+	if regPath, err := repos.FindRegistry(); err == nil {
+		cacheDir = filepath.Join(filepath.Dir(regPath), ".core", "cache")
 	}
 
-	// Check for bad GH_TOKEN which can override keyring auth
-	if os.Getenv("GH_TOKEN") != "" {
-		fmt.Printf("%s GH_TOKEN env var is set - this may cause auth issues\n", dimStyle.Render("Note:"))
-		fmt.Printf("%s Unset it with: unset GH_TOKEN\n\n", dimStyle.Render(""))
-	}
-
-	fmt.Printf("%s %s", dimStyle.Render("Searching:"), org)
-	if pattern != "" && pattern != "*" {
-		fmt.Printf(" (filter: %s)", pattern)
-	}
-	if repoType != "" {
-		fmt.Printf(" (type: %s)", repoType)
-	}
-	fmt.Println()
-	fmt.Println()
-
-	// Always use gh repo list (more reliable than gh search repos)
-	cmd := exec.Command("gh", "repo", "list", org,
-		"--json", "name,description,visibility,updatedAt,primaryLanguage",
-		"--limit", fmt.Sprintf("%d", limit))
-	output, err := cmd.CombinedOutput()
-
+	c, err := cache.New(cacheDir, 0)
 	if err != nil {
-		errStr := strings.TrimSpace(string(output))
-		if strings.Contains(errStr, "401") || strings.Contains(errStr, "Bad credentials") {
-			return fmt.Errorf("authentication failed - try: unset GH_TOKEN && gh auth login")
-		}
-		return fmt.Errorf("search failed: %s", errStr)
+		// Cache init failed, continue without cache
+		c = nil
 	}
 
+	cacheKey := cache.GitHubReposKey(org)
 	var repos []ghRepo
-	if err := json.Unmarshal(output, &repos); err != nil {
-		return fmt.Errorf("failed to parse results: %w", err)
+	var fromCache bool
+
+	// Try cache first (unless refresh requested)
+	if c != nil && !refresh {
+		if found, err := c.Get(cacheKey, &repos); found && err == nil {
+			fromCache = true
+			age := c.Age(cacheKey)
+			fmt.Printf("%s %s %s\n", dimStyle.Render("Cache:"), org, dimStyle.Render(fmt.Sprintf("(%s ago)", age.Round(time.Second))))
+		}
+	}
+
+	// Fetch from GitHub if not cached
+	if !fromCache {
+		if !ghAuthenticated() {
+			return fmt.Errorf("gh CLI not authenticated. Run: gh auth login")
+		}
+
+		// Check for bad GH_TOKEN which can override keyring auth
+		if os.Getenv("GH_TOKEN") != "" {
+			fmt.Printf("%s GH_TOKEN env var is set - this may cause auth issues\n", dimStyle.Render("Note:"))
+			fmt.Printf("%s Unset it with: unset GH_TOKEN\n\n", dimStyle.Render(""))
+		}
+
+		fmt.Printf("%s %s... ", dimStyle.Render("Fetching:"), org)
+
+		// Always use gh repo list (more reliable than gh search repos)
+		cmd := exec.Command("gh", "repo", "list", org,
+			"--json", "name,description,visibility,updatedAt,primaryLanguage",
+			"--limit", fmt.Sprintf("%d", limit))
+		output, err := cmd.CombinedOutput()
+
+		if err != nil {
+			fmt.Println()
+			errStr := strings.TrimSpace(string(output))
+			if strings.Contains(errStr, "401") || strings.Contains(errStr, "Bad credentials") {
+				return fmt.Errorf("authentication failed - try: unset GH_TOKEN && gh auth login")
+			}
+			return fmt.Errorf("search failed: %s", errStr)
+		}
+
+		if err := json.Unmarshal(output, &repos); err != nil {
+			return fmt.Errorf("failed to parse results: %w", err)
+		}
+
+		// Cache the results
+		if c != nil {
+			_ = c.Set(cacheKey, repos)
+		}
+
+		fmt.Printf("%s\n", successStyle.Render("✓"))
 	}
 
 	// Filter by glob pattern and type
