@@ -1,5 +1,6 @@
 wails3
 build/
+!pkg/build
 !cmd/core-gui/build
 cmd/core-gui/build/bin
 .task
@@ -28,3 +29,6 @@ cmd/lthn-desktop/frontend.old/dist/
 !cmd/core-demo/build
 cmd/core-demo/build/bin/
 cmd/core-demo/public/dist/
+
+# core build artifacts
+dist/

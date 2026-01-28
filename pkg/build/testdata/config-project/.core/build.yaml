@@ -1,0 +1,25 @@
+# Example build configuration for Core build system
+version: 1
+
+project:
+  name: example-cli
+  description: An example CLI application
+  main: ./cmd/example
+  binary: example
+
+build:
+  cgo: false
+  flags:
+    - -trimpath
+  ldflags:
+    - -s
+    - -w
+  env: []
+
+targets:
+  - os: linux
+    arch: amd64
+  - os: darwin
+    arch: arm64
+  - os: windows
+    arch: amd64
