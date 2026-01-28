@@ -1,0 +1,121 @@
+# Core Development Environment Template
+# A full-featured development environment with multiple runtimes
+#
+# Variables:
+#   ${SSH_KEY}           - SSH public key for access (required)
+#   ${MEMORY:-2048}      - Memory in MB (default: 2048)
+#   ${CPUS:-2}           - Number of CPUs (default: 2)
+#   ${HOSTNAME:-core-dev} - Hostname for the VM
+#   ${DATA_SIZE:-10G}    - Size of persistent /data volume
+
+kernel:
+  image: linuxkit/kernel:6.6.13
+  cmdline: "console=tty0 console=ttyS0"
+
+init:
+  - linuxkit/init:v1.2.0
+  - linuxkit/runc:v1.1.12
+  - linuxkit/containerd:v1.7.13
+  - linuxkit/ca-certificates:v1.0.0
+
+onboot:
+  - name: sysctl
+    image: linuxkit/sysctl:v1.0.0
+  - name: format
+    image: linuxkit/format:v1.0.0
+  - name: mount
+    image: linuxkit/mount:v1.0.0
+    command: ["/usr/bin/mountie", "/dev/sda1", "/data"]
+  - name: dhcpcd
+    image: linuxkit/dhcpcd:v1.0.0
+    command: ["/sbin/dhcpcd", "--nobackground", "-f", "/dhcpcd.conf", "-1"]
+
+onshutdown:
+  - name: shutdown
+    image: busybox:latest
+    command: ["/bin/echo", "Shutting down..."]
+
+services:
+  - name: getty
+    image: linuxkit/getty:v1.0.0
+    env:
+      - INSECURE=true
+
+  - name: sshd
+    image: linuxkit/sshd:v1.2.0
+    binds:
+      - /etc/ssh/authorized_keys:/root/.ssh/authorized_keys
+
+  - name: docker
+    image: docker:24.0-dind
+    capabilities:
+      - all
+    net: host
+    pid: host
+    binds:
+      - /var/run:/var/run
+      - /data/docker:/var/lib/docker
+    rootfsPropagation: shared
+
+  - name: dev-tools
+    image: alpine:3.19
+    capabilities:
+      - all
+    net: host
+    binds:
+      - /data:/data
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Install development tools
+        apk add --no-cache \
+          git curl wget vim nano htop tmux \
+          build-base gcc musl-dev linux-headers \
+          openssh-client jq yq
+
+        # Install Go 1.22.0
+        wget -q https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
+        tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
+        rm go1.22.0.linux-amd64.tar.gz
+        echo 'export PATH=/usr/local/go/bin:$PATH' >> /etc/profile
+
+        # Install Node.js
+        apk add --no-cache nodejs npm
+
+        # Install PHP
+        apk add --no-cache php82 php82-cli php82-curl php82-json php82-mbstring \
+          php82-openssl php82-pdo php82-pdo_mysql php82-pdo_pgsql php82-phar \
+          php82-session php82-tokenizer php82-xml php82-zip composer
+
+        # Keep container running
+        tail -f /dev/null
+
+files:
+  - path: /etc/hostname
+    contents: "${HOSTNAME:-core-dev}"
+  - path: /etc/ssh/authorized_keys
+    contents: "${SSH_KEY}"
+    mode: "0600"
+  - path: /etc/profile.d/dev.sh
+    contents: |
+      export PATH=$PATH:/usr/local/go/bin
+      export GOPATH=/data/go
+      export PATH=$PATH:$GOPATH/bin
+      cd /data
+    mode: "0755"
+  - path: /etc/motd
+    contents: |
+      ================================================
+        Core Development Environment
+
+        Runtimes: Go, Node.js, PHP
+        Tools: git, curl, vim, docker
+
+        Data directory: /data (persistent)
+      ================================================
+
+trust:
+  org:
+    - linuxkit
+    - library

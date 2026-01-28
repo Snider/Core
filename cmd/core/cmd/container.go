@@ -25,31 +25,54 @@ func AddContainerCommands(parent *clir.Cli) {
 // AddRunCommand adds the 'run' command.
 func AddRunCommand(parent *clir.Cli) {
 	var (
-		name    string
-		detach  bool
-		memory  int
-		cpus    int
-		sshPort int
+		name         string
+		detach       bool
+		memory       int
+		cpus         int
+		sshPort      int
+		templateName string
+		varFlags     []string
 	)
 
-	runCmd := parent.NewSubCommand("run", "Run a LinuxKit image")
+	runCmd := parent.NewSubCommand("run", "Run a LinuxKit image or template")
 	runCmd.LongDescription("Runs a LinuxKit image as a VM using the available hypervisor.\n\n" +
 		"Supported image formats: .iso, .qcow2, .vmdk, .raw\n\n" +
+		"You can also run from a template using --template, which will build and run\n" +
+		"the image automatically. Use --var to set template variables.\n\n" +
 		"Examples:\n" +
 		"  core run image.iso\n" +
 		"  core run -d image.qcow2\n" +
-		"  core run --name myvm --memory 2048 --cpus 4 image.iso")
+		"  core run --name myvm --memory 2048 --cpus 4 image.iso\n" +
+		"  core run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n" +
+		"  core run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com")
 
 	runCmd.StringFlag("name", "Name for the container", &name)
 	runCmd.BoolFlag("d", "Run in detached mode (background)", &detach)
 	runCmd.IntFlag("memory", "Memory in MB (default: 1024)", &memory)
 	runCmd.IntFlag("cpus", "Number of CPUs (default: 1)", &cpus)
 	runCmd.IntFlag("ssh-port", "SSH port for exec commands (default: 2222)", &sshPort)
+	runCmd.StringFlag("template", "Run from a LinuxKit template (build + run)", &templateName)
+	runCmd.StringsFlag("var", "Template variable in KEY=VALUE format (can be repeated)", &varFlags)
 
 	runCmd.Action(func() error {
+		opts := container.RunOptions{
+			Name:    name,
+			Detach:  detach,
+			Memory:  memory,
+			CPUs:    cpus,
+			SSHPort: sshPort,
+		}
+
+		// If template is specified, build and run from template
+		if templateName != "" {
+			vars := ParseVarFlags(varFlags)
+			return RunFromTemplate(templateName, vars, opts)
+		}
+
+		// Otherwise, require an image path
 		args := runCmd.OtherArgs()
 		if len(args) == 0 {
-			return fmt.Errorf("image path is required")
+			return fmt.Errorf("image path is required (or use --template)")
 		}
 		image := args[0]
 

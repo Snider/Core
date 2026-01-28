@@ -86,6 +86,7 @@ func Execute() error {
 	AddInstallCommand(app)
 	AddReleaseCommand(app)
 	AddContainerCommands(app)
+	AddTemplatesCommand(app)
 	// Run the application
 	return app.Run()
 }
