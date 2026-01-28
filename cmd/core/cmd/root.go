@@ -84,6 +84,7 @@ func Execute() error {
 	AddDoctorCommand(app)
 	AddSearchCommand(app)
 	AddInstallCommand(app)
+	AddReleaseCommand(app)
 	// Run the application
 	return app.Run()
 }
