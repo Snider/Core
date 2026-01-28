@@ -29,7 +29,7 @@ func AddSearchCommand(parent *clir.Cli) {
 		"Examples:\n" +
 		"  core search --org host-uk --pattern 'core-*'\n" +
 		"  core search --org mycompany --pattern '*-mod-*'\n" +
-		"  core search --org letheanvpn --refresh")
+		"  core search --org LetheanNetwork --refresh")
 
 	searchCmd.StringFlag("org", "GitHub organization to search (required)", &org)
 	searchCmd.StringFlag("pattern", "Repo name pattern (* for wildcard)", &pattern)
