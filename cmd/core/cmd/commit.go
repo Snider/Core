@@ -41,6 +41,7 @@ func runCommit(registryPath string, all bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
+		fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -48,6 +49,7 @@ func runCommit(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
+			fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
@@ -55,6 +57,7 @@ func runCommit(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to scan directory: %w", err)
 			}
+			fmt.Printf("%s %s\n", dimStyle.Render("Scanning:"), cwd)
 			registryPath = cwd
 		}
 	}
