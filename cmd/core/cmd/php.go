@@ -63,6 +63,9 @@ func AddPHPCommands(parent *clir.Cli) {
 	addPHPBuildCommand(phpCmd)
 	addPHPServeCommand(phpCmd)
 	addPHPShellCommand(phpCmd)
+	addPHPTestCommand(phpCmd)
+	addPHPFmtCommand(phpCmd)
+	addPHPAnalyseCommand(phpCmd)
 }
 
 func addPHPDevCommand(parent *clir.Command) {
@@ -811,6 +814,191 @@ func addPHPShellCommand(parent *clir.Command) {
 			return fmt.Errorf("failed to open shell: %w", err)
 		}
 
+		return nil
+	})
+}
+
+func addPHPTestCommand(parent *clir.Command) {
+	var (
+		parallel bool
+		coverage bool
+		filter   string
+		group    string
+	)
+
+	testCmd := parent.NewSubCommand("test", "Run PHP tests (PHPUnit/Pest)")
+	testCmd.LongDescription("Run PHP tests using PHPUnit or Pest.\n\n" +
+		"Auto-detects Pest if tests/Pest.php exists, otherwise uses PHPUnit.\n\n" +
+		"Examples:\n" +
+		"  core php test                    # Run all tests\n" +
+		"  core php test --parallel         # Run tests in parallel\n" +
+		"  core php test --coverage         # Run with coverage\n" +
+		"  core php test --filter UserTest  # Filter by test name")
+
+	testCmd.BoolFlag("parallel", "Run tests in parallel", &parallel)
+	testCmd.BoolFlag("coverage", "Generate code coverage", &coverage)
+	testCmd.StringFlag("filter", "Filter tests by name pattern", &filter)
+	testCmd.StringFlag("group", "Run only tests in specified group", &group)
+
+	testCmd.Action(func() error {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %w", err)
+		}
+
+		if !php.IsPHPProject(cwd) {
+			return fmt.Errorf("not a PHP project (missing composer.json)")
+		}
+
+		// Detect test runner
+		runner := php.DetectTestRunner(cwd)
+		fmt.Printf("%s Running tests with %s\n\n", dimStyle.Render("PHP:"), runner)
+
+		ctx := context.Background()
+
+		opts := php.TestOptions{
+			Dir:      cwd,
+			Filter:   filter,
+			Parallel: parallel,
+			Coverage: coverage,
+			Output:   os.Stdout,
+		}
+
+		if group != "" {
+			opts.Groups = []string{group}
+		}
+
+		if err := php.RunTests(ctx, opts); err != nil {
+			return fmt.Errorf("tests failed: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func addPHPFmtCommand(parent *clir.Command) {
+	var (
+		fix  bool
+		diff bool
+	)
+
+	fmtCmd := parent.NewSubCommand("fmt", "Format PHP code with Laravel Pint")
+	fmtCmd.LongDescription("Format PHP code using Laravel Pint.\n\n" +
+		"Examples:\n" +
+		"  core php fmt           # Check formatting (dry-run)\n" +
+		"  core php fmt --fix     # Auto-fix formatting issues\n" +
+		"  core php fmt --diff    # Show diff of changes")
+
+	fmtCmd.BoolFlag("fix", "Auto-fix formatting issues", &fix)
+	fmtCmd.BoolFlag("diff", "Show diff of changes", &diff)
+
+	fmtCmd.Action(func() error {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %w", err)
+		}
+
+		if !php.IsPHPProject(cwd) {
+			return fmt.Errorf("not a PHP project (missing composer.json)")
+		}
+
+		// Detect formatter
+		formatter, found := php.DetectFormatter(cwd)
+		if !found {
+			return fmt.Errorf("no formatter found (install Laravel Pint: composer require laravel/pint --dev)")
+		}
+
+		action := "Checking"
+		if fix {
+			action = "Formatting"
+		}
+		fmt.Printf("%s %s code with %s\n\n", dimStyle.Render("PHP:"), action, formatter)
+
+		ctx := context.Background()
+
+		opts := php.FormatOptions{
+			Dir:    cwd,
+			Fix:    fix,
+			Diff:   diff,
+			Output: os.Stdout,
+		}
+
+		// Get any additional paths from args
+		if args := fmtCmd.OtherArgs(); len(args) > 0 {
+			opts.Paths = args
+		}
+
+		if err := php.Format(ctx, opts); err != nil {
+			if fix {
+				return fmt.Errorf("formatting failed: %w", err)
+			}
+			return fmt.Errorf("formatting issues found: %w", err)
+		}
+
+		if fix {
+			fmt.Printf("\n%s Code formatted successfully\n", successStyle.Render("Done:"))
+		} else {
+			fmt.Printf("\n%s No formatting issues found\n", successStyle.Render("Done:"))
+		}
+
+		return nil
+	})
+}
+
+func addPHPAnalyseCommand(parent *clir.Command) {
+	var (
+		level  int
+		memory string
+	)
+
+	analyseCmd := parent.NewSubCommand("analyse", "Run PHPStan static analysis")
+	analyseCmd.LongDescription("Run PHPStan or Larastan static analysis.\n\n" +
+		"Auto-detects Larastan if installed, otherwise uses PHPStan.\n\n" +
+		"Examples:\n" +
+		"  core php analyse              # Run analysis\n" +
+		"  core php analyse --level 9    # Run at max strictness\n" +
+		"  core php analyse --memory 2G  # Increase memory limit")
+
+	analyseCmd.IntFlag("level", "PHPStan analysis level (0-9)", &level)
+	analyseCmd.StringFlag("memory", "Memory limit (e.g., 2G)", &memory)
+
+	analyseCmd.Action(func() error {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %w", err)
+		}
+
+		if !php.IsPHPProject(cwd) {
+			return fmt.Errorf("not a PHP project (missing composer.json)")
+		}
+
+		// Detect analyser
+		analyser, found := php.DetectAnalyser(cwd)
+		if !found {
+			return fmt.Errorf("no static analyser found (install PHPStan: composer require phpstan/phpstan --dev)")
+		}
+
+		fmt.Printf("%s Running static analysis with %s\n\n", dimStyle.Render("PHP:"), analyser)
+
+		ctx := context.Background()
+
+		opts := php.AnalyseOptions{
+			Dir:    cwd,
+			Level:  level,
+			Memory: memory,
+			Output: os.Stdout,
+		}
+
+		// Get any additional paths from args
+		if args := analyseCmd.OtherArgs(); len(args) > 0 {
+			opts.Paths = args
+		}
+
+		if err := php.Analyse(ctx, opts); err != nil {
+			return fmt.Errorf("analysis found issues: %w", err)
+		}
+
+		fmt.Printf("\n%s No issues found\n", successStyle.Render("Done:"))
 		return nil
 	})
 }
