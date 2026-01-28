@@ -16,6 +16,7 @@ coverage/
 /cmd/core-gui/public/dist/assets/index-CXPsZVIz.js
 /cmd/core-gui/public/dist/index.html
 /cmd/core/bin/
+/cmd/core/core
 /coverage.txt
 /bin/core
 tasks
