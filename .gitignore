@@ -3,7 +3,6 @@ build/
 !pkg/build
 !cmd/core-gui/build
 !docs/cmd/build
-cmd/core-gui/build/bin
 .task
 vendor/
 .idea
@@ -16,23 +15,8 @@ coverage/
 coverage.out
 coverage.html
 *.cache
-/cmd/core-gui/public/dist/assets/index-CXPsZVIz.js
-/cmd/core-gui/public/dist/index.html
-/cmd/core/bin/
-/cmd/core/core
 /coverage.txt
 bin/
 tasks
-# lthn-desktop build artifacts
-!cmd/lthn-desktop/build
-cmd/lthn-desktop/build/bin/
-cmd/lthn-desktop/frontend/dist/
-cmd/lthn-desktop/frontend.old/dist/
 
-# core-demo build artifacts
-!cmd/core-demo/build
-cmd/core-demo/build/bin/
-cmd/core-demo/public/dist/
 
-# core build artifacts
-dist/
