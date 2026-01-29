@@ -24,7 +24,7 @@ See [cmd/](cmd/) for full command documentation.
 | [php](cmd/php/) | Laravel/PHP development |
 | [build](cmd/build/) | Build Go, Wails, Docker, LinuxKit projects |
 | [ci](cmd/ci/) | Publish releases (dry-run by default) |
-| [sdk](cmd/sdk/) | SDK validation |
+| [sdk](cmd/sdk/) | SDK generation and validation |
 | [dev](cmd/dev/) | Multi-repo workflow + dev environment |
 | [pkg](cmd/pkg/) | Package search and install |
 | [vm](cmd/vm/) | LinuxKit VM management |

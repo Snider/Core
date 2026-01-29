@@ -10,7 +10,7 @@ Unified interface for Go/PHP development, multi-repo management, and deployment.
 | [php](php/) | Laravel/PHP development tools |
 | [build](build/) | Build projects |
 | [ci](ci/) | Publish releases |
-| [sdk](sdk/) | SDK validation |
+| [sdk](sdk/) | SDK generation and validation |
 | [dev](dev/) | Multi-repo workflow + dev environment |
 | [pkg](pkg/) | Package management |
 | [vm](vm/) | LinuxKit VM management |
