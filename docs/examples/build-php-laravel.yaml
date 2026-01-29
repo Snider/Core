@@ -1,0 +1,50 @@
+# Example: PHP/Laravel Build Configuration
+# FrankenPHP container with Laravel app
+
+version: 1
+
+project:
+  name: mylaravel
+  type: php
+
+php:
+  version: "8.4"
+
+  # Composer settings
+  composer:
+    install_args:
+      - --no-dev
+      - --optimize-autoloader
+      - --no-interaction
+
+  # Frontend build
+  frontend:
+    enabled: true
+    build_cmd: "npm run build"
+
+  # Octane configuration
+  octane:
+    server: frankenphp
+    workers: auto
+    max_requests: 500
+
+# Docker output
+docker:
+  dockerfile: Dockerfile
+  registry: ghcr.io
+  image: myorg/mylaravel
+  platforms:
+    - linux/amd64
+    - linux/arm64
+  tags:
+    - latest
+    - "{{.Version}}"
+  build_args:
+    PHP_VERSION: "8.4"
+
+# Optional: LinuxKit for immutable deployment
+linuxkit:
+  config: .core/linuxkit/server-php.yml
+  formats:
+    - qcow2
+    - iso

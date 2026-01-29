@@ -1,0 +1,42 @@
+# Example: Go + Docker Build Configuration
+# Build Go binary then containerize
+
+version: 1
+
+project:
+  name: myservice
+  binary: myservice
+
+# First: build Go binary
+build:
+  main: ./cmd/myservice
+  env:
+    CGO_ENABLED: "0"
+    GOOS: linux
+  ldflags:
+    - -s -w
+    - -X main.version={{.Version}}
+
+targets:
+  - os: linux
+    arch: amd64
+  - os: linux
+    arch: arm64
+
+# Then: build Docker image with the binary
+docker:
+  dockerfile: Dockerfile
+  registry: ghcr.io
+  image: myorg/myservice
+  platforms:
+    - linux/amd64
+    - linux/arm64
+  tags:
+    - latest
+    - "{{.Version}}"
+
+# Dockerfile should COPY the built binary:
+#
+# FROM alpine:latest
+# COPY myservice /usr/local/bin/myservice
+# ENTRYPOINT ["/usr/local/bin/myservice"]

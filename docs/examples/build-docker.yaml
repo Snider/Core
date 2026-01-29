@@ -1,0 +1,40 @@
+# Example: Docker Build Configuration
+# Multi-arch container image
+
+version: 1
+
+project:
+  name: myservice
+  type: docker
+
+docker:
+  dockerfile: Dockerfile
+  context: .
+  registry: ghcr.io
+  image: myorg/myservice
+
+  platforms:
+    - linux/amd64
+    - linux/arm64
+
+  tags:
+    - latest
+    - "{{.Version}}"
+    - "{{.Version}}-alpine"
+
+  build_args:
+    APP_VERSION: "{{.Version}}"
+    BUILD_DATE: "{{.Date}}"
+
+  labels:
+    org.opencontainers.image.source: https://github.com/myorg/myservice
+    org.opencontainers.image.description: My Service
+    org.opencontainers.image.licenses: MIT
+
+  # Optional: build stage target
+  target: production
+
+  # Optional: cache settings
+  cache:
+    from: type=gha
+    to: type=gha,mode=max

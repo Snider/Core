@@ -1,0 +1,7 @@
+# Example: Minimal Build Configuration
+# Auto-detects everything from project structure
+
+version: 1
+
+project:
+  name: myapp

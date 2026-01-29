@@ -1,0 +1,51 @@
+# Example: Multi-Binary Build Configuration
+# Multiple binaries from one repository
+
+version: 1
+
+project:
+  name: mytools
+
+# Multiple build targets
+builds:
+  - name: cli
+    binary: mytool
+    main: ./cmd/mytool
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+  - name: server
+    binary: myserver
+    main: ./cmd/server
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+  - name: worker
+    binary: myworker
+    main: ./cmd/worker
+    ldflags:
+      - -s -w
+
+# Shared settings
+build:
+  env:
+    CGO_ENABLED: "0"
+  flags:
+    - -trimpath
+
+targets:
+  - os: linux
+    arch: amd64
+  - os: linux
+    arch: arm64
+  - os: darwin
+    arch: arm64
+
+# Archive includes all binaries
+archive:
+  format: tar.gz
+  files:
+    - LICENSE
+    - README.md
