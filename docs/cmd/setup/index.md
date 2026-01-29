@@ -78,17 +78,16 @@ Core looks for `repos.yaml` in:
 
 ```bash
 # Check health of all repos
-core health
+core dev health
 
 # Pull latest changes
-core pull --all
+core dev pull --all
 
-# Check CI status
-core ci
+# Full workflow (status + commit + push)
+core dev work
 ```
 
 ## See Also
 
 - [work commands](../dev/work/) - Multi-repo operations
-- [search command](../pkg/search/) - Find repos on GitHub
-- [install command](../pkg/search/) - Clone individual repos
+- [search command](../pkg/search/) - Find and install repos
