@@ -33,9 +33,6 @@ core dev issues --all
 
 # PRs needing review
 core dev reviews
-
-# CI status
-core dev ci
 ```
 
 ## Dependency Analysis
