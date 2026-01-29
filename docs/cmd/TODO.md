@@ -4,26 +4,6 @@ Commands and flags found in CLI but missing from documentation.
 
 ## Missing Commands
 
-### core dev
-
-- `core dev api` - Tools for managing service APIs
-- `core dev api sync` - Synchronizes the public service APIs with their internal implementations
-- `core dev sync` - Synchronizes the public service APIs (duplicate of api sync)
-- `core dev ci` - Check CI status across all repos
-- `core dev tasks` - List available tasks from core-agentic
-- `core dev task` - Show task details or auto-select a task
-- `core dev task:update` - Update task status or progress
-- `core dev task:complete` - Mark a task as completed
-- `core dev task:commit` - Auto-commit changes with task reference
-- `core dev task:pr` - Create a pull request for a task
-
-### core go
-
-- `core go work` - Workspace management (init, sync, use)
-- `core go work sync` - Sync workspace
-- `core go work init` - Initialize workspace
-- `core go work use` - Add module to workspace
-
 ### core build
 
 - `core build from-path` - Build from a local directory
@@ -42,99 +22,6 @@ Commands and flags found in CLI but missing from documentation.
 - `core vm templates vars` - Show template variables
 
 ## Missing Flags
-
-### core dev boot
-
-- `--fresh` - Stop existing and start fresh
-
-### core dev claude
-
-- `--model` - Model to use (opus, sonnet)
-
-### core dev install
-
-- Docs mention `--source` and `--force` flags that don't appear in CLI help
-
-### core dev tasks
-
-- `--status` - Filter by status (pending, in_progress, completed, blocked)
-- `--priority` - Filter by priority (critical, high, medium, low)
-- `--labels` - Filter by labels (comma-separated)
-- `--project` - Filter by project
-- `--limit` - Max number of tasks to return (default 20)
-
-### core dev task
-
-- `--auto` - Auto-select highest priority pending task
-- `--claim` - Claim the task after showing details
-- `--context` - Show gathered context for AI collaboration
-
-### core dev task:update
-
-- `--status` - New status (pending, in_progress, completed, blocked)
-- `--progress` - Progress percentage (0-100)
-- `--notes` - Notes about the update
-
-### core dev task:complete
-
-- `--output` - Summary of the completed work
-- `--failed` - Mark the task as failed
-- `--error` - Error message if failed
-
-### core dev task:commit
-
-- `--message` / `-m` - Commit message
-- `--scope` - Scope for the commit type
-- `--push` - Push changes after committing
-
-### core dev task:pr
-
-- `--title` - PR title
-- `--draft` - Create as draft PR
-- `--labels` - Labels to add (comma-separated)
-- `--base` - Base branch (defaults to main)
-
-### core dev health
-
-- `--verbose` - Show detailed breakdown
-
-### core dev issues
-
-- `--assignee` - Filter by assignee (use @me for yourself)
-- `--limit` - Max issues per repo (default 10)
-- Docs mention `--label` which is not in CLI; CLI has `--assignee` instead
-
-### core dev reviews
-
-- `--all` - Show all PRs including drafts
-- `--author` - Filter by PR author
-
-### core dev ci
-
-- `--branch` - Filter by branch (default: main)
-- `--failed` - Show only failed runs
-
-### core dev update
-
-- `--apply` - Download and apply the update (docs mention `--force` instead)
-
-### core dev test
-
-- `--name` - Run named test command from .core/test.yaml
-- Docs mention `--unit` which is not in CLI
-
-### core go test
-
-- `--json` - Output JSON results
-
-### core go cov
-
-- `--open` - Generate and open HTML report in browser
-- `--threshold` - Minimum coverage percentage (exit 1 if below)
-
-### core go fmt
-
-- `--check` - Check only, exit 1 if not formatted
 
 ### core build
 
@@ -198,30 +85,6 @@ Commands and flags found in CLI but missing from documentation.
 - Docs describe `core sdk generate` command but CLI only has `core sdk diff` and `core sdk validate`
 - SDK generation is actually at `core build sdk`, not `core sdk generate`
 
-### core dev install
-
-- Docs mention `--source` and `--force` flags that are not shown in CLI help
-
-### core dev update
-
-- Docs mention `--force` flag but CLI has `--apply` instead
-
-### core dev test
-
-- Docs mention `--unit` flag but CLI has `--name` flag
-
-### core dev issues
-
-- Docs mention `--label` flag but CLI has `--assignee` flag and no `--label`
-
-### core dev push
-
-- Docs mention `--all` flag but CLI only has `--force` flag
-
-### core dev pull
-
-- Docs mention `--rebase` flag but CLI only has `--all` flag
-
 ### core setup
 
 - Docs mention `--path` and `--ssh` flags but CLI has `--dry-run` and `--only` flags instead
@@ -234,7 +97,3 @@ Commands and flags found in CLI but missing from documentation.
 ### core php serve
 
 - Docs mention `--production` flag but CLI has different flags: `--name`, `--tag`, `--port`, `--https-port`, `-d`, `--env-file`, `--container`
-
-### core dev work/commit/push flags
-
-- Documentation flags don't match CLI flags in several places (e.g., `--message` vs no such flag in CLI)

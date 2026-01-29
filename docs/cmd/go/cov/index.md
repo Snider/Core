@@ -13,9 +13,9 @@ core go cov [flags]
 | Flag | Description |
 |------|-------------|
 | `--pkg` | Package to test (default: `./...`) |
-| `--html` | Generate HTML report |
-| `--open` | Open in browser |
-| `--threshold` | Fail if coverage below % |
+| `--html` | Generate HTML coverage report |
+| `--open` | Generate and open HTML report in browser |
+| `--threshold` | Minimum coverage percentage (exit 1 if below) |
 
 ## Examples
 

@@ -12,13 +12,14 @@ core go fmt [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--fix` | Apply fixes (default: check only) |
-| `--diff` | Show diff |
+| `--fix` | Fix formatting in place |
+| `--diff` | Show diff of changes |
+| `--check` | Check only, exit 1 if not formatted |
 
 ## Examples
 
 ```bash
-core go fmt           # Check
-core go fmt --fix     # Apply fixes
+core go fmt           # Check formatting
+core go fmt --fix     # Fix formatting
 core go fmt --diff    # Show diff
 ```

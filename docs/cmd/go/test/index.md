@@ -13,11 +13,11 @@ core go test [flags]
 | Flag | Description |
 |------|-------------|
 | `--pkg` | Package to test (default: `./...`) |
-| `--run` | Run specific tests |
-| `--short` | Skip long-running tests |
-| `--race` | Enable race detection |
-| `--coverage` | Show coverage summary |
-| `--json` | JSON output for CI |
+| `--run` | Run only tests matching regexp |
+| `--short` | Run only short tests |
+| `--race` | Enable race detector |
+| `--coverage` | Show detailed per-package coverage |
+| `--json` | Output JSON results |
 | `-v` | Verbose output |
 
 ## Examples

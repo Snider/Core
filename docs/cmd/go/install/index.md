@@ -18,7 +18,8 @@ core go install [path] [flags]
 ## Examples
 
 ```bash
-core go install                 # Auto-detect cmd/
-core go install ./cmd/core      # Specific path
-core go install --no-cgo        # Pure Go
+core go install                 # Install current module
+core go install ./cmd/core      # Install specific path
+core go install --no-cgo        # Pure Go (no C dependencies)
+core go install -v              # Verbose output
 ```

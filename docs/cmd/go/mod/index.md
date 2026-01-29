@@ -6,10 +6,10 @@ Module management.
 
 | Command | Description |
 |---------|-------------|
-| `tidy` | Tidy go.mod |
-| `download` | Download dependencies |
+| `tidy` | Add missing and remove unused modules |
+| `download` | Download modules to local cache |
 | `verify` | Verify dependencies |
-| `graph` | Show dependency graph |
+| `graph` | Print module dependency graph |
 
 ## Examples
 

@@ -12,7 +12,7 @@ core go lint [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--fix` | Auto-fix issues |
+| `--fix` | Fix issues automatically |
 
 ## Examples
 
