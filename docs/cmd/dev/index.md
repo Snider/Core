@@ -20,14 +20,16 @@ Multi-repo workflow and portable development environment.
 
 ## Task Management Commands
 
+> **Note:** Task management commands have moved to [`core ai`](../ai/).
+
 | Command | Description |
 |---------|-------------|
-| `tasks` | List available tasks from core-agentic |
-| `task` | Show task details or auto-select a task |
-| `task:update` | Update task status or progress |
-| `task:complete` | Mark a task as completed |
-| `task:commit` | Auto-commit changes with task reference |
-| `task:pr` | Create a pull request for a task |
+| [`ai tasks`](../ai/) | List available tasks from core-agentic |
+| [`ai task`](../ai/) | Show task details or auto-select a task |
+| [`ai task:update`](../ai/) | Update task status or progress |
+| [`ai task:complete`](../ai/) | Mark a task as completed |
+| [`ai task:commit`](../ai/) | Auto-commit changes with task reference |
+| [`ai task:pr`](../ai/) | Create a pull request for a task |
 
 ## Dev Environment Commands
 
@@ -412,181 +414,7 @@ core dev sync
 
 This command scans the `pkg` directory for services and ensures that the top-level public API for each service is in sync with its internal implementation. It automatically generates the necessary Go files with type aliases.
 
-## Task Management Commands
-
-The task commands integrate with the core-agentic service for AI-powered task management.
-
-### Configuration
-
-Task commands load configuration from:
-1. Environment variables (`AGENTIC_TOKEN`, `AGENTIC_BASE_URL`)
-2. `.env` file in current directory
-3. `~/.core/agentic.yaml`
-
-### dev tasks
-
-List available tasks from core-agentic.
-
-```bash
-core dev tasks [flags]
-```
-
-#### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--status` | Filter by status (`pending`, `in_progress`, `completed`, `blocked`) |
-| `--priority` | Filter by priority (`critical`, `high`, `medium`, `low`) |
-| `--labels` | Filter by labels (comma-separated) |
-| `--project` | Filter by project |
-| `--limit` | Max number of tasks to return (default: 20) |
-
-#### Examples
-
-```bash
-core dev tasks
-core dev tasks --status pending --priority high
-core dev tasks --labels bug,urgent
-```
-
-### dev task
-
-Show task details or auto-select a task.
-
-```bash
-core dev task [task-id] [flags]
-```
-
-#### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--auto` | Auto-select highest priority pending task |
-| `--claim` | Claim the task after showing details |
-| `--context` | Show gathered context for AI collaboration |
-
-#### Examples
-
-```bash
-# Show task details
-core dev task abc123
-
-# Show and claim
-core dev task abc123 --claim
-
-# Show with context
-core dev task abc123 --context
-
-# Auto-select highest priority pending task
-core dev task --auto
-```
-
-### dev task:update
-
-Update a task's status, progress, or notes.
-
-```bash
-core dev task:update <task-id> [flags]
-```
-
-#### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--status` | New status (`pending`, `in_progress`, `completed`, `blocked`) |
-| `--progress` | Progress percentage (0-100) |
-| `--notes` | Notes about the update |
-
-#### Examples
-
-```bash
-core dev task:update abc123 --status in_progress
-core dev task:update abc123 --progress 50 --notes 'Halfway done'
-```
-
-### dev task:complete
-
-Mark a task as completed with optional output and artifacts.
-
-```bash
-core dev task:complete <task-id> [flags]
-```
-
-#### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--output` | Summary of the completed work |
-| `--failed` | Mark the task as failed |
-| `--error` | Error message if failed |
-
-#### Examples
-
-```bash
-core dev task:complete abc123 --output 'Feature implemented'
-core dev task:complete abc123 --failed --error 'Build failed'
-```
-
-### dev task:commit
-
-Create a git commit with a task reference and co-author attribution.
-
-```bash
-core dev task:commit <task-id> [flags]
-```
-
-Commit message format:
-```
-feat(scope): description
-
-Task: #123
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-#### Flags
-
-| Flag | Description |
-|------|-------------|
-| `-m`, `--message` | Commit message (without task reference) |
-| `--scope` | Scope for the commit type (e.g., `auth`, `api`, `ui`) |
-| `--push` | Push changes after committing |
-
-#### Examples
-
-```bash
-core dev task:commit abc123 --message 'add user authentication'
-core dev task:commit abc123 -m 'fix login bug' --scope auth
-core dev task:commit abc123 -m 'update docs' --push
-```
-
-### dev task:pr
-
-Create a GitHub pull request linked to a task.
-
-```bash
-core dev task:pr <task-id> [flags]
-```
-
-Requires the GitHub CLI (`gh`) to be installed and authenticated.
-
-#### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--title` | PR title (defaults to task title) |
-| `--base` | Base branch (defaults to main) |
-| `--draft` | Create as draft PR |
-| `--labels` | Labels to add (comma-separated) |
-
-#### Examples
-
-```bash
-core dev task:pr abc123
-core dev task:pr abc123 --title 'Add authentication feature'
-core dev task:pr abc123 --draft --labels 'enhancement,needs-review'
-core dev task:pr abc123 --base develop
-```
-
 ## See Also
 
 - [work](work/) - Multi-repo workflow commands (`core dev work`, `core dev health`, etc.)
+- [ai](../ai/) - Task management commands (`core ai tasks`, `core ai task`, etc.)
