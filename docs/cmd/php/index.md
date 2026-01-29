@@ -84,6 +84,9 @@ core php deploy
 # Deploy to staging
 core php deploy --staging
 
+# Wait for completion
+core php deploy --wait
+
 # Check deployment status
 core php deploy:status
 
