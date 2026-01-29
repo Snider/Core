@@ -18,6 +18,7 @@ import (
 	"github.com/host-uk/core/pkg/build"
 	"github.com/host-uk/core/pkg/build/builders"
 	"github.com/host-uk/core/pkg/build/signing"
+	"github.com/host-uk/core/pkg/sdk"
 	"github.com/leaanthony/clir"
 	"github.com/leaanthony/debme"
 	"github.com/leaanthony/gosod"
@@ -124,6 +125,25 @@ func AddBuildCommand(app *clir.Cli) {
 			return fmt.Errorf("a URL argument is required")
 		}
 		return runPwaBuild(pwaURL)
+	})
+
+	// --- `build sdk` command ---
+	sdkBuildCmd := buildCmd.NewSubCommand("sdk", "Generate API SDKs from OpenAPI spec")
+	sdkBuildCmd.LongDescription("Generates typed API clients from OpenAPI specifications.\n" +
+		"Supports TypeScript, Python, Go, and PHP.\n\n" +
+		"Examples:\n" +
+		"  core build sdk                    # Generate all configured SDKs\n" +
+		"  core build sdk --lang typescript  # Generate only TypeScript SDK\n" +
+		"  core build sdk --spec api.yaml    # Use specific OpenAPI spec")
+
+	var sdkSpec, sdkLang, sdkVersion string
+	var sdkDryRun bool
+	sdkBuildCmd.StringFlag("spec", "Path to OpenAPI spec file", &sdkSpec)
+	sdkBuildCmd.StringFlag("lang", "Generate only this language (typescript, python, go, php)", &sdkLang)
+	sdkBuildCmd.StringFlag("version", "Version to embed in generated SDKs", &sdkVersion)
+	sdkBuildCmd.BoolFlag("dry-run", "Show what would be generated without writing files", &sdkDryRun)
+	sdkBuildCmd.Action(func() error {
+		return runBuildSDK(sdkSpec, sdkLang, sdkVersion, sdkDryRun)
 	})
 }
 
@@ -514,6 +534,73 @@ func getBuilder(projectType build.ProjectType) (build.Builder, error) {
 	default:
 		return nil, fmt.Errorf("unsupported project type: %s", projectType)
 	}
+}
+
+// --- SDK Build Logic ---
+
+func runBuildSDK(specPath, lang, version string, dryRun bool) error {
+	ctx := context.Background()
+
+	projectDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// Load config
+	config := sdk.DefaultConfig()
+	if specPath != "" {
+		config.Spec = specPath
+	}
+
+	s := sdk.New(projectDir, config)
+	if version != "" {
+		s.SetVersion(version)
+	}
+
+	fmt.Printf("%s Generating SDKs\n", buildHeaderStyle.Render("Build SDK:"))
+	if dryRun {
+		fmt.Printf("  %s\n", buildDimStyle.Render("(dry-run mode)"))
+	}
+	fmt.Println()
+
+	// Detect spec
+	detectedSpec, err := s.DetectSpec()
+	if err != nil {
+		fmt.Printf("%s %v\n", buildErrorStyle.Render("Error:"), err)
+		return err
+	}
+	fmt.Printf("  Spec:      %s\n", buildTargetStyle.Render(detectedSpec))
+
+	if dryRun {
+		if lang != "" {
+			fmt.Printf("  Language:  %s\n", buildTargetStyle.Render(lang))
+		} else {
+			fmt.Printf("  Languages: %s\n", buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
+		}
+		fmt.Println()
+		fmt.Printf("%s Would generate SDKs (dry-run)\n", buildSuccessStyle.Render("OK:"))
+		return nil
+	}
+
+	if lang != "" {
+		// Generate single language
+		if err := s.GenerateLanguage(ctx, lang); err != nil {
+			fmt.Printf("%s %v\n", buildErrorStyle.Render("Error:"), err)
+			return err
+		}
+		fmt.Printf("  Generated: %s\n", buildTargetStyle.Render(lang))
+	} else {
+		// Generate all
+		if err := s.Generate(ctx); err != nil {
+			fmt.Printf("%s %v\n", buildErrorStyle.Render("Error:"), err)
+			return err
+		}
+		fmt.Printf("  Generated: %s\n", buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
+	}
+
+	fmt.Println()
+	fmt.Printf("%s SDK generation complete\n", buildSuccessStyle.Render("Success:"))
+	return nil
 }
 
 // --- PWA Build Logic ---

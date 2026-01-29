@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -29,22 +28,16 @@ var (
 
 // AddSDKCommand adds the sdk command and its subcommands.
 func AddSDKCommand(app *clir.Cli) {
-	sdkCmd := app.NewSubCommand("sdk", "Generate and manage API SDKs")
-	sdkCmd.LongDescription("Generate typed API clients from OpenAPI specs.\n" +
-		"Supports TypeScript, Python, Go, and PHP.")
-
-	// sdk generate
-	genCmd := sdkCmd.NewSubCommand("generate", "Generate SDKs from OpenAPI spec")
-	var specPath, lang string
-	genCmd.StringFlag("spec", "Path to OpenAPI spec file", &specPath)
-	genCmd.StringFlag("lang", "Generate only this language", &lang)
-	genCmd.Action(func() error {
-		return runSDKGenerate(specPath, lang)
-	})
+	sdkCmd := app.NewSubCommand("sdk", "SDK validation and API compatibility tools")
+	sdkCmd.LongDescription("Tools for validating OpenAPI specs and checking API compatibility.\n" +
+		"To generate SDKs, use: core build sdk\n\n" +
+		"Commands:\n" +
+		"  diff      Check for breaking API changes\n" +
+		"  validate  Validate OpenAPI spec syntax")
 
 	// sdk diff
 	diffCmd := sdkCmd.NewSubCommand("diff", "Check for breaking API changes")
-	var basePath string
+	var basePath, specPath string
 	diffCmd.StringFlag("base", "Base spec (version tag or file)", &basePath)
 	diffCmd.StringFlag("spec", "Current spec file", &specPath)
 	diffCmd.Action(func() error {
@@ -57,42 +50,6 @@ func AddSDKCommand(app *clir.Cli) {
 	validateCmd.Action(func() error {
 		return runSDKValidate(specPath)
 	})
-}
-
-func runSDKGenerate(specPath, lang string) error {
-	ctx := context.Background()
-
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Load config
-	config := sdk.DefaultConfig()
-	if specPath != "" {
-		config.Spec = specPath
-	}
-
-	s := sdk.New(projectDir, config)
-
-	fmt.Printf("%s Generating SDKs\n", sdkHeaderStyle.Render("SDK:"))
-
-	if lang != "" {
-		// Generate single language
-		if err := s.GenerateLanguage(ctx, lang); err != nil {
-			fmt.Printf("%s %v\n", sdkErrorStyle.Render("Error:"), err)
-			return err
-		}
-	} else {
-		// Generate all
-		if err := s.Generate(ctx); err != nil {
-			fmt.Printf("%s %v\n", sdkErrorStyle.Render("Error:"), err)
-			return err
-		}
-	}
-
-	fmt.Printf("%s SDK generation complete\n", sdkSuccessStyle.Render("Success:"))
-	return nil
 }
 
 func runSDKDiff(basePath, specPath string) error {

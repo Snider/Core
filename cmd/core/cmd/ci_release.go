@@ -45,20 +45,15 @@ func AddCIReleaseCommand(app *clir.Cli) {
 	var version string
 	var draft bool
 	var prerelease bool
-	var target string
 
 	releaseCmd.BoolFlag("dry-run", "Preview release without publishing", &dryRun)
 	releaseCmd.StringFlag("version", "Version to release (e.g., v1.2.3)", &version)
 	releaseCmd.BoolFlag("draft", "Create release as a draft", &draft)
 	releaseCmd.BoolFlag("prerelease", "Mark release as a prerelease", &prerelease)
-	releaseCmd.StringFlag("target", "CIRelease target (sdk)", &target)
 
-	// Default action for `core release`
+	// Default action for `core ci` - publish only (expects artifacts in dist/)
 	releaseCmd.Action(func() error {
-		if target == "sdk" {
-			return runCIReleaseSDK(dryRun, version)
-		}
-		return runCIRelease(dryRun, version, draft, prerelease)
+		return runCIPublish(dryRun, version, draft, prerelease)
 	})
 
 	// `release init` subcommand
@@ -86,8 +81,9 @@ func AddCIReleaseCommand(app *clir.Cli) {
 	})
 }
 
-// runCIRelease executes the main release workflow.
-func runCIRelease(dryRun bool, version string, draft, prerelease bool) error {
+// runCIPublish publishes pre-built artifacts from dist/.
+// It does NOT build - use `core build` first.
+func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	ctx := context.Background()
 
 	// Get current directory
@@ -120,14 +116,19 @@ func runCIRelease(dryRun bool, version string, draft, prerelease bool) error {
 	}
 
 	// Print header
-	fmt.Printf("%s Starting release process\n", releaseHeaderStyle.Render("CIRelease:"))
+	fmt.Printf("%s Publishing release\n", releaseHeaderStyle.Render("CI:"))
 	if dryRun {
 		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run mode)"))
 	}
 	fmt.Println()
 
-	// Run the release
-	rel, err := release.Run(ctx, cfg, dryRun)
+	// Check for publishers
+	if len(cfg.Publishers) == 0 {
+		return fmt.Errorf("no publishers configured in .core/release.yaml")
+	}
+
+	// Publish pre-built artifacts
+	rel, err := release.Publish(ctx, cfg, dryRun)
 	if err != nil {
 		fmt.Printf("%s %v\n", releaseErrorStyle.Render("Error:"), err)
 		return err
@@ -135,59 +136,15 @@ func runCIRelease(dryRun bool, version string, draft, prerelease bool) error {
 
 	// Print summary
 	fmt.Println()
-	fmt.Printf("%s CIRelease completed!\n", releaseSuccessStyle.Render("Success:"))
+	fmt.Printf("%s Publish completed!\n", releaseSuccessStyle.Render("Success:"))
 	fmt.Printf("  Version:   %s\n", releaseValueStyle.Render(rel.Version))
 	fmt.Printf("  Artifacts: %d\n", len(rel.Artifacts))
 
-	if !dryRun && len(cfg.Publishers) > 0 {
+	if !dryRun {
 		for _, pub := range cfg.Publishers {
 			fmt.Printf("  Published: %s\n", releaseValueStyle.Render(pub.Type))
 		}
 	}
-
-	return nil
-}
-
-// runCIReleaseSDK executes SDK-only release.
-func runCIReleaseSDK(dryRun bool, version string) error {
-	ctx := context.Background()
-
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Load configuration
-	cfg, err := release.LoadConfig(projectDir)
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Apply CLI overrides
-	if version != "" {
-		cfg.SetVersion(version)
-	}
-
-	// Print header
-	fmt.Printf("%s Generating SDKs\n", releaseHeaderStyle.Render("SDK CIRelease:"))
-	if dryRun {
-		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run mode)"))
-	}
-	fmt.Println()
-
-	// Run SDK release
-	result, err := release.RunSDK(ctx, cfg, dryRun)
-	if err != nil {
-		fmt.Printf("%s %v\n", releaseErrorStyle.Render("Error:"), err)
-		return err
-	}
-
-	// Print summary
-	fmt.Println()
-	fmt.Printf("%s SDK generation complete!\n", releaseSuccessStyle.Render("Success:"))
-	fmt.Printf("  Version:   %s\n", releaseValueStyle.Render(result.Version))
-	fmt.Printf("  Languages: %v\n", result.Languages)
-	fmt.Printf("  Output:    %s/\n", releaseValueStyle.Render(result.Output))
 
 	return nil
 }

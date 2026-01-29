@@ -25,7 +25,8 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Deploy PHP app | `core php deploy` | Coolify deployment |
 | Build project | `core build` | Auto-detects project type |
 | Build for targets | `core build --targets linux/amd64,darwin/arm64` | Cross-compile |
-| Release | `core ci` | Build + publish to GitHub/npm/Homebrew |
+| Build SDK | `core build sdk` | Generate API clients from OpenAPI |
+| Publish release | `core ci` | Publish pre-built artifacts |
 | Check environment | `core doctor` | Verify tools installed |
 | Multi-repo status | `core dev health` | Quick summary across repos |
 | Multi-repo workflow | `core dev work` | Status + commit + push |
@@ -35,7 +36,8 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | List issues | `core dev issues` | Open issues across repos |
 | List PRs | `core dev reviews` | PRs needing review |
 | Check CI | `core dev ci` | GitHub Actions status |
-| Generate SDK | `core sdk` | Generate API clients from OpenAPI |
+| Validate OpenAPI | `core sdk validate` | Validate OpenAPI spec |
+| Check API changes | `core sdk diff` | Detect breaking API changes |
 | Sync docs | `core docs sync` | Sync docs across repos |
 | Search packages | `core pkg search <query>` | GitHub search for core-* repos |
 | Install package | `core pkg install <name>` | Clone and register package |
@@ -64,6 +66,31 @@ core build --ci
 ```
 
 **Why:** Handles cross-compilation, code signing, archiving, checksums, and CI output formatting.
+
+## Releasing
+
+Build and publish are **separated** to prevent accidental releases:
+
+```bash
+# Step 1: Build artifacts (safe - no publishing)
+core build
+core build sdk
+
+# Step 2: Publish to configured targets (requires pre-built artifacts)
+core ci                    # Publish what's in dist/
+core ci --dry-run          # Preview what would be published
+core ci --draft            # Create as draft release
+core ci --prerelease       # Mark as prerelease
+```
+
+**Why separate?** Running `core ci` without first building will fail safely - no accidental publishes.
+
+```bash
+# Release workflow utilities
+core ci init               # Initialize .core/release.yaml
+core ci changelog          # Generate changelog from commits
+core ci version            # Show determined version
+```
 
 ## Multi-Repo Workflow
 
@@ -121,14 +148,31 @@ Generate API clients from OpenAPI specs:
 
 ```bash
 # Generate all configured SDKs
-core sdk
+core build sdk
 
 # Generate specific language
-core sdk --lang typescript
-core sdk --lang php
+core build sdk --lang typescript
+core build sdk --lang php
 
 # Specify OpenAPI spec
-core sdk --spec ./openapi.yaml
+core build sdk --spec ./openapi.yaml
+
+# Preview without generating
+core build sdk --dry-run
+```
+
+## SDK Validation
+
+Validate specs and check for breaking changes:
+
+```bash
+# Validate OpenAPI spec
+core sdk validate
+core sdk validate --spec ./api.yaml
+
+# Check for breaking API changes
+core sdk diff --base v1.0.0
+core sdk diff --base ./old-api.yaml --spec ./new-api.yaml
 ```
 
 ## Documentation
@@ -476,7 +520,8 @@ Go project?
   └── Lint: core go lint
   └── Tidy modules: core go mod tidy
   └── Build: core build [--targets <os/arch>]
-  └── Release: core ci
+  └── Build SDK: core build sdk
+  └── Publish: core ci [--dry-run]
 
 PHP/Laravel project?
   └── Start dev: core php dev [--https]
@@ -526,6 +571,8 @@ Managing packages?
 | Raw `linuxkit run` | `core vm run` | Unified interface, templates |
 | `gh repo clone` | `core pkg install` | Auto-detects org, adds to registry |
 | Manual GitHub search | `core pkg search` | Filtered to org, formatted output |
+| `core ci` without build | `core build && core ci` | Build first, then publish |
+| `core sdk generate` | `core build sdk` | SDK generation moved to build |
 
 ## Configuration
 

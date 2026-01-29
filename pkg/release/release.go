@@ -6,7 +6,9 @@ package release
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/host-uk/core/pkg/build"
 	"github.com/host-uk/core/pkg/build/builders"
@@ -25,8 +27,116 @@ type Release struct {
 	ProjectDir string
 }
 
-// Run executes the release process: determine version, build artifacts,
+// Publish publishes pre-built artifacts from dist/ to configured targets.
+// Use this after `core build` to separate build and publish concerns.
+// If dryRun is true, it will show what would be done without actually publishing.
+func Publish(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("release.Publish: config is nil")
+	}
+
+	projectDir := cfg.projectDir
+	if projectDir == "" {
+		projectDir = "."
+	}
+
+	// Resolve to absolute path
+	absProjectDir, err := filepath.Abs(projectDir)
+	if err != nil {
+		return nil, fmt.Errorf("release.Publish: failed to resolve project directory: %w", err)
+	}
+
+	// Step 1: Determine version
+	version := cfg.version
+	if version == "" {
+		version, err = DetermineVersion(absProjectDir)
+		if err != nil {
+			return nil, fmt.Errorf("release.Publish: failed to determine version: %w", err)
+		}
+	}
+
+	// Step 2: Find pre-built artifacts in dist/
+	distDir := filepath.Join(absProjectDir, "dist")
+	artifacts, err := findArtifacts(distDir)
+	if err != nil {
+		return nil, fmt.Errorf("release.Publish: %w", err)
+	}
+
+	if len(artifacts) == 0 {
+		return nil, fmt.Errorf("release.Publish: no artifacts found in dist/\nRun 'core build' first to create artifacts")
+	}
+
+	// Step 3: Generate changelog
+	changelog, err := Generate(absProjectDir, "", version)
+	if err != nil {
+		// Non-fatal: continue with empty changelog
+		changelog = fmt.Sprintf("Release %s", version)
+	}
+
+	release := &Release{
+		Version:    version,
+		Artifacts:  artifacts,
+		Changelog:  changelog,
+		ProjectDir: absProjectDir,
+	}
+
+	// Step 4: Publish to configured targets
+	if len(cfg.Publishers) > 0 {
+		pubRelease := publishers.NewRelease(release.Version, release.Artifacts, release.Changelog, release.ProjectDir)
+
+		for _, pubCfg := range cfg.Publishers {
+			publisher, err := getPublisher(pubCfg.Type)
+			if err != nil {
+				return release, fmt.Errorf("release.Publish: %w", err)
+			}
+
+			extendedCfg := buildExtendedConfig(pubCfg)
+			publisherCfg := publishers.NewPublisherConfig(pubCfg.Type, pubCfg.Prerelease, pubCfg.Draft, extendedCfg)
+			if err := publisher.Publish(ctx, pubRelease, publisherCfg, cfg, dryRun); err != nil {
+				return release, fmt.Errorf("release.Publish: publish to %s failed: %w", pubCfg.Type, err)
+			}
+		}
+	}
+
+	return release, nil
+}
+
+// findArtifacts discovers pre-built artifacts in the dist directory.
+func findArtifacts(distDir string) ([]build.Artifact, error) {
+	if _, err := os.Stat(distDir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("dist/ directory not found")
+	}
+
+	var artifacts []build.Artifact
+
+	entries, err := os.ReadDir(distDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read dist/: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+		path := filepath.Join(distDir, name)
+
+		// Include archives and checksums
+		if strings.HasSuffix(name, ".tar.gz") ||
+			strings.HasSuffix(name, ".zip") ||
+			strings.HasSuffix(name, ".txt") ||
+			strings.HasSuffix(name, ".sig") {
+			artifacts = append(artifacts, build.Artifact{Path: path})
+		}
+	}
+
+	return artifacts, nil
+}
+
+// Run executes the full release process: determine version, build artifacts,
 // generate changelog, and publish to configured targets.
+// For separated concerns, prefer using `core build` then `core ci` (Publish).
 // If dryRun is true, it will show what would be done without actually publishing.
 func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 	if cfg == nil {
