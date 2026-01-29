@@ -1,11 +1,11 @@
-# core templates
+# core vm templates
 
 Manage LinuxKit templates for container images.
 
 ## Usage
 
 ```bash
-core templates [command]
+core vm templates [command]
 ```
 
 ## Commands
@@ -20,7 +20,7 @@ core templates [command]
 List all available LinuxKit templates.
 
 ```bash
-core templates list
+core vm templates list
 ```
 
 ### Output
@@ -46,13 +46,13 @@ Available Templates:
 Show details of a specific template.
 
 ```bash
-core templates show <name>
+core vm templates show <name>
 ```
 
 ### Example
 
 ```bash
-core templates show core-dev
+core vm templates show core-dev
 ```
 
 Output:
@@ -108,7 +108,7 @@ services:
 Run with:
 
 ```bash
-core run --template myserver
+core vm run --template myserver
 ```
 
 ## See Also

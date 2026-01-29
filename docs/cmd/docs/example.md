@@ -10,5 +10,5 @@ core docs list
 
 ```bash
 core docs sync
-core docs sync --target ./docs
+core docs sync --output ./docs
 ```

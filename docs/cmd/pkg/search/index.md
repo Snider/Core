@@ -1,13 +1,13 @@
-# core search & install
+# core pkg search & core pkg install
 
 Search GitHub for repositories and install them locally.
 
-## core search
+## core pkg search
 
 Search GitHub for repositories matching a pattern.
 
 ```bash
-core search <pattern> [flags]
+core pkg search <pattern> [flags]
 ```
 
 ### Flags
@@ -22,16 +22,16 @@ core search <pattern> [flags]
 
 ```bash
 # Search by pattern
-core search "cli tool"
+core pkg search "cli tool"
 
 # Search within organization
-core search --org host-uk
+core pkg search --org host-uk
 
 # Search with language filter
-core search --org host-uk --language go
+core pkg search --org host-uk --language go
 
 # Search all core-* repos
-core search "core-" --org host-uk
+core pkg search "core-" --org host-uk
 ```
 
 ### Output
@@ -52,12 +52,12 @@ Found 5 repositories:
     ★ 8  Dockerfile  Updated 3 days ago
 ```
 
-## core install
+## core pkg install
 
 Clone a repository from GitHub.
 
 ```bash
-core install <repo> [flags]
+core pkg install <repo> [flags]
 ```
 
 ### Flags
@@ -72,16 +72,16 @@ core install <repo> [flags]
 
 ```bash
 # Install by full name
-core install host-uk/core
+core pkg install host-uk/core
 
 # Install to specific path
-core install host-uk/core --path ~/Code/host-uk
+core pkg install host-uk/core --path ~/Code/host-uk
 
 # Install specific branch
-core install host-uk/core --branch dev
+core pkg install host-uk/core --branch dev
 
 # Shallow clone
-core install host-uk/core --depth 1
+core pkg install host-uk/core --depth 1
 ```
 
 ### Authentication
@@ -97,10 +97,10 @@ gh auth login  # if not authenticated
 
 ```bash
 # Find repositories
-core search --org host-uk
+core pkg search --org host-uk
 
 # Install one
-core install host-uk/core-php --path ~/Code/host-uk
+core pkg install host-uk/core-php --path ~/Code/host-uk
 
 # Check setup
 core doctor
