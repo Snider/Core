@@ -61,7 +61,7 @@ func runSDKDiff(basePath, specPath string) error {
 
 	// Detect current spec if not provided
 	if specPath == "" {
-		s := sdk.New(projectDir, nil)
+		s := sdkpkg.New(projectDir, nil)
 		specPath, err = s.DetectSpec()
 		if err != nil {
 			return err
@@ -77,7 +77,7 @@ func runSDKDiff(basePath, specPath string) error {
 	fmt.Printf("  Current:  %s\n", sdkDimStyle.Render(specPath))
 	fmt.Println()
 
-	result, err := sdk.Diff(basePath, specPath)
+	result, err := sdkpkg.Diff(basePath, specPath)
 	if err != nil {
 		fmt.Printf("%s %v\n", sdkErrorStyle.Render("Error:"), err)
 		os.Exit(2)
@@ -101,7 +101,7 @@ func runSDKValidate(specPath string) error {
 		return fmt.Errorf("failed to get working directory: %w", err)
 	}
 
-	s := sdk.New(projectDir, &sdk.Config{Spec: specPath})
+	s := sdkpkg.New(projectDir, &sdkpkg.Config{Spec: specPath})
 
 	fmt.Printf("%s Validating OpenAPI spec\n", sdkHeaderStyle.Render("SDK:"))
 

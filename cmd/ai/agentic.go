@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/host-uk/core/cmd/core/cmd/shared"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/agentic"
 	"github.com/leaanthony/clir"
 )

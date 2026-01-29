@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/host-uk/core/cmd/core/cmd/shared"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/container"
 	"github.com/leaanthony/clir"
 )

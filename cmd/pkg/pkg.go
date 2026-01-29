@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/host-uk/core/cmd/core/cmd/shared"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/cache"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"

@@ -3,10 +3,10 @@
 package cmd
 
 import (
-	"github.com/host-uk/core/cmd/core/cmd/build"
-	"github.com/host-uk/core/cmd/core/cmd/ci"
-	"github.com/host-uk/core/cmd/core/cmd/doctor"
-	"github.com/host-uk/core/cmd/core/cmd/sdk"
+	"github.com/host-uk/core/cmd/build"
+	"github.com/host-uk/core/cmd/ci"
+	"github.com/host-uk/core/cmd/doctor"
+	"github.com/host-uk/core/cmd/sdk"
 	"github.com/leaanthony/clir"
 )
 

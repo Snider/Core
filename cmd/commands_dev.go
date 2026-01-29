@@ -3,19 +3,19 @@
 package cmd
 
 import (
-	"github.com/host-uk/core/cmd/core/cmd/ai"
-	"github.com/host-uk/core/cmd/core/cmd/build"
-	"github.com/host-uk/core/cmd/core/cmd/ci"
-	"github.com/host-uk/core/cmd/core/cmd/dev"
-	"github.com/host-uk/core/cmd/core/cmd/docs"
-	"github.com/host-uk/core/cmd/core/cmd/doctor"
-	gocmd "github.com/host-uk/core/cmd/core/cmd/go"
-	"github.com/host-uk/core/cmd/core/cmd/php"
-	"github.com/host-uk/core/cmd/core/cmd/pkg"
-	"github.com/host-uk/core/cmd/core/cmd/sdk"
-	"github.com/host-uk/core/cmd/core/cmd/setup"
-	testcmd "github.com/host-uk/core/cmd/core/cmd/test"
-	"github.com/host-uk/core/cmd/core/cmd/vm"
+	"github.com/host-uk/core/cmd/ai"
+	"github.com/host-uk/core/cmd/build"
+	"github.com/host-uk/core/cmd/ci"
+	"github.com/host-uk/core/cmd/dev"
+	"github.com/host-uk/core/cmd/docs"
+	"github.com/host-uk/core/cmd/doctor"
+	gocmd "github.com/host-uk/core/cmd/go"
+	"github.com/host-uk/core/cmd/php"
+	"github.com/host-uk/core/cmd/pkg"
+	"github.com/host-uk/core/cmd/sdk"
+	"github.com/host-uk/core/cmd/setup"
+	testcmd "github.com/host-uk/core/cmd/test"
+	"github.com/host-uk/core/cmd/vm"
 	"github.com/leaanthony/clir"
 )
 
