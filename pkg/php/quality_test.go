@@ -177,3 +177,341 @@ func TestBuildPHPStanCommand_Good(t *testing.T) {
 		assert.Equal(t, phpstanPath, cmd)
 	})
 }
+
+// =============================================================================
+// Psalm Detection Tests
+// =============================================================================
+
+func TestDetectPsalm_Good(t *testing.T) {
+	t.Run("detects psalm.xml", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(filepath.Join(dir, "psalm.xml"), []byte(""), 0644)
+		require.NoError(t, err)
+
+		// Also need vendor binary for it to return true
+		binDir := filepath.Join(dir, "vendor", "bin")
+		err = os.MkdirAll(binDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(binDir, "psalm"), []byte(""), 0755)
+		require.NoError(t, err)
+
+		psalmType, found := DetectPsalm(dir)
+		assert.True(t, found)
+		assert.Equal(t, PsalmStandard, psalmType)
+	})
+
+	t.Run("detects psalm.xml.dist", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(filepath.Join(dir, "psalm.xml.dist"), []byte(""), 0644)
+		require.NoError(t, err)
+
+		binDir := filepath.Join(dir, "vendor", "bin")
+		err = os.MkdirAll(binDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(binDir, "psalm"), []byte(""), 0755)
+		require.NoError(t, err)
+
+		_, found := DetectPsalm(dir)
+		assert.True(t, found)
+	})
+
+	t.Run("detects vendor binary only", func(t *testing.T) {
+		dir := t.TempDir()
+		binDir := filepath.Join(dir, "vendor", "bin")
+		err := os.MkdirAll(binDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(binDir, "psalm"), []byte(""), 0755)
+		require.NoError(t, err)
+
+		_, found := DetectPsalm(dir)
+		assert.True(t, found)
+	})
+}
+
+func TestDetectPsalm_Bad(t *testing.T) {
+	t.Run("no psalm", func(t *testing.T) {
+		dir := t.TempDir()
+		_, found := DetectPsalm(dir)
+		assert.False(t, found)
+	})
+}
+
+// =============================================================================
+// Rector Detection Tests
+// =============================================================================
+
+func TestDetectRector_Good(t *testing.T) {
+	t.Run("detects rector.php", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(filepath.Join(dir, "rector.php"), []byte("<?php"), 0644)
+		require.NoError(t, err)
+
+		found := DetectRector(dir)
+		assert.True(t, found)
+	})
+
+	t.Run("detects vendor binary", func(t *testing.T) {
+		dir := t.TempDir()
+		binDir := filepath.Join(dir, "vendor", "bin")
+		err := os.MkdirAll(binDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(binDir, "rector"), []byte(""), 0755)
+		require.NoError(t, err)
+
+		found := DetectRector(dir)
+		assert.True(t, found)
+	})
+}
+
+func TestDetectRector_Bad(t *testing.T) {
+	t.Run("no rector", func(t *testing.T) {
+		dir := t.TempDir()
+		found := DetectRector(dir)
+		assert.False(t, found)
+	})
+}
+
+// =============================================================================
+// Infection Detection Tests
+// =============================================================================
+
+func TestDetectInfection_Good(t *testing.T) {
+	t.Run("detects infection.json", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(filepath.Join(dir, "infection.json"), []byte("{}"), 0644)
+		require.NoError(t, err)
+
+		found := DetectInfection(dir)
+		assert.True(t, found)
+	})
+
+	t.Run("detects infection.json5", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(filepath.Join(dir, "infection.json5"), []byte("{}"), 0644)
+		require.NoError(t, err)
+
+		found := DetectInfection(dir)
+		assert.True(t, found)
+	})
+
+	t.Run("detects vendor binary", func(t *testing.T) {
+		dir := t.TempDir()
+		binDir := filepath.Join(dir, "vendor", "bin")
+		err := os.MkdirAll(binDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(binDir, "infection"), []byte(""), 0755)
+		require.NoError(t, err)
+
+		found := DetectInfection(dir)
+		assert.True(t, found)
+	})
+}
+
+func TestDetectInfection_Bad(t *testing.T) {
+	t.Run("no infection", func(t *testing.T) {
+		dir := t.TempDir()
+		found := DetectInfection(dir)
+		assert.False(t, found)
+	})
+}
+
+// =============================================================================
+// QA Pipeline Tests
+// =============================================================================
+
+func TestGetQAStages_Good(t *testing.T) {
+	t.Run("default stages", func(t *testing.T) {
+		opts := QAOptions{}
+		stages := GetQAStages(opts)
+		assert.Equal(t, []QAStage{QAStageQuick, QAStageStandard}, stages)
+	})
+
+	t.Run("quick only", func(t *testing.T) {
+		opts := QAOptions{Quick: true}
+		stages := GetQAStages(opts)
+		assert.Equal(t, []QAStage{QAStageQuick}, stages)
+	})
+
+	t.Run("full stages", func(t *testing.T) {
+		opts := QAOptions{Full: true}
+		stages := GetQAStages(opts)
+		assert.Equal(t, []QAStage{QAStageQuick, QAStageStandard, QAStageFull}, stages)
+	})
+}
+
+func TestGetQAChecks_Good(t *testing.T) {
+	t.Run("quick stage checks", func(t *testing.T) {
+		dir := t.TempDir()
+		checks := GetQAChecks(dir, QAStageQuick)
+		assert.Contains(t, checks, "audit")
+		assert.Contains(t, checks, "fmt")
+		assert.Contains(t, checks, "analyse")
+	})
+
+	t.Run("standard stage includes test", func(t *testing.T) {
+		dir := t.TempDir()
+		checks := GetQAChecks(dir, QAStageStandard)
+		assert.Contains(t, checks, "test")
+	})
+
+	t.Run("standard stage includes psalm if available", func(t *testing.T) {
+		dir := t.TempDir()
+		binDir := filepath.Join(dir, "vendor", "bin")
+		err := os.MkdirAll(binDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(binDir, "psalm"), []byte(""), 0755)
+		require.NoError(t, err)
+
+		checks := GetQAChecks(dir, QAStageStandard)
+		assert.Contains(t, checks, "psalm")
+	})
+
+	t.Run("full stage includes rector if available", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(filepath.Join(dir, "rector.php"), []byte("<?php"), 0644)
+		require.NoError(t, err)
+
+		checks := GetQAChecks(dir, QAStageFull)
+		assert.Contains(t, checks, "rector")
+	})
+}
+
+// =============================================================================
+// Security Checks Tests
+// =============================================================================
+
+func TestRunEnvSecurityChecks_Good(t *testing.T) {
+	t.Run("detects debug mode enabled", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "APP_DEBUG=true\nAPP_KEY=base64:abcdefghijklmnopqrstuvwxyz123456\n"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+
+		checks := runEnvSecurityChecks(dir)
+
+		var debugCheck *SecurityCheck
+		for i := range checks {
+			if checks[i].ID == "debug_mode" {
+				debugCheck = &checks[i]
+				break
+			}
+		}
+
+		require.NotNil(t, debugCheck)
+		assert.False(t, debugCheck.Passed)
+		assert.Equal(t, "critical", debugCheck.Severity)
+	})
+
+	t.Run("passes with debug disabled", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "APP_DEBUG=false\nAPP_KEY=base64:abcdefghijklmnopqrstuvwxyz123456\n"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+
+		checks := runEnvSecurityChecks(dir)
+
+		var debugCheck *SecurityCheck
+		for i := range checks {
+			if checks[i].ID == "debug_mode" {
+				debugCheck = &checks[i]
+				break
+			}
+		}
+
+		require.NotNil(t, debugCheck)
+		assert.True(t, debugCheck.Passed)
+	})
+
+	t.Run("detects weak app key", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "APP_KEY=short\n"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+
+		checks := runEnvSecurityChecks(dir)
+
+		var keyCheck *SecurityCheck
+		for i := range checks {
+			if checks[i].ID == "app_key_set" {
+				keyCheck = &checks[i]
+				break
+			}
+		}
+
+		require.NotNil(t, keyCheck)
+		assert.False(t, keyCheck.Passed)
+	})
+
+	t.Run("detects non-https app url", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "APP_URL=http://example.com\n"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+
+		checks := runEnvSecurityChecks(dir)
+
+		var urlCheck *SecurityCheck
+		for i := range checks {
+			if checks[i].ID == "https_enforced" {
+				urlCheck = &checks[i]
+				break
+			}
+		}
+
+		require.NotNil(t, urlCheck)
+		assert.False(t, urlCheck.Passed)
+	})
+}
+
+func TestRunFilesystemSecurityChecks_Good(t *testing.T) {
+	t.Run("detects .env in public", func(t *testing.T) {
+		dir := t.TempDir()
+		publicDir := filepath.Join(dir, "public")
+		err := os.MkdirAll(publicDir, 0755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(publicDir, ".env"), []byte(""), 0644)
+		require.NoError(t, err)
+
+		checks := runFilesystemSecurityChecks(dir)
+
+		found := false
+		for _, check := range checks {
+			if check.ID == "env_not_public" && !check.Passed {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "should detect .env in public directory")
+	})
+
+	t.Run("detects .git in public", func(t *testing.T) {
+		dir := t.TempDir()
+		gitDir := filepath.Join(dir, "public", ".git")
+		err := os.MkdirAll(gitDir, 0755)
+		require.NoError(t, err)
+
+		checks := runFilesystemSecurityChecks(dir)
+
+		found := false
+		for _, check := range checks {
+			if check.ID == "git_not_public" && !check.Passed {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "should detect .git in public directory")
+	})
+
+	t.Run("passes with clean public directory", func(t *testing.T) {
+		dir := t.TempDir()
+		publicDir := filepath.Join(dir, "public")
+		err := os.MkdirAll(publicDir, 0755)
+		require.NoError(t, err)
+		// Add only safe files
+		err = os.WriteFile(filepath.Join(publicDir, "index.php"), []byte("<?php"), 0644)
+		require.NoError(t, err)
+
+		checks := runFilesystemSecurityChecks(dir)
+		assert.Empty(t, checks, "should not report issues for clean public directory")
+	})
+}

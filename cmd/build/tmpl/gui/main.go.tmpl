@@ -1,0 +1,25 @@
+package main
+
+import (
+	"embed"
+	"log"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
+
+//go:embed all:html
+var assets embed.FS
+
+func main() {
+	app := application.New(application.Options{
+		Name:        "{{.AppName}}",
+		Description: "A web application enclaved by Core.",
+		Assets: application.AssetOptions{
+			FS: assets,
+		},
+	})
+
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
