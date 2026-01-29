@@ -132,3 +132,98 @@ func TestToSDKConfig_Good_NilInput(t *testing.T) {
 	result := toSDKConfig(nil)
 	assert.Nil(t, result)
 }
+
+func TestRunSDK_Good_WithDiffEnabledNoFailOnBreaking(t *testing.T) {
+	// Tests diff enabled but FailOnBreaking=false (should warn but not fail)
+	cfg := &Config{
+		SDK: &SDKConfig{
+			Languages: []string{"typescript"},
+			Output:    "sdk",
+			Diff: SDKDiffConfig{
+				Enabled:        true,
+				FailOnBreaking: false,
+			},
+		},
+	}
+	cfg.projectDir = "/tmp"
+	cfg.version = "v1.0.0"
+
+	// Dry run should succeed even without git repo (diff check fails gracefully)
+	result, err := RunSDK(context.Background(), cfg, true)
+	require.NoError(t, err)
+	assert.Equal(t, "v1.0.0", result.Version)
+	assert.Contains(t, result.Languages, "typescript")
+}
+
+func TestRunSDK_Good_MultipleLanguages(t *testing.T) {
+	// Tests multiple language support
+	cfg := &Config{
+		SDK: &SDKConfig{
+			Languages: []string{"typescript", "python", "go", "java"},
+			Output:    "multi-sdk",
+		},
+	}
+	cfg.projectDir = "/tmp"
+	cfg.version = "v3.0.0"
+
+	result, err := RunSDK(context.Background(), cfg, true)
+	require.NoError(t, err)
+
+	assert.Equal(t, "v3.0.0", result.Version)
+	assert.Len(t, result.Languages, 4)
+	assert.Equal(t, "multi-sdk", result.Output)
+}
+
+func TestRunSDK_Good_WithPackageConfig(t *testing.T) {
+	// Tests that package config is properly handled
+	cfg := &Config{
+		SDK: &SDKConfig{
+			Spec:      "openapi.yaml",
+			Languages: []string{"typescript"},
+			Output:    "sdk",
+			Package: SDKPackageConfig{
+				Name:    "my-custom-sdk",
+				Version: "v2.5.0",
+			},
+		},
+	}
+	cfg.projectDir = "/tmp"
+	cfg.version = "v1.0.0"
+
+	result, err := RunSDK(context.Background(), cfg, true)
+	require.NoError(t, err)
+	assert.Equal(t, "v1.0.0", result.Version)
+}
+
+func TestToSDKConfig_Good_EmptyPackageConfig(t *testing.T) {
+	// Tests conversion with empty package config
+	sdkCfg := &SDKConfig{
+		Languages: []string{"go"},
+		Output:    "sdk",
+		// Package is empty struct
+	}
+
+	result := toSDKConfig(sdkCfg)
+
+	assert.Equal(t, []string{"go"}, result.Languages)
+	assert.Equal(t, "sdk", result.Output)
+	assert.Empty(t, result.Package.Name)
+	assert.Empty(t, result.Package.Version)
+}
+
+func TestToSDKConfig_Good_DiffDisabled(t *testing.T) {
+	// Tests conversion with diff disabled
+	sdkCfg := &SDKConfig{
+		Languages: []string{"typescript"},
+		Output:    "sdk",
+		Diff: SDKDiffConfig{
+			Enabled:        false,
+			FailOnBreaking: false,
+		},
+	}
+
+	result := toSDKConfig(sdkCfg)
+
+	assert.False(t, result.Diff.Enabled)
+	assert.False(t, result.Diff.FailOnBreaking)
+}
