@@ -1,0 +1,29 @@
+# Example: Homebrew Publisher
+# Formula generation and tap management
+
+type: homebrew
+
+# Your tap repository
+tap: myorg/homebrew-tap
+
+# Formula name (defaults to project name)
+formula: mycli
+
+# Generate files for official homebrew-core PR
+official:
+  enabled: true
+  output: dist/homebrew
+
+# Environment: Uses gh CLI authentication
+#
+# Usage after publish:
+#   brew tap myorg/tap
+#   brew install mycli
+#
+# Or directly:
+#   brew install myorg/tap/mycli
+#
+# Generated formula includes:
+#   - Multi-platform support (macOS Intel/ARM, Linux)
+#   - SHA256 checksums from GitHub release
+#   - Version from git tag

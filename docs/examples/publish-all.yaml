@@ -1,0 +1,68 @@
+# Example: All Publishers Combined
+# Use in .core/release.yaml publishers array
+
+publishers:
+  # 1. GitHub - always first (others reference these artifacts)
+  - type: github
+    prerelease: false
+    draft: false
+
+  # 2. npm - JavaScript ecosystem
+  - type: npm
+    package: "@myorg/mycli"
+    access: public
+
+  # 3. Homebrew - macOS/Linux
+  - type: homebrew
+    tap: myorg/homebrew-tap
+    official:
+      enabled: true
+      output: dist/homebrew
+
+  # 4. Scoop - Windows
+  - type: scoop
+    bucket: myorg/scoop-bucket
+    official:
+      enabled: true
+      output: dist/scoop
+
+  # 5. AUR - Arch Linux
+  - type: aur
+    maintainer: "Your Name <your@email.com>"
+
+  # 6. Chocolatey - Windows enterprise
+  - type: chocolatey
+    push: false
+
+  # 7. Docker - Containers
+  - type: docker
+    registry: ghcr.io
+    image: myorg/mycli
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    tags:
+      - latest
+      - "{{.Version}}"
+
+  # 8. LinuxKit - Immutable infrastructure
+  - type: linuxkit
+    config: .core/linuxkit/server.yml
+    formats:
+      - iso
+      - qcow2
+      - docker
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+# Required environment variables:
+#   GITHUB_TOKEN  - via gh CLI auth
+#   NPM_TOKEN     - npm publish
+#   CHOCOLATEY_API_KEY - if push: true
+#
+# Required tools:
+#   gh        - GitHub CLI
+#   npm       - Node package manager
+#   docker    - Docker with buildx
+#   linuxkit  - LinuxKit CLI

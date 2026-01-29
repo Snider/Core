@@ -1,0 +1,23 @@
+# Example: Scoop Publisher (Windows)
+# JSON manifest for Windows package manager
+
+type: scoop
+
+# Your bucket repository
+bucket: myorg/scoop-bucket
+
+# Generate files for official scoop-main PR
+official:
+  enabled: true
+  output: dist/scoop
+
+# Environment: Uses gh CLI authentication
+#
+# Usage after publish:
+#   scoop bucket add myorg https://github.com/myorg/scoop-bucket
+#   scoop install mycli
+#
+# Generated manifest includes:
+#   - 64-bit and ARM64 Windows support
+#   - SHA256 checksums
+#   - Auto-update configuration

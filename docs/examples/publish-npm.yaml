@@ -1,0 +1,21 @@
+# Example: npm Publisher
+# Binary wrapper pattern - downloads correct platform binary on install
+
+type: npm
+
+# Package name (scoped recommended)
+package: "@myorg/mycli"
+
+# Access level
+access: public  # or "restricted" for private
+
+# Environment: NPM_TOKEN required
+#
+# Usage after publish:
+#   npm install -g @myorg/mycli
+#   npx @myorg/mycli --help
+#
+# The published package contains:
+#   - package.json
+#   - install.js (postinstall downloads binary)
+#   - bin/run.js (wrapper that executes binary)

@@ -1,0 +1,14 @@
+# Example: GitHub Releases Publisher
+# Foundation publisher - others reference these artifacts
+
+type: github
+
+# Release settings
+prerelease: false
+draft: false
+
+# Auto-detect from git tag, or override
+# version: v1.0.0
+
+# Auto-detect from git remote, or specify
+# repository: myorg/myapp

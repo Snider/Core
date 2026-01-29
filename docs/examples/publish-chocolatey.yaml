@@ -1,0 +1,29 @@
+# Example: Chocolatey Publisher (Windows)
+# NuSpec package for Windows enterprise
+
+type: chocolatey
+
+# Package name
+package: mycli
+
+# Push to Chocolatey community repo
+push: false  # Set true to auto-publish
+
+# Generate files only
+official:
+  enabled: true
+  output: dist/chocolatey
+
+# Environment: CHOCOLATEY_API_KEY required if push: true
+#
+# Usage after publish:
+#   choco install mycli
+#
+# Generated files:
+#   - mycli.nuspec
+#   - tools/chocolateyinstall.ps1
+#
+# Manual publish:
+#   cd dist/chocolatey
+#   choco pack
+#   choco push mycli.1.0.0.nupkg --source https://push.chocolatey.org/
