@@ -4,11 +4,14 @@
 # Clone all repos
 core setup
 
-# Specific directory
-core setup --path ~/Code/host-uk
+# Preview what would be cloned
+core setup --dry-run
 
-# Use SSH
-core setup --ssh
+# Only foundation packages
+core setup --only foundation
+
+# Multiple types
+core setup --only foundation,module
 ```
 
 ## Configuration

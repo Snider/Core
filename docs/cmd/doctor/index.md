@@ -5,8 +5,14 @@ Check your development environment for required tools and configuration.
 ## Usage
 
 ```bash
-core doctor
+core doctor [flags]
 ```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--verbose` | Show detailed version information |
 
 ## What It Checks
 

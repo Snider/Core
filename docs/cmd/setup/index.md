@@ -2,6 +2,8 @@
 
 Clone all repositories from the registry.
 
+Clones all repositories defined in repos.yaml into packages/. Skips repos that already exist.
+
 ## Usage
 
 ```bash
@@ -12,9 +14,9 @@ core setup [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--registry` | Path to repos.yaml |
-| `--path` | Base directory for cloning (default: current dir) |
-| `--ssh` | Use SSH URLs instead of HTTPS |
+| `--registry` | Path to repos.yaml (auto-detected if not specified) |
+| `--dry-run` | Show what would be cloned without cloning |
+| `--only` | Only clone repos of these types (comma-separated: foundation,module,product) |
 
 ## Examples
 
@@ -22,11 +24,14 @@ core setup [flags]
 # Clone all repos from registry
 core setup
 
-# Clone to specific directory
-core setup --path ~/Code/host-uk
+# Preview what would be cloned
+core setup --dry-run
 
-# Use SSH for cloning
-core setup --ssh
+# Only clone foundation packages
+core setup --only foundation
+
+# Clone specific types
+core setup --only foundation,module
 ```
 
 ## Registry Format
@@ -35,21 +40,20 @@ The registry file (`repos.yaml`) defines repositories:
 
 ```yaml
 repos:
-  - name: core
+  core:
+    type: foundation
     url: https://github.com/host-uk/core
     description: Go CLI for the host-uk ecosystem
 
-  - name: core-php
+  core-php:
+    type: foundation
     url: https://github.com/host-uk/core-php
     description: PHP/Laravel packages
 
-  - name: core-images
-    url: https://github.com/host-uk/core-images
-    description: Docker and LinuxKit images
-
-  - name: core-api
-    url: https://github.com/host-uk/core-api
-    description: API service
+  core-tenant:
+    type: module
+    url: https://github.com/host-uk/core-tenant
+    description: Multi-tenancy module
 ```
 
 ## Output
@@ -60,10 +64,10 @@ Setting up host-uk workspace...
 Cloning repositories:
   [1/4] core............... ✓
   [2/4] core-php........... ✓
-  [3/4] core-images........ ✓
-  [4/4] core-api........... ✓
+  [3/4] core-tenant........ ✓
+  [4/4] core-admin......... ✓
 
-Done! 4 repositories cloned to ~/Code/host-uk
+Done! 4 repositories cloned to packages/
 ```
 
 ## Finding Registry

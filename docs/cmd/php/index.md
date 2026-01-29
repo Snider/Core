@@ -1,18 +1,27 @@
 # core php
 
-Laravel/PHP development environment with FrankenPHP, Vite, Horizon, Reverb, and Redis.
+Laravel/PHP development tools with FrankenPHP.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `core php dev` | Start development environment |
-| `core php test` | Run PHPUnit/Pest tests |
-| `core php fmt` | Format with Laravel Pint |
-| `core php analyse` | Static analysis with PHPStan |
-| `core php build` | Build production container |
-| `core php deploy` | Deploy to Coolify |
-| `core php ssl` | Setup SSL certificates |
+| `dev` | Start development environment |
+| `logs` | View service logs |
+| `stop` | Stop all services |
+| `status` | Show service status |
+| `ssl` | Setup SSL certificates with mkcert |
+| `build` | Build Docker or LinuxKit image |
+| `serve` | Run production container |
+| `shell` | Open shell in running container |
+| `test` | Run PHP tests (PHPUnit/Pest) |
+| `fmt` | Format code with Laravel Pint |
+| `analyse` | Run PHPStan static analysis |
+| `packages` | Manage local PHP packages |
+| `deploy` | Deploy to Coolify |
+| `deploy:status` | Show deployment status |
+| `deploy:rollback` | Rollback to previous deployment |
+| `deploy:list` | List recent deployments |
 
 ## Development Environment
 
@@ -21,16 +30,19 @@ Laravel/PHP development environment with FrankenPHP, Vite, Horizon, Reverb, and 
 core php dev
 ```
 
-This starts:
-- FrankenPHP/Octane (HTTP server)
-- Vite dev server (frontend)
-- Laravel Horizon (queues)
-- Laravel Reverb (WebSockets)
-- Redis
+Services orchestrated:
+- FrankenPHP/Octane (port 8000, HTTPS on 443)
+- Vite dev server (port 5173)
+- Laravel Horizon (queue workers)
+- Laravel Reverb (WebSocket, port 8080)
+- Redis (port 6379)
 
 ```bash
 # View unified logs
 core php logs
+
+# Check service status
+core php status
 
 # Stop all services
 core php stop
@@ -57,12 +69,9 @@ core php fmt
 
 # Static analysis
 core php analyse
-
-# Run both
-core php fmt && core php analyse
 ```
 
-## Building
+## Building & Serving
 
 ```bash
 # Build Docker container
@@ -70,9 +79,34 @@ core php build
 
 # Build LinuxKit image
 core php build --type linuxkit
+```
 
-# Run production locally
-core php serve --production
+### php serve
+
+Run a production container.
+
+```bash
+core php serve [flags]
+```
+
+#### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--name` | Docker image name (required) |
+| `--tag` | Image tag (default: latest) |
+| `--port` | HTTP port (default: 80) |
+| `--https-port` | HTTPS port (default: 443) |
+| `-d` | Run in detached mode |
+| `--env-file` | Path to environment file |
+| `--container` | Container name |
+
+#### Examples
+
+```bash
+core php serve --name myapp
+core php serve --name myapp -d
+core php serve --name myapp --port 8080
 ```
 
 ## Deployment
@@ -90,17 +124,36 @@ core php deploy --wait
 # Check deployment status
 core php deploy:status
 
+# List recent deployments
+core php deploy:list
+
 # Rollback
 core php deploy:rollback
 ```
 
 ## Package Management
 
-Link local packages for development:
+Link local packages for development (similar to npm link).
+
+```bash
+core php packages <command>
+```
+
+| Command | Description |
+|---------|-------------|
+| `link` | Link local packages by path |
+| `unlink` | Unlink packages by name |
+| `update` | Update linked packages |
+| `list` | List linked packages |
+
+### Examples
 
 ```bash
 # Link a local package
 core php packages link ../my-package
+
+# List linked packages
+core php packages list
 
 # Update linked packages
 core php packages update
@@ -114,8 +167,7 @@ core php packages unlink my-package
 Local SSL with mkcert:
 
 ```bash
-# Auto-configured with core php dev
-# Uses mkcert for trusted local certificates
+core php ssl
 ```
 
 ## Configuration

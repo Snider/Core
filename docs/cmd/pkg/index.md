@@ -1,6 +1,6 @@
 # core pkg
 
-Package management for Go modules.
+Package management for host-uk/core-* repos.
 
 ## Usage
 
@@ -12,25 +12,41 @@ core pkg <command> [flags]
 
 | Command | Description |
 |---------|-------------|
-| [search](search/) | Search packages on GitHub |
-| `install` | Install a package |
+| [search](search/) | Search GitHub for packages |
+| `install` | Clone a package from GitHub |
 | `list` | List installed packages |
-| `update` | Update packages |
+| `update` | Update installed packages |
 | `outdated` | Check for outdated packages |
+
+## pkg search
+
+Search GitHub for host-uk packages.
+
+```bash
+core pkg search <query> [flags]
+```
+
+See [search](search/) for details.
 
 ## pkg install
 
-Install a Go module.
+Clone a package from GitHub.
 
 ```bash
-core pkg install <module> [flags]
+core pkg install <repo> [flags]
 ```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--add` | Add to repos.yaml registry |
 
 ### Examples
 
 ```bash
-core pkg install github.com/host-uk/core-php
-core pkg install github.com/spf13/cobra@latest
+core pkg install core-php
+core pkg install core-tenant --add
 ```
 
 ## pkg list
@@ -43,17 +59,11 @@ core pkg list
 
 ## pkg update
 
-Update packages to latest versions.
+Update installed packages.
 
 ```bash
-core pkg update [flags]
+core pkg update
 ```
-
-### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--all` | Update all packages |
 
 ## pkg outdated
 
