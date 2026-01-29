@@ -27,6 +27,8 @@ type Config struct {
 	Publishers []PublisherConfig `yaml:"publishers"`
 	// Changelog configures changelog generation.
 	Changelog ChangelogConfig `yaml:"changelog"`
+	// SDK configures SDK generation.
+	SDK *SDKConfig `yaml:"sdk,omitempty"`
 
 	// Internal fields (not serialized)
 	projectDir string // Set by LoadConfig
@@ -119,6 +121,40 @@ type OfficialConfig struct {
 	Enabled bool `yaml:"enabled"`
 	// Output is the directory to write generated files.
 	Output string `yaml:"output,omitempty"`
+}
+
+// SDKConfig holds SDK generation configuration.
+type SDKConfig struct {
+	// Spec is the path to the OpenAPI spec file.
+	Spec string `yaml:"spec,omitempty"`
+	// Languages to generate.
+	Languages []string `yaml:"languages,omitempty"`
+	// Output directory (default: sdk/).
+	Output string `yaml:"output,omitempty"`
+	// Package naming.
+	Package SDKPackageConfig `yaml:"package,omitempty"`
+	// Diff configuration.
+	Diff SDKDiffConfig `yaml:"diff,omitempty"`
+	// Publish configuration.
+	Publish SDKPublishConfig `yaml:"publish,omitempty"`
+}
+
+// SDKPackageConfig holds package naming configuration.
+type SDKPackageConfig struct {
+	Name    string `yaml:"name,omitempty"`
+	Version string `yaml:"version,omitempty"`
+}
+
+// SDKDiffConfig holds diff configuration.
+type SDKDiffConfig struct {
+	Enabled        bool `yaml:"enabled,omitempty"`
+	FailOnBreaking bool `yaml:"fail_on_breaking,omitempty"`
+}
+
+// SDKPublishConfig holds monorepo publish configuration.
+type SDKPublishConfig struct {
+	Repo string `yaml:"repo,omitempty"`
+	Path string `yaml:"path,omitempty"`
 }
 
 // ChangelogConfig holds changelog generation settings.
