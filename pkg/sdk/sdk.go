@@ -4,6 +4,9 @@ package sdk
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+
+	"github.com/host-uk/core/pkg/sdk/generators"
 )
 
 // Config holds SDK generation configuration from .core/release.yaml.
@@ -77,10 +80,52 @@ func DefaultConfig() *Config {
 
 // Generate generates SDKs for all configured languages.
 func (s *SDK) Generate(ctx context.Context) error {
-	return fmt.Errorf("sdk.Generate: not implemented")
+	// Generate for each language
+	for _, lang := range s.config.Languages {
+		if err := s.GenerateLanguage(ctx, lang); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // GenerateLanguage generates SDK for a specific language.
 func (s *SDK) GenerateLanguage(ctx context.Context, lang string) error {
-	return fmt.Errorf("sdk.GenerateLanguage: not implemented")
+	specPath, err := s.DetectSpec()
+	if err != nil {
+		return err
+	}
+
+	registry := generators.NewRegistry()
+	registry.Register(generators.NewTypeScriptGenerator())
+	registry.Register(generators.NewPythonGenerator())
+	registry.Register(generators.NewGoGenerator())
+	registry.Register(generators.NewPHPGenerator())
+
+	gen, ok := registry.Get(lang)
+	if !ok {
+		return fmt.Errorf("sdk.GenerateLanguage: unknown language: %s", lang)
+	}
+
+	if !gen.Available() {
+		fmt.Printf("Warning: %s generator not available. Install with: %s\n", lang, gen.Install())
+		fmt.Printf("Falling back to Docker...\n")
+	}
+
+	outputDir := filepath.Join(s.projectDir, s.config.Output, lang)
+	opts := generators.Options{
+		SpecPath:    specPath,
+		OutputDir:   outputDir,
+		PackageName: s.config.Package.Name,
+		Version:     s.config.Package.Version,
+	}
+
+	fmt.Printf("Generating %s SDK...\n", lang)
+	if err := gen.Generate(ctx, opts); err != nil {
+		return fmt.Errorf("sdk.GenerateLanguage: %s generation failed: %w", lang, err)
+	}
+	fmt.Printf("Generated %s SDK at %s\n", lang, outputDir)
+
+	return nil
 }
