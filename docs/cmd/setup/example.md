@@ -177,6 +177,88 @@ targets:
     arch: amd64
 ```
 
+### .core/release.yaml (Release Config)
+
+Generated for Go projects:
+
+```yaml
+version: 1
+project:
+  name: my-project
+  repository: owner/my-project
+
+changelog:
+  include:
+    - feat
+    - fix
+    - perf
+    - refactor
+  exclude:
+    - chore
+    - docs
+    - style
+    - test
+
+publishers:
+  - type: github
+    draft: false
+    prerelease: false
+```
+
+### .core/test.yaml (Test Config)
+
+Generated for Go projects:
+
+```yaml
+version: 1
+
+commands:
+  - name: unit
+    run: go test ./...
+  - name: coverage
+    run: go test -coverprofile=coverage.out ./...
+  - name: race
+    run: go test -race ./...
+
+env:
+  CGO_ENABLED: "0"
+```
+
+Generated for PHP projects:
+
+```yaml
+version: 1
+
+commands:
+  - name: unit
+    run: vendor/bin/pest --parallel
+  - name: types
+    run: vendor/bin/phpstan analyse
+  - name: lint
+    run: vendor/bin/pint --test
+
+env:
+  APP_ENV: testing
+  DB_CONNECTION: sqlite
+```
+
+Generated for Node.js projects:
+
+```yaml
+version: 1
+
+commands:
+  - name: unit
+    run: npm test
+  - name: lint
+    run: npm run lint
+  - name: typecheck
+    run: npm run typecheck
+
+env:
+  NODE_ENV: test
+```
+
 ## Workflow Examples
 
 ### New Developer Setup

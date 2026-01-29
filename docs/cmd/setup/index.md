@@ -115,6 +115,8 @@ Creates three config files in `.core/`:
 
 Also auto-detects GitHub repo from git remote for release config.
 
+See [Configuration Files](example.md#configuration-files) for generated config examples.
+
 ---
 
 ## Interactive Wizard
