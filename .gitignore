@@ -2,6 +2,7 @@ wails3
 build/
 !pkg/build
 !cmd/core-gui/build
+!docs/cmd/build
 cmd/core-gui/build/bin
 .task
 vendor/
