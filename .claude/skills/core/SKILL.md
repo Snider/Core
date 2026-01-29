@@ -19,6 +19,7 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Lint Go code | `core go lint` | Uses golangci-lint |
 | Tidy Go modules | `core go mod tidy` | go mod tidy wrapper |
 | Sync Go workspace | `core go work sync` | go work sync wrapper |
+| Install Go binary | `core go install` | Auto-detects cmd/ |
 | Run PHP tests | `core php test` | Auto-detects Pest/PHPUnit |
 | Start PHP dev server | `core php dev` | FrankenPHP + Vite + Horizon + Reverb |
 | Format PHP code | `core php fmt --fix` | Laravel Pint |
@@ -236,8 +237,25 @@ core pkg outdated
 | Run tests with coverage | `core go test --coverage` | Per-package breakdown |
 | Format code | `core go fmt --fix` | Uses goimports if available |
 | Lint code | `core go lint` | Uses golangci-lint |
+| Install binary | `core go install` | Auto-detects cmd/, --no-cgo option |
 | Tidy modules | `core go mod tidy` | go mod tidy |
 | Sync workspace | `core go work sync` | go work sync |
+
+### Installing
+
+```bash
+# Install current module (auto-detects cmd/ subdirs)
+core go install
+
+# Install specific path
+core go install ./cmd/core
+
+# Pure Go, no C dependencies
+core go install --no-cgo
+
+# Verbose output
+core go install -v
+```
 
 ### Testing
 

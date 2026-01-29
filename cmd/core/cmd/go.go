@@ -20,12 +20,14 @@ func AddGoCommands(parent *clir.Cli) {
 		"  test     Run tests with coverage\n" +
 		"  fmt      Format Go code\n" +
 		"  lint     Run golangci-lint\n" +
+		"  install  Install Go binary (CGO_ENABLED=0)\n" +
 		"  mod      Module management (tidy, download, verify)\n" +
 		"  work     Workspace management")
 
 	addGoTestCommand(goCmd)
 	addGoFmtCommand(goCmd)
 	addGoLintCommand(goCmd)
+	addGoInstallCommand(goCmd)
 	addGoModCommand(goCmd)
 	addGoWorkCommand(goCmd)
 }
@@ -250,6 +252,75 @@ func addGoLintCommand(parent *clir.Command) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		return cmd.Run()
+	})
+}
+
+func addGoInstallCommand(parent *clir.Command) {
+	var verbose bool
+	var noCgo bool
+
+	installCmd := parent.NewSubCommand("install", "Install Go binary")
+	installCmd.LongDescription("Install Go binary to $GOPATH/bin.\n\n" +
+		"Examples:\n" +
+		"  core go install              # Install current module\n" +
+		"  core go install ./cmd/core   # Install specific path\n" +
+		"  core go install --no-cgo     # Pure Go (no C dependencies)\n" +
+		"  core go install -v           # Verbose output")
+
+	installCmd.BoolFlag("v", "Verbose output", &verbose)
+	installCmd.BoolFlag("no-cgo", "Disable CGO (CGO_ENABLED=0)", &noCgo)
+
+	installCmd.Action(func() error {
+		// Get install path from args or default to current dir
+		args := installCmd.OtherArgs()
+		installPath := "./..."
+		if len(args) > 0 {
+			installPath = args[0]
+		}
+
+		// Detect if we're in a module with cmd/ subdirectories
+		if installPath == "./..." {
+			if entries, err := os.ReadDir("cmd"); err == nil && len(entries) > 0 {
+				installPath = "./cmd/..."
+			} else if _, err := os.Stat("main.go"); err == nil {
+				installPath = "."
+			}
+		}
+
+		fmt.Printf("%s Installing\n", dimStyle.Render("Install:"))
+		fmt.Printf("  %s %s\n", dimStyle.Render("Path:"), installPath)
+		if noCgo {
+			fmt.Printf("  %s %s\n", dimStyle.Render("CGO:"), "disabled")
+		}
+
+		cmdArgs := []string{"install"}
+		if verbose {
+			cmdArgs = append(cmdArgs, "-v")
+		}
+		cmdArgs = append(cmdArgs, installPath)
+
+		cmd := exec.Command("go", cmdArgs...)
+		if noCgo {
+			cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+		}
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("\n%s\n", errorStyle.Render("FAIL Install failed"))
+			return err
+		}
+
+		// Show where it was installed
+		gopath := os.Getenv("GOPATH")
+		if gopath == "" {
+			home, _ := os.UserHomeDir()
+			gopath = filepath.Join(home, "go")
+		}
+		binDir := filepath.Join(gopath, "bin")
+
+		fmt.Printf("\n%s Installed to %s\n", successStyle.Render("OK"), binDir)
+		return nil
 	})
 }
 
