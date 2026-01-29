@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/errors"
 )
 
 // FileContent represents the content of a file for AI context.
@@ -41,13 +41,13 @@ func BuildTaskContext(task *Task, dir string) (*TaskContext, error) {
 	const op = "agentic.BuildTaskContext"
 
 	if task == nil {
-		return nil, core.E(op, "task is required", nil)
+		return nil, errors.E(op, "task is required", nil)
 	}
 
 	if dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return nil, core.E(op, "failed to get working directory", err)
+			return nil, errors.E(op, "failed to get working directory", err)
 		}
 		dir = cwd
 	}
@@ -87,7 +87,7 @@ func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
 	const op = "agentic.GatherRelatedFiles"
 
 	if task == nil {
-		return nil, core.E(op, "task is required", nil)
+		return nil, errors.E(op, "task is required", nil)
 	}
 
 	var files []FileContent
@@ -117,7 +117,7 @@ func findRelatedCode(task *Task, dir string) ([]FileContent, error) {
 	const op = "agentic.findRelatedCode"
 
 	if task == nil {
-		return nil, core.E(op, "task is required", nil)
+		return nil, errors.E(op, "task is required", nil)
 	}
 
 	// Extract keywords from title and description

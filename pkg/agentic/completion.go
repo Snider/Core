@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/errors"
 )
 
 // PROptions contains options for creating a pull request.
@@ -36,11 +36,11 @@ func AutoCommit(ctx context.Context, task *Task, dir string, message string) err
 	const op = "agentic.AutoCommit"
 
 	if task == nil {
-		return core.E(op, "task is required", nil)
+		return errors.E(op, "task is required", nil)
 	}
 
 	if message == "" {
-		return core.E(op, "commit message is required", nil)
+		return errors.E(op, "commit message is required", nil)
 	}
 
 	// Build full commit message
@@ -48,12 +48,12 @@ func AutoCommit(ctx context.Context, task *Task, dir string, message string) err
 
 	// Stage all changes
 	if _, err := runGitCommandCtx(ctx, dir, "add", "-A"); err != nil {
-		return core.E(op, "failed to stage changes", err)
+		return errors.E(op, "failed to stage changes", err)
 	}
 
 	// Create commit
 	if _, err := runGitCommandCtx(ctx, dir, "commit", "-m", fullMessage); err != nil {
-		return core.E(op, "failed to create commit", err)
+		return errors.E(op, "failed to create commit", err)
 	}
 
 	return nil
@@ -83,7 +83,7 @@ func CreatePR(ctx context.Context, task *Task, dir string, opts PROptions) (stri
 	const op = "agentic.CreatePR"
 
 	if task == nil {
-		return "", core.E(op, "task is required", nil)
+		return "", errors.E(op, "task is required", nil)
 	}
 
 	// Build title if not provided
@@ -116,7 +116,7 @@ func CreatePR(ctx context.Context, task *Task, dir string, opts PROptions) (stri
 	// Run gh pr create
 	output, err := runCommandCtx(ctx, dir, "gh", args...)
 	if err != nil {
-		return "", core.E(op, "failed to create PR", err)
+		return "", errors.E(op, "failed to create PR", err)
 	}
 
 	// Extract PR URL from output
@@ -158,11 +158,11 @@ func SyncStatus(ctx context.Context, client *Client, task *Task, update TaskUpda
 	const op = "agentic.SyncStatus"
 
 	if client == nil {
-		return core.E(op, "client is required", nil)
+		return errors.E(op, "client is required", nil)
 	}
 
 	if task == nil {
-		return core.E(op, "task is required", nil)
+		return errors.E(op, "task is required", nil)
 	}
 
 	return client.UpdateTask(ctx, task.ID, update)
@@ -174,7 +174,7 @@ func CommitAndSync(ctx context.Context, client *Client, task *Task, dir string, 
 
 	// Create commit
 	if err := AutoCommit(ctx, task, dir, message); err != nil {
-		return core.E(op, "failed to commit", err)
+		return errors.E(op, "failed to commit", err)
 	}
 
 	// Sync status if client provided
@@ -187,7 +187,7 @@ func CommitAndSync(ctx context.Context, client *Client, task *Task, dir string, 
 
 		if err := SyncStatus(ctx, client, task, update); err != nil {
 			// Log but don't fail on sync errors
-			return core.E(op, "commit succeeded but sync failed", err)
+			return errors.E(op, "commit succeeded but sync failed", err)
 		}
 	}
 
@@ -200,7 +200,7 @@ func PushChanges(ctx context.Context, dir string) error {
 
 	_, err := runGitCommandCtx(ctx, dir, "push")
 	if err != nil {
-		return core.E(op, "failed to push changes", err)
+		return errors.E(op, "failed to push changes", err)
 	}
 
 	return nil
@@ -211,7 +211,7 @@ func CreateBranch(ctx context.Context, task *Task, dir string) (string, error) {
 	const op = "agentic.CreateBranch"
 
 	if task == nil {
-		return "", core.E(op, "task is required", nil)
+		return "", errors.E(op, "task is required", nil)
 	}
 
 	// Generate branch name from task
@@ -220,7 +220,7 @@ func CreateBranch(ctx context.Context, task *Task, dir string) (string, error) {
 	// Create and checkout branch
 	_, err := runGitCommandCtx(ctx, dir, "checkout", "-b", branchName)
 	if err != nil {
-		return "", core.E(op, "failed to create branch", err)
+		return "", errors.E(op, "failed to create branch", err)
 	}
 
 	return branchName, nil
@@ -302,7 +302,7 @@ func GetCurrentBranch(ctx context.Context, dir string) (string, error) {
 
 	output, err := runGitCommandCtx(ctx, dir, "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
-		return "", core.E(op, "failed to get current branch", err)
+		return "", errors.E(op, "failed to get current branch", err)
 	}
 
 	return strings.TrimSpace(output), nil
@@ -314,7 +314,7 @@ func HasUncommittedChanges(ctx context.Context, dir string) (bool, error) {
 
 	output, err := runGitCommandCtx(ctx, dir, "status", "--porcelain")
 	if err != nil {
-		return false, core.E(op, "failed to get git status", err)
+		return false, errors.E(op, "failed to get git status", err)
 	}
 
 	return strings.TrimSpace(output) != "", nil
@@ -331,7 +331,7 @@ func GetDiff(ctx context.Context, dir string, staged bool) (string, error) {
 
 	output, err := runGitCommandCtx(ctx, dir, args...)
 	if err != nil {
-		return "", core.E(op, "failed to get diff", err)
+		return "", errors.E(op, "failed to get diff", err)
 	}
 
 	return output, nil

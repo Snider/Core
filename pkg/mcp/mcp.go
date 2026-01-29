@@ -15,7 +15,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/display"
 	"github.com/host-uk/core/pkg/ide"
 	"github.com/host-uk/core/pkg/process"

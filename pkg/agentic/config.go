@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/host-uk/core/pkg/core"
+	"github.com/host-uk/core/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -74,12 +74,12 @@ func LoadConfig(dir string) (*Config, error) {
 	// Try loading from ~/.core/agentic.yaml
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, core.E("agentic.LoadConfig", "failed to get home directory", err)
+		return nil, errors.E("agentic.LoadConfig", "failed to get home directory", err)
 	}
 
 	configPath := filepath.Join(homeDir, ".core", configFileName)
 	if err := loadYAMLConfig(configPath, cfg); err != nil && !os.IsNotExist(err) {
-		return nil, core.E("agentic.LoadConfig", "failed to load config", err)
+		return nil, errors.E("agentic.LoadConfig", "failed to load config", err)
 	}
 
 	// Apply environment variable overrides
@@ -87,7 +87,7 @@ func LoadConfig(dir string) (*Config, error) {
 
 	// Validate configuration
 	if cfg.Token == "" {
-		return nil, core.E("agentic.LoadConfig", "no authentication token configured", nil)
+		return nil, errors.E("agentic.LoadConfig", "no authentication token configured", nil)
 	}
 
 	return cfg, nil
@@ -167,23 +167,23 @@ func applyEnvOverrides(cfg *Config) {
 func SaveConfig(cfg *Config) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return core.E("agentic.SaveConfig", "failed to get home directory", err)
+		return errors.E("agentic.SaveConfig", "failed to get home directory", err)
 	}
 
 	configDir := filepath.Join(homeDir, ".core")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return core.E("agentic.SaveConfig", "failed to create config directory", err)
+		return errors.E("agentic.SaveConfig", "failed to create config directory", err)
 	}
 
 	configPath := filepath.Join(configDir, configFileName)
 
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
-		return core.E("agentic.SaveConfig", "failed to marshal config", err)
+		return errors.E("agentic.SaveConfig", "failed to marshal config", err)
 	}
 
 	if err := os.WriteFile(configPath, data, 0600); err != nil {
-		return core.E("agentic.SaveConfig", "failed to write config file", err)
+		return errors.E("agentic.SaveConfig", "failed to write config file", err)
 	}
 
 	return nil
@@ -193,7 +193,7 @@ func SaveConfig(cfg *Config) error {
 func ConfigPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", core.E("agentic.ConfigPath", "failed to get home directory", err)
+		return "", errors.E("agentic.ConfigPath", "failed to get home directory", err)
 	}
 	return filepath.Join(homeDir, ".core", configFileName), nil
 }
