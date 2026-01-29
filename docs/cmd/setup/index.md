@@ -191,16 +191,17 @@ Core looks for `repos.yaml` in:
 
 ```bash
 # Check workspace health
-core health
+core dev health
 
 # Full workflow (status + commit + push)
-core work
+core dev work
 
 # Build the project
 core build
 
 # Run tests
-core test
+core go test    # Go projects
+core php test   # PHP projects
 ```
 
 ---

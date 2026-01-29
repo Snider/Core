@@ -5,14 +5,18 @@ Core is a unified CLI for the host-uk ecosystem - build, release, and deploy Go,
 ## Installation
 
 ```bash
-# From any Go project
-core go install github.com/host-uk/core/cmd/core
-
-# Or standard go install
+# Via Go (recommended)
 go install github.com/host-uk/core/cmd/core@latest
+
+# Or download binary from releases
+curl -Lo core https://github.com/host-uk/core/releases/latest/download/core-$(go env GOOS)-$(go env GOARCH)
+chmod +x core && sudo mv core /usr/local/bin/
+
+# Verify
+core doctor
 ```
 
-Verify: `core doctor`
+See [Getting Started](getting-started.md) for all installation options including building from source.
 
 ## Command Reference
 
@@ -47,7 +51,7 @@ core build --targets linux/amd64,darwin/arm64
 
 # Release (dry-run by default)
 core ci                   # Preview release
-core ci --were-go-for-launch  # Actually publish
+core ci --we-are-go-for-launch  # Actually publish
 
 # Multi-repo workflow
 core dev work             # Status + commit + push
@@ -71,10 +75,17 @@ Core uses `.core/` directory for project configuration:
 
 And `repos.yaml` in workspace root for multi-repo management.
 
+## Guides
+
+- [Getting Started](getting-started.md) - Installation and first steps
+- [Workflows](workflows.md) - Common task sequences
+- [Troubleshooting](troubleshooting.md) - When things go wrong
+- [Migration](migration.md) - Moving from legacy tools
+
 ## Reference
 
 - [Configuration](configuration.md) - All config options
-- [Examples](examples/) - Sample configurations
+- [Glossary](glossary.md) - Term definitions
 
 ## Claude Code Skill
 

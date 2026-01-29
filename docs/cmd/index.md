@@ -23,7 +23,9 @@ Unified interface for Go/PHP development, multi-repo management, and deployment.
 ## Installation
 
 ```bash
-core go install
+go install github.com/host-uk/core/cmd/core@latest
 ```
 
 Verify: `core doctor`
+
+See [Getting Started](../getting-started.md) for all installation options.

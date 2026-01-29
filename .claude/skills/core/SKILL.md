@@ -28,7 +28,7 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Build for targets | `core build --targets linux/amd64,darwin/arm64` | Cross-compile |
 | Build SDK | `core build sdk` | Generate API clients from OpenAPI |
 | Preview release | `core ci` | Dry-run publish (safe default) |
-| Publish release | `core ci --were-go-for-launch` | Actually publish artifacts |
+| Publish release | `core ci --we-are-go-for-launch` | Actually publish artifacts |
 | Check environment | `core doctor` | Verify tools installed |
 | Multi-repo status | `core dev health` | Quick summary across repos |
 | Multi-repo workflow | `core dev work` | Status + commit + push |
@@ -82,12 +82,12 @@ core build sdk
 core ci                          # Dry-run: shows what would be published
 
 # Step 3: Actually publish (explicit flag required)
-core ci --were-go-for-launch     # Actually publish to targets
-core ci --were-go-for-launch --draft       # Publish as draft
-core ci --were-go-for-launch --prerelease  # Publish as prerelease
+core ci --we-are-go-for-launch     # Actually publish to targets
+core ci --we-are-go-for-launch --draft       # Publish as draft
+core ci --we-are-go-for-launch --prerelease  # Publish as prerelease
 ```
 
-**Why safe by default?** `core ci` always does a dry-run unless you explicitly say `--were-go-for-launch`.
+**Why safe by default?** `core ci` always does a dry-run unless you explicitly say `--we-are-go-for-launch`.
 
 ```bash
 # Release workflow utilities
@@ -562,7 +562,7 @@ Go project?
   └── Build: core build [--targets <os/arch>]
   └── Build SDK: core build sdk
   └── Preview publish: core ci
-  └── Publish: core ci --were-go-for-launch
+  └── Publish: core ci --we-are-go-for-launch
 
 PHP/Laravel project?
   └── Start dev: core php dev [--https]

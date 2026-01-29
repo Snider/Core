@@ -5,7 +5,7 @@
 //   - S3-compatible storage
 //   - Custom endpoints
 //
-// Safe by default: runs in dry-run mode unless --were-go-for-launch is specified.
+// Safe by default: runs in dry-run mode unless --we-are-go-for-launch is specified.
 // Configuration via .core/release.yaml.
 package ci
 

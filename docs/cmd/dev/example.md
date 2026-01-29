@@ -79,46 +79,46 @@ core dev impact core-php
 
 ```bash
 # List tasks
-core dev tasks
+core ai tasks
 
 # Filter by status and priority
-core dev tasks --status pending --priority high
+core ai tasks --status pending --priority high
 
 # Filter by labels
-core dev tasks --labels bug,urgent
+core ai tasks --labels bug,urgent
 
 # Show task details
-core dev task abc123
+core ai task abc123
 
 # Auto-select highest priority task
-core dev task --auto
+core ai task --auto
 
 # Claim a task
-core dev task abc123 --claim
+core ai task abc123 --claim
 
 # Update task status
-core dev task:update abc123 --status in_progress
+core ai task:update abc123 --status in_progress
 
 # Add progress notes
-core dev task:update abc123 --progress 50 --notes 'Halfway done'
+core ai task:update abc123 --progress 50 --notes 'Halfway done'
 
 # Complete a task
-core dev task:complete abc123 --output 'Feature implemented'
+core ai task:complete abc123 --output 'Feature implemented'
 
 # Mark as failed
-core dev task:complete abc123 --failed --error 'Build failed'
+core ai task:complete abc123 --failed --error 'Build failed'
 
 # Commit with task reference
-core dev task:commit abc123 -m 'add user authentication'
+core ai task:commit abc123 -m 'add user authentication'
 
 # Commit with scope and push
-core dev task:commit abc123 -m 'fix login bug' --scope auth --push
+core ai task:commit abc123 -m 'fix login bug' --scope auth --push
 
 # Create PR for task
-core dev task:pr abc123
+core ai task:pr abc123
 
 # Create draft PR with labels
-core dev task:pr abc123 --draft --labels 'enhancement,needs-review'
+core ai task:pr abc123 --draft --labels 'enhancement,needs-review'
 ```
 
 ## Service API Management

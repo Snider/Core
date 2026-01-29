@@ -205,14 +205,148 @@ files:
         port: 8080
 ```
 
+## repos.yaml
+
+Package registry for multi-repo workspaces:
+
+```yaml
+# Organisation name (used for GitHub URLs)
+org: host-uk
+
+# Base path for cloning (default: current directory)
+base_path: .
+
+# Default settings for all repos
+defaults:
+  ci: github
+  license: EUPL-1.2
+  branch: main
+
+# Repository definitions
+repos:
+  # Foundation packages (no dependencies)
+  core-php:
+    type: foundation
+    description: Foundation framework
+
+  core-devops:
+    type: foundation
+    description: Development environment
+    clone: false  # Skip during setup (already exists)
+
+  # Module packages (depend on foundation)
+  core-tenant:
+    type: module
+    depends_on: [core-php]
+    description: Multi-tenancy module
+
+  core-admin:
+    type: module
+    depends_on: [core-php, core-tenant]
+    description: Admin panel
+
+  core-api:
+    type: module
+    depends_on: [core-php]
+    description: REST API framework
+
+  # Product packages (user-facing applications)
+  core-bio:
+    type: product
+    depends_on: [core-php, core-tenant]
+    description: Link-in-bio product
+    domain: bio.host.uk.com
+
+  core-social:
+    type: product
+    depends_on: [core-php, core-tenant]
+    description: Social scheduling
+    domain: social.host.uk.com
+
+  # Templates
+  core-template:
+    type: template
+    description: Starter template for new projects
+```
+
+### repos.yaml Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org` | Yes | GitHub organisation name |
+| `base_path` | No | Directory for cloning (default: `.`) |
+| `defaults` | No | Default settings applied to all repos |
+| `repos` | Yes | Map of repository definitions |
+
+### Repository Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `type` | Yes | `foundation`, `module`, `product`, or `template` |
+| `description` | No | Human-readable description |
+| `depends_on` | No | List of package dependencies |
+| `clone` | No | Set `false` to skip during setup |
+| `domain` | No | Production domain (for products) |
+| `branch` | No | Override default branch |
+
+### Package Types
+
+| Type | Description | Dependencies |
+|------|-------------|--------------|
+| `foundation` | Core framework packages | None |
+| `module` | Reusable modules | Foundation packages |
+| `product` | User-facing applications | Foundation + modules |
+| `template` | Starter templates | Any |
+
+---
+
 ## Environment Variables
+
+Complete reference of environment variables used by Core CLI.
+
+### Authentication
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `GITHUB_TOKEN` | `core ci`, `core dev` | GitHub API authentication |
+| `ANTHROPIC_API_KEY` | `core ai`, `core dev claude` | Claude API key |
+| `AGENTIC_TOKEN` | `core ai task*` | Agentic API authentication |
+| `AGENTIC_BASE_URL` | `core ai task*` | Agentic API endpoint |
+
+### Publishing
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `NPM_TOKEN` | `core ci` (npm publisher) | npm registry auth token |
+| `CHOCOLATEY_API_KEY` | `core ci` (chocolatey publisher) | Chocolatey API key |
+| `DOCKER_USERNAME` | `core ci` (docker publisher) | Docker registry username |
+| `DOCKER_PASSWORD` | `core ci` (docker publisher) | Docker registry password |
+
+### Deployment
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `COOLIFY_URL` | `core php deploy` | Coolify server URL |
+| `COOLIFY_TOKEN` | `core php deploy` | Coolify API token |
+| `COOLIFY_APP_ID` | `core php deploy` | Production application ID |
+| `COOLIFY_STAGING_APP_ID` | `core php deploy --staging` | Staging application ID |
+
+### Build
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `CGO_ENABLED` | `core build`, `core go *` | Enable/disable CGO (default: 0) |
+| `GOOS` | `core build` | Target operating system |
+| `GOARCH` | `core build` | Target architecture |
+
+### Configuration Paths
 
 | Variable | Description |
 |----------|-------------|
-| `GITHUB_TOKEN` | GitHub authentication (via gh CLI) |
-| `NPM_TOKEN` | npm publish token |
-| `CHOCOLATEY_API_KEY` | Chocolatey publish key |
-| `COOLIFY_TOKEN` | Coolify deployment token |
+| `CORE_CONFIG` | Override config directory (default: `~/.core/`) |
+| `CORE_REGISTRY` | Override repos.yaml path |
+
+---
 
 ## Defaults
 
