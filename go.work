@@ -22,6 +22,7 @@ use (
 	./pkg/module
 	./pkg/process
 	./pkg/repos
+	./pkg/sdk
 	./pkg/updater
 	./pkg/webview
 	./pkg/ws
