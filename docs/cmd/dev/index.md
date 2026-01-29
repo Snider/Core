@@ -1,24 +1,40 @@
 # core dev
 
-Portable development environment with 100+ embedded tools.
+Multi-repo development workflow and portable dev environment.
 
-## Overview
-
-Core DevOps provides a sandboxed, immutable development environment based on LinuxKit. It includes AI tools (Claude, Gemini), runtimes (Go, Node, PHP, Python, Rust), and infrastructure tools (Docker, Kubernetes, Terraform).
-
-## Commands
+## Multi-Repo Commands
 
 | Command | Description |
 |---------|-------------|
-| `install` | Download the core-devops image for your platform |
-| `boot` | Start the development environment |
-| `stop` | Stop the running environment |
-| `status` | Show environment status |
-| `shell` | Open a shell in the environment |
-| `serve` | Mount project and start dev server |
-| `test` | Run tests inside the environment |
-| `claude` | Start sandboxed Claude session |
-| `update` | Update to latest image |
+| [work](work/) | Full workflow: status + commit + push |
+| [health](health/) | Quick health check across repos |
+| [commit](commit/) | Claude-assisted commits |
+| [push](push/) | Push repos with unpushed commits |
+| [pull](pull/) | Pull repos that are behind |
+| [issues](issues/) | List open issues |
+| [reviews](reviews/) | List PRs needing review |
+| [ci](ci/) | Check CI status |
+| [impact](impact/) | Show dependency impact |
+
+## Dev Environment Commands
+
+| Command | Description |
+|---------|-------------|
+| [install](install/) | Download the core-devops image |
+| [boot](boot/) | Start the environment |
+| [stop](stop/) | Stop the environment |
+| [status](status/) | Show status |
+| [shell](shell/) | Open shell |
+| [serve](serve/) | Start dev server |
+| [test](test/) | Run tests |
+| [claude](claude/) | Sandboxed Claude |
+| [update](update/) | Update image |
+
+---
+
+## Dev Environment Overview
+
+Core DevOps provides a sandboxed, immutable development environment based on LinuxKit with 100+ embedded tools.
 
 ## Quick Start
 
