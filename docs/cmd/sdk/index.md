@@ -1,6 +1,8 @@
 # core sdk
 
-Generate typed API clients from OpenAPI specifications.
+SDK validation and API compatibility tools.
+
+To generate SDKs, use: `core build sdk`
 
 ## Usage
 
@@ -12,46 +14,8 @@ core sdk <command> [flags]
 
 | Command | Description |
 |---------|-------------|
-| `generate` | Generate SDKs from OpenAPI spec |
-| `validate` | Validate OpenAPI spec |
 | `diff` | Check for breaking API changes |
-
-## sdk generate
-
-Generate typed API clients for multiple languages.
-
-```bash
-core sdk generate [flags]
-```
-
-### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--spec` | Path to OpenAPI spec file (auto-detected) |
-| `--lang` | Generate only this language |
-
-### Examples
-
-```bash
-# Generate all configured SDKs
-core sdk generate
-
-# Generate only TypeScript SDK
-core sdk generate --lang typescript
-
-# Use specific spec file
-core sdk generate --spec api/openapi.yaml
-```
-
-### Supported Languages
-
-| Language | Generator |
-|----------|-----------|
-| TypeScript | openapi-generator (typescript-fetch) |
-| Python | openapi-generator (python) |
-| Go | openapi-generator (go) |
-| PHP | openapi-generator (php) |
+| `validate` | Validate OpenAPI spec |
 
 ## sdk validate
 
@@ -109,48 +73,22 @@ core sdk diff --base old-api.yaml --spec new-api.yaml
 - Removed required fields
 - Changed response types
 
-## Release Integration
+## SDK Generation
 
-SDKs can be generated before publishing a release:
+SDK generation is handled by `core build sdk`, not this command.
 
 ```bash
-# Generate all configured SDKs
-core sdk generate
+# Generate SDKs
+core build sdk
 
-# Then publish the release
-core ci --were-go-for-launch
+# Generate specific language
+core build sdk --lang typescript
+
+# Preview without writing
+core build sdk --dry-run
 ```
 
-See [ci command](../ci/) for release details.
-
-## Configuration
-
-Configure SDK generation in `.core/release.yaml`:
-
-```yaml
-sdk:
-  # OpenAPI spec path (auto-detected if not set)
-  spec: api/openapi.yaml
-
-  # Languages to generate
-  languages:
-    - typescript
-    - python
-    - go
-    - php
-
-  # Output directory
-  output: sdk
-
-  # Package naming
-  package:
-    name: my-api-sdk
-
-  # Breaking change detection
-  diff:
-    enabled: true
-    fail_on_breaking: false  # Warn but continue
-```
+See [build sdk](../build/sdk/) for generation details.
 
 ## Spec Auto-Detection
 
@@ -162,24 +100,7 @@ Core looks for OpenAPI specs in this order:
 4. `docs/openapi.yaml` / `docs/openapi.json`
 5. Laravel Scramble endpoint (`/docs/api.json`)
 
-## Output Structure
+## See Also
 
-Generated SDKs are placed in language-specific directories:
-
-```
-sdk/
-├── typescript/
-│   ├── src/
-│   ├── package.json
-│   └── tsconfig.json
-├── python/
-│   ├── my_api_sdk/
-│   ├── setup.py
-│   └── requirements.txt
-├── go/
-│   ├── client.go
-│   └── go.mod
-└── php/
-    ├── src/
-    └── composer.json
-```
+- [build sdk](../build/sdk/) - Generate SDKs from OpenAPI
+- [ci command](../ci/) - Release workflow

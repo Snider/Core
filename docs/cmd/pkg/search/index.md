@@ -1,40 +1,48 @@
-# core pkg search & core pkg install
-
-Search GitHub for repositories and install them locally.
-
-## core pkg search
+# core pkg search
 
 Search GitHub for repositories matching a pattern.
 
+Uses `gh` CLI for authenticated search. Results are cached for 1 hour.
+
+## Usage
+
 ```bash
-core pkg search <pattern> [flags]
+core pkg search [flags]
 ```
 
-### Flags
+## Flags
 
 | Flag | Description |
 |------|-------------|
-| `--org` | Search within a specific organization |
-| `--limit` | Maximum results (default: 10) |
-| `--language` | Filter by programming language |
+| `--pattern` | Repo name pattern (* for wildcard) |
+| `--org` | GitHub organization (default: host-uk) |
+| `--type` | Filter by type in name (mod, services, plug, website) |
+| `--limit` | Max results (default: 50) |
+| `--refresh` | Bypass cache and fetch fresh data |
 
-### Examples
+## Examples
 
 ```bash
-# Search by pattern
-core pkg search "cli tool"
+# List all host-uk repos
+core pkg search
 
-# Search within organization
-core pkg search --org host-uk
+# Search for core-* repos
+core pkg search --pattern "core-*"
 
-# Search with language filter
-core pkg search --org host-uk --language go
+# Search different org
+core pkg search --org mycompany
 
-# Search all core-* repos
-core pkg search "core-" --org host-uk
+# Filter by type
+core pkg search --type services
+
+# Bypass cache
+core pkg search --refresh
+
+# Combine filters
+core pkg search --pattern "core-*" --type mod --limit 20
 ```
 
-### Output
+## Output
 
 ```
 Found 5 repositories:
@@ -52,39 +60,7 @@ Found 5 repositories:
     ★ 8  Dockerfile  Updated 3 days ago
 ```
 
-## core pkg install
-
-Clone a repository from GitHub.
-
-```bash
-core pkg install <repo> [flags]
-```
-
-### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--path` | Destination directory (default: current dir) |
-| `--branch` | Clone specific branch |
-| `--depth` | Shallow clone depth |
-
-### Examples
-
-```bash
-# Install by full name
-core pkg install host-uk/core
-
-# Install to specific path
-core pkg install host-uk/core --path ~/Code/host-uk
-
-# Install specific branch
-core pkg install host-uk/core --branch dev
-
-# Shallow clone
-core pkg install host-uk/core --depth 1
-```
-
-### Authentication
+## Authentication
 
 Uses GitHub CLI (`gh`) authentication. Ensure you're logged in:
 
@@ -93,20 +69,7 @@ gh auth status
 gh auth login  # if not authenticated
 ```
 
-## Workflow Example
-
-```bash
-# Find repositories
-core pkg search --org host-uk
-
-# Install one
-core pkg install host-uk/core-php --path ~/Code/host-uk
-
-# Check setup
-core doctor
-```
-
 ## See Also
 
+- [pkg install](../) - Clone a package from GitHub
 - [setup command](../../setup/) - Clone all repos from registry
-- [doctor command](../../doctor/) - Check environment

@@ -34,9 +34,11 @@ core vm run --template <name> [flags]
 |------|-------------|
 | `--template` | Use a template instead of image file |
 | `--var` | Set template variable (KEY=value) |
-| `--memory` | Memory in MB (default: 4096) |
-| `--cpus` | CPU count (default: 4) |
-| `-d` | Run in background |
+| `--name` | Name for the container |
+| `--memory` | Memory in MB (default: 1024) |
+| `--cpus` | CPU count (default: 1) |
+| `--ssh-port` | SSH port for exec commands (default: 2222) |
+| `-d` | Run in detached mode (background) |
 
 ## vm ps
 
