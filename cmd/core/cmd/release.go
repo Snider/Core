@@ -148,6 +148,50 @@ func runRelease(dryRun bool, version string, draft, prerelease bool) error {
 	return nil
 }
 
+// runReleaseSDK executes SDK-only release.
+func runReleaseSDK(dryRun bool, version string) error {
+	ctx := context.Background()
+
+	projectDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// Load configuration
+	cfg, err := release.LoadConfig(projectDir)
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Apply CLI overrides
+	if version != "" {
+		cfg.SetVersion(version)
+	}
+
+	// Print header
+	fmt.Printf("%s Generating SDKs\n", releaseHeaderStyle.Render("SDK Release:"))
+	if dryRun {
+		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run mode)"))
+	}
+	fmt.Println()
+
+	// Run SDK release
+	result, err := release.RunSDK(ctx, cfg, dryRun)
+	if err != nil {
+		fmt.Printf("%s %v\n", releaseErrorStyle.Render("Error:"), err)
+		return err
+	}
+
+	// Print summary
+	fmt.Println()
+	fmt.Printf("%s SDK generation complete!\n", releaseSuccessStyle.Render("Success:"))
+	fmt.Printf("  Version:   %s\n", releaseValueStyle.Render(result.Version))
+	fmt.Printf("  Languages: %v\n", result.Languages)
+	fmt.Printf("  Output:    %s/\n", releaseValueStyle.Render(result.Output))
+
+	return nil
+}
+
 // runReleaseInit creates a release configuration interactively.
 func runReleaseInit() error {
 	projectDir, err := os.Getwd()
