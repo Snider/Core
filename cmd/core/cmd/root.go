@@ -31,7 +31,6 @@ func Execute() error {
 	AddAgenticCommands(devCmd)
 	AddDevCommand(devCmd)
 	AddBuildCommand(app)
-	AddTviewCommand(app)
 	AddWorkCommand(app)
 	AddHealthCommand(app)
 	AddIssuesCommand(app)
