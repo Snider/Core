@@ -1,0 +1,36 @@
+# Example: Wails Desktop App Release Configuration
+# Builds cross-platform desktop app and publishes to GitHub
+
+version: 1
+
+project:
+  name: myapp
+  repository: myorg/myapp
+
+build:
+  targets:
+    - os: darwin
+      arch: amd64
+    - os: darwin
+      arch: arm64
+    - os: windows
+      arch: amd64
+    - os: linux
+      arch: amd64
+
+publishers:
+  - type: github
+    prerelease: false
+    draft: true  # Review before publishing
+
+  # Homebrew cask for macOS
+  - type: homebrew
+    tap: myorg/homebrew-tap
+    formula: myapp
+
+changelog:
+  include:
+    - feat
+    - fix
+    - perf
+    - ui  # Custom type for UI changes

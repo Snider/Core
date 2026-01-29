@@ -1,0 +1,59 @@
+# Example: Go CLI Release Configuration
+# Publishes to GitHub, npm, Homebrew, Scoop, AUR, and Chocolatey
+
+version: 1
+
+project:
+  name: mycli
+  repository: myorg/mycli
+
+build:
+  targets:
+    - os: linux
+      arch: amd64
+    - os: linux
+      arch: arm64
+    - os: darwin
+      arch: amd64
+    - os: darwin
+      arch: arm64
+    - os: windows
+      arch: amd64
+
+publishers:
+  # GitHub Releases - foundation for all other publishers
+  - type: github
+    prerelease: false
+    draft: false
+
+  # npm - binary wrapper pattern
+  # Users install via: npm install -g @myorg/mycli
+  - type: npm
+    package: "@myorg/mycli"
+    access: public
+
+  # Homebrew - tap repository
+  # Users install via: brew install myorg/tap/mycli
+  - type: homebrew
+    tap: myorg/homebrew-tap
+
+  # Scoop - Windows package manager
+  # Users install via: scoop bucket add myorg https://github.com/myorg/scoop-bucket && scoop install mycli
+  - type: scoop
+    bucket: myorg/scoop-bucket
+
+  # AUR - Arch Linux User Repository
+  # Users install via: yay -S mycli-bin
+  - type: aur
+    maintainer: "Your Name <your@email.com>"
+
+  # Chocolatey - Windows enterprise
+  # Users install via: choco install mycli
+  - type: chocolatey
+    push: false  # Set true to auto-publish
+
+changelog:
+  include:
+    - feat
+    - fix
+    - perf

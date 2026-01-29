@@ -1,0 +1,98 @@
+# Example: Full Release Configuration
+# Complete configuration with all publishers
+
+version: 1
+
+project:
+  name: core
+  repository: host-uk/core
+
+build:
+  targets:
+    - os: linux
+      arch: amd64
+    - os: linux
+      arch: arm64
+    - os: darwin
+      arch: amd64
+    - os: darwin
+      arch: arm64
+    - os: windows
+      arch: amd64
+    - os: windows
+      arch: arm64
+
+publishers:
+  # 1. GitHub Releases - always first, others reference these
+  - type: github
+    prerelease: false
+    draft: false
+
+  # 2. npm - JavaScript ecosystem
+  - type: npm
+    package: "@host-uk/core"
+    access: public
+
+  # 3. Homebrew - macOS/Linux
+  - type: homebrew
+    tap: host-uk/homebrew-tap
+    formula: core
+    # Generate files for official homebrew-core PR
+    official:
+      enabled: true
+      output: dist/homebrew
+
+  # 4. Scoop - Windows
+  - type: scoop
+    bucket: host-uk/scoop-bucket
+    # Generate files for official scoop-main PR
+    official:
+      enabled: true
+      output: dist/scoop
+
+  # 5. AUR - Arch Linux
+  - type: aur
+    maintainer: "Host UK <dev@host.uk.com>"
+
+  # 6. Chocolatey - Windows enterprise
+  - type: chocolatey
+    push: false  # Manual review before push
+
+  # 7. Docker - Container deployment
+  - type: docker
+    registry: ghcr.io
+    image: host-uk/core
+    dockerfile: Dockerfile
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    tags:
+      - latest
+      - "{{.Version}}"
+      - "{{.Version}}-alpine"
+
+  # 8. LinuxKit - Immutable infrastructure
+  - type: linuxkit
+    config: .core/linuxkit/core-server.yml
+    formats:
+      - iso           # Bootable ISO for bare metal
+      - qcow2         # QEMU/KVM/Proxmox
+      - docker        # Immutable container
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+changelog:
+  include:
+    - feat      # New features
+    - fix       # Bug fixes
+    - perf      # Performance improvements
+    - refactor  # Code refactoring
+    - security  # Security fixes
+  exclude:
+    - chore
+    - docs
+    - style
+    - test
+    - ci
+    - build

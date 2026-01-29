@@ -1,76 +1,77 @@
-# Core Framework
+# Core CLI
 
-Core is a Web3 Framework for building production-grade Go desktop applications using [Wails v3](https://wails.io/). It replaces Electron with a native Go backend while providing a modern, service-based architecture.
+Core is a unified CLI for the host-uk ecosystem - build, release, and deploy Go, Wails, PHP, and container workloads.
 
-## Why Core?
+## Installation
 
-- **Native Performance**: Go backend with native webview, no Chromium bloat
-- **Service Architecture**: Modular, testable services with dependency injection
-- **MCP Integration**: Built-in Model Context Protocol support for AI tooling
-- **Cross-Platform**: macOS, Windows, and Linux from a single codebase
-- **TypeScript Bindings**: Auto-generated bindings for frontend integration
+```bash
+# Go install
+go install github.com/host-uk/core/cmd/core@latest
 
-## Quick Example
-
-```go
-package main
-
-import (
-    "embed"
-    "log"
-
-    "github.com/Snider/Core/pkg/core"
-    "github.com/Snider/Core/pkg/display"
-    "github.com/wailsapp/wails/v3/pkg/application"
-)
-
-//go:embed all:frontend/dist
-var assets embed.FS
-
-func main() {
-    // Create the Core with services
-    c, err := core.New(
-        core.WithAssets(assets),
-        core.WithService(display.NewService),
-        core.WithServiceLock(),
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    // Create Wails app
-    app := application.New(application.Options{
-        Name: "MyApp",
-    })
-
-    // Run
-    if err := app.Run(); err != nil {
-        log.Fatal(err)
-    }
-}
+# Or download from releases
+curl -fsSL https://github.com/host-uk/core/releases/latest/download/core-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/').tar.gz | tar -xzf - -C /usr/local/bin
 ```
 
-## Core Services
+## Commands
 
-| Service | Description |
+| Command | Description |
 |---------|-------------|
-| **Core** | Central service container and lifecycle management |
-| **Display** | Window management, dialogs, tray, clipboard |
-| **WebView** | JavaScript execution, DOM interaction, screenshots |
-| **MCP** | Model Context Protocol server for AI tool integration |
-| **Config** | Application configuration and state persistence |
-| **Crypt** | Encryption, signing, key management |
-| **I18n** | Internationalization and localization |
-| **IO** | File system operations |
-| **Workspace** | Project and path management |
+| `core build` | Build Go, Wails, Docker, and LinuxKit projects |
+| `core release` | Build and publish to GitHub, npm, Homebrew, etc. |
+| `core run` | Run LinuxKit images with qemu/hyperkit |
+| `core php` | Laravel/PHP development environment |
+| `core ps` | List running containers |
+| `core stop` | Stop running containers |
+| `core logs` | View container logs |
+| `core exec` | Execute commands in containers |
 
-## Getting Started
+## Quick Start
 
-1. [Installation](getting-started/installation.md) - Install Go, Wails, and Core
-2. [Quick Start](getting-started/quickstart.md) - Build your first app
-3. [Architecture](getting-started/architecture.md) - Understand the design
+```bash
+# Build a Go project
+core build
 
-## Links
+# Build for specific targets
+core build --targets linux/amd64,darwin/arm64
 
-- **Repository**: [github.com/Snider/Core](https://github.com/Snider/Core)
-- **Issues**: [GitHub Issues](https://github.com/Snider/Core/issues)
+# Release to GitHub
+core release
+
+# Release to multiple package managers
+core release  # Publishes to all configured targets
+
+# Start PHP dev environment
+core php dev
+
+# Run a LinuxKit image
+core run server.iso
+```
+
+## Configuration
+
+Core uses `.core/` directory for project configuration:
+
+```
+.core/
+├── release.yaml    # Release targets and settings
+├── build.yaml      # Build configuration (optional)
+└── linuxkit/       # LinuxKit templates
+    └── server.yml
+```
+
+## Documentation
+
+- [Build Command](build.md) - Cross-platform builds
+- [Release Command](release.md) - Publishing to package managers
+- [PHP Commands](php.md) - Laravel development
+- [Run Command](run.md) - Container management
+- [Configuration](configuration.md) - All config options
+- [Examples](examples/) - Sample configurations
+
+## Framework
+
+Core also provides a Go framework for building desktop applications:
+
+- [Framework Overview](framework/overview.md)
+- [Services](framework/services.md)
+- [Lifecycle](framework/lifecycle.md)
