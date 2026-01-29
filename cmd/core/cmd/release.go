@@ -45,14 +45,19 @@ func AddReleaseCommand(app *clir.Cli) {
 	var version string
 	var draft bool
 	var prerelease bool
+	var target string
 
 	releaseCmd.BoolFlag("dry-run", "Preview release without publishing", &dryRun)
 	releaseCmd.StringFlag("version", "Version to release (e.g., v1.2.3)", &version)
 	releaseCmd.BoolFlag("draft", "Create release as a draft", &draft)
 	releaseCmd.BoolFlag("prerelease", "Mark release as a prerelease", &prerelease)
+	releaseCmd.StringFlag("target", "Release target (sdk)", &target)
 
 	// Default action for `core release`
 	releaseCmd.Action(func() error {
+		if target == "sdk" {
+			return runReleaseSDK(dryRun, version)
+		}
 		return runRelease(dryRun, version, draft, prerelease)
 	})
 
