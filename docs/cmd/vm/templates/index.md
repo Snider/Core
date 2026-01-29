@@ -110,23 +110,7 @@ Templates are searched in order:
 
 ## Creating Templates
 
-Create a LinuxKit YAML in `.core/linuxkit/`:
-
-```yaml
-# .core/linuxkit/myserver.yml
-kernel:
-  image: linuxkit/kernel:5.15
-  cmdline: "console=tty0"
-
-init:
-  - linuxkit/init:v1.0.0
-
-services:
-  - name: sshd
-    image: linuxkit/sshd:v1.0.0
-  - name: myapp
-    image: ghcr.io/myorg/myapp:latest
-```
+Create a LinuxKit YAML in `.core/linuxkit/`. See [Template Format](example.md#template-format) for examples.
 
 Run with:
 

@@ -283,17 +283,7 @@ core dev impact core-php
 
 ## Registry
 
-These commands use `repos.yaml` to know which repos to manage:
-
-```yaml
-repos:
-  - name: core
-    path: ./core
-    url: https://github.com/host-uk/core
-  - name: core-php
-    path: ./core-php
-    url: https://github.com/host-uk/core-php
-```
+These commands use `repos.yaml` to know which repos to manage. See [Configuration](example.md#registry) for format.
 
 Use `core setup` to clone all repos from the registry.
 

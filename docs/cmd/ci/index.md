@@ -61,7 +61,7 @@ core ci --we-are-go-for-launch
 
 ## Publishers
 
-See [example.md](example.md) for publisher configuration.
+See [Publisher Examples](example.md#publisher-examples) for configuration.
 
 | Type | Target |
 |------|--------|
@@ -76,4 +76,4 @@ See [example.md](example.md) for publisher configuration.
 
 ## Changelog
 
-Auto-generated from conventional commits. See [example.md](example.md) for configuration.
+Auto-generated from conventional commits. See [Changelog Configuration](example.md#changelog-configuration).

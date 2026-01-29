@@ -410,23 +410,4 @@ core php deploy:list [flags]
 
 ## Configuration
 
-Optional `.core/php.yaml`:
-
-```yaml
-version: 1
-
-dev:
-  domain: myapp.test
-  ssl: true
-  services:
-    - frankenphp
-    - vite
-    - horizon
-    - reverb
-    - redis
-
-deploy:
-  coolify:
-    server: https://coolify.example.com
-    project: my-project
-```
+Optional `.core/php.yaml` - see [Configuration](example.md#configuration) for examples.

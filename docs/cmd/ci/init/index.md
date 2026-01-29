@@ -8,18 +8,4 @@ Initialize release configuration.
 core ci init
 ```
 
-Creates `.core/release.yaml` with default configuration.
-
-## Example Output
-
-```yaml
-version: 1
-
-project:
-  name: myapp
-
-publishers:
-  - type: github
-```
-
-See [configuration.md](../../../configuration.md) for full configuration options.
+Creates `.core/release.yaml` with default configuration. See [Configuration](../example.md#configuration) for output format.

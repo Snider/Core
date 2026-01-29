@@ -153,7 +153,8 @@ core dev claude
 
 ## Configuration
 
-`repos.yaml`:
+### repos.yaml
+
 ```yaml
 org: host-uk
 repos:
@@ -165,9 +166,38 @@ repos:
     depends: [core-php]
 ```
 
-`~/.core/config.yaml`:
+### ~/.core/config.yaml
+
 ```yaml
 version: 1
+
 images:
-  source: auto
+  source: auto  # auto | github | registry | cdn
+
+  cdn:
+    url: https://images.example.com/core-devops
+
+  github:
+    repo: host-uk/core-images
+
+  registry:
+    image: ghcr.io/host-uk/core-devops
+```
+
+### .core/test.yaml
+
+```yaml
+version: 1
+
+commands:
+  - name: unit
+    run: vendor/bin/pest --parallel
+  - name: types
+    run: vendor/bin/phpstan analyse
+  - name: lint
+    run: vendor/bin/pint --test
+
+env:
+  APP_ENV: testing
+  DB_CONNECTION: sqlite
 ```

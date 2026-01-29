@@ -60,12 +60,34 @@ core php deploy:rollback
 
 ## Configuration
 
-`.env`:
+### .env
+
 ```env
 COOLIFY_URL=https://coolify.example.com
 COOLIFY_TOKEN=your-api-token
 COOLIFY_APP_ID=production-app-id
 COOLIFY_STAGING_APP_ID=staging-app-id
+```
+
+### .core/php.yaml
+
+```yaml
+version: 1
+
+dev:
+  domain: myapp.test
+  ssl: true
+  services:
+    - frankenphp
+    - vite
+    - horizon
+    - reverb
+    - redis
+
+deploy:
+  coolify:
+    server: https://coolify.example.com
+    project: my-project
 ```
 
 ## Package Linking

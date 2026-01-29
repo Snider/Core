@@ -172,24 +172,7 @@ core setup --all --name my-project --build
 
 ## Registry Format
 
-The registry file (`repos.yaml`) defines repositories:
-
-```yaml
-org: host-uk
-base_path: .
-repos:
-  core-php:
-    type: foundation
-    description: Foundation framework
-  core-tenant:
-    type: module
-    depends_on: [core-php]
-    description: Multi-tenancy module
-  core-bio:
-    type: product
-    depends_on: [core-php, core-tenant]
-    description: Link-in-bio product
-```
+The registry file (`repos.yaml`) defines repositories. See [Configuration Files](example.md#configuration-files) for format.
 
 ---
 

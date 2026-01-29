@@ -110,40 +110,7 @@ dist/
 
 ## Configuration
 
-Optional `.core/build.yaml`:
-
-```yaml
-version: 1
-
-project:
-  name: myapp
-  binary: myapp
-
-build:
-  main: ./cmd/myapp
-  ldflags:
-    - -s -w
-    - -X main.version={{.Version}}
-
-targets:
-  - os: linux
-    arch: amd64
-  - os: linux
-    arch: arm64
-  - os: darwin
-    arch: arm64
-
-sign:
-  enabled: true
-  gpg:
-    key: $GPG_KEY_ID
-  macos:
-    identity: "Developer ID Application: Your Name (TEAM_ID)"
-    notarize: false
-    apple_id: $APPLE_ID
-    team_id: $APPLE_TEAM_ID
-    app_password: $APPLE_APP_PASSWORD
-```
+Optional `.core/build.yaml` - see [Configuration](example.md#configuration) for examples.
 
 ## Code Signing
 

@@ -214,23 +214,7 @@ core dev test -- go test -v ./pkg/...
 
 ### Test Configuration
 
-Create `.core/test.yaml` for custom test setup:
-
-```yaml
-version: 1
-
-commands:
-  - name: unit
-    run: vendor/bin/pest --parallel
-  - name: types
-    run: vendor/bin/phpstan analyse
-  - name: lint
-    run: vendor/bin/pint --test
-
-env:
-  APP_ENV: testing
-  DB_CONNECTION: sqlite
-```
+Create `.core/test.yaml` for custom test setup - see [Configuration](example.md#configuration) for examples.
 
 ## dev claude
 
@@ -341,23 +325,7 @@ The core-devops image includes 100+ tools:
 
 ## Configuration
 
-Global config in `~/.core/config.yaml`:
-
-```yaml
-version: 1
-
-images:
-  source: auto  # auto | github | registry | cdn
-
-  cdn:
-    url: https://images.example.com/core-devops
-
-  github:
-    repo: host-uk/core-images
-
-  registry:
-    image: ghcr.io/host-uk/core-devops
-```
+Global config in `~/.core/config.yaml` - see [Configuration](example.md#configuration) for examples.
 
 ## Image Storage
 

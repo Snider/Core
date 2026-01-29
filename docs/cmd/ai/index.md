@@ -254,27 +254,7 @@ core ai claude config
 
 ## Workflow Example
 
-```bash
-# 1. List available tasks
-core ai tasks --status pending
-
-# 2. Auto-select and claim a task
-core ai task --auto --claim
-
-# 3. Work on the task...
-
-# 4. Update progress
-core ai task:update abc123 --progress 75
-
-# 5. Commit with task reference
-core ai task:commit abc123 -m 'implement feature'
-
-# 6. Create PR
-core ai task:pr abc123
-
-# 7. Mark complete
-core ai task:complete abc123 --output 'Feature implemented and PR created'
-```
+See [Workflow Example](example.md#workflow-example) for a complete task management workflow.
 
 ## See Also
 

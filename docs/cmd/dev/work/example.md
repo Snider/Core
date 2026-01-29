@@ -19,3 +19,15 @@ core dev work --status
 │ core-admin  │ dev    │ clean    │ 3       │
 └─────────────┴────────┴──────────┴─────────┘
 ```
+
+## Registry
+
+```yaml
+repos:
+  - name: core
+    path: ./core
+    url: https://github.com/host-uk/core
+  - name: core-php
+    path: ./core-php
+    url: https://github.com/host-uk/core-php
+```

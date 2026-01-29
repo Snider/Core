@@ -10,7 +10,7 @@ core build
 core ci
 
 # Publish
-core ci --were-go-for-launch
+core ci --we-are-go-for-launch
 ```
 
 ## Configuration
