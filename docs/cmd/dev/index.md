@@ -7,28 +7,28 @@ Multi-repo development workflow and portable dev environment.
 | Command | Description |
 |---------|-------------|
 | [work](work/) | Full workflow: status + commit + push |
-| [health](health/) | Quick health check across repos |
-| [commit](commit/) | Claude-assisted commits |
-| [push](push/) | Push repos with unpushed commits |
-| [pull](pull/) | Pull repos that are behind |
-| [issues](issues/) | List open issues |
-| [reviews](reviews/) | List PRs needing review |
-| [ci](ci/) | Check CI status |
-| [impact](impact/) | Show dependency impact |
+| `health` | Quick health check across repos |
+| `commit` | Claude-assisted commits |
+| `push` | Push repos with unpushed commits |
+| `pull` | Pull repos that are behind |
+| `issues` | List open issues |
+| `reviews` | List PRs needing review |
+| `ci` | Check CI status |
+| `impact` | Show dependency impact |
 
 ## Dev Environment Commands
 
 | Command | Description |
 |---------|-------------|
-| [install](install/) | Download the core-devops image |
-| [boot](boot/) | Start the environment |
-| [stop](stop/) | Stop the environment |
-| [status](status/) | Show status |
-| [shell](shell/) | Open shell |
-| [serve](serve/) | Start dev server |
-| [test](test/) | Run tests |
-| [claude](claude/) | Sandboxed Claude |
-| [update](update/) | Update image |
+| `install` | Download the core-devops image |
+| `boot` | Start the environment |
+| `stop` | Stop the environment |
+| `status` | Show status |
+| `shell` | Open shell |
+| `serve` | Start dev server |
+| `test` | Run tests |
+| `claude` | Sandboxed Claude |
+| `update` | Update image |
 
 ---
 
