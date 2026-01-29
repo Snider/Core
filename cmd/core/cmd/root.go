@@ -91,6 +91,7 @@ func Execute() error {
 	AddTemplatesCommand(app)
 	AddPHPCommands(app)
 	AddSDKCommand(app)
+	AddTestCommand(app)
 	// Run the application
 	return app.Run()
 }
