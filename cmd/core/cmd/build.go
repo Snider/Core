@@ -17,6 +17,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/pkg/build"
 	"github.com/host-uk/core/pkg/build/builders"
+	"github.com/host-uk/core/pkg/build/signing"
 	"github.com/leaanthony/clir"
 	"github.com/leaanthony/debme"
 	"github.com/leaanthony/gosod"
@@ -73,6 +74,10 @@ func AddBuildCommand(app *clir.Cli) {
 	var push bool
 	var imageName string
 
+	// Signing flags
+	var noSign bool
+	var notarize bool
+
 	buildCmd.StringFlag("type", "Builder type (go, wails, docker, linuxkit, taskfile) - auto-detected if not specified", &buildType)
 	buildCmd.BoolFlag("ci", "CI mode - minimal output with JSON artifact list at the end", &ciMode)
 	buildCmd.StringFlag("targets", "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)", &targets)
@@ -86,13 +91,17 @@ func AddBuildCommand(app *clir.Cli) {
 	buildCmd.BoolFlag("push", "Push Docker image after build (default: false)", &push)
 	buildCmd.StringFlag("image", "Docker image name (e.g., host-uk/core-devops)", &imageName)
 
+	// Signing flags
+	buildCmd.BoolFlag("no-sign", "Skip all code signing", &noSign)
+	buildCmd.BoolFlag("notarize", "Enable macOS notarization (requires Apple credentials)", &notarize)
+
 	// Set defaults for archive and checksum (true by default)
 	doArchive = true
 	doChecksum = true
 
 	// Default action for `core build` (no subcommand)
 	buildCmd.Action(func() error {
-		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName)
+		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName, noSign, notarize)
 	})
 
 	// --- `build from-path` command (legacy PWA/GUI build) ---
@@ -119,7 +128,7 @@ func AddBuildCommand(app *clir.Cli) {
 }
 
 // runProjectBuild handles the main `core build` command with auto-detection.
-func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string) error {
+func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string, noSign bool, notarize bool) error {
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
@@ -240,6 +249,44 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		}
 	}
 
+	// Sign macOS binaries if enabled
+	signCfg := buildCfg.Sign
+	if notarize {
+		signCfg.MacOS.Notarize = true
+	}
+	if noSign {
+		signCfg.Enabled = false
+	}
+
+	if signCfg.Enabled && runtime.GOOS == "darwin" {
+		if !ciMode {
+			fmt.Println()
+			fmt.Printf("%s Signing binaries...\n", buildHeaderStyle.Render("Sign:"))
+		}
+
+		// Convert build.Artifact to signing.Artifact
+		signingArtifacts := make([]signing.Artifact, len(artifacts))
+		for i, a := range artifacts {
+			signingArtifacts[i] = signing.Artifact{Path: a.Path, OS: a.OS, Arch: a.Arch}
+		}
+
+		if err := signing.SignBinaries(ctx, signCfg, signingArtifacts); err != nil {
+			if !ciMode {
+				fmt.Printf("%s Signing failed: %v\n", buildErrorStyle.Render("Error:"), err)
+			}
+			return err
+		}
+
+		if signCfg.MacOS.Notarize {
+			if err := signing.NotarizeBinaries(ctx, signCfg, signingArtifacts); err != nil {
+				if !ciMode {
+					fmt.Printf("%s Notarization failed: %v\n", buildErrorStyle.Render("Error:"), err)
+				}
+				return err
+			}
+		}
+	}
+
 	// Archive artifacts if enabled
 	var archivedArtifacts []build.Artifact
 	if doArchive && len(artifacts) > 0 {
@@ -296,6 +343,16 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 			return err
 		}
 
+		// Sign checksums with GPG
+		if signCfg.Enabled {
+			if err := signing.SignChecksums(ctx, signCfg, checksumPath); err != nil {
+				if !ciMode {
+					fmt.Printf("%s GPG signing failed: %v\n", buildErrorStyle.Render("Error:"), err)
+				}
+				return err
+			}
+		}
+
 		if !ciMode {
 			for _, artifact := range checksummedArtifacts {
 				relPath, err := filepath.Rel(projectDir, artifact.Path)
@@ -340,6 +397,16 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 				fmt.Printf("%s Failed to write CHECKSUMS.txt: %v\n", buildErrorStyle.Render("Error:"), err)
 			}
 			return err
+		}
+
+		// Sign checksums with GPG
+		if signCfg.Enabled {
+			if err := signing.SignChecksums(ctx, signCfg, checksumPath); err != nil {
+				if !ciMode {
+					fmt.Printf("%s GPG signing failed: %v\n", buildErrorStyle.Render("Error:"), err)
+				}
+				return err
+			}
 		}
 
 		if !ciMode {
