@@ -552,6 +552,26 @@ func TestIsPHPProject_Bad(t *testing.T) {
 	})
 }
 
+func TestExtractPHPVersion_Edge(t *testing.T) {
+	t.Run("handles single major version", func(t *testing.T) {
+		result := extractPHPVersion("8")
+		assert.Equal(t, "8.0", result)
+	})
+}
+
+func TestDetectPHPExtensions_RequireDev(t *testing.T) {
+	t.Run("detects extensions from require-dev", func(t *testing.T) {
+		composer := ComposerJSON{
+			RequireDev: map[string]string{
+				"predis/predis": "^2.0",
+			},
+		}
+
+		extensions := detectPHPExtensions(composer)
+		assert.Contains(t, extensions, "redis")
+	})
+}
+
 func TestDockerfileStructure_Good(t *testing.T) {
 	t.Run("Dockerfile has proper structure", func(t *testing.T) {
 		dir := t.TempDir()

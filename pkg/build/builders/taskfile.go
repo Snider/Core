@@ -180,7 +180,38 @@ func (b *TaskfileBuilder) findArtifacts(outputDir string) []build.Artifact {
 func (b *TaskfileBuilder) findArtifactsForTarget(outputDir string, target build.Target) []build.Artifact {
 	var artifacts []build.Artifact
 
-	// Look for files matching the target pattern
+	// 1. Look for platform-specific subdirectory: output/os_arch/
+	platformSubdir := filepath.Join(outputDir, fmt.Sprintf("%s_%s", target.OS, target.Arch))
+	if info, err := os.Stat(platformSubdir); err == nil && info.IsDir() {
+		entries, _ := os.ReadDir(platformSubdir)
+		for _, entry := range entries {
+			if entry.IsDir() {
+				// Handle .app bundles on macOS
+				if target.OS == "darwin" && strings.HasSuffix(entry.Name(), ".app") {
+					artifacts = append(artifacts, build.Artifact{
+						Path: filepath.Join(platformSubdir, entry.Name()),
+						OS:   target.OS,
+						Arch: target.Arch,
+					})
+				}
+				continue
+			}
+			// Skip hidden files
+			if strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
+			artifacts = append(artifacts, build.Artifact{
+				Path: filepath.Join(platformSubdir, entry.Name()),
+				OS:   target.OS,
+				Arch: target.Arch,
+			})
+		}
+		if len(artifacts) > 0 {
+			return artifacts
+		}
+	}
+
+	// 2. Look for files matching the target pattern in the root output dir
 	patterns := []string{
 		fmt.Sprintf("*-%s-%s*", target.OS, target.Arch),
 		fmt.Sprintf("*_%s_%s*", target.OS, target.Arch),

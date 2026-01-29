@@ -211,7 +211,15 @@ func addGoCovCommand(parent *clir.Command) {
 
 	covCmd.Action(func() error {
 		if pkg == "" {
-			pkg = "./..."
+			// Auto-discover packages with tests
+			pkgs, err := findTestPackages(".")
+			if err != nil {
+				return fmt.Errorf("failed to discover test packages: %w", err)
+			}
+			if len(pkgs) == 0 {
+				return fmt.Errorf("no test packages found")
+			}
+			pkg = strings.Join(pkgs, " ")
 		}
 
 		// Create temp file for coverage data
@@ -224,11 +232,19 @@ func addGoCovCommand(parent *clir.Command) {
 		defer os.Remove(covPath)
 
 		fmt.Printf("%s Running tests with coverage\n", dimStyle.Render("Coverage:"))
-		fmt.Printf("  %s %s\n", dimStyle.Render("Package:"), pkg)
+		// Truncate package list if too long for display
+		displayPkg := pkg
+		if len(displayPkg) > 60 {
+			displayPkg = displayPkg[:57] + "..."
+		}
+		fmt.Printf("  %s %s\n", dimStyle.Render("Package:"), displayPkg)
 		fmt.Println()
 
 		// Run tests with coverage
-		args := []string{"test", "-coverprofile=" + covPath, "-covermode=atomic", pkg}
+		// We need to split pkg into individual arguments if it contains spaces
+		pkgArgs := strings.Fields(pkg)
+		args := append([]string{"test", "-coverprofile=" + covPath, "-covermode=atomic"}, pkgArgs...)
+		
 		cmd := exec.Command("go", args...)
 		cmd.Env = append(os.Environ(), "MACOSX_DEPLOYMENT_TARGET=26.0")
 		cmd.Stdout = os.Stdout
@@ -311,6 +327,32 @@ func addGoCovCommand(parent *clir.Command) {
 		fmt.Printf("\n%s\n", successStyle.Render("OK"))
 		return nil
 	})
+}
+
+func findTestPackages(root string) ([]string, error) {
+	pkgMap := make(map[string]bool)
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if !info.IsDir() && strings.HasSuffix(info.Name(), "_test.go") {
+			dir := filepath.Dir(path)
+			if !strings.HasPrefix(dir, ".") {
+				dir = "./" + dir
+			}
+			pkgMap[dir] = true
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var pkgs []string
+	for pkg := range pkgMap {
+		pkgs = append(pkgs, pkg)
+	}
+	return pkgs, nil
 }
 
 func addGoFmtCommand(parent *clir.Command) {
@@ -405,9 +447,11 @@ func addGoInstallCommand(parent *clir.Command) {
 			installPath = args[0]
 		}
 
-		// Detect if we're in a module with cmd/ subdirectories
+		// Detect if we're in a module with cmd/ subdirectories or a root main.go
 		if installPath == "./..." {
-			if entries, err := os.ReadDir("cmd"); err == nil && len(entries) > 0 {
+			if _, err := os.Stat("core.go"); err == nil {
+				installPath = "."
+			} else if entries, err := os.ReadDir("cmd"); err == nil && len(entries) > 0 {
 				installPath = "./cmd/..."
 			} else if _, err := os.Stat("main.go"); err == nil {
 				installPath = "."

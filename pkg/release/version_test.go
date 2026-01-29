@@ -1,10 +1,248 @@
 package release
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// setupGitRepo creates a temporary directory with an initialized git repository.
+func setupGitRepo(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+
+	// Initialize git repo
+	cmd := exec.Command("git", "init")
+	cmd.Dir = dir
+	require.NoError(t, cmd.Run())
+
+	// Configure git user for commits
+	cmd = exec.Command("git", "config", "user.email", "test@example.com")
+	cmd.Dir = dir
+	require.NoError(t, cmd.Run())
+
+	cmd = exec.Command("git", "config", "user.name", "Test User")
+	cmd.Dir = dir
+	require.NoError(t, cmd.Run())
+
+	return dir
+}
+
+// createCommit creates a commit in the given directory.
+func createCommit(t *testing.T, dir, message string) {
+	t.Helper()
+
+	// Create or modify a file
+	filePath := filepath.Join(dir, "test.txt")
+	content, _ := os.ReadFile(filePath)
+	content = append(content, []byte(message+"\n")...)
+	require.NoError(t, os.WriteFile(filePath, content, 0644))
+
+	// Stage and commit
+	cmd := exec.Command("git", "add", ".")
+	cmd.Dir = dir
+	require.NoError(t, cmd.Run())
+
+	cmd = exec.Command("git", "commit", "-m", message)
+	cmd.Dir = dir
+	require.NoError(t, cmd.Run())
+}
+
+// createTag creates a tag in the given directory.
+func createTag(t *testing.T, dir, tag string) {
+	t.Helper()
+	cmd := exec.Command("git", "tag", tag)
+	cmd.Dir = dir
+	require.NoError(t, cmd.Run())
+}
+
+func TestDetermineVersion_Good(t *testing.T) {
+	t.Run("returns tag when HEAD has tag", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "v1.0.0")
+
+		version, err := DetermineVersion(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.0.0", version)
+	})
+
+	t.Run("normalizes tag without v prefix", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "1.0.0")
+
+		version, err := DetermineVersion(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.0.0", version)
+	})
+
+	t.Run("increments patch when commits after tag", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "v1.0.0")
+		createCommit(t, dir, "feat: new feature")
+
+		version, err := DetermineVersion(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.0.1", version)
+	})
+
+	t.Run("returns v0.0.1 when no tags exist", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+
+		version, err := DetermineVersion(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v0.0.1", version)
+	})
+
+	t.Run("handles multiple tags with increments", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: first")
+		createTag(t, dir, "v1.0.0")
+		createCommit(t, dir, "feat: second")
+		createTag(t, dir, "v1.0.1")
+		createCommit(t, dir, "feat: third")
+
+		version, err := DetermineVersion(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.0.2", version)
+	})
+}
+
+func TestDetermineVersion_Bad(t *testing.T) {
+	t.Run("returns v0.0.1 for empty repo", func(t *testing.T) {
+		dir := setupGitRepo(t)
+
+		// No commits, git describe will fail
+		version, err := DetermineVersion(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v0.0.1", version)
+	})
+}
+
+func TestGetTagOnHead_Good(t *testing.T) {
+	t.Run("returns tag when HEAD has tag", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "v1.2.3")
+
+		tag, err := getTagOnHead(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.2.3", tag)
+	})
+
+	t.Run("returns latest tag when multiple tags on HEAD", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "v1.0.0")
+		createTag(t, dir, "v1.0.0-beta")
+
+		tag, err := getTagOnHead(dir)
+		require.NoError(t, err)
+		// Git returns one of the tags
+		assert.Contains(t, []string{"v1.0.0", "v1.0.0-beta"}, tag)
+	})
+}
+
+func TestGetTagOnHead_Bad(t *testing.T) {
+	t.Run("returns error when HEAD has no tag", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+
+		_, err := getTagOnHead(dir)
+		assert.Error(t, err)
+	})
+
+	t.Run("returns error when commits after tag", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "v1.0.0")
+		createCommit(t, dir, "feat: new feature")
+
+		_, err := getTagOnHead(dir)
+		assert.Error(t, err)
+	})
+}
+
+func TestGetLatestTag_Good(t *testing.T) {
+	t.Run("returns latest tag", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+		createTag(t, dir, "v1.0.0")
+
+		tag, err := getLatestTag(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.0.0", tag)
+	})
+
+	t.Run("returns most recent tag after multiple commits", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: first")
+		createTag(t, dir, "v1.0.0")
+		createCommit(t, dir, "feat: second")
+		createTag(t, dir, "v1.1.0")
+		createCommit(t, dir, "feat: third")
+
+		tag, err := getLatestTag(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "v1.1.0", tag)
+	})
+}
+
+func TestGetLatestTag_Bad(t *testing.T) {
+	t.Run("returns error when no tags exist", func(t *testing.T) {
+		dir := setupGitRepo(t)
+		createCommit(t, dir, "feat: initial commit")
+
+		_, err := getLatestTag(dir)
+		assert.Error(t, err)
+	})
+
+	t.Run("returns error for empty repo", func(t *testing.T) {
+		dir := setupGitRepo(t)
+
+		_, err := getLatestTag(dir)
+		assert.Error(t, err)
+	})
+}
+
+func TestIncrementMinor_Bad(t *testing.T) {
+	t.Run("returns fallback for invalid version", func(t *testing.T) {
+		result := IncrementMinor("not-valid")
+		assert.Equal(t, "not-valid.1", result)
+	})
+}
+
+func TestIncrementMajor_Bad(t *testing.T) {
+	t.Run("returns fallback for invalid version", func(t *testing.T) {
+		result := IncrementMajor("not-valid")
+		assert.Equal(t, "not-valid.1", result)
+	})
+}
+
+func TestCompareVersions_Ugly(t *testing.T) {
+	t.Run("handles both invalid versions", func(t *testing.T) {
+		result := CompareVersions("invalid-a", "invalid-b")
+		// Should do string comparison for invalid versions
+		assert.Equal(t, -1, result) // "invalid-a" < "invalid-b"
+	})
+
+	t.Run("invalid a returns -1", func(t *testing.T) {
+		result := CompareVersions("invalid", "v1.0.0")
+		assert.Equal(t, -1, result)
+	})
+
+	t.Run("invalid b returns 1", func(t *testing.T) {
+		result := CompareVersions("v1.0.0", "invalid")
+		assert.Equal(t, 1, result)
+	})
+}
 
 func TestIncrementVersion_Good(t *testing.T) {
 	tests := []struct {

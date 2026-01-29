@@ -1,25 +1,32 @@
 package signing
 
 import (
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGPGSigner_Good_Name(t *testing.T) {
 	s := NewGPGSigner("ABCD1234")
-	if s.Name() != "gpg" {
-		t.Errorf("expected name 'gpg', got %q", s.Name())
-	}
+	assert.Equal(t, "gpg", s.Name())
 }
 
 func TestGPGSigner_Good_Available(t *testing.T) {
 	s := NewGPGSigner("ABCD1234")
-	// Available depends on gpg being installed
 	_ = s.Available()
 }
 
 func TestGPGSigner_Bad_NoKey(t *testing.T) {
 	s := NewGPGSigner("")
-	if s.Available() {
-		t.Error("expected Available() to be false when key is empty")
-	}
+	assert.False(t, s.Available())
+}
+
+func TestGPGSigner_Sign_Bad(t *testing.T) {
+	t.Run("fails when no key", func(t *testing.T) {
+		s := NewGPGSigner("")
+		err := s.Sign(context.Background(), "test.txt")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not available or key not configured")
+	})
 }

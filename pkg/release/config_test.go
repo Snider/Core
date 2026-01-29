@@ -301,3 +301,57 @@ func TestConfig_SetProjectDir_Good(t *testing.T) {
 		assert.Equal(t, "/path/to/project", cfg.projectDir)
 	})
 }
+
+func TestWriteConfig_Bad(t *testing.T) {
+	t.Run("returns error for unwritable directory", func(t *testing.T) {
+		dir := t.TempDir()
+
+		// Create .core directory and make it unwritable
+		coreDir := filepath.Join(dir, ConfigDir)
+		err := os.MkdirAll(coreDir, 0755)
+		require.NoError(t, err)
+
+		// Make directory read-only
+		err = os.Chmod(coreDir, 0555)
+		require.NoError(t, err)
+		defer func() { _ = os.Chmod(coreDir, 0755) }()
+
+		cfg := DefaultConfig()
+		err = WriteConfig(cfg, dir)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to write config file")
+	})
+
+	t.Run("returns error when directory creation fails", func(t *testing.T) {
+		// Use a path that doesn't exist and can't be created
+		cfg := DefaultConfig()
+		err := WriteConfig(cfg, "/nonexistent/path/that/cannot/be/created")
+		assert.Error(t, err)
+	})
+}
+
+func TestApplyDefaults_Good(t *testing.T) {
+	t.Run("applies version default when zero", func(t *testing.T) {
+		cfg := &Config{Version: 0}
+		applyDefaults(cfg)
+		assert.Equal(t, 1, cfg.Version)
+	})
+
+	t.Run("preserves existing version", func(t *testing.T) {
+		cfg := &Config{Version: 2}
+		applyDefaults(cfg)
+		assert.Equal(t, 2, cfg.Version)
+	})
+
+	t.Run("applies changelog defaults only when both empty", func(t *testing.T) {
+		cfg := &Config{
+			Changelog: ChangelogConfig{
+				Include: []string{"feat"},
+			},
+		}
+		applyDefaults(cfg)
+		// Should not apply defaults because Include is set
+		assert.Equal(t, []string{"feat"}, cfg.Changelog.Include)
+		assert.Empty(t, cfg.Changelog.Exclude)
+	})
+}

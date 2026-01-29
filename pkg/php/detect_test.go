@@ -176,6 +176,32 @@ return [
 		// No config file - should still return true (assume frankenphp)
 		assert.True(t, IsFrankenPHPProject(dir))
 	})
+
+	t.Run("project with octane but unreadable config file", func(t *testing.T) {
+		dir := t.TempDir()
+
+		// Create composer.json with laravel/octane
+		composerJSON := `{
+			"require": {
+				"laravel/octane": "^2.0"
+			}
+		}`
+		err := os.WriteFile(filepath.Join(dir, "composer.json"), []byte(composerJSON), 0644)
+		require.NoError(t, err)
+
+		// Create config directory and octane.php with no read permissions
+		configDir := filepath.Join(dir, "config")
+		err = os.MkdirAll(configDir, 0755)
+		require.NoError(t, err)
+
+		octanePath := filepath.Join(configDir, "octane.php")
+		err = os.WriteFile(octanePath, []byte("<?php return [];"), 0000)
+		require.NoError(t, err)
+		defer os.Chmod(octanePath, 0644) // Clean up
+
+		// Should return true (assume frankenphp if unreadable)
+		assert.True(t, IsFrankenPHPProject(dir))
+	})
 }
 
 func TestIsFrankenPHPProject_Bad(t *testing.T) {
@@ -271,6 +297,48 @@ REDIS_HOST=127.0.0.1`
 		assert.NotContains(t, services, ServiceHorizon)
 		assert.NotContains(t, services, ServiceReverb)
 		assert.NotContains(t, services, ServiceRedis)
+	})
+}
+
+func TestHasHorizon_Good(t *testing.T) {
+	t.Run("horizon config exists", func(t *testing.T) {
+		dir := t.TempDir()
+		configDir := filepath.Join(dir, "config")
+		err := os.MkdirAll(configDir, 0755)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(configDir, "horizon.php"), []byte("<?php return [];"), 0644)
+		require.NoError(t, err)
+
+		assert.True(t, hasHorizon(dir))
+	})
+}
+
+func TestHasHorizon_Bad(t *testing.T) {
+	t.Run("horizon config missing", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.False(t, hasHorizon(dir))
+	})
+}
+
+func TestHasReverb_Good(t *testing.T) {
+	t.Run("reverb config exists", func(t *testing.T) {
+		dir := t.TempDir()
+		configDir := filepath.Join(dir, "config")
+		err := os.MkdirAll(configDir, 0755)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(configDir, "reverb.php"), []byte("<?php return [];"), 0644)
+		require.NoError(t, err)
+
+		assert.True(t, hasReverb(dir))
+	})
+}
+
+func TestHasReverb_Bad(t *testing.T) {
+	t.Run("reverb config missing", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.False(t, hasReverb(dir))
 	})
 }
 
@@ -470,6 +538,30 @@ REDIS_HOST=127.0.0.1`
 
 		assert.True(t, needsRedis(dir))
 	})
+
+	t.Run("SESSION_DRIVER=redis", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "SESSION_DRIVER=redis"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+		assert.True(t, needsRedis(dir))
+	})
+
+	t.Run("BROADCAST_DRIVER=redis", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "BROADCAST_DRIVER=redis"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+		assert.True(t, needsRedis(dir))
+	})
+
+	t.Run("REDIS_HOST remote (should be false for local dev env)", func(t *testing.T) {
+		dir := t.TempDir()
+		envContent := "REDIS_HOST=redis.example.com"
+		err := os.WriteFile(filepath.Join(dir, ".env"), []byte(envContent), 0644)
+		require.NoError(t, err)
+		assert.False(t, needsRedis(dir))
+	})
 }
 
 func TestNeedsRedis_Bad(t *testing.T) {
@@ -535,5 +627,34 @@ func TestHasVite_Bad(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.False(t, hasVite(dir))
+	})
+}
+
+func TestIsFrankenPHPProject_ConfigWithoutFrankenPHP(t *testing.T) {
+	t.Run("octane config without frankenphp", func(t *testing.T) {
+		dir := t.TempDir()
+
+		// Create composer.json with laravel/octane
+		composerJSON := `{
+			"require": {
+				"laravel/octane": "^2.0"
+			}
+		}`
+		err := os.WriteFile(filepath.Join(dir, "composer.json"), []byte(composerJSON), 0644)
+		require.NoError(t, err)
+
+		// Create config directory and octane.php without frankenphp
+		configDir := filepath.Join(dir, "config")
+		err = os.MkdirAll(configDir, 0755)
+		require.NoError(t, err)
+
+		octaneConfig := `<?php
+return [
+    'server' => 'swoole',
+];`
+		err = os.WriteFile(filepath.Join(configDir, "octane.php"), []byte(octaneConfig), 0644)
+		require.NoError(t, err)
+
+		assert.False(t, IsFrankenPHPProject(dir))
 	})
 }

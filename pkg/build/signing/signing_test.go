@@ -4,6 +4,8 @@ import (
 	"context"
 	"runtime"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSignBinaries_Good_SkipsNonDarwin(t *testing.T) {
@@ -127,4 +129,25 @@ func TestSignChecksums_Good_Disabled(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
+}
+
+func TestDefaultSignConfig(t *testing.T) {
+	cfg := DefaultSignConfig()
+	assert.True(t, cfg.Enabled)
+}
+
+func TestSignConfig_ExpandEnv(t *testing.T) {
+	t.Setenv("TEST_KEY", "ABC")
+	cfg := SignConfig{
+		GPG: GPGConfig{Key: "$TEST_KEY"},
+	}
+	cfg.ExpandEnv()
+	assert.Equal(t, "ABC", cfg.GPG.Key)
+}
+
+func TestWindowsSigner_Good(t *testing.T) {
+	s := NewWindowsSigner(WindowsConfig{})
+	assert.Equal(t, "signtool", s.Name())
+	assert.False(t, s.Available())
+	assert.NoError(t, s.Sign(context.Background(), "test.exe"))
 }

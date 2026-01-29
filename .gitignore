@@ -12,6 +12,8 @@ node_modules/
 .env
 .env.*.local
 coverage/
+coverage.out
+coverage.html
 *.cache
 /cmd/core-gui/public/dist/assets/index-CXPsZVIz.js
 /cmd/core-gui/public/dist/index.html

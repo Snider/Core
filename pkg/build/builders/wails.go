@@ -32,7 +32,9 @@ func (b *WailsBuilder) Detect(dir string) (bool, error) {
 }
 
 // Build compiles the Wails project for the specified targets.
-// It installs frontend dependencies, builds the frontend, then runs wails3 build.
+// It detects the Wails version and chooses the appropriate build strategy:
+// - Wails v3: Delegates to Taskfile (error if missing)
+// - Wails v2: Uses 'wails build' command
 func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []build.Target) ([]build.Artifact, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("builders.WailsBuilder.Build: config is nil")
@@ -42,37 +44,30 @@ func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []b
 		return nil, fmt.Errorf("builders.WailsBuilder.Build: no targets specified")
 	}
 
+	// Detect Wails version
+	isV3 := b.isWailsV3(cfg.ProjectDir)
+
+	if isV3 {
+		// Wails v3 strategy: Delegate to Taskfile
+		taskBuilder := NewTaskfileBuilder()
+		if detected, _ := taskBuilder.Detect(cfg.ProjectDir); detected {
+			return taskBuilder.Build(ctx, cfg, targets)
+		}
+		return nil, fmt.Errorf("Wails v3 projects require a Taskfile for building")
+	}
+
+	// Wails v2 strategy: Use 'wails build'
 	// Ensure output directory exists
 	if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
 		return nil, fmt.Errorf("builders.WailsBuilder.Build: failed to create output directory: %w", err)
 	}
 
-	// Find frontend directory (typically "frontend")
-	frontendDir := filepath.Join(cfg.ProjectDir, "frontend")
-	hasFrontend := dirExists(frontendDir)
-
-	if hasFrontend {
-		// Detect package manager
-		pkgManager := detectPackageManager(frontendDir)
-
-		// Install frontend dependencies if node_modules is missing
-		nodeModules := filepath.Join(frontendDir, "node_modules")
-		if !dirExists(nodeModules) {
-			if err := b.installFrontendDeps(ctx, frontendDir, pkgManager); err != nil {
-				return nil, fmt.Errorf("builders.WailsBuilder.Build: failed to install frontend dependencies: %w", err)
-			}
-		}
-
-		// Build frontend
-		if err := b.buildFrontend(ctx, frontendDir, pkgManager); err != nil {
-			return nil, fmt.Errorf("builders.WailsBuilder.Build: failed to build frontend: %w", err)
-		}
-	}
+	// Note: Wails v2 handles frontend installation/building automatically via wails.json config
 
 	var artifacts []build.Artifact
 
 	for _, target := range targets {
-		artifact, err := b.buildTarget(ctx, cfg, target)
+		artifact, err := b.buildV2Target(ctx, cfg, target)
 		if err != nil {
 			return artifacts, fmt.Errorf("builders.WailsBuilder.Build: failed to build %s: %w", target.String(), err)
 		}
@@ -82,98 +77,77 @@ func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []b
 	return artifacts, nil
 }
 
-// installFrontendDeps installs frontend dependencies using the detected package manager.
-func (b *WailsBuilder) installFrontendDeps(ctx context.Context, frontendDir, pkgManager string) error {
-	var cmd *exec.Cmd
-
-	switch pkgManager {
-	case "bun":
-		cmd = exec.CommandContext(ctx, "bun", "install")
-	case "pnpm":
-		cmd = exec.CommandContext(ctx, "pnpm", "install")
-	case "yarn":
-		cmd = exec.CommandContext(ctx, "yarn", "install")
-	default:
-		cmd = exec.CommandContext(ctx, "npm", "install")
-	}
-
-	cmd.Dir = frontendDir
-	output, err := cmd.CombinedOutput()
+// isWailsV3 checks if the project uses Wails v3 by inspecting go.mod.
+func (b *WailsBuilder) isWailsV3(dir string) bool {
+	goModPath := filepath.Join(dir, "go.mod")
+	data, err := os.ReadFile(goModPath)
 	if err != nil {
-		return fmt.Errorf("%s install failed: %w\nOutput: %s", pkgManager, err, string(output))
+		return false
 	}
-
-	return nil
+	return strings.Contains(string(data), "github.com/wailsapp/wails/v3")
 }
 
-// buildFrontend runs the frontend build command using the detected package manager.
-func (b *WailsBuilder) buildFrontend(ctx context.Context, frontendDir, pkgManager string) error {
-	var cmd *exec.Cmd
-
-	switch pkgManager {
-	case "bun":
-		cmd = exec.CommandContext(ctx, "bun", "run", "build")
-	case "pnpm":
-		cmd = exec.CommandContext(ctx, "pnpm", "run", "build")
-	case "yarn":
-		cmd = exec.CommandContext(ctx, "yarn", "run", "build")
-	default:
-		cmd = exec.CommandContext(ctx, "npm", "run", "build")
-	}
-
-	cmd.Dir = frontendDir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%s run build failed: %w\nOutput: %s", pkgManager, err, string(output))
-	}
-
-	return nil
-}
-
-// buildTarget compiles for a single target platform using wails3.
-func (b *WailsBuilder) buildTarget(ctx context.Context, cfg *build.Config, target build.Target) (build.Artifact, error) {
+// buildV2Target compiles for a single target platform using wails (v2).
+func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, target build.Target) (build.Artifact, error) {
 	// Determine output binary name
 	binaryName := cfg.Name
 	if binaryName == "" {
 		binaryName = filepath.Base(cfg.ProjectDir)
 	}
 
-	// Create platform-specific output path: output/os_arch/
-	platformDir := filepath.Join(cfg.OutputDir, fmt.Sprintf("%s_%s", target.OS, target.Arch))
-	if err := os.MkdirAll(platformDir, 0755); err != nil {
-		return build.Artifact{}, fmt.Errorf("failed to create platform directory: %w", err)
-	}
-
-	// Build the wails3 build arguments
+	// Build the wails build arguments
 	args := []string{"build"}
 
-	// Add output directory
-	args = append(args, "-o", platformDir)
+	// Platform
+	args = append(args, "-platform", fmt.Sprintf("%s/%s", target.OS, target.Arch))
 
+	// Output (Wails v2 uses -o for the binary name, relative to build/bin usually, but we want to control it)
+	// Actually, Wails v2 is opinionated about output dir (build/bin). 
+	// We might need to copy artifacts after build if we want them in cfg.OutputDir.
+	// For now, let's try to let Wails do its thing and find the artifact.
+	
 	// Create the command
-	cmd := exec.CommandContext(ctx, "wails3", args...)
+	cmd := exec.CommandContext(ctx, "wails", args...)
 	cmd.Dir = cfg.ProjectDir
-
-	// Set up environment for cross-compilation
-	env := os.Environ()
-	env = append(env, fmt.Sprintf("GOOS=%s", target.OS))
-	env = append(env, fmt.Sprintf("GOARCH=%s", target.Arch))
-	cmd.Env = env
 
 	// Capture output for error messages
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return build.Artifact{}, fmt.Errorf("wails3 build failed: %w\nOutput: %s", err, string(output))
+		return build.Artifact{}, fmt.Errorf("wails build failed: %w\nOutput: %s", err, string(output))
 	}
 
-	// Find the built artifact - depends on platform
-	artifactPath, err := b.findArtifact(platformDir, binaryName, target)
+	// Wails v2 typically outputs to build/bin
+	// We need to move/copy it to our desired output dir
+	
+	// Construct the source path where Wails v2 puts the binary
+	wailsOutputDir := filepath.Join(cfg.ProjectDir, "build", "bin")
+	
+	// Find the artifact in Wails output dir
+	sourcePath, err := b.findArtifact(wailsOutputDir, binaryName, target)
 	if err != nil {
-		return build.Artifact{}, fmt.Errorf("failed to find build artifact: %w", err)
+		return build.Artifact{}, fmt.Errorf("failed to find Wails v2 build artifact: %w", err)
+	}
+
+	// Move/Copy to our output dir
+	// Create platform specific dir in our output
+	platformDir := filepath.Join(cfg.OutputDir, fmt.Sprintf("%s_%s", target.OS, target.Arch))
+	if err := os.MkdirAll(platformDir, 0755); err != nil {
+		return build.Artifact{}, fmt.Errorf("failed to create output dir: %w", err)
+	}
+
+	destPath := filepath.Join(platformDir, filepath.Base(sourcePath))
+	
+	// Simple copy
+	input, err := os.ReadFile(sourcePath)
+	if err != nil {
+		return build.Artifact{}, err
+	}
+	if err := os.WriteFile(destPath, input, 0755); err != nil {
+		return build.Artifact{}, err
 	}
 
 	return build.Artifact{
-		Path: artifactPath,
+		Path: destPath,
 		OS:   target.OS,
 		Arch: target.Arch,
 	}, nil
