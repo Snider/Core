@@ -15,7 +15,7 @@ Unified interface for Go/PHP development, multi-repo management, and deployment.
 | [pkg](pkg/) | Package management |
 | [vm](vm/) | LinuxKit VM management |
 | [docs](docs/) | Documentation management |
-| [setup](setup/) | Clone repos |
+| [setup](setup/) | Clone repos or setup repository |
 | [doctor](doctor/) | Check environment |
 
 ## Installation

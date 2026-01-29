@@ -2,53 +2,46 @@
 
 package cmd
 
-import "github.com/leaanthony/clir"
+import (
+	"github.com/host-uk/core/cmd/core/cmd/ai"
+	"github.com/host-uk/core/cmd/core/cmd/build"
+	"github.com/host-uk/core/cmd/core/cmd/ci"
+	"github.com/host-uk/core/cmd/core/cmd/dev"
+	"github.com/host-uk/core/cmd/core/cmd/docs"
+	"github.com/host-uk/core/cmd/core/cmd/doctor"
+	gocmd "github.com/host-uk/core/cmd/core/cmd/go"
+	"github.com/host-uk/core/cmd/core/cmd/php"
+	"github.com/host-uk/core/cmd/core/cmd/pkg"
+	"github.com/host-uk/core/cmd/core/cmd/sdk"
+	"github.com/host-uk/core/cmd/core/cmd/setup"
+	testcmd "github.com/host-uk/core/cmd/core/cmd/test"
+	"github.com/host-uk/core/cmd/core/cmd/vm"
+	"github.com/leaanthony/clir"
+)
 
 // registerCommands adds all commands for the full development binary.
 // Build with: go build (default) or go build -tags dev
 func registerCommands(app *clir.Cli) {
-	// Dev workflow commands (multi-repo git operations)
-	devCmd := app.NewSubCommand("dev", "Multi-repo development workflow")
-	devCmd.LongDescription("Multi-repo git operations and GitHub integration.\n\n" +
-		"Commands:\n" +
-		"  work      Multi-repo status, commit, push workflow\n" +
-		"  health    Quick health check across repos\n" +
-		"  commit    Claude-assisted commits\n" +
-		"  push      Push repos with unpushed commits\n" +
-		"  pull      Pull repos that are behind\n" +
-		"  issues    List open issues across repos\n" +
-		"  reviews   List PRs needing review\n" +
-		"  ci        Check CI status\n" +
-		"  impact    Show dependency impact")
+	// Dev workflow commands
+	dev.AddCommands(app)
 
-	AddWorkCommand(devCmd)
-	AddHealthCommand(devCmd)
-	AddCommitCommand(devCmd)
-	AddPushCommand(devCmd)
-	AddPullCommand(devCmd)
-	AddIssuesCommand(devCmd)
-	AddReviewsCommand(devCmd)
-	AddCICommand(devCmd)
-	AddImpactCommand(devCmd)
-	AddAPICommands(devCmd)
-	AddSyncCommand(devCmd)
-	AddAgenticCommands(devCmd)
-	AddDevCommand(devCmd)
+	// AI/Agent commands
+	ai.AddCommands(app)
 
 	// Language-specific development tools
-	AddGoCommands(app)
-	AddPHPCommands(app)
+	gocmd.AddCommands(app)
+	php.AddCommands(app)
 
 	// CI/Release commands (also available in ci build)
-	AddBuildCommand(app)
-	AddCIReleaseCommand(app)
-	AddSDKCommand(app)
+	build.AddCommands(app)
+	ci.AddCommands(app)
+	sdk.AddCommands(app)
 
 	// Package/environment management (dev only)
-	AddPkgCommands(app)
-	AddContainerCommands(app)
-	AddDocsCommand(app)
-	AddSetupCommand(app)
-	AddDoctorCommand(app)
-	AddTestCommand(app)
+	pkg.AddCommands(app)
+	vm.AddCommands(app)
+	docs.AddCommands(app)
+	setup.AddCommands(app)
+	doctor.AddCommands(app)
+	testcmd.AddCommands(app)
 }
