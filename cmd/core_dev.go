@@ -1,5 +1,24 @@
 //go:build !ci
 
+// core_dev.go registers commands for the full development binary.
+//
+// Build with: go build (default)
+//
+// This is the default build variant with all development tools:
+//   - dev: Multi-repo git workflows (commit, push, pull, sync)
+//   - ai: AI agent task management
+//   - go: Go module and build tools
+//   - php: Laravel/Composer development tools
+//   - build: Cross-platform compilation
+//   - ci: Release publishing
+//   - sdk: API compatibility checks
+//   - pkg: Package management
+//   - vm: LinuxKit VM management
+//   - docs: Documentation generation
+//   - setup: Repository cloning and setup
+//   - doctor: Environment health checks
+//   - test: Test runner with coverage
+
 package cmd
 
 import (
@@ -19,25 +38,24 @@ import (
 	"github.com/leaanthony/clir"
 )
 
-// registerCommands adds all commands for the full development binary.
-// Build with: go build (default) or go build -tags dev
+// registerCommands adds all development commands.
 func registerCommands(app *clir.Cli) {
-	// Dev workflow commands
+	// Multi-repo workflow
 	dev.AddCommands(app)
 
-	// AI/Agent commands
+	// AI agent tools
 	ai.AddCommands(app)
 
-	// Language-specific development tools
+	// Language tooling
 	gocmd.AddCommands(app)
 	php.AddCommands(app)
 
-	// CI/Release commands (also available in ci build)
+	// Build and release
 	build.AddCommands(app)
 	ci.AddCommands(app)
 	sdk.AddCommands(app)
 
-	// Package/environment management (dev only)
+	// Environment management
 	pkg.AddCommands(app)
 	vm.AddCommands(app)
 	docs.AddCommands(app)

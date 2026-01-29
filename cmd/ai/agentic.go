@@ -1,4 +1,9 @@
-// Package ai provides AI agent tools and task management commands.
+// agentic.go implements task management commands for the core-agentic service.
+//
+// The agentic service provides a task queue for AI-assisted development.
+// Tasks can be listed, claimed, updated, and completed through these commands.
+// Git integration allows automatic commits and PR creation with task references.
+
 package ai
 
 import (

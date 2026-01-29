@@ -1,3 +1,30 @@
+// Package php provides Laravel/PHP development and deployment commands.
+//
+// Development Commands:
+//   - dev: Start Laravel environment (FrankenPHP, Vite, Horizon, Reverb, Redis)
+//   - logs: Stream unified service logs
+//   - stop: Stop all running services
+//   - status: Show service status
+//   - ssl: Setup SSL certificates with mkcert
+//
+// Build Commands:
+//   - build: Build Docker or LinuxKit image
+//   - serve: Run production container
+//   - shell: Open shell in running container
+//
+// Code Quality:
+//   - test: Run PHPUnit/Pest tests
+//   - fmt: Format code with Laravel Pint
+//   - analyse: Run PHPStan/Larastan static analysis
+//
+// Package Management:
+//   - packages link/unlink/update/list: Manage local Composer packages
+//
+// Deployment (Coolify):
+//   - deploy: Deploy to Coolify
+//   - deploy:status: Check deployment status
+//   - deploy:rollback: Rollback deployment
+//   - deploy:list: List recent deployments
 package php
 
 import "github.com/leaanthony/clir"

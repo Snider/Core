@@ -1,20 +1,34 @@
-// Package ai provides AI agent tools and task management commands.
+// Package ai provides AI agent task management and Claude Code integration.
+//
+// Commands:
+//   - tasks: List tasks from the agentic service
+//   - task: View, claim, or auto-select tasks
+//   - task:update: Update task status and progress
+//   - task:complete: Mark tasks as completed or failed
+//   - task:commit: Create commits with task references
+//   - task:pr: Create pull requests linked to tasks
+//   - claude: Claude Code CLI integration (planned)
 package ai
 
 import "github.com/leaanthony/clir"
 
 // AddCommands registers the 'ai' command and all subcommands.
 func AddCommands(app *clir.Cli) {
-	aiCmd := app.NewSubCommand("ai", "AI agent tools")
-	aiCmd.LongDescription("AI and agent-related tools for development.\n\n" +
+	aiCmd := app.NewSubCommand("ai", "AI agent task management")
+	aiCmd.LongDescription("Manage tasks from the core-agentic service for AI-assisted development.\n\n" +
 		"Commands:\n" +
-		"  claude    Claude Code integration\n" +
-		"  tasks     List available tasks\n" +
-		"  task      Show/claim a specific task\n\n" +
-		"Task workflow:\n" +
-		"  core ai tasks              # List pending tasks\n" +
-		"  core ai task <id>          # View and claim a task\n" +
-		"  core ai task:complete <id> # Mark task complete")
+		"  tasks          List tasks (filterable by status, priority, labels)\n" +
+		"  task           View task details or auto-select highest priority\n" +
+		"  task:update    Update task status or progress\n" +
+		"  task:complete  Mark task as completed or failed\n" +
+		"  task:commit    Create git commit with task reference\n" +
+		"  task:pr        Create GitHub PR linked to task\n" +
+		"  claude         Claude Code integration\n\n" +
+		"Workflow:\n" +
+		"  core ai tasks                      # List pending tasks\n" +
+		"  core ai task --auto --claim        # Auto-select and claim a task\n" +
+		"  core ai task:commit <id> -m 'msg'  # Commit with task reference\n" +
+		"  core ai task:complete <id>         # Mark task done")
 
 	// Add Claude command
 	addClaudeCommand(aiCmd)
