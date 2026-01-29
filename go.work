@@ -12,6 +12,7 @@ use (
 	./pkg/cache
 	./pkg/config
 	./pkg/core
+	./pkg/devops
 	./pkg/display
 	./pkg/docs
 	./pkg/git
