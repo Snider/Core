@@ -27,14 +27,14 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Build for targets | `core build --targets linux/amd64,darwin/arm64` | Cross-compile |
 | Release | `core release` | Build + publish to GitHub/npm/Homebrew |
 | Check environment | `core doctor` | Verify tools installed |
-| Multi-repo status | `core health` | Quick summary across repos |
-| Multi-repo workflow | `core work` | Status + commit + push |
-| Commit dirty repos | `core commit` | Claude-assisted commit messages |
-| Push repos | `core push` | Push repos with unpushed commits |
-| Pull repos | `core pull` | Pull repos that are behind |
-| List issues | `core issues` | Open issues across repos |
-| List PRs | `core reviews` | PRs needing review |
-| Check CI | `core ci` | GitHub Actions status |
+| Multi-repo status | `core dev health` | Quick summary across repos |
+| Multi-repo workflow | `core dev work` | Status + commit + push |
+| Commit dirty repos | `core dev commit` | Claude-assisted commit messages |
+| Push repos | `core dev push` | Push repos with unpushed commits |
+| Pull repos | `core dev pull` | Pull repos that are behind |
+| List issues | `core dev issues` | Open issues across repos |
+| List PRs | `core dev reviews` | PRs needing review |
+| Check CI | `core dev ci` | GitHub Actions status |
 | Generate SDK | `core sdk` | Generate API clients from OpenAPI |
 | Sync docs | `core docs sync` | Sync docs across repos |
 | Search packages | `core pkg search <query>` | GitHub search for core-* repos |
@@ -71,30 +71,30 @@ When working across host-uk repositories:
 
 ```bash
 # Quick health check
-core health
+core dev health
 # Output: "18 repos │ clean │ synced"
 
 # Full status table
-core work --status
+core dev work --status
 
 # Commit + push workflow
-core work
+core dev work
 
 # Commit dirty repos with Claude
-core commit
+core dev commit
 
 # Push repos with unpushed commits
-core push
+core dev push
 
 # Pull repos that are behind
-core pull
+core dev pull
 ```
 
 ### Dependency Analysis
 
 ```bash
 # What depends on core-php?
-core impact core-php
+core dev impact core-php
 ```
 
 ## GitHub Integration
@@ -103,16 +103,16 @@ Requires `gh` CLI authenticated.
 
 ```bash
 # Open issues across all repos
-core issues
+core dev issues
 
 # Include closed issues
-core issues --all
+core dev issues --all
 
 # PRs needing review
-core reviews
+core dev reviews
 
 # CI status
-core ci
+core dev ci
 ```
 
 ## SDK Generation
@@ -487,15 +487,15 @@ PHP/Laravel project?
   └── Deploy: core php deploy [--staging]
 
 Working across multiple repos?
-  └── Quick check: core health
-  └── Full workflow: core work
-  └── Just commit: core commit
-  └── Just push: core push
+  └── Quick check: core dev health
+  └── Full workflow: core dev work
+  └── Just commit: core dev commit
+  └── Just push: core dev push
 
 Need GitHub info?
-  └── Issues: core issues
-  └── PRs: core reviews
-  └── CI: core ci
+  └── Issues: core dev issues
+  └── PRs: core dev reviews
+  └── CI: core dev ci
 
 Setting up environment?
   └── Check: core doctor
@@ -519,9 +519,9 @@ Managing packages?
 | `php artisan serve` | `core php dev` | Missing Vite, Horizon, Reverb, Redis |
 | `./vendor/bin/pest` | `core php test` | Inconsistent invocation |
 | `./vendor/bin/pint` | `core php fmt --fix` | Consistent interface |
-| `git status` in each repo | `core health` | Slow, manual |
-| `gh pr list` per repo | `core reviews` | Aggregated view |
-| Manual commits across repos | `core commit` | Consistent messages, Co-Authored-By |
+| `git status` in each repo | `core dev health` | Slow, manual |
+| `gh pr list` per repo | `core dev reviews` | Aggregated view |
+| Manual commits across repos | `core dev commit` | Consistent messages, Co-Authored-By |
 | Manual Coolify deploys | `core php deploy` | Tracked, scriptable |
 | Raw `linuxkit run` | `core vm run` | Unified interface, templates |
 | `gh repo clone` | `core pkg install` | Auto-detects org, adds to registry |

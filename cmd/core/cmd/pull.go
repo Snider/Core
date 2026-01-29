@@ -12,7 +12,7 @@ import (
 )
 
 // AddPullCommand adds the 'pull' command to the given parent command.
-func AddPullCommand(parent *clir.Cli) {
+func AddPullCommand(parent *clir.Command) {
 	var registryPath string
 	var all bool
 

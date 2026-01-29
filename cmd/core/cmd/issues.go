@@ -61,7 +61,7 @@ type GitHubIssue struct {
 }
 
 // AddIssuesCommand adds the 'issues' command to the given parent command.
-func AddIssuesCommand(parent *clir.Cli) {
+func AddIssuesCommand(parent *clir.Command) {
 	var registryPath string
 	var limit int
 	var assignee string

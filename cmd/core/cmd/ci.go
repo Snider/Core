@@ -44,7 +44,7 @@ type WorkflowRun struct {
 }
 
 // AddCICommand adds the 'ci' command to the given parent command.
-func AddCICommand(parent *clir.Cli) {
+func AddCICommand(parent *clir.Command) {
 	var registryPath string
 	var branch string
 	var failedOnly bool

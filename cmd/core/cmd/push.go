@@ -11,7 +11,7 @@ import (
 )
 
 // AddPushCommand adds the 'push' command to the given parent command.
-func AddPushCommand(parent *clir.Cli) {
+func AddPushCommand(parent *clir.Command) {
 	var registryPath string
 	var force bool
 

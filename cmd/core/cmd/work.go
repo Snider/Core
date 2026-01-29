@@ -55,7 +55,7 @@ var (
 )
 
 // AddWorkCommand adds the 'work' command to the given parent command.
-func AddWorkCommand(parent *clir.Cli) {
+func AddWorkCommand(parent *clir.Command) {
 	var statusOnly bool
 	var autoCommit bool
 	var registryPath string

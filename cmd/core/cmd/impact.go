@@ -23,7 +23,7 @@ var (
 )
 
 // AddImpactCommand adds the 'impact' command to the given parent command.
-func AddImpactCommand(parent *clir.Cli) {
+func AddImpactCommand(parent *clir.Command) {
 	var registryPath string
 
 	impactCmd := parent.NewSubCommand("impact", "Show impact of changing a repo")

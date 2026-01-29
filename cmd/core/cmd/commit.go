@@ -13,7 +13,7 @@ import (
 )
 
 // AddCommitCommand adds the 'commit' command to the given parent command.
-func AddCommitCommand(parent *clir.Cli) {
+func AddCommitCommand(parent *clir.Command) {
 	var registryPath string
 	var all bool
 

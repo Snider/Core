@@ -34,7 +34,7 @@ var (
 )
 
 // AddHealthCommand adds the 'health' command to the given parent command.
-func AddHealthCommand(parent *clir.Cli) {
+func AddHealthCommand(parent *clir.Command) {
 	var registryPath string
 	var verbose bool
 

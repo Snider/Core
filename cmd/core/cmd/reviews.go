@@ -66,7 +66,7 @@ type GitHubPR struct {
 }
 
 // AddReviewsCommand adds the 'reviews' command to the given parent command.
-func AddReviewsCommand(parent *clir.Cli) {
+func AddReviewsCommand(parent *clir.Command) {
 	var registryPath string
 	var author string
 	var showAll bool
