@@ -14,7 +14,10 @@ import (
 type LinuxKitConfig struct {
 	// Config is the path to the LinuxKit YAML configuration file.
 	Config string `yaml:"config"`
-	// Formats are the output formats to build (iso, raw, qcow2, vmdk).
+	// Formats are the output formats to build.
+	// Supported: iso, iso-bios, iso-efi, raw, raw-bios, raw-efi,
+	//            qcow2, qcow2-bios, qcow2-efi, vmdk, vhd, gcp, aws,
+	//            docker (tarball for `docker load`), tar, kernel+initrd
 	Formats []string `yaml:"formats"`
 	// Platforms are the target platforms (linux/amd64, linux/arm64).
 	Platforms []string `yaml:"platforms"`
@@ -149,6 +152,9 @@ func (p *LinuxKitPublisher) dryRunPublish(release *Release, cfg LinuxKitConfig, 
 			outputName := fmt.Sprintf("%s-%s", baseName, arch)
 			artifactPath := p.getArtifactPath(outputDir, outputName, format)
 			fmt.Printf("  - %s\n", filepath.Base(artifactPath))
+			if format == "docker" {
+				fmt.Printf("    Usage: docker load < %s\n", filepath.Base(artifactPath))
+			}
 		}
 	}
 
@@ -208,6 +214,11 @@ func (p *LinuxKitPublisher) executePublish(ctx context.Context, release *Release
 		if err := UploadArtifact(ctx, repo, release.Version, artifactPath); err != nil {
 			return fmt.Errorf("linuxkit.Publish: failed to upload %s: %w", filepath.Base(artifactPath), err)
 		}
+
+		// Print helpful usage info for docker format
+		if strings.HasSuffix(artifactPath, ".docker.tar") {
+			fmt.Printf("  Load with: docker load < %s\n", filepath.Base(artifactPath))
+		}
 	}
 
 	return nil
@@ -253,11 +264,11 @@ func (p *LinuxKitPublisher) getArtifactPath(outputDir, outputName, format string
 // getFormatExtension returns the file extension for a LinuxKit output format.
 func (p *LinuxKitPublisher) getFormatExtension(format string) string {
 	switch format {
-	case "iso":
+	case "iso", "iso-bios", "iso-efi":
 		return ".iso"
-	case "raw":
+	case "raw", "raw-bios", "raw-efi":
 		return ".raw"
-	case "qcow2":
+	case "qcow2", "qcow2-bios", "qcow2-efi":
 		return ".qcow2"
 	case "vmdk":
 		return ".vmdk"
@@ -267,6 +278,13 @@ func (p *LinuxKitPublisher) getFormatExtension(format string) string {
 		return ".img.tar.gz"
 	case "aws":
 		return ".raw"
+	case "docker":
+		// Docker format outputs a tarball that can be loaded with `docker load`
+		return ".docker.tar"
+	case "tar":
+		return ".tar"
+	case "kernel+initrd":
+		return "-initrd.img"
 	default:
 		return "." + format
 	}
