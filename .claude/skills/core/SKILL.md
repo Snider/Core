@@ -33,6 +33,10 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Check CI | `core ci` | GitHub Actions status |
 | Generate SDK | `core sdk` | Generate API clients from OpenAPI |
 | Sync docs | `core docs sync` | Sync docs across repos |
+| Search packages | `core pkg search <query>` | GitHub search for core-* repos |
+| Install package | `core pkg install <name>` | Clone and register package |
+| Update packages | `core pkg update` | Pull latest for all packages |
+| Run VM | `core vm run <image>` | Run LinuxKit VM |
 
 ## Testing
 
@@ -186,12 +190,32 @@ core doctor
 
 # Clone all repos from registry
 core setup
+```
 
-# Search GitHub repos
-core search <query>
+## Package Management
 
-# Clone a specific repo
-core install <repo>
+Manage host-uk/core-* packages and repositories.
+
+```bash
+# Search GitHub for packages
+core pkg search <query>
+core pkg search core-           # Find all core-* packages
+core pkg search --org host-uk   # Search specific org
+
+# Install/clone a package
+core pkg install core-api
+core pkg install host-uk/core-api  # Full name
+
+# List installed packages
+core pkg list
+core pkg list --format json     # JSON output
+
+# Update installed packages
+core pkg update                 # Update all
+core pkg update core-api        # Update specific package
+
+# Check for outdated packages
+core pkg outdated
 ```
 
 ## PHP Development
@@ -418,6 +442,12 @@ Need GitHub info?
 Setting up environment?
   └── Check: core doctor
   └── Clone all: core setup
+
+Managing packages?
+  └── Search: core pkg search <query>
+  └── Install: core pkg install <name>
+  └── Update: core pkg update
+  └── Check outdated: core pkg outdated
 ```
 
 ## Common Mistakes
@@ -434,6 +464,8 @@ Setting up environment?
 | Manual commits across repos | `core commit` | Consistent messages, Co-Authored-By |
 | Manual Coolify deploys | `core php deploy` | Tracked, scriptable |
 | Raw `linuxkit run` | `core vm run` | Unified interface, templates |
+| `gh repo clone` | `core pkg install` | Auto-detects org, adds to registry |
+| Manual GitHub search | `core pkg search` | Filtered to org, formatted output |
 
 ## Configuration
 
