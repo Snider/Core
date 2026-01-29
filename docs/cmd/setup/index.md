@@ -89,6 +89,6 @@ core ci
 
 ## See Also
 
-- [work commands](work.md) - Multi-repo operations
-- [search command](search.md) - Find repos on GitHub
-- [install command](search.md) - Clone individual repos
+- [work commands](../dev/work/) - Multi-repo operations
+- [search command](../pkg/search/) - Find repos on GitHub
+- [install command](../pkg/search/) - Clone individual repos

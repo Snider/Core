@@ -108,5 +108,5 @@ core doctor
 
 ## See Also
 
-- [setup command](setup.md) - Clone all repos from registry
-- [doctor command](doctor.md) - Check environment
+- [setup command](../../setup/) - Clone all repos from registry
+- [doctor command](../../doctor/) - Check environment

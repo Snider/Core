@@ -71,5 +71,5 @@ All checks passed!
 
 ## See Also
 
-- [setup command](setup.md) - Clone repos from registry
-- [dev install](dev.md) - Install development environment
+- [setup command](../setup/) - Clone repos from registry
+- [dev](../dev/) - Development environment

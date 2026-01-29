@@ -107,4 +107,4 @@ The synced docs are used to build https://core.help:
 
 ## See Also
 
-- [Configuration](../configuration.md) - Project configuration
+- [Configuration](../../configuration.md) - Project configuration

@@ -22,4 +22,4 @@ publishers:
   - type: github
 ```
 
-See [config.md](../config.md) for full configuration options.
+See [configuration.md](../../../configuration.md) for full configuration options.

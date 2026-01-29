@@ -113,5 +113,5 @@ core run --template myserver
 
 ## See Also
 
-- [run command](run.md) - Run LinuxKit images
-- [build command](build.md) - Build LinuxKit images
+- [vm command](../) - Run LinuxKit images
+- [build command](../../build/) - Build LinuxKit images

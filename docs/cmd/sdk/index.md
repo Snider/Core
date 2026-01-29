@@ -115,16 +115,16 @@ Generate SDKs as part of the release process:
 
 ```bash
 # Generate SDKs for release
-core release --target sdk
+core ci --target sdk
 
 # With explicit version
-core release --target sdk --version v1.2.3
+core ci --target sdk --version v1.2.3
 
-# Preview what would be generated
-core release --target sdk --dry-run
+# Preview what would be generated (default behaviour)
+core ci --target sdk
 ```
 
-See [release command](release.md) for full details.
+See [ci command](../ci/) for full release details.
 
 ## Configuration
 

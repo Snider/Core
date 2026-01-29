@@ -25,4 +25,4 @@ Generates markdown changelog from git commits since last tag:
 
 ## Configuration
 
-See [config.md](../config.md) for changelog configuration options.
+See [configuration.md](../../../configuration.md) for changelog configuration options.

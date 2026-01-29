@@ -2,13 +2,86 @@
 
 LinuxKit VM management.
 
-## Subcommands
+## Usage
+
+```bash
+core vm <command> [flags]
+```
+
+## Commands
 
 | Command | Description |
 |---------|-------------|
-| [run](run/) | Run VM |
-| [ps](ps/) | List VMs |
-| [stop](stop/) | Stop VM |
-| [logs](logs/) | View logs |
-| [exec](exec/) | Execute command |
-| [templates](templates/) | Manage templates |
+| `run` | Run a LinuxKit image |
+| `ps` | List running VMs |
+| `stop` | Stop a VM |
+| `logs` | View VM logs |
+| `exec` | Execute command in VM |
+| [templates](templates/) | Manage LinuxKit templates |
+
+## vm run
+
+Run a LinuxKit image.
+
+```bash
+core vm run <image> [flags]
+core vm run --template <name> [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--template` | Use a template instead of image file |
+| `--var` | Set template variable (KEY=value) |
+| `--memory` | Memory in MB (default: 4096) |
+| `--cpus` | CPU count (default: 4) |
+| `-d` | Run in background |
+
+## vm ps
+
+List running VMs.
+
+```bash
+core vm ps [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-a` | Show all (including stopped) |
+
+## vm stop
+
+Stop a running VM.
+
+```bash
+core vm stop <id>
+```
+
+## vm logs
+
+View VM logs.
+
+```bash
+core vm logs <id> [flags]
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-f` | Follow log output |
+
+## vm exec
+
+Execute a command in a running VM.
+
+```bash
+core vm exec <id> <command>
+```
+
+## See Also
+
+- [build command](../build/) - Build LinuxKit images

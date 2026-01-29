@@ -156,5 +156,5 @@ Use `core setup` to clone all repos from the registry.
 
 ## See Also
 
-- [setup command](setup.md) - Clone repos from registry
-- [search command](search.md) - Find and install repos
+- [setup command](../../setup/) - Clone repos from registry
+- [search command](../../pkg/search/) - Find and install repos
