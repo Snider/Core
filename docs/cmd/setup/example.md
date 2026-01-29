@@ -5,7 +5,7 @@
 core setup
 
 # Specific directory
-core setup --dir ~/Code/host-uk
+core setup --path ~/Code/host-uk
 
 # Use SSH
 core setup --ssh
