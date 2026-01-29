@@ -14,6 +14,7 @@ core vm templates [command]
 |---------|-------------|
 | `list` | List available templates |
 | `show` | Show template details |
+| `vars` | Show template variables |
 
 ## templates list
 

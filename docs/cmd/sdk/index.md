@@ -111,20 +111,17 @@ core sdk diff --base old-api.yaml --spec new-api.yaml
 
 ## Release Integration
 
-Generate SDKs as part of the release process:
+SDKs can be generated before publishing a release:
 
 ```bash
-# Generate SDKs for release
-core ci --target sdk
+# Generate all configured SDKs
+core sdk generate
 
-# With explicit version
-core ci --target sdk --version v1.2.3
-
-# Preview what would be generated (default behaviour)
-core ci --target sdk
+# Then publish the release
+core ci --were-go-for-launch
 ```
 
-See [ci command](../ci/) for full release details.
+See [ci command](../ci/) for release details.
 
 ## Configuration
 

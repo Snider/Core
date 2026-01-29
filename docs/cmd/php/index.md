@@ -12,6 +12,7 @@ Laravel/PHP development environment with FrankenPHP, Vite, Horizon, Reverb, and 
 | `core php analyse` | Static analysis with PHPStan |
 | `core php build` | Build production container |
 | `core php deploy` | Deploy to Coolify |
+| `core php ssl` | Setup SSL certificates |
 
 ## Development Environment
 
