@@ -26,7 +26,8 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Build project | `core build` | Auto-detects project type |
 | Build for targets | `core build --targets linux/amd64,darwin/arm64` | Cross-compile |
 | Build SDK | `core build sdk` | Generate API clients from OpenAPI |
-| Publish release | `core ci` | Publish pre-built artifacts |
+| Preview release | `core ci` | Dry-run publish (safe default) |
+| Publish release | `core ci --were-go-for-launch` | Actually publish artifacts |
 | Check environment | `core doctor` | Verify tools installed |
 | Multi-repo status | `core dev health` | Quick summary across repos |
 | Multi-repo workflow | `core dev work` | Status + commit + push |
@@ -76,14 +77,16 @@ Build and publish are **separated** to prevent accidental releases:
 core build
 core build sdk
 
-# Step 2: Publish to configured targets (requires pre-built artifacts)
-core ci                    # Publish what's in dist/
-core ci --dry-run          # Preview what would be published
-core ci --draft            # Create as draft release
-core ci --prerelease       # Mark as prerelease
+# Step 2: Preview publish (default is dry-run)
+core ci                          # Dry-run: shows what would be published
+
+# Step 3: Actually publish (explicit flag required)
+core ci --were-go-for-launch     # Actually publish to targets
+core ci --were-go-for-launch --draft       # Publish as draft
+core ci --were-go-for-launch --prerelease  # Publish as prerelease
 ```
 
-**Why separate?** Running `core ci` without first building will fail safely - no accidental publishes.
+**Why safe by default?** `core ci` always does a dry-run unless you explicitly say `--were-go-for-launch`.
 
 ```bash
 # Release workflow utilities
@@ -521,7 +524,8 @@ Go project?
   └── Tidy modules: core go mod tidy
   └── Build: core build [--targets <os/arch>]
   └── Build SDK: core build sdk
-  └── Publish: core ci [--dry-run]
+  └── Preview publish: core ci
+  └── Publish: core ci --were-go-for-launch
 
 PHP/Laravel project?
   └── Start dev: core php dev [--https]

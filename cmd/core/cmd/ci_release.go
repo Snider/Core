@@ -36,23 +36,26 @@ var (
 
 // AddCIReleaseCommand adds the release command and its subcommands.
 func AddCIReleaseCommand(app *clir.Cli) {
-	releaseCmd := app.NewSubCommand("ci", "Build and publish releases")
-	releaseCmd.LongDescription("Builds release artifacts, generates changelog, and publishes to GitHub.\n" +
-		"Configuration can be provided via .core/release.yaml or command-line flags.")
+	releaseCmd := app.NewSubCommand("ci", "Publish releases (dry-run by default)")
+	releaseCmd.LongDescription("Publishes pre-built artifacts from dist/ to configured targets.\n" +
+		"Run 'core build' first to create artifacts.\n\n" +
+		"SAFE BY DEFAULT: Runs in dry-run mode unless --were-go-for-launch is specified.\n\n" +
+		"Configuration: .core/release.yaml")
 
 	// Flags for the main release command
-	var dryRun bool
+	var goForLaunch bool
 	var version string
 	var draft bool
 	var prerelease bool
 
-	releaseCmd.BoolFlag("dry-run", "Preview release without publishing", &dryRun)
+	releaseCmd.BoolFlag("were-go-for-launch", "Actually publish (default is dry-run for safety)", &goForLaunch)
 	releaseCmd.StringFlag("version", "Version to release (e.g., v1.2.3)", &version)
 	releaseCmd.BoolFlag("draft", "Create release as a draft", &draft)
 	releaseCmd.BoolFlag("prerelease", "Mark release as a prerelease", &prerelease)
 
-	// Default action for `core ci` - publish only (expects artifacts in dist/)
+	// Default action for `core ci` - dry-run by default for safety
 	releaseCmd.Action(func() error {
+		dryRun := !goForLaunch
 		return runCIPublish(dryRun, version, draft, prerelease)
 	})
 
@@ -118,7 +121,9 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Print header
 	fmt.Printf("%s Publishing release\n", releaseHeaderStyle.Render("CI:"))
 	if dryRun {
-		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run mode)"))
+		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run) use --were-go-for-launch to publish"))
+	} else {
+		fmt.Printf("  %s\n", releaseSuccessStyle.Render("🚀 GO FOR LAUNCH"))
 	}
 	fmt.Println()
 
