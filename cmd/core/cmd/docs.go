@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,14 +31,14 @@ type RepoDocInfo struct {
 	Readme    string
 	ClaudeMd  string
 	Changelog string
-	DocsDir   []string // Files in docs/ directory
+	DocsFiles []string // All files in docs/ directory (recursive)
 }
 
 // AddDocsCommand adds the 'docs' command to the given parent command.
 func AddDocsCommand(parent *clir.Cli) {
 	docsCmd := parent.NewSubCommand("docs", "Documentation management")
 	docsCmd.LongDescription("Manage documentation across all repos.\n" +
-		"Scan for docs, check coverage, and sync to core.help.")
+		"Scan for docs, check coverage, and sync to core-php/docs/packages/.")
 
 	// Add subcommands
 	addDocsSyncCommand(docsCmd)
@@ -49,15 +50,12 @@ func addDocsSyncCommand(parent *clir.Command) {
 	var dryRun bool
 	var outputDir string
 
-	syncCmd := parent.NewSubCommand("sync", "Sync documentation to output directory")
+	syncCmd := parent.NewSubCommand("sync", "Sync documentation to core-php/docs/packages/")
 	syncCmd.StringFlag("registry", "Path to repos.yaml", &registryPath)
 	syncCmd.BoolFlag("dry-run", "Show what would be synced without copying", &dryRun)
-	syncCmd.StringFlag("output", "Output directory (default: ./docs-build)", &outputDir)
+	syncCmd.StringFlag("output", "Output directory (default: core-php/docs/packages)", &outputDir)
 
 	syncCmd.Action(func() error {
-		if outputDir == "" {
-			outputDir = "./docs-build"
-		}
 		return runDocsSync(registryPath, outputDir, dryRun)
 	})
 }
@@ -73,37 +71,52 @@ func addDocsListCommand(parent *clir.Command) {
 	})
 }
 
+// packageOutputName maps repo name to output folder name
+func packageOutputName(repoName string) string {
+	// core -> go (the Go framework)
+	if repoName == "core" {
+		return "go"
+	}
+	// core-admin -> admin, core-api -> api, etc.
+	if strings.HasPrefix(repoName, "core-") {
+		return strings.TrimPrefix(repoName, "core-")
+	}
+	return repoName
+}
+
+// shouldSyncRepo returns true if this repo should be synced
+func shouldSyncRepo(repoName string) bool {
+	// Skip core-php (it's the destination)
+	if repoName == "core-php" {
+		return false
+	}
+	// Skip template
+	if repoName == "core-template" {
+		return false
+	}
+	return true
+}
+
 func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	// Find or use provided registry
-	var reg *repos.Registry
-	var err error
+	reg, basePath, err := loadRegistry(registryPath)
+	if err != nil {
+		return err
+	}
 
-	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
-		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
-		}
-	} else {
-		registryPath, err = repos.FindRegistry()
-		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
-			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
-			}
-		} else {
-			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
-			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
-			}
-		}
+	// Default output to core-php/docs/packages relative to registry
+	if outputDir == "" {
+		outputDir = filepath.Join(basePath, "core-php", "docs", "packages")
 	}
 
 	// Scan all repos for docs
 	var docsInfo []RepoDocInfo
 	for _, repo := range reg.List() {
+		if !shouldSyncRepo(repo.Name) {
+			continue
+		}
 		info := scanRepoDocs(repo)
-		if info.HasDocs {
+		if info.HasDocs && len(info.DocsFiles) > 0 {
 			docsInfo = append(docsInfo, info)
 		}
 	}
@@ -113,30 +126,25 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		return nil
 	}
 
-	fmt.Printf("\n%s %d repo(s) with documentation\n\n", dimStyle.Render("Found"), len(docsInfo))
+	fmt.Printf("\n%s %d repo(s) with docs/ directories\n\n", dimStyle.Render("Found"), len(docsInfo))
 
 	// Show what will be synced
 	var totalFiles int
 	for _, info := range docsInfo {
-		files := countDocFiles(info)
-		totalFiles += files
-		fmt.Printf("  %s %s\n", repoNameStyle.Render(info.Name), dimStyle.Render(fmt.Sprintf("(%d files)", files)))
+		totalFiles += len(info.DocsFiles)
+		outName := packageOutputName(info.Name)
+		fmt.Printf("  %s → %s %s\n",
+			repoNameStyle.Render(info.Name),
+			docsFileStyle.Render("packages/"+outName+"/"),
+			dimStyle.Render(fmt.Sprintf("(%d files)", len(info.DocsFiles))))
 
-		if info.Readme != "" {
-			fmt.Printf("    %s\n", docsFileStyle.Render("README.md"))
-		}
-		if info.ClaudeMd != "" {
-			fmt.Printf("    %s\n", docsFileStyle.Render("CLAUDE.md"))
-		}
-		if info.Changelog != "" {
-			fmt.Printf("    %s\n", docsFileStyle.Render("CHANGELOG.md"))
-		}
-		for _, f := range info.DocsDir {
-			fmt.Printf("    %s\n", docsFileStyle.Render("docs/"+f))
+		for _, f := range info.DocsFiles {
+			fmt.Printf("    %s\n", dimStyle.Render(f))
 		}
 	}
 
-	fmt.Printf("\n%s %d files from %d repos\n", dimStyle.Render("Total:"), totalFiles, len(docsInfo))
+	fmt.Printf("\n%s %d files from %d repos → %s\n",
+		dimStyle.Render("Total:"), totalFiles, len(docsInfo), outputDir)
 
 	if dryRun {
 		fmt.Printf("\n%s\n", dimStyle.Render("Dry run - no files copied"))
@@ -145,76 +153,50 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 
 	// Confirm
 	fmt.Println()
-	if !confirm(fmt.Sprintf("Sync to %s?", outputDir)) {
+	if !confirm("Sync?") {
 		fmt.Println("Aborted.")
 		return nil
-	}
-
-	// Create output directory
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	// Sync docs
 	fmt.Println()
 	var synced int
 	for _, info := range docsInfo {
-		repoOutDir := filepath.Join(outputDir, "packages", info.Name)
+		outName := packageOutputName(info.Name)
+		repoOutDir := filepath.Join(outputDir, outName)
+
+		// Clear existing directory
+		os.RemoveAll(repoOutDir)
+
 		if err := os.MkdirAll(repoOutDir, 0755); err != nil {
 			fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), info.Name, err)
 			continue
 		}
 
-		// Copy files
-		if info.Readme != "" {
-			copyFile(info.Readme, filepath.Join(repoOutDir, "index.md"))
-		}
-		if info.ClaudeMd != "" {
-			copyFile(info.ClaudeMd, filepath.Join(repoOutDir, "claude.md"))
-		}
-		if info.Changelog != "" {
-			copyFile(info.Changelog, filepath.Join(repoOutDir, "changelog.md"))
-		}
-		for _, f := range info.DocsDir {
-			src := filepath.Join(info.Path, "docs", f)
+		// Copy all docs files
+		docsDir := filepath.Join(info.Path, "docs")
+		for _, f := range info.DocsFiles {
+			src := filepath.Join(docsDir, f)
 			dst := filepath.Join(repoOutDir, f)
 			os.MkdirAll(filepath.Dir(dst), 0755)
-			copyFile(src, dst)
+			if err := copyFile(src, dst); err != nil {
+				fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), f, err)
+			}
 		}
 
-		fmt.Printf("  %s %s\n", successStyle.Render("✓"), info.Name)
+		fmt.Printf("  %s %s → packages/%s/\n", successStyle.Render("✓"), info.Name, outName)
 		synced++
 	}
 
-	fmt.Printf("\n%s Synced %d repos to %s\n", successStyle.Render("Done:"), synced, outputDir)
+	fmt.Printf("\n%s Synced %d packages\n", successStyle.Render("Done:"), synced)
 
 	return nil
 }
 
 func runDocsList(registryPath string) error {
-	// Find or use provided registry
-	var reg *repos.Registry
-	var err error
-
-	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
-		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
-		}
-	} else {
-		registryPath, err = repos.FindRegistry()
-		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
-			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
-			}
-		} else {
-			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
-			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
-			}
-		}
+	reg, _, err := loadRegistry(registryPath)
+	if err != nil {
+		return err
 	}
 
 	fmt.Printf("\n%-20s  %-8s  %-8s  %-10s  %s\n",
@@ -246,8 +228,8 @@ func runDocsList(registryPath string) error {
 		}
 
 		docsDir := docsMissingStyle.Render("—")
-		if len(info.DocsDir) > 0 {
-			docsDir = docsFoundStyle.Render(fmt.Sprintf("%d files", len(info.DocsDir)))
+		if len(info.DocsFiles) > 0 {
+			docsDir = docsFoundStyle.Render(fmt.Sprintf("%d files", len(info.DocsFiles)))
 		}
 
 		fmt.Printf("%-20s  %-8s  %-8s  %-10s  %s\n",
@@ -273,6 +255,38 @@ func runDocsList(registryPath string) error {
 	)
 
 	return nil
+}
+
+func loadRegistry(registryPath string) (*repos.Registry, string, error) {
+	var reg *repos.Registry
+	var err error
+	var basePath string
+
+	if registryPath != "" {
+		reg, err = repos.LoadRegistry(registryPath)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to load registry: %w", err)
+		}
+		basePath = filepath.Dir(registryPath)
+	} else {
+		registryPath, err = repos.FindRegistry()
+		if err == nil {
+			reg, err = repos.LoadRegistry(registryPath)
+			if err != nil {
+				return nil, "", fmt.Errorf("failed to load registry: %w", err)
+			}
+			basePath = filepath.Dir(registryPath)
+		} else {
+			cwd, _ := os.Getwd()
+			reg, err = repos.ScanDirectory(cwd)
+			if err != nil {
+				return nil, "", fmt.Errorf("failed to scan directory: %w", err)
+			}
+			basePath = cwd
+		}
+	}
+
+	return reg, basePath, nil
 }
 
 func scanRepoDocs(repo *repos.Repo) RepoDocInfo {
@@ -302,32 +316,30 @@ func scanRepoDocs(repo *repos.Repo) RepoDocInfo {
 		info.HasDocs = true
 	}
 
-	// Check for docs/ directory
+	// Recursively scan docs/ directory for .md files
 	docsDir := filepath.Join(repo.Path, "docs")
-	if entries, err := os.ReadDir(docsDir); err == nil {
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".md") {
-				info.DocsDir = append(info.DocsDir, e.Name())
-				info.HasDocs = true
+	if _, err := os.Stat(docsDir); err == nil {
+		filepath.WalkDir(docsDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil
 			}
-		}
+			// Skip plans/ directory
+			if d.IsDir() && d.Name() == "plans" {
+				return filepath.SkipDir
+			}
+			// Skip non-markdown files
+			if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+				return nil
+			}
+			// Get relative path from docs/
+			relPath, _ := filepath.Rel(docsDir, path)
+			info.DocsFiles = append(info.DocsFiles, relPath)
+			info.HasDocs = true
+			return nil
+		})
 	}
 
 	return info
-}
-
-func countDocFiles(info RepoDocInfo) int {
-	count := len(info.DocsDir)
-	if info.Readme != "" {
-		count++
-	}
-	if info.ClaudeMd != "" {
-		count++
-	}
-	if info.Changelog != "" {
-		count++
-	}
-	return count
 }
 
 func copyFile(src, dst string) error {
