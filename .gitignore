@@ -1,8 +1,4 @@
 wails3
-build/
-!pkg/build
-!cmd/core-gui/build
-!docs/cmd/build
 .task
 vendor/
 .idea
