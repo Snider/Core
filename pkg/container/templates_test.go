@@ -383,3 +383,201 @@ func TestVariablePatternEdgeCases_Good(t *testing.T) {
 		})
 	}
 }
+
+func TestListTemplates_Good_WithUserTemplates(t *testing.T) {
+	// Create a workspace directory with user templates
+	tmpDir := t.TempDir()
+	coreDir := filepath.Join(tmpDir, ".core", "linuxkit")
+	err := os.MkdirAll(coreDir, 0755)
+	require.NoError(t, err)
+
+	// Create a user template
+	templateContent := `# Custom user template
+kernel:
+  image: linuxkit/kernel:6.6
+`
+	err = os.WriteFile(filepath.Join(coreDir, "user-custom.yml"), []byte(templateContent), 0644)
+	require.NoError(t, err)
+
+	// Change to the temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	err = os.Chdir(tmpDir)
+	require.NoError(t, err)
+	defer os.Chdir(oldWd)
+
+	templates := ListTemplates()
+
+	// Should have at least the builtin templates plus the user template
+	assert.GreaterOrEqual(t, len(templates), 3)
+
+	// Check that user template is included
+	found := false
+	for _, tmpl := range templates {
+		if tmpl.Name == "user-custom" {
+			found = true
+			assert.Equal(t, "Custom user template", tmpl.Description)
+			break
+		}
+	}
+	assert.True(t, found, "user-custom template should exist")
+}
+
+func TestGetTemplate_Good_UserTemplate(t *testing.T) {
+	// Create a workspace directory with user templates
+	tmpDir := t.TempDir()
+	coreDir := filepath.Join(tmpDir, ".core", "linuxkit")
+	err := os.MkdirAll(coreDir, 0755)
+	require.NoError(t, err)
+
+	// Create a user template
+	templateContent := `# My user template
+kernel:
+  image: linuxkit/kernel:6.6
+services:
+  - name: test
+`
+	err = os.WriteFile(filepath.Join(coreDir, "my-user-template.yml"), []byte(templateContent), 0644)
+	require.NoError(t, err)
+
+	// Change to the temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	err = os.Chdir(tmpDir)
+	require.NoError(t, err)
+	defer os.Chdir(oldWd)
+
+	content, err := GetTemplate("my-user-template")
+
+	require.NoError(t, err)
+	assert.Contains(t, content, "kernel:")
+	assert.Contains(t, content, "My user template")
+}
+
+func TestScanUserTemplates_Good_SkipsBuiltinNames(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a template with a builtin name (should be skipped)
+	err := os.WriteFile(filepath.Join(tmpDir, "core-dev.yml"), []byte("# Duplicate\nkernel:"), 0644)
+	require.NoError(t, err)
+
+	// Create a unique template
+	err = os.WriteFile(filepath.Join(tmpDir, "unique.yml"), []byte("# Unique\nkernel:"), 0644)
+	require.NoError(t, err)
+
+	templates := scanUserTemplates(tmpDir)
+
+	// Should only have the unique template, not the builtin name
+	assert.Len(t, templates, 1)
+	assert.Equal(t, "unique", templates[0].Name)
+}
+
+func TestScanUserTemplates_Good_SkipsDirectories(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a subdirectory (should be skipped)
+	err := os.MkdirAll(filepath.Join(tmpDir, "subdir"), 0755)
+	require.NoError(t, err)
+
+	// Create a valid template
+	err = os.WriteFile(filepath.Join(tmpDir, "valid.yml"), []byte("# Valid\nkernel:"), 0644)
+	require.NoError(t, err)
+
+	templates := scanUserTemplates(tmpDir)
+
+	assert.Len(t, templates, 1)
+	assert.Equal(t, "valid", templates[0].Name)
+}
+
+func TestScanUserTemplates_Good_YamlExtension(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create templates with both extensions
+	err := os.WriteFile(filepath.Join(tmpDir, "template1.yml"), []byte("# Template 1\nkernel:"), 0644)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(tmpDir, "template2.yaml"), []byte("# Template 2\nkernel:"), 0644)
+	require.NoError(t, err)
+
+	templates := scanUserTemplates(tmpDir)
+
+	assert.Len(t, templates, 2)
+
+	names := make(map[string]bool)
+	for _, tmpl := range templates {
+		names[tmpl.Name] = true
+	}
+	assert.True(t, names["template1"])
+	assert.True(t, names["template2"])
+}
+
+func TestExtractTemplateDescription_Good_EmptyComment(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "test.yml")
+
+	// First comment is empty, second has content
+	content := `#
+# Actual description here
+kernel:
+  image: test
+`
+	err := os.WriteFile(path, []byte(content), 0644)
+	require.NoError(t, err)
+
+	desc := extractTemplateDescription(path)
+
+	assert.Equal(t, "Actual description here", desc)
+}
+
+func TestExtractTemplateDescription_Good_MultipleEmptyComments(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "test.yml")
+
+	// Multiple empty comments before actual content
+	content := `#
+#
+#
+# Real description
+kernel:
+  image: test
+`
+	err := os.WriteFile(path, []byte(content), 0644)
+	require.NoError(t, err)
+
+	desc := extractTemplateDescription(path)
+
+	assert.Equal(t, "Real description", desc)
+}
+
+func TestGetUserTemplatesDir_Good_NoDirectory(t *testing.T) {
+	// Save current working directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+
+	// Create a temp directory without .core/linuxkit
+	tmpDir := t.TempDir()
+	err = os.Chdir(tmpDir)
+	require.NoError(t, err)
+	defer os.Chdir(oldWd)
+
+	dir := getUserTemplatesDir()
+
+	// Should return empty string since no templates dir exists
+	// (unless home dir has one)
+	assert.True(t, dir == "" || strings.Contains(dir, "linuxkit"))
+}
+
+func TestScanUserTemplates_Good_DefaultDescription(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a template without comments
+	content := `kernel:
+  image: test
+`
+	err := os.WriteFile(filepath.Join(tmpDir, "nocomment.yml"), []byte(content), 0644)
+	require.NoError(t, err)
+
+	templates := scanUserTemplates(tmpDir)
+
+	assert.Len(t, templates, 1)
+	assert.Equal(t, "User-defined template", templates[0].Description)
+}
