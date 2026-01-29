@@ -13,9 +13,12 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 
 | Task | Command | Notes |
 |------|---------|-------|
-| Run tests | `core test` | Sets macOS deployment target, filters warnings |
-| Run tests with coverage | `core test --coverage` | Per-package breakdown |
-| Run specific test | `core test --run TestName` | Regex filter |
+| Run Go tests | `core test` | Sets macOS deployment target, filters warnings |
+| Run Go tests with coverage | `core test --coverage` | Per-package breakdown |
+| Run PHP tests | `core php test` | Auto-detects Pest/PHPUnit |
+| Start PHP dev server | `core php dev` | FrankenPHP + Vite + Horizon + Reverb |
+| Format PHP code | `core php fmt --fix` | Laravel Pint |
+| Deploy PHP app | `core php deploy` | Coolify deployment |
 | Build project | `core build` | Auto-detects project type |
 | Build for targets | `core build --targets linux/amd64,darwin/arm64` | Cross-compile |
 | Release | `core release` | Build + publish to GitHub/npm/Homebrew |
@@ -193,15 +196,161 @@ core install <repo>
 
 ## PHP Development
 
+**Always use `core php` commands instead of raw artisan/composer/phpunit.**
+
+### Quick Reference
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Start dev environment | `core php dev` | FrankenPHP + Vite + Horizon + Reverb + Redis |
+| Run PHP tests | `core php test` | Auto-detects Pest/PHPUnit |
+| Format code | `core php fmt --fix` | Laravel Pint |
+| Static analysis | `core php analyse` | PHPStan/Larastan |
+| Build Docker image | `core php build` | Production-ready FrankenPHP |
+| Deploy to Coolify | `core php deploy` | With status tracking |
+
+### Development Server
+
 ```bash
-# Start PHP dev environment
+# Start full Laravel dev environment
 core php dev
 
-# Run artisan commands
-core php artisan <command>
+# Start with HTTPS (uses mkcert)
+core php dev --https
 
-# Run composer
-core php composer <command>
+# Skip specific services
+core php dev --no-vite --no-horizon
+
+# Custom port
+core php dev --port 9000
+```
+
+**Services orchestrated:**
+- FrankenPHP/Octane (port 8000, HTTPS on 443)
+- Vite dev server (port 5173)
+- Laravel Horizon (queue workers)
+- Laravel Reverb (WebSocket, port 8080)
+- Redis (port 6379)
+
+```bash
+# View logs
+core php logs
+core php logs --service frankenphp
+
+# Check status
+core php status
+
+# Stop all services
+core php stop
+
+# Setup SSL certificates
+core php ssl
+core php ssl --domain myapp.test
+```
+
+### Testing
+
+```bash
+# Run all tests (auto-detects Pest/PHPUnit)
+core php test
+
+# Run in parallel
+core php test --parallel
+
+# With coverage
+core php test --coverage
+
+# Filter tests
+core php test --filter UserTest
+core php test --group api
+```
+
+### Code Quality
+
+```bash
+# Check formatting (dry-run)
+core php fmt
+
+# Auto-fix formatting
+core php fmt --fix
+
+# Show diff
+core php fmt --diff
+
+# Run static analysis
+core php analyse
+
+# Max strictness
+core php analyse --level 9
+```
+
+### Building & Deployment
+
+```bash
+# Build Docker image
+core php build
+core php build --name myapp --tag v1.0
+
+# Build for specific platform
+core php build --platform linux/amd64
+
+# Build LinuxKit image
+core php build --type linuxkit --format iso
+
+# Run production container
+core php serve --name myapp
+core php serve --name myapp -d  # Detached
+
+# Open shell in container
+core php shell myapp
+```
+
+### Coolify Deployment
+
+```bash
+# Deploy to production
+core php deploy
+
+# Deploy to staging
+core php deploy --staging
+
+# Wait for completion
+core php deploy --wait
+
+# Check deployment status
+core php deploy:status
+
+# List recent deployments
+core php deploy:list
+
+# Rollback
+core php deploy:rollback
+core php deploy:rollback --id abc123
+```
+
+**Required .env configuration:**
+```env
+COOLIFY_URL=https://coolify.example.com
+COOLIFY_TOKEN=your-api-token
+COOLIFY_APP_ID=production-app-id
+COOLIFY_STAGING_APP_ID=staging-app-id
+```
+
+### Package Management
+
+```bash
+# Link local packages for development
+core php packages link ../my-package
+core php packages link ../pkg-a ../pkg-b
+
+# List linked packages
+core php packages list
+
+# Update linked packages
+core php packages update
+
+# Unlink packages
+core php packages unlink vendor/my-package
 ```
 
 ## Container Management
@@ -226,14 +375,18 @@ core exec <name> <command>
 ## Decision Tree
 
 ```
-Need to run tests?
-  └── core test [--coverage] [--pkg <pattern>]
+Go project?
+  └── Run tests: core test [--coverage]
+  └── Build: core build [--targets <os/arch>]
+  └── Release: core release
 
-Need to build?
-  └── core build [--targets <os/arch>]
-
-Need to release?
-  └── core release
+PHP/Laravel project?
+  └── Start dev: core php dev [--https]
+  └── Run tests: core php test [--parallel]
+  └── Format: core php fmt --fix
+  └── Analyse: core php analyse
+  └── Build image: core php build
+  └── Deploy: core php deploy [--staging]
 
 Working across multiple repos?
   └── Quick check: core health
@@ -257,9 +410,13 @@ Setting up environment?
 |-------|-------|-----|
 | `go test ./...` | `core test` | Missing deployment target, noisy output |
 | `go build` | `core build` | Missing cross-compile, signing, checksums |
+| `php artisan serve` | `core php dev` | Missing Vite, Horizon, Reverb, Redis |
+| `./vendor/bin/pest` | `core php test` | Inconsistent invocation |
+| `./vendor/bin/pint` | `core php fmt --fix` | Consistent interface |
 | `git status` in each repo | `core health` | Slow, manual |
 | `gh pr list` per repo | `core reviews` | Aggregated view |
 | Manual commits across repos | `core commit` | Consistent messages, Co-Authored-By |
+| Manual Coolify deploys | `core php deploy` | Tracked, scriptable |
 
 ## Configuration
 
