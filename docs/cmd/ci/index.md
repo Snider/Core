@@ -2,7 +2,7 @@
 
 Publish releases to GitHub, Docker, npm, Homebrew, and more.
 
-**Safety:** Dry-run by default. Use `--were-go-for-launch` to actually publish.
+**Safety:** Dry-run by default. Use `--we-are-go-for-launch` to actually publish.
 
 ## Subcommands
 
@@ -22,7 +22,7 @@ core ci [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--were-go-for-launch` | Actually publish (default is dry-run) |
+| `--we-are-go-for-launch` | Actually publish (default is dry-run) |
 | `--version` | Override version |
 | `--draft` | Create as draft release |
 | `--prerelease` | Mark as prerelease |
@@ -34,13 +34,13 @@ core ci [flags]
 core ci
 
 # Actually publish
-core ci --were-go-for-launch
+core ci --we-are-go-for-launch
 
 # Publish as draft
-core ci --were-go-for-launch --draft
+core ci --we-are-go-for-launch --draft
 
 # Publish as prerelease
-core ci --were-go-for-launch --prerelease
+core ci --we-are-go-for-launch --prerelease
 ```
 
 ## Workflow
@@ -56,7 +56,7 @@ core build sdk
 core ci
 
 # Step 3: Publish (explicit flag required)
-core ci --were-go-for-launch
+core ci --we-are-go-for-launch
 ```
 
 ## Publishers

@@ -40,7 +40,7 @@ func AddCIReleaseCommand(app *clir.Cli) {
 	releaseCmd := app.NewSubCommand("ci", "Publish releases (dry-run by default)")
 	releaseCmd.LongDescription("Publishes pre-built artifacts from dist/ to configured targets.\n" +
 		"Run 'core build' first to create artifacts.\n\n" +
-		"SAFE BY DEFAULT: Runs in dry-run mode unless --were-go-for-launch is specified.\n\n" +
+		"SAFE BY DEFAULT: Runs in dry-run mode unless --we-are-go-for-launch is specified.\n\n" +
 		"Configuration: .core/release.yaml")
 
 	// Flags for the main release command
@@ -49,7 +49,7 @@ func AddCIReleaseCommand(app *clir.Cli) {
 	var draft bool
 	var prerelease bool
 
-	releaseCmd.BoolFlag("were-go-for-launch", "Actually publish (default is dry-run for safety)", &goForLaunch)
+	releaseCmd.BoolFlag("we-are-go-for-launch", "Actually publish (default is dry-run for safety)", &goForLaunch)
 	releaseCmd.StringFlag("version", "Version to release (e.g., v1.2.3)", &version)
 	releaseCmd.BoolFlag("draft", "Create release as a draft", &draft)
 	releaseCmd.BoolFlag("prerelease", "Mark release as a prerelease", &prerelease)
@@ -122,7 +122,7 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Print header
 	fmt.Printf("%s Publishing release\n", releaseHeaderStyle.Render("CI:"))
 	if dryRun {
-		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run) use --were-go-for-launch to publish"))
+		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run) use --we-are-go-for-launch to publish"))
 	} else {
 		fmt.Printf("  %s\n", releaseSuccessStyle.Render("🚀 GO FOR LAUNCH"))
 	}

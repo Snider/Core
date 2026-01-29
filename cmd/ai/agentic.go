@@ -67,22 +67,22 @@ var (
 
 // AddAgenticCommands adds the agentic task management commands to the dev command.
 func AddAgenticCommands(parent *clir.Command) {
-	// core dev tasks - list available tasks
+	// core ai tasks - list available tasks
 	addTasksCommand(parent)
 
-	// core dev task <id> - show task details and claim
+	// core ai task <id> - show task details and claim
 	addTaskCommand(parent)
 
-	// core dev task:update <id> - update task
+	// core ai task:update <id> - update task
 	addTaskUpdateCommand(parent)
 
-	// core dev task:complete <id> - mark task complete
+	// core ai task:complete <id> - mark task complete
 	addTaskCompleteCommand(parent)
 
-	// core dev task:commit <id> - auto-commit with task reference
+	// core ai task:commit <id> - auto-commit with task reference
 	addTaskCommitCommand(parent)
 
-	// core dev task:pr <id> - create PR for task
+	// core ai task:pr <id> - create PR for task
 	addTaskPRCommand(parent)
 }
 
@@ -100,9 +100,9 @@ func addTasksCommand(parent *clir.Command) {
 		"  2. .env file in current directory\n" +
 		"  3. ~/.core/agentic.yaml\n\n" +
 		"Examples:\n" +
-		"  core dev tasks\n" +
-		"  core dev tasks --status pending --priority high\n" +
-		"  core dev tasks --labels bug,urgent")
+		"  core ai tasks\n" +
+		"  core ai tasks --status pending --priority high\n" +
+		"  core ai tasks --labels bug,urgent")
 
 	cmd.StringFlag("status", "Filter by status (pending, in_progress, completed, blocked)", &status)
 	cmd.StringFlag("priority", "Filter by priority (critical, high, medium, low)", &priority)
@@ -163,10 +163,10 @@ func addTaskCommand(parent *clir.Command) {
 	cmd := parent.NewSubCommand("task", "Show task details or auto-select a task")
 	cmd.LongDescription("Shows details of a specific task or auto-selects the highest priority task.\n\n" +
 		"Examples:\n" +
-		"  core dev task abc123           # Show task details\n" +
-		"  core dev task abc123 --claim   # Show and claim the task\n" +
-		"  core dev task abc123 --context # Show task with gathered context\n" +
-		"  core dev task --auto           # Auto-select highest priority pending task")
+		"  core ai task abc123           # Show task details\n" +
+		"  core ai task abc123 --claim   # Show and claim the task\n" +
+		"  core ai task abc123 --context # Show task with gathered context\n" +
+		"  core ai task --auto           # Auto-select highest priority pending task")
 
 	cmd.BoolFlag("auto", "Auto-select highest priority pending task", &autoSelect)
 	cmd.BoolFlag("claim", "Claim the task after showing details", &claim)
@@ -275,8 +275,8 @@ func addTaskUpdateCommand(parent *clir.Command) {
 	cmd := parent.NewSubCommand("task:update", "Update task status or progress")
 	cmd.LongDescription("Updates a task's status, progress, or adds notes.\n\n" +
 		"Examples:\n" +
-		"  core dev task:update abc123 --status in_progress\n" +
-		"  core dev task:update abc123 --progress 50 --notes 'Halfway done'")
+		"  core ai task:update abc123 --status in_progress\n" +
+		"  core ai task:update abc123 --progress 50 --notes 'Halfway done'")
 
 	cmd.StringFlag("status", "New status (pending, in_progress, completed, blocked)", &status)
 	cmd.IntFlag("progress", "Progress percentage (0-100)", &progress)
@@ -336,8 +336,8 @@ func addTaskCompleteCommand(parent *clir.Command) {
 	cmd := parent.NewSubCommand("task:complete", "Mark a task as completed")
 	cmd.LongDescription("Marks a task as completed with optional output and artifacts.\n\n" +
 		"Examples:\n" +
-		"  core dev task:complete abc123 --output 'Feature implemented'\n" +
-		"  core dev task:complete abc123 --failed --error 'Build failed'")
+		"  core ai task:complete abc123 --output 'Feature implemented'\n" +
+		"  core ai task:complete abc123 --failed --error 'Build failed'")
 
 	cmd.StringFlag("output", "Summary of the completed work", &output)
 	cmd.BoolFlag("failed", "Mark the task as failed", &failed)
@@ -407,7 +407,7 @@ func printTaskList(tasks []agentic.Task) {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s\n", dimStyle.Render("Use 'core dev task <id>' to view details"))
+	fmt.Printf("%s\n", dimStyle.Render("Use 'core ai task <id>' to view details"))
 }
 
 func printTaskDetails(task *agentic.Task) {
@@ -492,9 +492,9 @@ func addTaskCommitCommand(parent *clir.Command) {
 		"  Task: #123\n" +
 		"  Co-Authored-By: Claude <noreply@anthropic.com>\n\n" +
 		"Examples:\n" +
-		"  core dev task:commit abc123 --message 'add user authentication'\n" +
-		"  core dev task:commit abc123 -m 'fix login bug' --scope auth\n" +
-		"  core dev task:commit abc123 -m 'update docs' --push")
+		"  core ai task:commit abc123 --message 'add user authentication'\n" +
+		"  core ai task:commit abc123 -m 'fix login bug' --scope auth\n" +
+		"  core ai task:commit abc123 -m 'update docs' --push")
 
 	cmd.StringFlag("message", "Commit message (without task reference)", &message)
 	cmd.StringFlag("m", "Commit message (short form)", &message)
@@ -593,10 +593,10 @@ func addTaskPRCommand(parent *clir.Command) {
 	cmd.LongDescription("Creates a GitHub pull request linked to a task.\n\n" +
 		"Requires the GitHub CLI (gh) to be installed and authenticated.\n\n" +
 		"Examples:\n" +
-		"  core dev task:pr abc123\n" +
-		"  core dev task:pr abc123 --title 'Add authentication feature'\n" +
-		"  core dev task:pr abc123 --draft --labels 'enhancement,needs-review'\n" +
-		"  core dev task:pr abc123 --base develop")
+		"  core ai task:pr abc123\n" +
+		"  core ai task:pr abc123 --title 'Add authentication feature'\n" +
+		"  core ai task:pr abc123 --draft --labels 'enhancement,needs-review'\n" +
+		"  core ai task:pr abc123 --base develop")
 
 	cmd.StringFlag("title", "PR title (defaults to task title)", &title)
 	cmd.BoolFlag("draft", "Create as draft PR", &draft)
