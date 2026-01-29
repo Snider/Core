@@ -1,0 +1,11 @@
+# Example: Minimal Release Configuration
+# Just GitHub releases with defaults
+
+version: 1
+
+project:
+  name: myapp
+  repository: myorg/myapp
+
+publishers:
+  - type: github

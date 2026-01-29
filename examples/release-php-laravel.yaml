@@ -1,0 +1,42 @@
+# Example: PHP/Laravel Release Configuration
+# Builds Docker container and LinuxKit image
+
+version: 1
+
+project:
+  name: mylaravel
+  repository: myorg/mylaravel
+
+publishers:
+  - type: github
+    prerelease: false
+
+  # Docker container for deployment
+  - type: docker
+    registry: ghcr.io
+    image: myorg/mylaravel
+    dockerfile: Dockerfile
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    tags:
+      - latest
+      - "{{.Version}}"
+    build_args:
+      PHP_VERSION: "8.4"
+      APP_ENV: production
+
+  # LinuxKit for immutable server deployment
+  - type: linuxkit
+    config: .core/linuxkit/server-php.yml
+    formats:
+      - iso
+      - qcow2
+    platforms:
+      - linux/amd64
+
+changelog:
+  include:
+    - feat
+    - fix
+    - security

@@ -1,0 +1,121 @@
+# Example: Full Build Configuration
+# All available options
+
+version: 1
+
+project:
+  name: myapp
+  binary: myapp
+  type: auto  # auto, go, wails, docker, linuxkit, php
+
+build:
+  # Go build settings
+  main: ./cmd/myapp
+
+  # Environment variables
+  env:
+    CGO_ENABLED: "0"
+    GOFLAGS: "-mod=readonly"
+
+  # Build flags
+  flags:
+    - -trimpath
+    - -v
+
+  # Linker flags
+  ldflags:
+    - -s -w
+    - -X main.version={{.Version}}
+    - -X main.commit={{.Commit}}
+    - -X main.date={{.Date}}
+    - -X main.builtBy=core
+
+  # Build tags
+  tags:
+    - production
+    - netgo
+
+# Build targets
+targets:
+  - os: linux
+    arch: amd64
+  - os: linux
+    arch: arm64
+  - os: linux
+    arch: "386"
+  - os: darwin
+    arch: amd64
+  - os: darwin
+    arch: arm64
+  - os: windows
+    arch: amd64
+  - os: windows
+    arch: arm64
+  - os: freebsd
+    arch: amd64
+
+# Wails configuration (if type: wails)
+wails:
+  frontend: ./frontend
+  install_cmd: install
+  build_cmd: build
+  dev_cmd: dev
+
+# Docker configuration (if type: docker or docker output enabled)
+docker:
+  dockerfile: Dockerfile
+  context: .
+  registry: ghcr.io
+  image: myorg/myapp
+  platforms:
+    - linux/amd64
+    - linux/arm64
+  tags:
+    - latest
+    - "{{.Version}}"
+  build_args:
+    VERSION: "{{.Version}}"
+  labels:
+    org.opencontainers.image.source: https://github.com/myorg/myapp
+  target: production
+  cache:
+    from: type=gha
+    to: type=gha,mode=max
+
+# LinuxKit configuration (if type: linuxkit)
+linuxkit:
+  config: .core/linuxkit/server.yml
+  formats:
+    - iso
+    - qcow2
+    - docker
+  platforms:
+    - linux/amd64
+    - linux/arm64
+
+# Archive settings
+archive:
+  format: tar.gz
+  format_windows: zip
+  name: "{{.Project}}-{{.Version}}-{{.OS}}-{{.Arch}}"
+  files:
+    - LICENSE
+    - README.md
+    - CHANGELOG.md
+  strip_parent: true
+
+# Checksum settings
+checksum:
+  algorithm: sha256
+  file: checksums.txt
+
+# Hooks
+hooks:
+  pre_build:
+    - go generate ./...
+    - go mod tidy
+  post_build:
+    - echo "Build complete"
+
+# Output directory
+output: dist

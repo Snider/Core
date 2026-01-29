@@ -1,0 +1,23 @@
+# Example: Go Library Build Configuration
+# No binary output, just validation and testing
+
+version: 1
+
+project:
+  name: mylib
+  type: library  # No binary build
+
+build:
+  # Library-specific settings
+  env:
+    CGO_ENABLED: "0"
+
+# Test configuration
+test:
+  race: true
+  cover: true
+  packages:
+    - ./...
+
+# No targets needed for library
+# targets: []

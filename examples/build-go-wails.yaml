@@ -1,0 +1,46 @@
+# Example: Wails Desktop App Build Configuration
+# Cross-platform desktop application with web frontend
+
+version: 1
+
+project:
+  name: myapp
+  binary: myapp
+
+build:
+  main: .
+  env:
+    CGO_ENABLED: "1"  # Required for Wails
+  ldflags:
+    - -s -w
+    - -X main.version={{.Version}}
+
+# Wails-specific configuration
+wails:
+  frontend: ./frontend
+  # Auto-detects: npm, pnpm, yarn, bun
+  install_cmd: install
+  build_cmd: build
+
+targets:
+  # Desktop platforms only
+  - os: darwin
+    arch: amd64
+  - os: darwin
+    arch: arm64
+  - os: windows
+    arch: amd64
+  - os: linux
+    arch: amd64
+
+# Platform-specific packaging
+package:
+  darwin:
+    - dmg
+    - app
+  windows:
+    - nsis
+    - zip
+  linux:
+    - tar.gz
+    - appimage

@@ -1,0 +1,36 @@
+# Example: LinuxKit Publisher
+# Immutable Linux images uploaded to GitHub release
+
+type: linuxkit
+
+# LinuxKit YAML configuration
+config: .core/linuxkit/server.yml
+
+# Output formats
+formats:
+  - iso           # Bootable ISO (bare metal, VMs)
+  - qcow2         # QEMU/KVM/Proxmox
+  - raw           # Raw disk image
+  - vmdk          # VMware
+  - docker        # Docker-loadable tarball
+
+# Target platforms
+platforms:
+  - linux/amd64
+  - linux/arm64
+
+# Environment: linuxkit CLI installed
+#
+# Artifacts uploaded to GitHub release:
+#   - myapp-v1.0.0-amd64.iso
+#   - myapp-v1.0.0-amd64.qcow2
+#   - myapp-v1.0.0-amd64.docker.tar
+#   - myapp-v1.0.0-arm64.iso
+#   - ...
+#
+# Usage:
+#   # Boot ISO
+#   qemu-system-x86_64 -cdrom myapp-v1.0.0-amd64.iso -m 1024
+#
+#   # Load Docker image
+#   docker load < myapp-v1.0.0-amd64.docker.tar

@@ -1,0 +1,38 @@
+# Example: Docker Publisher
+# Multi-arch container images
+
+type: docker
+
+# Registry (default: ghcr.io)
+registry: ghcr.io
+
+# Image name
+image: myorg/myapp
+
+# Dockerfile path (default: Dockerfile)
+dockerfile: Dockerfile
+
+# Target platforms
+platforms:
+  - linux/amd64
+  - linux/arm64
+
+# Image tags
+tags:
+  - latest
+  - "{{.Version}}"
+  - "{{.Version}}-alpine"
+
+# Build arguments
+build_args:
+  VERSION: "{{.Version}}"
+  BUILD_DATE: "{{.Date}}"
+
+# Environment: Docker login to registry
+#
+# For ghcr.io:
+#   echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+#
+# Usage after publish:
+#   docker pull ghcr.io/myorg/myapp:latest
+#   docker run ghcr.io/myorg/myapp:v1.0.0

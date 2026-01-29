@@ -1,0 +1,51 @@
+# Example: Generate Files for Official Repository PRs
+# Creates files for PRs to homebrew-core, scoop-main, etc.
+
+version: 1
+
+project:
+  name: myapp
+  repository: myorg/myapp
+
+publishers:
+  - type: github
+
+  # Generate formula for homebrew-core PR
+  # Output: dist/homebrew/myapp.rb
+  - type: homebrew
+    tap: myorg/homebrew-tap  # Also push to own tap
+    official:
+      enabled: true
+      output: dist/homebrew
+
+  # Generate manifest for scoop-main PR
+  # Output: dist/scoop/myapp.json
+  - type: scoop
+    bucket: myorg/scoop-bucket  # Also push to own bucket
+    official:
+      enabled: true
+      output: dist/scoop
+
+  # Generate files for AUR
+  # Output: dist/aur/PKGBUILD, dist/aur/.SRCINFO
+  - type: aur
+    maintainer: "Your Name <email>"
+    official:
+      enabled: true
+      output: dist/aur
+
+# After release, submit PRs:
+#
+# Homebrew:
+#   cd homebrew-core
+#   cp ../myapp/dist/homebrew/myapp.rb Formula/m/myapp.rb
+#   git checkout -b myapp-1.0.0
+#   git add . && git commit -m "myapp 1.0.0 (new formula)"
+#   gh pr create
+#
+# Scoop:
+#   cd Main
+#   cp ../myapp/dist/scoop/myapp.json bucket/myapp.json
+#   git checkout -b myapp-1.0.0
+#   git add . && git commit -m "myapp: Add version 1.0.0"
+#   gh pr create

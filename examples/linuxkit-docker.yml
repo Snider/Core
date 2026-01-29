@@ -1,0 +1,29 @@
+# Example: LinuxKit Docker Format
+# Build immutable container that loads with `docker load`
+
+kernel:
+  image: linuxkit/kernel:6.6
+  cmdline: "console=tty0"
+
+init:
+  - linuxkit/init:latest
+  - linuxkit/runc:latest
+  - linuxkit/containerd:latest
+
+services:
+  - name: myservice
+    image: ghcr.io/myorg/myservice:latest
+
+# Use in release.yaml:
+#
+# publishers:
+#   - type: linuxkit
+#     config: .core/linuxkit/docker-format.yml
+#     formats:
+#       - docker  # Outputs .docker.tar
+#     platforms:
+#       - linux/amd64
+#       - linux/arm64
+#
+# Load the image:
+#   docker load < linuxkit-v1.0.0-amd64.docker.tar

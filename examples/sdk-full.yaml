@@ -1,0 +1,43 @@
+# Example: Full SDK Configuration
+# Generate typed API clients from OpenAPI specs
+
+sdk:
+  # OpenAPI spec source (auto-detected if omitted)
+  spec: api/openapi.yaml
+
+  # Languages to generate
+  languages:
+    - typescript
+    - python
+    - go
+    - php
+
+  # Output directory (default: sdk/)
+  output: sdk/
+
+  # Package naming
+  package:
+    name: myapi
+    version: "{{.Version}}"
+
+  # Breaking change detection
+  diff:
+    enabled: true
+    fail_on_breaking: true  # CI fails on breaking changes
+
+  # Optional: publish to monorepo
+  publish:
+    repo: myorg/sdks
+    path: packages/myapi
+
+# Required tools (install one per language):
+#   TypeScript: npm i -g openapi-typescript-codegen (or Docker)
+#   Python:     pip install openapi-python-client (or Docker)
+#   Go:         go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+#   PHP:        Docker required
+#
+# Usage:
+#   core sdk generate              # Generate all configured languages
+#   core sdk generate --lang go    # Generate single language
+#   core sdk diff --base v1.0.0    # Check for breaking changes
+#   core sdk validate              # Validate spec

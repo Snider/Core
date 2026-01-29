@@ -1,0 +1,33 @@
+# Example: LinuxKit Build Configuration
+# Immutable Linux images
+
+version: 1
+
+project:
+  name: myserver
+  type: linuxkit
+
+linuxkit:
+  config: .core/linuxkit/server.yml
+
+  formats:
+    - iso           # Bootable ISO (BIOS/EFI)
+    - qcow2         # QEMU/KVM/Proxmox
+    - raw           # Raw disk image
+    - vmdk          # VMware
+    - docker        # Docker-loadable tarball
+
+  platforms:
+    - linux/amd64
+    - linux/arm64
+
+  # Output naming
+  name: "{{.Project}}-{{.Version}}"
+
+# The linuxkit config file (.core/linuxkit/server.yml) defines:
+# - kernel version
+# - init system
+# - services to run
+# - files to include
+#
+# See linuxkit-server.yml example

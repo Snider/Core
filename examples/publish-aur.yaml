@@ -1,0 +1,28 @@
+# Example: AUR Publisher (Arch Linux)
+# PKGBUILD generation and AUR push
+
+type: aur
+
+# Package name (will be suffixed with -bin)
+package: mycli
+
+# Maintainer info (required by AUR)
+maintainer: "Your Name <your@email.com>"
+
+# Generate files only (don't push to AUR)
+official:
+  enabled: true
+  output: dist/aur
+
+# Environment: SSH key for aur.archlinux.org
+#
+# Usage after publish:
+#   yay -S mycli-bin
+#   # or
+#   paru -S mycli-bin
+#
+# Generated files:
+#   - PKGBUILD
+#   - .SRCINFO
+#
+# Supports both x86_64 and aarch64

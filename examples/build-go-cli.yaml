@@ -1,0 +1,39 @@
+# Example: Go CLI Build Configuration
+# Cross-platform CLI tool
+
+version: 1
+
+project:
+  name: mycli
+  binary: mycli
+
+build:
+  main: ./cmd/mycli
+  env:
+    CGO_ENABLED: "0"
+  flags:
+    - -trimpath
+  ldflags:
+    - -s -w
+    - -X main.version={{.Version}}
+    - -X main.commit={{.Commit}}
+    - -X main.date={{.Date}}
+
+targets:
+  - os: linux
+    arch: amd64
+  - os: linux
+    arch: arm64
+  - os: darwin
+    arch: amd64
+  - os: darwin
+    arch: arm64
+  - os: windows
+    arch: amd64
+
+archive:
+  format: tar.gz
+  format_windows: zip
+  files:
+    - LICENSE
+    - README.md
