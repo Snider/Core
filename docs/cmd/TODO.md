@@ -46,6 +46,9 @@ Most packages document all commands in their index.md file with anchor links.
 
 ## Recent Updates
 
+- 2026-01-29: Setup wizard implemented with three modes (registry, bootstrap, repo setup)
+- 2026-01-29: CI flag renamed to --we-are-go-for-launch
+- 2026-01-29: AI command examples fixed (core dev -> core ai)
 - 2026-01-29: Added ai package documentation
 - 2026-01-29: Updated php, pkg, vm documentation with full command coverage
 - 2026-01-29: Task commands moved from dev to ai
