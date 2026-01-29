@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/build/signing"
 	"gopkg.in/yaml.v3"
 )
 
@@ -27,6 +28,8 @@ type BuildConfig struct {
 	Build Build `yaml:"build"`
 	// Targets defines the build targets.
 	Targets []TargetConfig `yaml:"targets"`
+	// Sign contains code signing configuration.
+	Sign signing.SignConfig `yaml:"sign,omitempty"`
 }
 
 // Project holds project metadata.
@@ -109,6 +112,7 @@ func DefaultConfig() *BuildConfig {
 			{OS: "darwin", Arch: "arm64"},
 			{OS: "windows", Arch: "amd64"},
 		},
+		Sign: signing.DefaultSignConfig(),
 	}
 }
 
@@ -139,6 +143,9 @@ func applyDefaults(cfg *BuildConfig) {
 	if len(cfg.Targets) == 0 {
 		cfg.Targets = defaults.Targets
 	}
+
+	// Expand environment variables in sign config
+	cfg.Sign.ExpandEnv()
 }
 
 // ConfigPath returns the path to the build config file for a given directory.

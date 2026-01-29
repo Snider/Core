@@ -233,6 +233,41 @@ func TestConfigExists_Good(t *testing.T) {
 	})
 }
 
+func TestLoadConfig_Good_SignConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	coreDir := filepath.Join(tmpDir, ".core")
+	os.MkdirAll(coreDir, 0755)
+
+	configContent := `version: 1
+sign:
+  enabled: true
+  gpg:
+    key: "ABCD1234"
+  macos:
+    identity: "Developer ID Application: Test"
+    notarize: true
+`
+	os.WriteFile(filepath.Join(coreDir, "build.yaml"), []byte(configContent), 0644)
+
+	cfg, err := LoadConfig(tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !cfg.Sign.Enabled {
+		t.Error("expected Sign.Enabled to be true")
+	}
+	if cfg.Sign.GPG.Key != "ABCD1234" {
+		t.Errorf("expected GPG.Key 'ABCD1234', got %q", cfg.Sign.GPG.Key)
+	}
+	if cfg.Sign.MacOS.Identity != "Developer ID Application: Test" {
+		t.Errorf("expected MacOS.Identity, got %q", cfg.Sign.MacOS.Identity)
+	}
+	if !cfg.Sign.MacOS.Notarize {
+		t.Error("expected MacOS.Notarize to be true")
+	}
+}
+
 func TestBuildConfig_ToTargets_Good(t *testing.T) {
 	t.Run("converts TargetConfig to Target", func(t *testing.T) {
 		cfg := &BuildConfig{
