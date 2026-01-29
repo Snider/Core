@@ -14,7 +14,9 @@ core release [flags]
 |------|-------------|
 | `--dry-run` | Preview what would be published |
 | `--version` | Override version (default: git tag) |
-| `--skip-build` | Skip build, use existing artifacts |
+| `--target` | Release target: `sdk` for SDK-only release |
+| `--draft` | Create release as draft |
+| `--prerelease` | Mark release as prerelease |
 
 ## Quick Start
 
@@ -27,7 +29,33 @@ core release --dry-run
 
 # Release
 core release
+
+# SDK-only release
+core release --target sdk
 ```
+
+## SDK Release
+
+Generate SDKs without building binaries:
+
+```bash
+# Generate SDKs with version from git tag
+core release --target sdk
+
+# Explicit version
+core release --target sdk --version v1.2.3
+
+# Preview
+core release --target sdk --dry-run
+```
+
+This will:
+1. Determine version from git tags (or `--version` flag)
+2. Run breaking change detection if configured
+3. Generate SDKs for all configured languages
+4. Output to `sdk/` directory
+
+See [SDK commands](sdk.md) for more details.
 
 ## Publishers
 

@@ -17,6 +17,8 @@ core build [flags]
 | `--output` | Output directory (default: `dist`) |
 | `--ci` | CI mode - non-interactive, fail fast |
 | `--image` | Docker image name (for docker builds) |
+| `--no-sign` | Skip code signing |
+| `--notarize` | Enable macOS notarization (requires Apple credentials) |
 
 ## Examples
 
@@ -110,4 +112,60 @@ targets:
     arch: arm64
   - os: darwin
     arch: arm64
+
+sign:
+  enabled: true
+  gpg:
+    key: $GPG_KEY_ID
+  macos:
+    identity: "Developer ID Application: Your Name (TEAM_ID)"
+    notarize: false
+    apple_id: $APPLE_ID
+    team_id: $APPLE_TEAM_ID
+    app_password: $APPLE_APP_PASSWORD
 ```
+
+## Code Signing
+
+Core supports GPG signing for checksums and native code signing for macOS.
+
+### GPG Signing
+
+Signs `CHECKSUMS.txt` with a detached ASCII signature (`.asc`):
+
+```bash
+# Build with GPG signing (default if key configured)
+core build
+
+# Skip signing
+core build --no-sign
+```
+
+Users can verify:
+
+```bash
+gpg --verify CHECKSUMS.txt.asc CHECKSUMS.txt
+sha256sum -c CHECKSUMS.txt
+```
+
+### macOS Code Signing
+
+Signs Darwin binaries with your Developer ID and optionally notarizes with Apple:
+
+```bash
+# Build with codesign (automatic if identity configured)
+core build
+
+# Build with notarization (takes 1-5 minutes)
+core build --notarize
+```
+
+### Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `GPG_KEY_ID` | GPG key ID or fingerprint |
+| `CODESIGN_IDENTITY` | macOS Developer ID (fallback) |
+| `APPLE_ID` | Apple account email |
+| `APPLE_TEAM_ID` | Apple Developer Team ID |
+| `APPLE_APP_PASSWORD` | App-specific password for notarization |

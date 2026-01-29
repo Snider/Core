@@ -14,16 +14,40 @@ curl -fsSL https://github.com/host-uk/core/releases/latest/download/core-$(uname
 
 ## Commands
 
+### Build & Release
+
 | Command | Description |
 |---------|-------------|
 | `core build` | Build Go, Wails, Docker, and LinuxKit projects |
 | `core release` | Build and publish to GitHub, npm, Homebrew, etc. |
+| `core sdk` | Generate and manage API SDKs |
+
+### Containers
+
+| Command | Description |
+|---------|-------------|
 | `core run` | Run LinuxKit images with qemu/hyperkit |
-| `core php` | Laravel/PHP development environment |
 | `core ps` | List running containers |
 | `core stop` | Stop running containers |
 | `core logs` | View container logs |
 | `core exec` | Execute commands in containers |
+| `core templates` | Manage LinuxKit templates |
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `core dev` | Portable development environment (100+ tools) |
+| `core php` | Laravel/PHP development tools |
+| `core doctor` | Check development environment |
+
+### GitHub Integration
+
+| Command | Description |
+|---------|-------------|
+| `core search` | Search GitHub for repositories |
+| `core install` | Clone a repository from GitHub |
+| `core setup` | Clone all repos from registry |
 
 ## Quick Start
 
@@ -61,10 +85,21 @@ Core uses `.core/` directory for project configuration:
 
 ## Documentation
 
-- [Build Command](build.md) - Cross-platform builds
+### Build & Release
+- [Build Command](build.md) - Cross-platform builds with code signing
 - [Release Command](release.md) - Publishing to package managers
-- [PHP Commands](php.md) - Laravel development
+- [SDK Command](sdk.md) - Generate API clients from OpenAPI
+
+### Containers
 - [Run Command](run.md) - Container management
+
+### Development
+- [Dev Command](dev.md) - Portable development environment
+- [PHP Commands](php.md) - Laravel development
+- [Doctor Command](doctor.md) - Environment check
+- [Search & Install](search.md) - GitHub integration
+
+### Reference
 - [Configuration](configuration.md) - All config options
 - [Examples](examples/) - Sample configurations
 
