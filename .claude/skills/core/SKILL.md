@@ -13,8 +13,12 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 
 | Task | Command | Notes |
 |------|---------|-------|
-| Run Go tests | `core test` | Sets macOS deployment target, filters warnings |
-| Run Go tests with coverage | `core test --coverage` | Per-package breakdown |
+| Run Go tests | `core go test` | Sets macOS deployment target, filters warnings |
+| Run Go tests with coverage | `core go test --coverage` | Per-package breakdown |
+| Format Go code | `core go fmt --fix` | Uses goimports/gofmt |
+| Lint Go code | `core go lint` | Uses golangci-lint |
+| Tidy Go modules | `core go mod tidy` | go mod tidy wrapper |
+| Sync Go workspace | `core go work sync` | go work sync wrapper |
 | Run PHP tests | `core php test` | Auto-detects Pest/PHPUnit |
 | Start PHP dev server | `core php dev` | FrankenPHP + Vite + Horizon + Reverb |
 | Format PHP code | `core php fmt --fix` | Laravel Pint |
@@ -37,51 +41,6 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Install package | `core pkg install <name>` | Clone and register package |
 | Update packages | `core pkg update` | Pull latest for all packages |
 | Run VM | `core vm run <image>` | Run LinuxKit VM |
-
-## Testing
-
-**Always use `core test` instead of `go test`.**
-
-```bash
-# Run all tests with coverage summary
-core test
-
-# Detailed per-package coverage
-core test --coverage
-
-# Test specific packages
-core test --pkg ./pkg/crypt
-
-# Run specific tests
-core test --run TestHash
-core test --run "Test.*Good"
-
-# Skip integration tests
-core test --short
-
-# Race detection
-core test --race
-
-# JSON output for CI/parsing
-core test --json
-```
-
-**Why:** Sets `MACOSX_DEPLOYMENT_TARGET=26.0` to suppress linker warnings, filters noise from output, provides colour-coded coverage.
-
-### JSON Output
-
-For programmatic use:
-
-```json
-{
-  "passed": 14,
-  "failed": 0,
-  "skipped": 0,
-  "coverage": 75.1,
-  "exit_code": 0,
-  "failed_packages": []
-}
-```
 
 ## Building
 
@@ -216,6 +175,102 @@ core pkg update core-api        # Update specific package
 
 # Check for outdated packages
 core pkg outdated
+```
+
+## Go Development
+
+**Always use `core go` commands instead of raw go commands.**
+
+### Quick Reference
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Run tests | `core go test` | CGO_ENABLED=0, filters warnings |
+| Run tests with coverage | `core go test --coverage` | Per-package breakdown |
+| Format code | `core go fmt --fix` | Uses goimports if available |
+| Lint code | `core go lint` | Uses golangci-lint |
+| Tidy modules | `core go mod tidy` | go mod tidy |
+| Sync workspace | `core go work sync` | go work sync |
+
+### Testing
+
+```bash
+# Run all tests
+core go test
+
+# With coverage
+core go test --coverage
+
+# Specific package
+core go test --pkg ./pkg/errors
+
+# Run specific tests
+core go test --run TestHash
+
+# Short tests only
+core go test --short
+
+# Race detection
+core go test --race
+
+# JSON output for CI
+core go test --json
+
+# Verbose
+core go test -v
+```
+
+**Why:** Sets `CGO_ENABLED=0` and `MACOSX_DEPLOYMENT_TARGET=26.0`, filters linker warnings, provides colour-coded coverage.
+
+### Formatting & Linting
+
+```bash
+# Check formatting
+core go fmt
+
+# Fix formatting
+core go fmt --fix
+
+# Show diff
+core go fmt --diff
+
+# Run linter
+core go lint
+
+# Lint with auto-fix
+core go lint --fix
+```
+
+### Module Management
+
+```bash
+# Tidy go.mod
+core go mod tidy
+
+# Download dependencies
+core go mod download
+
+# Verify dependencies
+core go mod verify
+
+# Show dependency graph
+core go mod graph
+```
+
+### Workspace Management
+
+```bash
+# Sync workspace
+core go work sync
+
+# Initialize workspace
+core go work init
+
+# Add module to workspace
+core go work use ./pkg/mymodule
+
+# Auto-add all modules
+core go work use
 ```
 
 ## PHP Development
@@ -416,7 +471,10 @@ core vm templates vars <name>  # Show template variables
 
 ```
 Go project?
-  └── Run tests: core test [--coverage]
+  └── Run tests: core go test [--coverage]
+  └── Format: core go fmt --fix
+  └── Lint: core go lint
+  └── Tidy modules: core go mod tidy
   └── Build: core build [--targets <os/arch>]
   └── Release: core release
 
@@ -454,7 +512,9 @@ Managing packages?
 
 | Wrong | Right | Why |
 |-------|-------|-----|
-| `go test ./...` | `core test` | Missing deployment target, noisy output |
+| `go test ./...` | `core go test` | CGO disabled, filters warnings, coverage |
+| `go fmt ./...` | `core go fmt --fix` | Uses goimports, consistent |
+| `golangci-lint run` | `core go lint` | Consistent interface |
 | `go build` | `core build` | Missing cross-compile, signing, checksums |
 | `php artisan serve` | `core php dev` | Missing Vite, Horizon, Reverb, Redis |
 | `./vendor/bin/pest` | `core php test` | Inconsistent invocation |
