@@ -353,23 +353,39 @@ core php packages update
 core php packages unlink vendor/my-package
 ```
 
-## Container Management
+## VM Management
+
+LinuxKit VMs are lightweight, immutable VMs built from YAML templates.
 
 ```bash
 # Run LinuxKit image
-core run server.iso
+core vm run server.iso
 
-# List running containers
-core ps
+# Run with options
+core vm run -d --memory 2048 --cpus 4 image.iso
 
-# Stop container
-core stop <name>
+# Run from template
+core vm run --template core-dev --var SSH_KEY="ssh-rsa AAAA..."
+
+# List running VMs
+core vm ps
+core vm ps -a  # Include stopped
+
+# Stop VM
+core vm stop <id>
 
 # View logs
-core logs <name>
+core vm logs <id>
+core vm logs -f <id>  # Follow
 
-# Execute command in container
-core exec <name> <command>
+# Execute command in VM
+core vm exec <id> ls -la
+core vm exec <id> /bin/sh
+
+# Manage templates
+core vm templates              # List templates
+core vm templates show <name>  # Show template content
+core vm templates vars <name>  # Show template variables
 ```
 
 ## Decision Tree
@@ -417,6 +433,7 @@ Setting up environment?
 | `gh pr list` per repo | `core reviews` | Aggregated view |
 | Manual commits across repos | `core commit` | Consistent messages, Co-Authored-By |
 | Manual Coolify deploys | `core php deploy` | Tracked, scriptable |
+| Raw `linuxkit run` | `core vm run` | Unified interface, templates |
 
 ## Configuration
 
