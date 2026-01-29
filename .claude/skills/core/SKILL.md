@@ -25,7 +25,7 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Deploy PHP app | `core php deploy` | Coolify deployment |
 | Build project | `core build` | Auto-detects project type |
 | Build for targets | `core build --targets linux/amd64,darwin/arm64` | Cross-compile |
-| Release | `core release` | Build + publish to GitHub/npm/Homebrew |
+| Release | `core ci` | Build + publish to GitHub/npm/Homebrew |
 | Check environment | `core doctor` | Verify tools installed |
 | Multi-repo status | `core dev health` | Quick summary across repos |
 | Multi-repo workflow | `core dev work` | Status + commit + push |
@@ -476,7 +476,7 @@ Go project?
   └── Lint: core go lint
   └── Tidy modules: core go mod tidy
   └── Build: core build [--targets <os/arch>]
-  └── Release: core release
+  └── Release: core ci
 
 PHP/Laravel project?
   └── Start dev: core php dev [--https]
@@ -540,15 +540,37 @@ Core reads from `.core/` directory:
 
 And `repos.yaml` in workspace root for multi-repo management.
 
+## Build Variants
+
+Core supports build tags for different deployment contexts:
+
+```bash
+# Full development binary (default)
+go build -o core ./cmd/core/
+
+# CI-only binary (minimal attack surface)
+go build -tags ci -o core-ci ./cmd/core/
+```
+
+| Variant | Commands | Use Case |
+|---------|----------|----------|
+| `core` (default) | All commands | Development, local workflow |
+| `core-ci` | build, ci, sdk, doctor | CI pipelines, production builds |
+
+The CI variant excludes development tools (go, php, dev, pkg, vm, etc.) for a smaller attack surface in automated environments.
+
 ## Installation
 
 ```bash
-# Go install
-go install github.com/host-uk/core/cmd/core@latest
+# Go install (full binary)
+CGO_ENABLED=0 go install github.com/host-uk/core/cmd/core@latest
 
 # Or from source
 cd /path/to/core
-go install ./cmd/core/
+CGO_ENABLED=0 go install ./cmd/core/
+
+# CI variant
+CGO_ENABLED=0 go build -tags ci -o /usr/local/bin/core-ci ./cmd/core/
 ```
 
 Verify: `core doctor`

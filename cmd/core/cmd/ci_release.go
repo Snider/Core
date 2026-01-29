@@ -13,7 +13,7 @@ import (
 	"github.com/leaanthony/clir"
 )
 
-// Release command styles
+// CIRelease command styles
 var (
 	releaseHeaderStyle = lipgloss.NewStyle().
 				Bold(true).
@@ -34,9 +34,9 @@ var (
 				Foreground(lipgloss.Color("#e2e8f0")) // gray-200
 )
 
-// AddReleaseCommand adds the release command and its subcommands.
-func AddReleaseCommand(app *clir.Cli) {
-	releaseCmd := app.NewSubCommand("release", "Build and publish releases")
+// AddCIReleaseCommand adds the release command and its subcommands.
+func AddCIReleaseCommand(app *clir.Cli) {
+	releaseCmd := app.NewSubCommand("ci", "Build and publish releases")
 	releaseCmd.LongDescription("Builds release artifacts, generates changelog, and publishes to GitHub.\n" +
 		"Configuration can be provided via .core/release.yaml or command-line flags.")
 
@@ -51,21 +51,21 @@ func AddReleaseCommand(app *clir.Cli) {
 	releaseCmd.StringFlag("version", "Version to release (e.g., v1.2.3)", &version)
 	releaseCmd.BoolFlag("draft", "Create release as a draft", &draft)
 	releaseCmd.BoolFlag("prerelease", "Mark release as a prerelease", &prerelease)
-	releaseCmd.StringFlag("target", "Release target (sdk)", &target)
+	releaseCmd.StringFlag("target", "CIRelease target (sdk)", &target)
 
 	// Default action for `core release`
 	releaseCmd.Action(func() error {
 		if target == "sdk" {
-			return runReleaseSDK(dryRun, version)
+			return runCIReleaseSDK(dryRun, version)
 		}
-		return runRelease(dryRun, version, draft, prerelease)
+		return runCIRelease(dryRun, version, draft, prerelease)
 	})
 
 	// `release init` subcommand
 	initCmd := releaseCmd.NewSubCommand("init", "Initialize release configuration")
 	initCmd.LongDescription("Creates a .core/release.yaml configuration file interactively.")
 	initCmd.Action(func() error {
-		return runReleaseInit()
+		return runCIReleaseInit()
 	})
 
 	// `release changelog` subcommand
@@ -82,12 +82,12 @@ func AddReleaseCommand(app *clir.Cli) {
 	versionCmd := releaseCmd.NewSubCommand("version", "Show or set version")
 	versionCmd.LongDescription("Shows the determined version or validates a version string.")
 	versionCmd.Action(func() error {
-		return runReleaseVersion()
+		return runCIReleaseVersion()
 	})
 }
 
-// runRelease executes the main release workflow.
-func runRelease(dryRun bool, version string, draft, prerelease bool) error {
+// runCIRelease executes the main release workflow.
+func runCIRelease(dryRun bool, version string, draft, prerelease bool) error {
 	ctx := context.Background()
 
 	// Get current directory
@@ -120,7 +120,7 @@ func runRelease(dryRun bool, version string, draft, prerelease bool) error {
 	}
 
 	// Print header
-	fmt.Printf("%s Starting release process\n", releaseHeaderStyle.Render("Release:"))
+	fmt.Printf("%s Starting release process\n", releaseHeaderStyle.Render("CIRelease:"))
 	if dryRun {
 		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run mode)"))
 	}
@@ -135,7 +135,7 @@ func runRelease(dryRun bool, version string, draft, prerelease bool) error {
 
 	// Print summary
 	fmt.Println()
-	fmt.Printf("%s Release completed!\n", releaseSuccessStyle.Render("Success:"))
+	fmt.Printf("%s CIRelease completed!\n", releaseSuccessStyle.Render("Success:"))
 	fmt.Printf("  Version:   %s\n", releaseValueStyle.Render(rel.Version))
 	fmt.Printf("  Artifacts: %d\n", len(rel.Artifacts))
 
@@ -148,8 +148,8 @@ func runRelease(dryRun bool, version string, draft, prerelease bool) error {
 	return nil
 }
 
-// runReleaseSDK executes SDK-only release.
-func runReleaseSDK(dryRun bool, version string) error {
+// runCIReleaseSDK executes SDK-only release.
+func runCIReleaseSDK(dryRun bool, version string) error {
 	ctx := context.Background()
 
 	projectDir, err := os.Getwd()
@@ -169,7 +169,7 @@ func runReleaseSDK(dryRun bool, version string) error {
 	}
 
 	// Print header
-	fmt.Printf("%s Generating SDKs\n", releaseHeaderStyle.Render("SDK Release:"))
+	fmt.Printf("%s Generating SDKs\n", releaseHeaderStyle.Render("SDK CIRelease:"))
 	if dryRun {
 		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run mode)"))
 	}
@@ -192,8 +192,8 @@ func runReleaseSDK(dryRun bool, version string) error {
 	return nil
 }
 
-// runReleaseInit creates a release configuration interactively.
-func runReleaseInit() error {
+// runCIReleaseInit creates a release configuration interactively.
+func runCIReleaseInit() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get working directory: %w", err)
@@ -275,8 +275,8 @@ func runChangelog(fromRef, toRef string) error {
 	return nil
 }
 
-// runReleaseVersion shows the determined version.
-func runReleaseVersion() error {
+// runCIReleaseVersion shows the determined version.
+func runCIReleaseVersion() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get working directory: %w", err)
