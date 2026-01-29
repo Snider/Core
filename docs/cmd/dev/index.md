@@ -1,8 +1,21 @@
 # core dev
 
-Portable development environment based on LinuxKit.
+Multi-repo workflow and portable development environment.
 
-## Commands
+## Multi-Repo Commands
+
+| Command | Description |
+|---------|-------------|
+| [work](work/) | Full workflow: status + commit + push |
+| `health` | Quick health check across repos |
+| `commit` | Claude-assisted commits |
+| `push` | Push repos with unpushed commits |
+| `pull` | Pull repos that are behind |
+| `issues` | List open issues |
+| `reviews` | List PRs needing review |
+| `impact` | Show dependency impact |
+
+## Dev Environment Commands
 
 | Command | Description |
 |---------|-------------|
@@ -328,4 +341,4 @@ Images are stored in `~/.core/images/`:
 
 ## See Also
 
-- [work](work/) - Multi-repo workflow commands (`core work`, `core health`, `core commit`, etc.)
+- [work](work/) - Multi-repo workflow commands (`core dev work`, `core dev health`, etc.)

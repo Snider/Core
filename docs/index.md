@@ -25,7 +25,7 @@ See [cmd/](cmd/) for full command documentation.
 | [build](cmd/build/) | Build Go, Wails, Docker, LinuxKit projects |
 | [ci](cmd/ci/) | Publish releases (dry-run by default) |
 | [sdk](cmd/sdk/) | SDK validation |
-| [dev](cmd/dev/) | Multi-repo workflow |
+| [dev](cmd/dev/) | Multi-repo workflow + dev environment |
 | [pkg](cmd/pkg/) | Package search and install |
 | [vm](cmd/vm/) | LinuxKit VM management |
 | [docs](cmd/docs/) | Documentation management |

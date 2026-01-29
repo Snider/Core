@@ -11,7 +11,7 @@ Unified interface for Go/PHP development, multi-repo management, and deployment.
 | [build](build/) | Build projects |
 | [ci](ci/) | Publish releases |
 | [sdk](sdk/) | SDK validation |
-| [dev](dev/) | Portable dev environment (LinuxKit) |
+| [dev](dev/) | Multi-repo workflow + dev environment |
 | [pkg](pkg/) | Package management |
 | [vm](vm/) | LinuxKit VM management |
 | [docs](docs/) | Documentation management |

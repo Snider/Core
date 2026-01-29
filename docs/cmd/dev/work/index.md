@@ -1,45 +1,44 @@
-# core work
+# core dev work
 
 Multi-repo git operations for managing the host-uk organization.
 
 ## Overview
 
-The `work` command and related commands (`health`, `issues`, `reviews`, `commit`, `push`, `pull`, `impact`, `ci`) help manage multiple repositories in the host-uk ecosystem simultaneously.
+The `core dev work` command and related subcommands help manage multiple repositories in the host-uk ecosystem simultaneously.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `core work` | Multi-repo git operations |
-| `core health` | Quick health check across all repos |
-| `core issues` | List open issues across all repos |
-| `core reviews` | List PRs needing review |
-| `core commit` | Claude-assisted commits across repos |
-| `core push` | Push commits across all repos |
-| `core pull` | Pull updates across all repos |
-| `core impact` | Show impact of changing a repo |
-| `core ci` | Check CI status across all repos |
+| `core dev work` | Full workflow: status + commit + push |
+| `core dev work --status` | Status table only |
+| `core dev health` | Quick health check across all repos |
+| `core dev issues` | List open issues across all repos |
+| `core dev reviews` | List PRs needing review |
+| `core dev commit` | Claude-assisted commits across repos |
+| `core dev push` | Push commits across all repos |
+| `core dev pull` | Pull updates across all repos |
+| `core dev impact` | Show impact of changing a repo |
 
-## core health
+## core dev health
 
 Quick health check showing status of all repos.
 
 ```bash
-core health
+core dev health
 ```
 
 Output shows:
 - Git status (clean/dirty)
 - Current branch
 - Commits ahead/behind remote
-- CI status
 
-## core issues
+## core dev issues
 
 List open issues across all repositories.
 
 ```bash
-core issues [flags]
+core dev issues [flags]
 ```
 
 ### Flags
@@ -50,12 +49,12 @@ core issues [flags]
 | `--label` | Filter by label |
 | `--limit` | Max issues per repo |
 
-## core reviews
+## core dev reviews
 
 List pull requests needing review.
 
 ```bash
-core reviews [flags]
+core dev reviews [flags]
 ```
 
 Shows PRs where:
@@ -63,12 +62,12 @@ Shows PRs where:
 - PR is open and not draft
 - CI is passing
 
-## core commit
+## core dev commit
 
 Create commits across repos with Claude assistance.
 
 ```bash
-core commit [flags]
+core dev commit [flags]
 ```
 
 ### Flags
@@ -80,12 +79,12 @@ core commit [flags]
 
 Claude analyzes changes and suggests conventional commit messages.
 
-## core push
+## core dev push
 
 Push commits across all repos.
 
 ```bash
-core push [flags]
+core dev push [flags]
 ```
 
 ### Flags
@@ -95,12 +94,12 @@ core push [flags]
 | `--all` | Push all repos with unpushed commits |
 | `--force` | Force push (use with caution) |
 
-## core pull
+## core dev pull
 
 Pull updates across all repos.
 
 ```bash
-core pull [flags]
+core dev pull [flags]
 ```
 
 ### Flags
@@ -110,33 +109,18 @@ core pull [flags]
 | `--all` | Pull all repos |
 | `--rebase` | Rebase instead of merge |
 
-## core impact
+## core dev impact
 
 Show the impact of changing a repository.
 
 ```bash
-core impact <repo>
+core dev impact <repo>
 ```
 
 Shows:
 - Dependent repos
 - Reverse dependencies
 - Potential breaking changes
-
-## core ci
-
-Check CI status across all repos.
-
-```bash
-core ci [flags]
-```
-
-### Flags
-
-| Flag | Description |
-|------|-------------|
-| `--watch` | Watch for status changes |
-| `--failing` | Show only failing repos |
 
 ## Registry
 
