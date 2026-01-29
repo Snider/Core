@@ -4,11 +4,6 @@ Commands and flags found in CLI but missing from documentation.
 
 ## Missing Commands
 
-### core build
-
-- `core build from-path` - Build from a local directory
-- `core build pwa` - Build from a live PWA URL
-
 ### core php
 
 - `core php packages link` - Link local packages (subcommand documentation exists but not detailed)
@@ -22,27 +17,6 @@ Commands and flags found in CLI but missing from documentation.
 - `core vm templates vars` - Show template variables
 
 ## Missing Flags
-
-### core build
-
-- `--archive` - Create archives (tar.gz for linux/darwin, zip for windows)
-- `--checksum` - Generate SHA256 checksums and CHECKSUMS.txt
-- `--config` - Config file path
-- `--format` - Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk)
-- `--push` - Push Docker image after build
-
-### core build sdk
-
-- `--dry-run` - Show what would be generated without writing files
-- `--version` - Version to embed in generated SDKs
-
-### core build from-path
-
-- `--path` - The path to the static web application files
-
-### core build pwa
-
-- `--url` - The URL of the PWA to build
 
 ### core setup
 

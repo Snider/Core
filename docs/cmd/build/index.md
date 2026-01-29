@@ -7,6 +7,8 @@ Build Go, Wails, Docker, and LinuxKit projects with automatic project detection.
 | Command | Description |
 |---------|-------------|
 | [sdk](sdk/) | Generate API SDKs from OpenAPI |
+| `from-path` | Build from a local directory |
+| `pwa` | Build from a live PWA URL |
 
 ## Usage
 
@@ -18,12 +20,17 @@ core build [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--type` | Project type: `go`, `wails`, `docker`, `linuxkit` (auto-detected) |
+| `--type` | Project type: `go`, `wails`, `docker`, `linuxkit`, `taskfile` (auto-detected) |
 | `--targets` | Build targets: `linux/amd64,darwin/arm64,windows/amd64` |
 | `--output` | Output directory (default: `dist`) |
-| `--ci` | CI mode - non-interactive, fail fast |
+| `--ci` | CI mode - minimal output with JSON artifact list at the end |
 | `--image` | Docker image name (for docker builds) |
-| `--no-sign` | Skip code signing |
+| `--config` | Config file path (for linuxkit: YAML config, for docker: Dockerfile) |
+| `--format` | Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk) |
+| `--push` | Push Docker image after build (default: false) |
+| `--archive` | Create archives (tar.gz for linux/darwin, zip for windows) - default: true |
+| `--checksum` | Generate SHA256 checksums and CHECKSUMS.txt - default: true |
+| `--no-sign` | Skip all code signing |
 | `--notarize` | Enable macOS notarization (requires Apple credentials) |
 
 ## Examples
@@ -59,6 +66,9 @@ core build --type docker
 
 # With custom image name
 core build --type docker --image ghcr.io/myorg/myapp
+
+# Build and push to registry
+core build --type docker --image ghcr.io/myorg/myapp --push
 ```
 
 ### LinuxKit Image
@@ -66,6 +76,9 @@ core build --type docker --image ghcr.io/myorg/myapp
 ```bash
 # Build LinuxKit ISO
 core build --type linuxkit
+
+# Build with specific format
+core build --type linuxkit --config linuxkit.yml --format qcow2-bios
 ```
 
 ## Project Detection
@@ -77,6 +90,7 @@ Core automatically detects project type based on files:
 | `wails.json` | Wails |
 | `go.mod` | Go |
 | `Dockerfile` | Docker |
+| `Taskfile.yml` | Taskfile |
 | `composer.json` | PHP |
 | `package.json` | Node |
 
@@ -175,3 +189,21 @@ core build --notarize
 | `APPLE_ID` | Apple account email |
 | `APPLE_TEAM_ID` | Apple Developer Team ID |
 | `APPLE_APP_PASSWORD` | App-specific password for notarization |
+
+## Building from PWAs and Static Sites
+
+### Build from Local Directory
+
+Build a desktop app from static web application files:
+
+```bash
+core build from-path --path ./dist
+```
+
+### Build from Live PWA
+
+Build a desktop app from a live Progressive Web App URL:
+
+```bash
+core build pwa --url https://example.com
+```

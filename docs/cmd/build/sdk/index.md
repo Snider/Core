@@ -1,6 +1,6 @@
 # core build sdk
 
-Generate API SDKs from OpenAPI specifications.
+Generate typed API clients from OpenAPI specifications. Supports TypeScript, Python, Go, and PHP.
 
 ## Usage
 
@@ -13,9 +13,9 @@ core build sdk [flags]
 | Flag | Description |
 |------|-------------|
 | `--spec` | Path to OpenAPI spec file |
-| `--lang` | Generate only this language |
-| `--version` | Version to embed |
-| `--dry-run` | Preview without generating |
+| `--lang` | Generate only this language (typescript, python, go, php) |
+| `--version` | Version to embed in generated SDKs |
+| `--dry-run` | Show what would be generated without writing files |
 
 ## Examples
 
