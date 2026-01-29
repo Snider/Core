@@ -22,7 +22,7 @@ var (
 
 // Execute creates the root CLI application and runs it.
 func Execute() error {
-	app := clir.NewCli("core", "CLI for Go/PHP development, multi-repo management, and deployment", "0.1.0")
+	app := clir.NewCli("core", "CLI tool for development and production", "0.1.0")
 
 	// Register commands based on build tags
 	registerCommands(app)
