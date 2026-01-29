@@ -14,7 +14,7 @@ The `core` command provides a unified interface for Go/Wails development, multi-
 | Task | Command | Notes |
 |------|---------|-------|
 | Run Go tests | `core go test` | Sets macOS deployment target, filters warnings |
-| Run Go tests with coverage | `core go test --coverage` | Per-package breakdown |
+| Run Go tests with coverage | `core go cov` | HTML report, thresholds |
 | Format Go code | `core go fmt --fix` | Uses goimports/gofmt |
 | Lint Go code | `core go lint` | Uses golangci-lint |
 | Tidy Go modules | `core go mod tidy` | go mod tidy wrapper |
@@ -233,8 +233,8 @@ core pkg outdated
 
 | Task | Command | Notes |
 |------|---------|-------|
-| Run tests | `core go test` | CGO_ENABLED=0, filters warnings |
-| Run tests with coverage | `core go test --coverage` | Per-package breakdown |
+| Run tests | `core go test` | Filters warnings, colour output |
+| Coverage report | `core go cov` | HTML report, thresholds |
 | Format code | `core go fmt --fix` | Uses goimports if available |
 | Lint code | `core go lint` | Uses golangci-lint |
 | Install binary | `core go install` | Auto-detects cmd/, --no-cgo option |
@@ -255,6 +255,25 @@ core go install --no-cgo
 
 # Verbose output
 core go install -v
+```
+
+### Coverage
+
+```bash
+# Run tests with coverage summary
+core go cov
+
+# Generate HTML report
+core go cov --html
+
+# Generate and open in browser
+core go cov --open
+
+# Fail if coverage below threshold
+core go cov --threshold 80
+
+# Specific package
+core go cov --pkg ./pkg/release
 ```
 
 ### Testing

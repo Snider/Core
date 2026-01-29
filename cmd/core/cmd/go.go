@@ -17,14 +17,16 @@ func AddGoCommands(parent *clir.Cli) {
 	goCmd := parent.NewSubCommand("go", "Go development tools")
 	goCmd.LongDescription("Go development tools with enhanced output and environment setup.\n\n" +
 		"Commands:\n" +
-		"  test     Run tests with coverage\n" +
+		"  test     Run tests\n" +
+		"  cov      Run tests with coverage report\n" +
 		"  fmt      Format Go code\n" +
 		"  lint     Run golangci-lint\n" +
-		"  install  Install Go binary (CGO_ENABLED=0)\n" +
+		"  install  Install Go binary\n" +
 		"  mod      Module management (tidy, download, verify)\n" +
 		"  work     Workspace management")
 
 	addGoTestCommand(goCmd)
+	addGoCovCommand(goCmd)
 	addGoFmtCommand(goCmd)
 	addGoLintCommand(goCmd)
 	addGoInstallCommand(goCmd)
@@ -184,6 +186,131 @@ func parseOverallCoverage(output string) float64 {
 		total += cov
 	}
 	return total / float64(len(matches))
+}
+
+func addGoCovCommand(parent *clir.Command) {
+	var (
+		pkg     string
+		html    bool
+		open    bool
+		threshold float64
+	)
+
+	covCmd := parent.NewSubCommand("cov", "Run tests with coverage report")
+	covCmd.LongDescription("Run tests and generate coverage report.\n\n" +
+		"Examples:\n" +
+		"  core go cov                  # Run with coverage summary\n" +
+		"  core go cov --html           # Generate HTML report\n" +
+		"  core go cov --open           # Generate and open HTML report\n" +
+		"  core go cov --threshold 80   # Fail if coverage < 80%")
+
+	covCmd.StringFlag("pkg", "Package to test (default: ./...)", &pkg)
+	covCmd.BoolFlag("html", "Generate HTML coverage report", &html)
+	covCmd.BoolFlag("open", "Generate and open HTML report in browser", &open)
+	covCmd.Float64Flag("threshold", "Minimum coverage percentage (exit 1 if below)", &threshold)
+
+	covCmd.Action(func() error {
+		if pkg == "" {
+			pkg = "./..."
+		}
+
+		// Create temp file for coverage data
+		covFile, err := os.CreateTemp("", "coverage-*.out")
+		if err != nil {
+			return fmt.Errorf("failed to create coverage file: %w", err)
+		}
+		covPath := covFile.Name()
+		covFile.Close()
+		defer os.Remove(covPath)
+
+		fmt.Printf("%s Running tests with coverage\n", dimStyle.Render("Coverage:"))
+		fmt.Printf("  %s %s\n", dimStyle.Render("Package:"), pkg)
+		fmt.Println()
+
+		// Run tests with coverage
+		args := []string{"test", "-coverprofile=" + covPath, "-covermode=atomic", pkg}
+		cmd := exec.Command("go", args...)
+		cmd.Env = append(os.Environ(), "MACOSX_DEPLOYMENT_TARGET=26.0")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		testErr := cmd.Run()
+
+		// Get coverage percentage
+		covCmd := exec.Command("go", "tool", "cover", "-func="+covPath)
+		covOutput, err := covCmd.Output()
+		if err != nil {
+			if testErr != nil {
+				return testErr
+			}
+			return fmt.Errorf("failed to get coverage: %w", err)
+		}
+
+		// Parse total coverage from last line
+		lines := strings.Split(strings.TrimSpace(string(covOutput)), "\n")
+		var totalCov float64
+		if len(lines) > 0 {
+			lastLine := lines[len(lines)-1]
+			// Format: "total:    (statements)    XX.X%"
+			if strings.Contains(lastLine, "total:") {
+				parts := strings.Fields(lastLine)
+				if len(parts) >= 3 {
+					covStr := strings.TrimSuffix(parts[len(parts)-1], "%")
+					fmt.Sscanf(covStr, "%f", &totalCov)
+				}
+			}
+		}
+
+		// Print coverage summary
+		fmt.Println()
+		covStyle := successStyle
+		if totalCov < 50 {
+			covStyle = errorStyle
+		} else if totalCov < 80 {
+			covStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#f59e0b"))
+		}
+		fmt.Printf("  %s %s\n", dimStyle.Render("Total:"), covStyle.Render(fmt.Sprintf("%.1f%%", totalCov)))
+
+		// Generate HTML if requested
+		if html || open {
+			htmlPath := "coverage.html"
+			htmlCmd := exec.Command("go", "tool", "cover", "-html="+covPath, "-o="+htmlPath)
+			if err := htmlCmd.Run(); err != nil {
+				return fmt.Errorf("failed to generate HTML: %w", err)
+			}
+			fmt.Printf("  %s %s\n", dimStyle.Render("HTML:"), htmlPath)
+
+			if open {
+				// Open in browser
+				var openCmd *exec.Cmd
+				switch {
+				case exec.Command("which", "open").Run() == nil:
+					openCmd = exec.Command("open", htmlPath)
+				case exec.Command("which", "xdg-open").Run() == nil:
+					openCmd = exec.Command("xdg-open", htmlPath)
+				default:
+					fmt.Printf("  %s\n", dimStyle.Render("(open manually)"))
+				}
+				if openCmd != nil {
+					openCmd.Run()
+				}
+			}
+		}
+
+		// Check threshold
+		if threshold > 0 && totalCov < threshold {
+			fmt.Printf("\n%s Coverage %.1f%% is below threshold %.1f%%\n",
+				errorStyle.Render("FAIL"), totalCov, threshold)
+			return fmt.Errorf("coverage below threshold")
+		}
+
+		if testErr != nil {
+			return testErr
+		}
+
+		fmt.Printf("\n%s\n", successStyle.Render("OK"))
+		return nil
+	})
 }
 
 func addGoFmtCommand(parent *clir.Command) {
