@@ -1,0 +1,16 @@
+pkgbase = {{.PackageName}}-bin
+	pkgdesc = {{.Description}}
+	pkgver = {{.Version}}
+	pkgrel = 1
+	url = https://github.com/{{.Repository}}
+	arch = x86_64
+	arch = aarch64
+	license = {{.License}}
+	provides = {{.PackageName}}
+	conflicts = {{.PackageName}}
+	source_x86_64 = {{.PackageName}}-bin-{{.Version}}-x86_64.tar.gz::https://github.com/{{.Repository}}/releases/download/v{{.Version}}/{{.BinaryName}}-linux-amd64.tar.gz
+	sha256sums_x86_64 = {{.Checksums.LinuxAmd64}}
+	source_aarch64 = {{.PackageName}}-bin-{{.Version}}-aarch64.tar.gz::https://github.com/{{.Repository}}/releases/download/v{{.Version}}/{{.BinaryName}}-linux-arm64.tar.gz
+	sha256sums_aarch64 = {{.Checksums.LinuxArm64}}
+
+pkgname = {{.PackageName}}-bin

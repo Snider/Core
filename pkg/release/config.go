@@ -83,6 +83,42 @@ type PublisherConfig struct {
 	Tags []string `yaml:"tags,omitempty"`
 	// BuildArgs are additional Docker build arguments.
 	BuildArgs map[string]string `yaml:"build_args,omitempty"`
+
+	// npm-specific configuration
+	// Package is the npm package name (e.g., "@host-uk/core").
+	Package string `yaml:"package,omitempty"`
+	// Access is the npm access level: "public" or "restricted".
+	Access string `yaml:"access,omitempty"`
+
+	// Homebrew-specific configuration
+	// Tap is the Homebrew tap repository (e.g., "host-uk/homebrew-tap").
+	Tap string `yaml:"tap,omitempty"`
+	// Formula is the formula name (defaults to project name).
+	Formula string `yaml:"formula,omitempty"`
+
+	// Scoop-specific configuration
+	// Bucket is the Scoop bucket repository (e.g., "host-uk/scoop-bucket").
+	Bucket string `yaml:"bucket,omitempty"`
+
+	// AUR-specific configuration
+	// Maintainer is the AUR package maintainer (e.g., "Name <email>").
+	Maintainer string `yaml:"maintainer,omitempty"`
+
+	// Chocolatey-specific configuration
+	// Push determines whether to push to Chocolatey (false = generate only).
+	Push bool `yaml:"push,omitempty"`
+
+	// Official repo configuration (for Homebrew, Scoop)
+	// When enabled, generates files for PR to official repos.
+	Official *OfficialConfig `yaml:"official,omitempty"`
+}
+
+// OfficialConfig holds configuration for generating files for official repo PRs.
+type OfficialConfig struct {
+	// Enabled determines whether to generate files for official repos.
+	Enabled bool `yaml:"enabled"`
+	// Output is the directory to write generated files.
+	Output string `yaml:"output,omitempty"`
 }
 
 // ChangelogConfig holds changelog generation settings.

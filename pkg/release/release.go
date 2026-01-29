@@ -216,6 +216,16 @@ func getPublisher(pubType string) (publishers.Publisher, error) {
 		return publishers.NewLinuxKitPublisher(), nil
 	case "docker":
 		return publishers.NewDockerPublisher(), nil
+	case "npm":
+		return publishers.NewNpmPublisher(), nil
+	case "homebrew":
+		return publishers.NewHomebrewPublisher(), nil
+	case "scoop":
+		return publishers.NewScoopPublisher(), nil
+	case "aur":
+		return publishers.NewAURPublisher(), nil
+	case "chocolatey":
+		return publishers.NewChocolateyPublisher(), nil
 	default:
 		return nil, fmt.Errorf("unsupported publisher type: %s", pubType)
 	}
@@ -255,6 +265,47 @@ func buildExtendedConfig(pubCfg PublisherConfig) map[string]any {
 			args[k] = v
 		}
 		ext["build_args"] = args
+	}
+
+	// npm-specific config
+	if pubCfg.Package != "" {
+		ext["package"] = pubCfg.Package
+	}
+	if pubCfg.Access != "" {
+		ext["access"] = pubCfg.Access
+	}
+
+	// Homebrew-specific config
+	if pubCfg.Tap != "" {
+		ext["tap"] = pubCfg.Tap
+	}
+	if pubCfg.Formula != "" {
+		ext["formula"] = pubCfg.Formula
+	}
+
+	// Scoop-specific config
+	if pubCfg.Bucket != "" {
+		ext["bucket"] = pubCfg.Bucket
+	}
+
+	// AUR-specific config
+	if pubCfg.Maintainer != "" {
+		ext["maintainer"] = pubCfg.Maintainer
+	}
+
+	// Chocolatey-specific config
+	if pubCfg.Push {
+		ext["push"] = pubCfg.Push
+	}
+
+	// Official repo config (shared by multiple publishers)
+	if pubCfg.Official != nil {
+		official := make(map[string]any)
+		official["enabled"] = pubCfg.Official.Enabled
+		if pubCfg.Official.Output != "" {
+			official["output"] = pubCfg.Official.Output
+		}
+		ext["official"] = official
 	}
 
 	return ext

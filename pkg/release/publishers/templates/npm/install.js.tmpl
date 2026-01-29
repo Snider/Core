@@ -1,0 +1,176 @@
+#!/usr/bin/env node
+/**
+ * Binary installer for {{.Package}}
+ * Downloads the correct binary for the current platform from GitHub releases.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
+const { spawnSync } = require('child_process');
+const crypto = require('crypto');
+
+const PACKAGE_VERSION = '{{.Version}}';
+const GITHUB_REPO = '{{.Repository}}';
+const BINARY_NAME = '{{.BinaryName}}';
+
+// Platform/arch mapping
+const PLATFORM_MAP = {
+  darwin: 'darwin',
+  linux: 'linux',
+  win32: 'windows',
+};
+
+const ARCH_MAP = {
+  x64: 'amd64',
+  arm64: 'arm64',
+};
+
+function getPlatformInfo() {
+  const platform = PLATFORM_MAP[process.platform];
+  const arch = ARCH_MAP[process.arch];
+
+  if (!platform || !arch) {
+    console.error(`Unsupported platform: ${process.platform}/${process.arch}`);
+    process.exit(1);
+  }
+
+  return { platform, arch };
+}
+
+function getDownloadUrl(platform, arch) {
+  const ext = platform === 'windows' ? '.zip' : '.tar.gz';
+  const name = `${BINARY_NAME}-${platform}-${arch}${ext}`;
+  return `https://github.com/${GITHUB_REPO}/releases/download/v${PACKAGE_VERSION}/${name}`;
+}
+
+function getChecksumsUrl() {
+  return `https://github.com/${GITHUB_REPO}/releases/download/v${PACKAGE_VERSION}/checksums.txt`;
+}
+
+function download(url) {
+  return new Promise((resolve, reject) => {
+    const request = (url) => {
+      https.get(url, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          // Follow redirect
+          request(res.headers.location);
+          return;
+        }
+
+        if (res.statusCode !== 200) {
+          reject(new Error(`Failed to download ${url}: HTTP ${res.statusCode}`));
+          return;
+        }
+
+        const chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => resolve(Buffer.concat(chunks)));
+        res.on('error', reject);
+      }).on('error', reject);
+    };
+    request(url);
+  });
+}
+
+async function fetchChecksums() {
+  try {
+    const data = await download(getChecksumsUrl());
+    const checksums = {};
+    data.toString().split('\n').forEach((line) => {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length === 2) {
+        checksums[parts[1]] = parts[0];
+      }
+    });
+    return checksums;
+  } catch (err) {
+    console.warn('Warning: Could not fetch checksums, skipping verification');
+    return null;
+  }
+}
+
+function verifyChecksum(data, expectedHash) {
+  const actualHash = crypto.createHash('sha256').update(data).digest('hex');
+  return actualHash === expectedHash;
+}
+
+function extract(data, destDir, platform) {
+  const tempFile = path.join(destDir, platform === 'windows' ? 'temp.zip' : 'temp.tar.gz');
+  fs.writeFileSync(tempFile, data);
+
+  try {
+    if (platform === 'windows') {
+      // Use PowerShell to extract zip
+      const result = spawnSync('powershell', [
+        '-command',
+        `Expand-Archive -Path '${tempFile}' -DestinationPath '${destDir}' -Force`
+      ], { stdio: 'ignore' });
+      if (result.status !== 0) {
+        throw new Error('Failed to extract zip');
+      }
+    } else {
+      const result = spawnSync('tar', ['-xzf', tempFile, '-C', destDir], { stdio: 'ignore' });
+      if (result.status !== 0) {
+        throw new Error('Failed to extract tar.gz');
+      }
+    }
+  } finally {
+    fs.unlinkSync(tempFile);
+  }
+}
+
+async function main() {
+  const { platform, arch } = getPlatformInfo();
+  const binDir = path.join(__dirname, 'bin');
+  const binaryPath = path.join(binDir, platform === 'windows' ? `${BINARY_NAME}.exe` : BINARY_NAME);
+
+  // Skip if binary already exists
+  if (fs.existsSync(binaryPath)) {
+    console.log(`${BINARY_NAME} binary already installed`);
+    return;
+  }
+
+  console.log(`Installing ${BINARY_NAME} v${PACKAGE_VERSION} for ${platform}/${arch}...`);
+
+  // Ensure bin directory exists
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
+  }
+
+  // Fetch checksums
+  const checksums = await fetchChecksums();
+
+  // Download binary
+  const url = getDownloadUrl(platform, arch);
+  console.log(`Downloading from ${url}`);
+
+  const data = await download(url);
+
+  // Verify checksum if available
+  if (checksums) {
+    const ext = platform === 'windows' ? '.zip' : '.tar.gz';
+    const filename = `${BINARY_NAME}-${platform}-${arch}${ext}`;
+    const expectedHash = checksums[filename];
+    if (expectedHash && !verifyChecksum(data, expectedHash)) {
+      console.error('Checksum verification failed!');
+      process.exit(1);
+    }
+    console.log('Checksum verified');
+  }
+
+  // Extract
+  extract(data, binDir, platform);
+
+  // Make executable on Unix
+  if (platform !== 'windows') {
+    fs.chmodSync(binaryPath, 0o755);
+  }
+
+  console.log(`${BINARY_NAME} installed successfully`);
+}
+
+main().catch((err) => {
+  console.error(`Installation failed: ${err.message}`);
+  process.exit(1);
+});

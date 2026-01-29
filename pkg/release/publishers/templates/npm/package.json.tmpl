@@ -1,0 +1,34 @@
+{
+  "name": "{{.Package}}",
+  "version": "{{.Version}}",
+  "description": "{{.Description}}",
+  "license": "{{.License}}",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/{{.Repository}}.git"
+  },
+  "homepage": "https://github.com/{{.Repository}}",
+  "bugs": {
+    "url": "https://github.com/{{.Repository}}/issues"
+  },
+  "bin": {
+    "{{.BinaryName}}": "./bin/run.js"
+  },
+  "scripts": {
+    "postinstall": "node ./install.js"
+  },
+  "files": [
+    "bin/",
+    "install.js"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "cli",
+    "{{.ProjectName}}"
+  ],
+  "publishConfig": {
+    "access": "{{.Access}}"
+  }
+}

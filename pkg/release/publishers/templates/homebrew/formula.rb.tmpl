@@ -1,0 +1,37 @@
+# typed: false
+# frozen_string_literal: true
+
+class {{.FormulaClass}} < Formula
+  desc "{{.Description}}"
+  homepage "https://github.com/{{.Repository}}"
+  version "{{.Version}}"
+  license "{{.License}}"
+
+  on_macos do
+    if Hardware::CPU.arm?
+      url "https://github.com/{{.Repository}}/releases/download/v{{.Version}}/{{.BinaryName}}-darwin-arm64.tar.gz"
+      sha256 "{{.Checksums.DarwinArm64}}"
+    else
+      url "https://github.com/{{.Repository}}/releases/download/v{{.Version}}/{{.BinaryName}}-darwin-amd64.tar.gz"
+      sha256 "{{.Checksums.DarwinAmd64}}"
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.arm?
+      url "https://github.com/{{.Repository}}/releases/download/v{{.Version}}/{{.BinaryName}}-linux-arm64.tar.gz"
+      sha256 "{{.Checksums.LinuxArm64}}"
+    else
+      url "https://github.com/{{.Repository}}/releases/download/v{{.Version}}/{{.BinaryName}}-linux-amd64.tar.gz"
+      sha256 "{{.Checksums.LinuxAmd64}}"
+    end
+  end
+
+  def install
+    bin.install "{{.BinaryName}}"
+  end
+
+  test do
+    system "#{bin}/{{.BinaryName}}", "--version"
+  end
+end

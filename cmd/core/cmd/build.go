@@ -51,8 +51,13 @@ var guiTemplate embed.FS
 func AddBuildCommand(app *clir.Cli) {
 	buildCmd := app.NewSubCommand("build", "Build projects with auto-detection and cross-compilation")
 	buildCmd.LongDescription("Builds the current project with automatic type detection.\n" +
-		"Supports Go, Wails, Node.js, and PHP projects.\n" +
-		"Configuration can be provided via .core/build.yaml or command-line flags.")
+		"Supports Go, Wails, Docker, LinuxKit, and Taskfile projects.\n" +
+		"Configuration can be provided via .core/build.yaml or command-line flags.\n\n" +
+		"Examples:\n" +
+		"  core build                              # Auto-detect and build\n" +
+		"  core build --type docker                # Build Docker image\n" +
+		"  core build --type linuxkit              # Build LinuxKit image\n" +
+		"  core build --type linuxkit --config linuxkit.yml --format qcow2-bios")
 
 	// Flags for the main build command
 	var buildType string
@@ -62,12 +67,24 @@ func AddBuildCommand(app *clir.Cli) {
 	var doArchive bool
 	var doChecksum bool
 
-	buildCmd.StringFlag("type", "Builder type (go, wails, node, php) - auto-detected if not specified", &buildType)
+	// Docker/LinuxKit specific flags
+	var configPath string
+	var format string
+	var push bool
+	var imageName string
+
+	buildCmd.StringFlag("type", "Builder type (go, wails, docker, linuxkit, taskfile) - auto-detected if not specified", &buildType)
 	buildCmd.BoolFlag("ci", "CI mode - minimal output with JSON artifact list at the end", &ciMode)
 	buildCmd.StringFlag("targets", "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)", &targets)
 	buildCmd.StringFlag("output", "Output directory for artifacts (default: dist)", &outputDir)
 	buildCmd.BoolFlag("archive", "Create archives (tar.gz for linux/darwin, zip for windows) - default: true", &doArchive)
 	buildCmd.BoolFlag("checksum", "Generate SHA256 checksums and CHECKSUMS.txt - default: true", &doChecksum)
+
+	// Docker/LinuxKit specific
+	buildCmd.StringFlag("config", "Config file path (for linuxkit: YAML config, for docker: Dockerfile)", &configPath)
+	buildCmd.StringFlag("format", "Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk)", &format)
+	buildCmd.BoolFlag("push", "Push Docker image after build (default: false)", &push)
+	buildCmd.StringFlag("image", "Docker image name (e.g., host-uk/core-devops)", &imageName)
 
 	// Set defaults for archive and checksum (true by default)
 	doArchive = true
@@ -75,7 +92,7 @@ func AddBuildCommand(app *clir.Cli) {
 
 	// Default action for `core build` (no subcommand)
 	buildCmd.Action(func() error {
-		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum)
+		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName)
 	})
 
 	// --- `build from-path` command (legacy PWA/GUI build) ---
@@ -102,7 +119,7 @@ func AddBuildCommand(app *clir.Cli) {
 }
 
 // runProjectBuild handles the main `core build` command with auto-detection.
-func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool) error {
+func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string) error {
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
@@ -185,6 +202,16 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		Name:       binaryName,
 		Version:    buildCfg.Project.Name, // Could be enhanced with git describe
 		LDFlags:    buildCfg.Build.LDFlags,
+		// Docker/LinuxKit specific
+		Dockerfile:     configPath, // Reuse for Dockerfile path
+		LinuxKitConfig: configPath,
+		Push:           push,
+		Image:          imageName,
+	}
+
+	// Parse formats for LinuxKit
+	if format != "" {
+		cfg.Formats = strings.Split(format, ",")
 	}
 
 	// Execute build
@@ -407,6 +434,12 @@ func getBuilder(projectType build.ProjectType) (build.Builder, error) {
 		return builders.NewWailsBuilder(), nil
 	case build.ProjectTypeGo:
 		return builders.NewGoBuilder(), nil
+	case build.ProjectTypeDocker:
+		return builders.NewDockerBuilder(), nil
+	case build.ProjectTypeLinuxKit:
+		return builders.NewLinuxKitBuilder(), nil
+	case build.ProjectTypeTaskfile:
+		return builders.NewTaskfileBuilder(), nil
 	case build.ProjectTypeNode:
 		return nil, fmt.Errorf("Node.js builder not yet implemented")
 	case build.ProjectTypePHP:
@@ -631,8 +664,8 @@ func runBuild(fromPath string) error {
 		return fmt.Errorf("failed to anchor template filesystem: %w", err)
 	}
 	sod := gosod.New(templateFS)
-	if sod != nil {
-		return fmt.Errorf("failed to create new sod instance: %w", sod)
+	if sod == nil {
+		return fmt.Errorf("failed to create new sod instance")
 	}
 
 	templateData := map[string]string{"AppName": appName}

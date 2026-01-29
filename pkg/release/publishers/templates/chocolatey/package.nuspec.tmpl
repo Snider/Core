@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>{{.PackageName}}</id>
+    <version>{{.Version}}</version>
+    <title>{{.Title}}</title>
+    <authors>{{.Authors}}</authors>
+    <projectUrl>https://github.com/{{.Repository}}</projectUrl>
+    <licenseUrl>https://github.com/{{.Repository}}/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>{{.Description}}</description>
+    <tags>{{.Tags}}</tags>
+    <releaseNotes>https://github.com/{{.Repository}}/releases/tag/v{{.Version}}</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

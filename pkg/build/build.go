@@ -11,10 +11,13 @@ import (
 type ProjectType string
 
 const (
-	ProjectTypeGo     ProjectType = "go"
-	ProjectTypeWails  ProjectType = "wails"
-	ProjectTypeNode   ProjectType = "node"
-	ProjectTypePHP    ProjectType = "php"
+	ProjectTypeGo       ProjectType = "go"
+	ProjectTypeWails    ProjectType = "wails"
+	ProjectTypeNode     ProjectType = "node"
+	ProjectTypePHP      ProjectType = "php"
+	ProjectTypeDocker   ProjectType = "docker"
+	ProjectTypeLinuxKit ProjectType = "linuxkit"
+	ProjectTypeTaskfile ProjectType = "taskfile"
 )
 
 // Target represents a build target platform.
@@ -48,6 +51,18 @@ type Config struct {
 	Version string
 	// LDFlags are additional linker flags.
 	LDFlags []string
+
+	// Docker-specific config
+	Dockerfile string            // Path to Dockerfile (default: Dockerfile)
+	Registry   string            // Container registry (default: ghcr.io)
+	Image      string            // Image name (owner/repo format)
+	Tags       []string          // Additional tags to apply
+	BuildArgs  map[string]string // Docker build arguments
+	Push       bool              // Whether to push after build
+
+	// LinuxKit-specific config
+	LinuxKitConfig string   // Path to LinuxKit YAML config
+	Formats        []string // Output formats (iso, qcow2, raw, vmdk)
 }
 
 // Builder defines the interface for project-specific build implementations.

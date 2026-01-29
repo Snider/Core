@@ -1,0 +1,20 @@
+# Maintainer: {{.Maintainer}}
+pkgname={{.PackageName}}-bin
+pkgver={{.Version}}
+pkgrel=1
+pkgdesc="{{.Description}}"
+arch=('x86_64' 'aarch64')
+url="https://github.com/{{.Repository}}"
+license=('{{.License}}')
+provides=('{{.PackageName}}')
+conflicts=('{{.PackageName}}')
+
+source_x86_64=("${pkgname}-${pkgver}-x86_64.tar.gz::https://github.com/{{.Repository}}/releases/download/v${pkgver}/{{.BinaryName}}-linux-amd64.tar.gz")
+source_aarch64=("${pkgname}-${pkgver}-aarch64.tar.gz::https://github.com/{{.Repository}}/releases/download/v${pkgver}/{{.BinaryName}}-linux-arm64.tar.gz")
+
+sha256sums_x86_64=('{{.Checksums.LinuxAmd64}}')
+sha256sums_aarch64=('{{.Checksums.LinuxArm64}}')
+
+package() {
+    install -Dm755 {{.BinaryName}} "${pkgdir}/usr/bin/{{.BinaryName}}"
+}
