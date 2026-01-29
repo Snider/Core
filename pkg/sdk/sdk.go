@@ -53,6 +53,7 @@ type PublishConfig struct {
 type SDK struct {
 	config     *Config
 	projectDir string
+	version    string
 }
 
 // New creates a new SDK instance.
@@ -63,6 +64,15 @@ func New(projectDir string, config *Config) *SDK {
 	return &SDK{
 		config:     config,
 		projectDir: projectDir,
+	}
+}
+
+// SetVersion sets the SDK version for generation.
+// This updates both the internal version field and the config's Package.Version.
+func (s *SDK) SetVersion(version string) {
+	s.version = version
+	if s.config != nil {
+		s.config.Package.Version = version
 	}
 }
 
