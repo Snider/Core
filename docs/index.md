@@ -18,36 +18,47 @@ curl -fsSL https://github.com/host-uk/core/releases/latest/download/core-$(uname
 
 | Command | Description |
 |---------|-------------|
-| `core build` | Build Go, Wails, Docker, and LinuxKit projects |
-| `core release` | Build and publish to GitHub, npm, Homebrew, etc. |
-| `core sdk` | Generate and manage API SDKs |
+| [`core build`](cmd/build.md) | Build Go, Wails, Docker, and LinuxKit projects |
+| [`core release`](cmd/release.md) | Build and publish to GitHub, npm, Homebrew, etc. |
+| [`core sdk`](cmd/sdk.md) | Generate and manage API SDKs |
 
 ### Containers
 
 | Command | Description |
 |---------|-------------|
-| `core run` | Run LinuxKit images with qemu/hyperkit |
+| [`core run`](cmd/run.md) | Run LinuxKit images with qemu/hyperkit |
 | `core ps` | List running containers |
 | `core stop` | Stop running containers |
 | `core logs` | View container logs |
 | `core exec` | Execute commands in containers |
-| `core templates` | Manage LinuxKit templates |
+| [`core templates`](cmd/templates.md) | Manage LinuxKit templates |
 
 ### Development
 
 | Command | Description |
 |---------|-------------|
-| `core dev` | Portable development environment (100+ tools) |
-| `core php` | Laravel/PHP development tools |
-| `core doctor` | Check development environment |
+| [`core dev`](cmd/dev.md) | Portable development environment (100+ tools) |
+| [`core php`](cmd/php.md) | Laravel/PHP development tools |
+| [`core doctor`](cmd/doctor.md) | Check development environment |
 
-### GitHub Integration
+### GitHub & Multi-Repo
 
 | Command | Description |
 |---------|-------------|
-| `core search` | Search GitHub for repositories |
-| `core install` | Clone a repository from GitHub |
-| `core setup` | Clone all repos from registry |
+| [`core search`](cmd/search.md) | Search GitHub for repositories |
+| [`core install`](cmd/search.md) | Clone a repository from GitHub |
+| [`core setup`](cmd/setup.md) | Clone all repos from registry |
+| [`core work`](cmd/work.md) | Multi-repo git operations |
+| [`core health`](cmd/work.md) | Quick health check across repos |
+| [`core issues`](cmd/work.md) | List open issues across repos |
+| [`core reviews`](cmd/work.md) | List PRs needing review |
+| [`core ci`](cmd/work.md) | Check CI status across repos |
+
+### Documentation
+
+| Command | Description |
+|---------|-------------|
+| [`core docs`](cmd/docs.md) | Documentation management |
 
 ## Quick Start
 
@@ -85,19 +96,19 @@ Core uses `.core/` directory for project configuration:
 
 ## Documentation
 
-### Build & Release
-- [Build Command](build.md) - Cross-platform builds with code signing
-- [Release Command](release.md) - Publishing to package managers
-- [SDK Command](sdk.md) - Generate API clients from OpenAPI
-
-### Containers
-- [Run Command](run.md) - Container management
-
-### Development
-- [Dev Command](dev.md) - Portable development environment
-- [PHP Commands](php.md) - Laravel development
-- [Doctor Command](doctor.md) - Environment check
-- [Search & Install](search.md) - GitHub integration
+### Command Reference
+- [Build](cmd/build.md) - Cross-platform builds with code signing
+- [Release](cmd/release.md) - Publishing to package managers
+- [SDK](cmd/sdk.md) - Generate API clients from OpenAPI
+- [Run](cmd/run.md) - Container management
+- [Templates](cmd/templates.md) - LinuxKit templates
+- [Dev](cmd/dev.md) - Portable development environment
+- [PHP](cmd/php.md) - Laravel development
+- [Doctor](cmd/doctor.md) - Environment check
+- [Search & Install](cmd/search.md) - GitHub integration
+- [Setup](cmd/setup.md) - Clone repos from registry
+- [Work](cmd/work.md) - Multi-repo operations
+- [Docs](cmd/docs.md) - Documentation management
 
 ### Reference
 - [Configuration](configuration.md) - All config options
