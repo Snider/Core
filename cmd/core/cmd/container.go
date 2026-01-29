@@ -13,17 +13,30 @@ import (
 	"github.com/leaanthony/clir"
 )
 
-// AddContainerCommands adds container-related commands to the CLI.
+// AddContainerCommands adds container-related commands under 'vm' to the CLI.
 func AddContainerCommands(parent *clir.Cli) {
-	AddRunCommand(parent)
-	AddPsCommand(parent)
-	AddStopCommand(parent)
-	AddLogsCommand(parent)
-	AddExecCommand(parent)
+	vmCmd := parent.NewSubCommand("vm", "LinuxKit VM management")
+	vmCmd.LongDescription("Manage LinuxKit virtual machines.\n\n" +
+		"LinuxKit VMs are lightweight, immutable VMs built from YAML templates.\n" +
+		"They run using qemu or hyperkit depending on your system.\n\n" +
+		"Commands:\n" +
+		"  run        Run a VM from image or template\n" +
+		"  ps         List running VMs\n" +
+		"  stop       Stop a running VM\n" +
+		"  logs       View VM logs\n" +
+		"  exec       Execute command in VM\n" +
+		"  templates  Manage LinuxKit templates")
+
+	addVMRunCommand(vmCmd)
+	addVMPsCommand(vmCmd)
+	addVMStopCommand(vmCmd)
+	addVMLogsCommand(vmCmd)
+	addVMExecCommand(vmCmd)
+	addVMTemplatesCommand(vmCmd)
 }
 
-// AddRunCommand adds the 'run' command.
-func AddRunCommand(parent *clir.Cli) {
+// addVMRunCommand adds the 'run' command under vm.
+func addVMRunCommand(parent *clir.Command) {
 	var (
 		name         string
 		detach       bool
@@ -40,11 +53,11 @@ func AddRunCommand(parent *clir.Cli) {
 		"You can also run from a template using --template, which will build and run\n" +
 		"the image automatically. Use --var to set template variables.\n\n" +
 		"Examples:\n" +
-		"  core run image.iso\n" +
-		"  core run -d image.qcow2\n" +
-		"  core run --name myvm --memory 2048 --cpus 4 image.iso\n" +
-		"  core run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n" +
-		"  core run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com")
+		"  core vm run image.iso\n" +
+		"  core vm run -d image.qcow2\n" +
+		"  core vm run --name myvm --memory 2048 --cpus 4 image.iso\n" +
+		"  core vm run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n" +
+		"  core vm run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com")
 
 	runCmd.StringFlag("name", "Name for the container", &name)
 	runCmd.BoolFlag("d", "Run in detached mode (background)", &detach)
@@ -111,8 +124,8 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 		fmt.Printf("%s %s\n", successStyle.Render("Started:"), c.ID)
 		fmt.Printf("%s %d\n", dimStyle.Render("PID:"), c.PID)
 		fmt.Println()
-		fmt.Printf("Use 'core logs %s' to view output\n", c.ID[:8])
-		fmt.Printf("Use 'core stop %s' to stop\n", c.ID[:8])
+		fmt.Printf("Use 'core vm logs %s' to view output\n", c.ID[:8])
+		fmt.Printf("Use 'core vm stop %s' to stop\n", c.ID[:8])
 	} else {
 		fmt.Printf("\n%s %s\n", dimStyle.Render("Container stopped:"), c.ID)
 	}
@@ -120,15 +133,15 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 	return nil
 }
 
-// AddPsCommand adds the 'ps' command.
-func AddPsCommand(parent *clir.Cli) {
+// addVMPsCommand adds the 'ps' command under vm.
+func addVMPsCommand(parent *clir.Command) {
 	var all bool
 
-	psCmd := parent.NewSubCommand("ps", "List running containers")
-	psCmd.LongDescription("Lists all containers. By default, only shows running containers.\n\n" +
+	psCmd := parent.NewSubCommand("ps", "List running VMs")
+	psCmd.LongDescription("Lists all VMs. By default, only shows running VMs.\n\n" +
 		"Examples:\n" +
-		"  core ps\n" +
-		"  core ps -a")
+		"  core vm ps\n" +
+		"  core vm ps -a")
 
 	psCmd.BoolFlag("a", "Show all containers (including stopped)", &all)
 
@@ -215,13 +228,13 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%dd", int(d.Hours()/24))
 }
 
-// AddStopCommand adds the 'stop' command.
-func AddStopCommand(parent *clir.Cli) {
-	stopCmd := parent.NewSubCommand("stop", "Stop a running container")
-	stopCmd.LongDescription("Stops a running container by ID.\n\n" +
+// addVMStopCommand adds the 'stop' command under vm.
+func addVMStopCommand(parent *clir.Command) {
+	stopCmd := parent.NewSubCommand("stop", "Stop a running VM")
+	stopCmd.LongDescription("Stops a running VM by ID.\n\n" +
 		"Examples:\n" +
-		"  core stop abc12345\n" +
-		"  core stop abc1")
+		"  core vm stop abc12345\n" +
+		"  core vm stop abc1")
 
 	stopCmd.Action(func() error {
 		args := stopCmd.OtherArgs()
@@ -280,15 +293,15 @@ func resolveContainerID(manager *container.LinuxKitManager, partialID string) (s
 	}
 }
 
-// AddLogsCommand adds the 'logs' command.
-func AddLogsCommand(parent *clir.Cli) {
+// addVMLogsCommand adds the 'logs' command under vm.
+func addVMLogsCommand(parent *clir.Command) {
 	var follow bool
 
-	logsCmd := parent.NewSubCommand("logs", "View container logs")
-	logsCmd.LongDescription("View logs from a container.\n\n" +
+	logsCmd := parent.NewSubCommand("logs", "View VM logs")
+	logsCmd.LongDescription("View logs from a VM.\n\n" +
 		"Examples:\n" +
-		"  core logs abc12345\n" +
-		"  core logs -f abc1")
+		"  core vm logs abc12345\n" +
+		"  core vm logs -f abc1")
 
 	logsCmd.BoolFlag("f", "Follow log output", &follow)
 
@@ -323,13 +336,13 @@ func viewLogs(id string, follow bool) error {
 	return err
 }
 
-// AddExecCommand adds the 'exec' command.
-func AddExecCommand(parent *clir.Cli) {
-	execCmd := parent.NewSubCommand("exec", "Execute a command in a container")
-	execCmd.LongDescription("Execute a command inside a running container via SSH.\n\n" +
+// addVMExecCommand adds the 'exec' command under vm.
+func addVMExecCommand(parent *clir.Command) {
+	execCmd := parent.NewSubCommand("exec", "Execute a command in a VM")
+	execCmd.LongDescription("Execute a command inside a running VM via SSH.\n\n" +
 		"Examples:\n" +
-		"  core exec abc12345 ls -la\n" +
-		"  core exec abc1 /bin/sh")
+		"  core vm exec abc12345 ls -la\n" +
+		"  core vm exec abc1 /bin/sh")
 
 	execCmd.Action(func() error {
 		args := execCmd.OtherArgs()

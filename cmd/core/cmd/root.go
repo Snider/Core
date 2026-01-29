@@ -48,7 +48,6 @@ func Execute() error {
 	AddInstallCommand(app)
 	AddReleaseCommand(app)
 	AddContainerCommands(app)
-	AddTemplatesCommand(app)
 	AddPHPCommands(app)
 	AddSDKCommand(app)
 	AddTestCommand(app)

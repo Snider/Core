@@ -19,16 +19,16 @@ var (
 	defaultStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6b7280")).Italic(true)
 )
 
-// AddTemplatesCommand adds the 'templates' command and subcommands.
-func AddTemplatesCommand(parent *clir.Cli) {
+// addVMTemplatesCommand adds the 'templates' command under vm.
+func addVMTemplatesCommand(parent *clir.Command) {
 	templatesCmd := parent.NewSubCommand("templates", "Manage LinuxKit templates")
 	templatesCmd.LongDescription("Manage LinuxKit YAML templates for building VMs.\n\n" +
 		"Templates provide pre-configured LinuxKit configurations for common use cases.\n" +
 		"They support variable substitution with ${VAR} and ${VAR:-default} syntax.\n\n" +
 		"Examples:\n" +
-		"  core templates                    # List available templates\n" +
-		"  core templates show core-dev      # Show template content\n" +
-		"  core templates vars server-php    # Show template variables")
+		"  core vm templates                    # List available templates\n" +
+		"  core vm templates show core-dev      # Show template content\n" +
+		"  core vm templates vars server-php    # Show template variables")
 
 	// Default action: list templates
 	templatesCmd.Action(func() error {
@@ -99,9 +99,9 @@ func listTemplates() error {
 	w.Flush()
 
 	fmt.Println()
-	fmt.Printf("Show template: %s\n", dimStyle.Render("core templates show <name>"))
-	fmt.Printf("Show variables: %s\n", dimStyle.Render("core templates vars <name>"))
-	fmt.Printf("Run from template: %s\n", dimStyle.Render("core run --template <name> --var SSH_KEY=\"...\""))
+	fmt.Printf("Show template: %s\n", dimStyle.Render("core vm templates show <name>"))
+	fmt.Printf("Show variables: %s\n", dimStyle.Render("core vm templates vars <name>"))
+	fmt.Printf("Run from template: %s\n", dimStyle.Render("core vm run --template <name> --var SSH_KEY=\"...\""))
 
 	return nil
 }
@@ -211,8 +211,8 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 		fmt.Printf("%s %s\n", successStyle.Render("Started:"), c.ID)
 		fmt.Printf("%s %d\n", dimStyle.Render("PID:"), c.PID)
 		fmt.Println()
-		fmt.Printf("Use 'core logs %s' to view output\n", c.ID[:8])
-		fmt.Printf("Use 'core stop %s' to stop\n", c.ID[:8])
+		fmt.Printf("Use 'core vm logs %s' to view output\n", c.ID[:8])
+		fmt.Printf("Use 'core vm stop %s' to stop\n", c.ID[:8])
 	} else {
 		fmt.Printf("\n%s %s\n", dimStyle.Render("Container stopped:"), c.ID)
 	}
