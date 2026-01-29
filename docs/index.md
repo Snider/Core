@@ -114,10 +114,12 @@ Core uses `.core/` directory for project configuration:
 - [Configuration](configuration.md) - All config options
 - [Examples](examples/) - Sample configurations
 
-## Framework
+## Claude Code Skill
 
-Core also provides a Go framework for building desktop applications:
+Install the skill to teach Claude Code how to use the Core CLI:
 
-- [Framework Overview](framework/overview.md)
-- [Services](framework/services.md)
-- [Lifecycle](framework/lifecycle.md)
+```bash
+curl -fsSL https://raw.githubusercontent.com/host-uk/core/main/.claude/skills/core/install.sh | bash
+```
+
+See [skill/](skill/) for details.
