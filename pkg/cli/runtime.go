@@ -156,6 +156,14 @@ func Error(msg string) {
 	fmt.Println(ErrorStyle.Render(SymbolCross + " " + msg))
 }
 
+// Fatal prints an error message and exits with code 1.
+func Fatal(err error) {
+	if err != nil {
+		Error(err.Error())
+		os.Exit(1)
+	}
+}
+
 // Warning prints a warning message.
 func Warning(msg string) {
 	fmt.Println(WarningStyle.Render(SymbolWarning + " " + msg))

@@ -17,7 +17,8 @@ const (
 
 // Main initialises and runs the CLI application.
 // This is the main entry point for the CLI.
-func Main() error {
+// Exits with code 1 on error.
+func Main() {
 	// Initialise CLI runtime with services
 	if err := Init(Options{
 		AppName: AppName,
@@ -29,14 +30,14 @@ func Main() error {
 			})),
 		},
 	}); err != nil {
-		return err
+		Fatal(err)
 	}
 	defer Shutdown()
 
 	// Add completion command to the CLI's root
 	RootCmd().AddCommand(completionCmd)
 
-	return Execute()
+	Fatal(Execute())
 }
 
 // completionCmd generates shell completion scripts.

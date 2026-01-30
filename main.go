@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/host-uk/core/pkg/cli"
 
 	// Build variants import commands via self-registration.
@@ -12,8 +9,5 @@ import (
 )
 
 func main() {
-	if err := cli.Main(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	cli.Main()
 }
