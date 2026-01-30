@@ -1,64 +1,43 @@
-// Package cmd implements the core CLI application.
-//
-// The CLI provides commands for:
-//   - Multi-repo development workflows (dev)
-//   - AI agent task management (ai)
-//   - Go and PHP development tools (go, php)
-//   - Build and release automation (build, ci)
-//   - SDK validation and API compatibility (sdk)
-//   - Package and environment management (pkg, vm)
-//   - Documentation and testing (docs, test)
-//   - Environment health checks (doctor)
-//   - Repository setup and cloning (setup)
-//
-// Two build variants exist:
-//   - Default build: Full development toolset
-//   - CI build (-tags ci): Minimal release toolset
-package cmd
+package cli
 
 import (
 	"os"
 
-	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/framework"
+	"github.com/host-uk/core/pkg/log"
 	"github.com/spf13/cobra"
-
-	// Build variants import commands via self-registration.
-	// See cmd/variants/ for available variants: full, ci, php, minimal.
-	_ "github.com/host-uk/core/cmd/variants"
 )
 
 const (
-	appName    = "core"
-	appVersion = "0.1.0"
+	// AppName is the CLI application name.
+	AppName = "core"
+	// AppVersion is the CLI application version.
+	AppVersion = "0.1.0"
 )
 
-
-
-// Execute initialises and runs the CLI application.
-// Commands are registered based on build tags (see core_ci.go and core_dev.go).
-func Execute() error {
+// Main initialises and runs the CLI application.
+// This is the main entry point for the CLI.
+func Main() error {
 	// Initialise CLI runtime with services
-	if err := cli.Init(cli.Options{
-		AppName: appName,
-		Version: appVersion,
+	if err := Init(Options{
+		AppName: AppName,
+		Version: AppVersion,
 		Services: []framework.Option{
-			framework.WithName("i18n", cli.NewI18nService(cli.I18nOptions{})),
-			framework.WithName("log", cli.NewLogService(cli.LogOptions{
-				Level: cli.LogLevelInfo,
+			framework.WithName("i18n", NewI18nService(I18nOptions{})),
+			framework.WithName("log", NewLogService(log.Options{
+				Level: log.LevelInfo,
 			})),
 		},
 	}); err != nil {
 		return err
 	}
-	defer cli.Shutdown()
+	defer Shutdown()
 
 	// Add completion command to the CLI's root
-	cli.RootCmd().AddCommand(completionCmd)
+	RootCmd().AddCommand(completionCmd)
 
-	return cli.Execute()
+	return Execute()
 }
-
 
 // completionCmd generates shell completion scripts.
 var completionCmd = &cobra.Command{

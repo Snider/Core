@@ -1,12 +1,18 @@
 version: '3'
 
-includes:
-  gui: ./cmd/lthn-desktop/Taskfile.yml
-  cli: ./cmd/core/Taskfile.yml
-  demo: ./cmd/core-demo/Taskfile.yml
-  ide: ./cmd/core-gui/Taskfile.yml
-
 tasks:
+  cli:build:
+    desc: "Build the core CLI executable"
+    cmds:
+      - go build -o ./bin/core .
+
+  cli:run:
+    desc: "Build and run the core CLI"
+    cmds:
+      - task: cli:build
+      - ./bin/core {{.CLI_ARGS}}
+
+
   test:
     desc: "Run all Go tests recursively for the entire project."
     cmds:
@@ -53,4 +59,4 @@ tasks:
   i18n:validate:
     desc: "Validate i18n key usage across the codebase"
     cmds:
-      - go run ./cmd/i18n-validate ./...
+      - go run ./internal/tools/i18n-validate ./...
