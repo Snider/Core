@@ -56,6 +56,17 @@ func _(messageID string, args ...any) string {
 	return messageID
 }
 
+// N formats a number using the i18n.numeric.* namespace.
+// Wrapper for T("i18n.numeric.{format}", value).
+//
+//	N("number", 1234567)   // T("i18n.numeric.number", 1234567)
+//	N("percent", 0.85)     // T("i18n.numeric.percent", 0.85)
+//	N("bytes", 1536000)    // T("i18n.numeric.bytes", 1536000)
+//	N("ordinal", 1)        // T("i18n.numeric.ordinal", 1)
+func N(format string, value any) string {
+	return T("i18n.numeric."+format, value)
+}
+
 // --- Template helpers ---
 
 // executeIntentTemplate executes an intent template with the given data.

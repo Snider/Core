@@ -314,36 +314,48 @@ func (s *Service) handleI18nNamespace(key string, args []any) string {
 		return ActionFailed(verb, "")
 	}
 
-	// i18n.number → FormatNumber(n)
-	if key == "i18n.number" && len(args) > 0 {
-		return FormatNumber(toInt64(args[0]))
+	// i18n.numeric.* namespace (for N() helper)
+	if strings.HasPrefix(key, "i18n.numeric.") && len(args) > 0 {
+		format := strings.TrimPrefix(key, "i18n.numeric.")
+		switch format {
+		case "number", "int":
+			return FormatNumber(toInt64(args[0]))
+		case "decimal", "float":
+			return FormatDecimal(toFloat64(args[0]))
+		case "percent", "pct":
+			return FormatPercent(toFloat64(args[0]))
+		case "bytes", "size":
+			return FormatBytes(toInt64(args[0]))
+		case "ordinal", "ord":
+			return FormatOrdinal(toInt(args[0]))
+		case "ago":
+			if len(args) >= 2 {
+				if unit, ok := args[1].(string); ok {
+					return FormatAgo(toInt(args[0]), unit)
+				}
+			}
+		}
 	}
 
-	// i18n.decimal → FormatDecimal(f)
-	if key == "i18n.decimal" && len(args) > 0 {
-		return FormatDecimal(toFloat64(args[0]))
-	}
-
-	// i18n.percent → FormatPercent(f)
-	if key == "i18n.percent" && len(args) > 0 {
-		return FormatPercent(toFloat64(args[0]))
-	}
-
-	// i18n.bytes → FormatBytes(n)
-	if key == "i18n.bytes" && len(args) > 0 {
-		return FormatBytes(toInt64(args[0]))
-	}
-
-	// i18n.ordinal → FormatOrdinal(n)
-	if key == "i18n.ordinal" && len(args) > 0 {
-		return FormatOrdinal(toInt(args[0]))
-	}
-
-	// i18n.ago → FormatAgo(count, unit)
-	if key == "i18n.ago" && len(args) >= 2 {
-		count := toInt(args[0])
-		if unit, ok := args[1].(string); ok {
-			return FormatAgo(count, unit)
+	// Legacy i18n.{format} shortcuts (kept for compatibility)
+	if len(args) > 0 {
+		switch key {
+		case "i18n.number":
+			return FormatNumber(toInt64(args[0]))
+		case "i18n.decimal":
+			return FormatDecimal(toFloat64(args[0]))
+		case "i18n.percent":
+			return FormatPercent(toFloat64(args[0]))
+		case "i18n.bytes":
+			return FormatBytes(toInt64(args[0]))
+		case "i18n.ordinal":
+			return FormatOrdinal(toInt(args[0]))
+		case "i18n.ago":
+			if len(args) >= 2 {
+				if unit, ok := args[1].(string); ok {
+					return FormatAgo(toInt(args[0]), unit)
+				}
+			}
 		}
 	}
 
