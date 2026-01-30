@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
+// Issue-specific styles
 var (
 	issueRepoStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6b7280")) // gray-500
@@ -60,8 +62,8 @@ type GitHubIssue struct {
 	RepoName string `json:"-"`
 }
 
-// AddIssuesCommand adds the 'issues' command to the given parent command.
-func AddIssuesCommand(parent *clir.Command) {
+// addIssuesCommand adds the 'issues' command to the given parent command.
+func addIssuesCommand(parent *clir.Command) {
 	var registryPath string
 	var limit int
 	var assignee string
@@ -204,7 +206,7 @@ func printIssue(issue GitHubIssue) {
 	// #42 [core-bio] Fix avatar upload
 	num := issueNumberStyle.Render(fmt.Sprintf("#%d", issue.Number))
 	repo := issueRepoStyle.Render(fmt.Sprintf("[%s]", issue.RepoName))
-	title := issueTitleStyle.Render(truncate(issue.Title, 60))
+	title := issueTitleStyle.Render(shared.Truncate(issue.Title, 60))
 
 	line := fmt.Sprintf("  %s %s %s", num, repo, title)
 
@@ -227,33 +229,8 @@ func printIssue(issue GitHubIssue) {
 	}
 
 	// Add age
-	age := formatAge(issue.CreatedAt)
+	age := shared.FormatAge(issue.CreatedAt)
 	line += " " + issueAgeStyle.Render(age)
 
 	fmt.Println(line)
-}
-
-func truncate(s string, max int) string {
-	if len(s) <= max {
-		return s
-	}
-	return s[:max-3] + "..."
-}
-
-func formatAge(t time.Time) string {
-	d := time.Since(t)
-
-	if d < time.Hour {
-		return fmt.Sprintf("%dm ago", int(d.Minutes()))
-	}
-	if d < 24*time.Hour {
-		return fmt.Sprintf("%dh ago", int(d.Hours()))
-	}
-	if d < 7*24*time.Hour {
-		return fmt.Sprintf("%dd ago", int(d.Hours()/24))
-	}
-	if d < 30*24*time.Hour {
-		return fmt.Sprintf("%dw ago", int(d.Hours()/(24*7)))
-	}
-	return fmt.Sprintf("%dmo ago", int(d.Hours()/(24*30)))
 }

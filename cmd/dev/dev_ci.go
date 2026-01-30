@@ -9,10 +9,12 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
+// CI-specific styles
 var (
 	ciSuccessStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -43,8 +45,8 @@ type WorkflowRun struct {
 	RepoName string `json:"-"`
 }
 
-// AddCICommand adds the 'ci' command to the given parent command.
-func AddCICommand(parent *clir.Command) {
+// addCICommand adds the 'ci' command to the given parent command.
+func addCICommand(parent *clir.Command) {
 	var registryPath string
 	var branch string
 	var failedOnly bool
@@ -149,16 +151,16 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	fmt.Println()
 	fmt.Printf("%d repos checked", len(repoList))
 	if success > 0 {
-		fmt.Printf(" · %s", ciSuccessStyle.Render(fmt.Sprintf("%d passing", success)))
+		fmt.Printf(" * %s", ciSuccessStyle.Render(fmt.Sprintf("%d passing", success)))
 	}
 	if failed > 0 {
-		fmt.Printf(" · %s", ciFailureStyle.Render(fmt.Sprintf("%d failing", failed)))
+		fmt.Printf(" * %s", ciFailureStyle.Render(fmt.Sprintf("%d failing", failed)))
 	}
 	if pending > 0 {
-		fmt.Printf(" · %s", ciPendingStyle.Render(fmt.Sprintf("%d pending", pending)))
+		fmt.Printf(" * %s", ciPendingStyle.Render(fmt.Sprintf("%d pending", pending)))
 	}
 	if len(noCI) > 0 {
-		fmt.Printf(" · %s", ciSkippedStyle.Render(fmt.Sprintf("%d no CI", len(noCI))))
+		fmt.Printf(" * %s", ciSkippedStyle.Render(fmt.Sprintf("%d no CI", len(noCI))))
 	}
 	fmt.Println()
 	fmt.Println()
@@ -227,30 +229,30 @@ func printWorkflowRun(run WorkflowRun) {
 	var status string
 	switch run.Conclusion {
 	case "success":
-		status = ciSuccessStyle.Render("✓")
+		status = ciSuccessStyle.Render("v")
 	case "failure":
-		status = ciFailureStyle.Render("✗")
+		status = ciFailureStyle.Render("x")
 	case "":
 		if run.Status == "in_progress" {
-			status = ciPendingStyle.Render("●")
+			status = ciPendingStyle.Render("*")
 		} else if run.Status == "queued" {
-			status = ciPendingStyle.Render("○")
+			status = ciPendingStyle.Render("o")
 		} else {
-			status = ciSkippedStyle.Render("—")
+			status = ciSkippedStyle.Render("-")
 		}
 	case "skipped":
-		status = ciSkippedStyle.Render("—")
+		status = ciSkippedStyle.Render("-")
 	case "cancelled":
-		status = ciSkippedStyle.Render("○")
+		status = ciSkippedStyle.Render("o")
 	default:
 		status = ciSkippedStyle.Render("?")
 	}
 
 	// Workflow name (truncated)
-	workflowName := truncate(run.Name, 20)
+	workflowName := shared.Truncate(run.Name, 20)
 
 	// Age
-	age := formatAge(run.UpdatedAt)
+	age := shared.FormatAge(run.UpdatedAt)
 
 	fmt.Printf("  %s %-18s %-22s %s\n",
 		status,

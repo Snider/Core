@@ -2,37 +2,17 @@
 package ci
 
 import (
-	"bufio"
-	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/charmbracelet/lipgloss"
-	"github.com/host-uk/core/pkg/release"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/leaanthony/clir"
 )
 
-// CIRelease command styles
+// Style aliases from shared
 var (
-	releaseHeaderStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#3b82f6")) // blue-500
-
-	releaseSuccessStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	releaseErrorStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#ef4444")) // red-500
-
-	releaseDimStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	releaseValueStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#e2e8f0")) // gray-200
+	releaseHeaderStyle  = shared.RepoNameStyle
+	releaseSuccessStyle = shared.SuccessStyle
+	releaseErrorStyle   = shared.ErrorStyle
+	releaseDimStyle     = shared.DimStyle
+	releaseValueStyle   = shared.ValueStyle
 )
 
 // AddCIReleaseCommand adds the release command and its subcommands.
@@ -83,173 +63,4 @@ func AddCIReleaseCommand(app *clir.Cli) {
 	versionCmd.Action(func() error {
 		return runCIReleaseVersion()
 	})
-}
-
-// runCIPublish publishes pre-built artifacts from dist/.
-// It does NOT build - use `core build` first.
-func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
-	ctx := context.Background()
-
-	// Get current directory
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Load configuration
-	cfg, err := release.LoadConfig(projectDir)
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Apply CLI overrides
-	if version != "" {
-		cfg.SetVersion(version)
-	}
-
-	// Apply draft/prerelease overrides to all publishers
-	if draft || prerelease {
-		for i := range cfg.Publishers {
-			if draft {
-				cfg.Publishers[i].Draft = true
-			}
-			if prerelease {
-				cfg.Publishers[i].Prerelease = true
-			}
-		}
-	}
-
-	// Print header
-	fmt.Printf("%s Publishing release\n", releaseHeaderStyle.Render("CI:"))
-	if dryRun {
-		fmt.Printf("  %s\n", releaseDimStyle.Render("(dry-run) use --we-are-go-for-launch to publish"))
-	} else {
-		fmt.Printf("  %s\n", releaseSuccessStyle.Render("🚀 GO FOR LAUNCH"))
-	}
-	fmt.Println()
-
-	// Check for publishers
-	if len(cfg.Publishers) == 0 {
-		return fmt.Errorf("no publishers configured in .core/release.yaml")
-	}
-
-	// Publish pre-built artifacts
-	rel, err := release.Publish(ctx, cfg, dryRun)
-	if err != nil {
-		fmt.Printf("%s %v\n", releaseErrorStyle.Render("Error:"), err)
-		return err
-	}
-
-	// Print summary
-	fmt.Println()
-	fmt.Printf("%s Publish completed!\n", releaseSuccessStyle.Render("Success:"))
-	fmt.Printf("  Version:   %s\n", releaseValueStyle.Render(rel.Version))
-	fmt.Printf("  Artifacts: %d\n", len(rel.Artifacts))
-
-	if !dryRun {
-		for _, pub := range cfg.Publishers {
-			fmt.Printf("  Published: %s\n", releaseValueStyle.Render(pub.Type))
-		}
-	}
-
-	return nil
-}
-
-// runCIReleaseInit creates a release configuration interactively.
-func runCIReleaseInit() error {
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Check if config already exists
-	if release.ConfigExists(projectDir) {
-		fmt.Printf("%s Configuration already exists at %s\n",
-			releaseDimStyle.Render("Note:"),
-			release.ConfigPath(projectDir))
-
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Overwrite? [y/N]: ")
-		response, _ := reader.ReadString('\n')
-		response = strings.TrimSpace(strings.ToLower(response))
-		if response != "y" && response != "yes" {
-			fmt.Println("Aborted.")
-			return nil
-		}
-	}
-
-	fmt.Printf("%s Creating release configuration\n", releaseHeaderStyle.Render("Init:"))
-	fmt.Println()
-
-	reader := bufio.NewReader(os.Stdin)
-
-	// Project name
-	defaultName := filepath.Base(projectDir)
-	fmt.Printf("Project name [%s]: ", defaultName)
-	name, _ := reader.ReadString('\n')
-	name = strings.TrimSpace(name)
-	if name == "" {
-		name = defaultName
-	}
-
-	// Repository
-	fmt.Print("GitHub repository (owner/repo): ")
-	repo, _ := reader.ReadString('\n')
-	repo = strings.TrimSpace(repo)
-
-	// Create config
-	cfg := release.DefaultConfig()
-	cfg.Project.Name = name
-	cfg.Project.Repository = repo
-
-	// Write config
-	if err := release.WriteConfig(cfg, projectDir); err != nil {
-		return fmt.Errorf("failed to write config: %w", err)
-	}
-
-	fmt.Println()
-	fmt.Printf("%s Configuration written to %s\n",
-		releaseSuccessStyle.Render("Success:"),
-		release.ConfigPath(projectDir))
-
-	return nil
-}
-
-// runChangelog generates and prints a changelog.
-func runChangelog(fromRef, toRef string) error {
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Load config for changelog settings
-	cfg, err := release.LoadConfig(projectDir)
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Generate changelog
-	changelog, err := release.GenerateWithConfig(projectDir, fromRef, toRef, &cfg.Changelog)
-	if err != nil {
-		return fmt.Errorf("failed to generate changelog: %w", err)
-	}
-
-	fmt.Println(changelog)
-	return nil
-}
-
-// runCIReleaseVersion shows the determined version.
-func runCIReleaseVersion() error {
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	version, err := release.DetermineVersion(projectDir)
-	if err != nil {
-		return fmt.Errorf("failed to determine version: %w", err)
-	}
-
-	fmt.Printf("Version: %s\n", releaseValueStyle.Render(version))
-	return nil
 }

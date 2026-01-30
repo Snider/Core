@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
-// AddCommitCommand adds the 'commit' command to the given parent command.
-func AddCommitCommand(parent *clir.Command) {
+// addCommitCommand adds the 'commit' command to the given parent command.
+func addCommitCommand(parent *clir.Command) {
 	var registryPath string
 	var all bool
 
@@ -116,7 +115,7 @@ func runCommit(registryPath string, all bool) error {
 	// Confirm unless --all
 	if !all {
 		fmt.Println()
-		if !confirm("Have Claude commit these repos?") {
+		if !shared.Confirm("Have Claude commit these repos?") {
 			fmt.Println("Aborted.")
 			return nil
 		}
@@ -130,10 +129,10 @@ func runCommit(registryPath string, all bool) error {
 		fmt.Printf("%s %s\n", dimStyle.Render("Committing"), s.Name)
 
 		if err := claudeCommit(ctx, s.Path, s.Name, registryPath); err != nil {
-			fmt.Printf("  %s %s\n", errorStyle.Render("✗"), err)
+			fmt.Printf("  %s %s\n", errorStyle.Render("x"), err)
 			failed++
 		} else {
-			fmt.Printf("  %s committed\n", successStyle.Render("✓"))
+			fmt.Printf("  %s committed\n", successStyle.Render("v"))
 			succeeded++
 		}
 		fmt.Println()
@@ -147,26 +146,4 @@ func runCommit(registryPath string, all bool) error {
 	fmt.Println()
 
 	return nil
-}
-
-// claudeCommit is defined in work.go but we need it here too
-// This version includes better output handling
-func claudeCommitWithOutput(ctx context.Context, repoPath, repoName, registryPath string) error {
-	// Load AGENTS.md context if available
-	agentsPath := filepath.Join(filepath.Dir(registryPath), "AGENTS.md")
-	var agentContext string
-	if data, err := os.ReadFile(agentsPath); err == nil {
-		agentContext = string(data) + "\n\n"
-	}
-
-	prompt := agentContext + "Review the uncommitted changes and create an appropriate commit. " +
-		"Use Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>. Be concise."
-
-	cmd := exec.CommandContext(ctx, "claude", "-p", prompt, "--allowedTools", "Bash,Read,Glob,Grep")
-	cmd.Dir = repoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	return cmd.Run()
 }

@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
+// PR-specific styles
 var (
 	prNumberStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -65,8 +67,8 @@ type GitHubPR struct {
 	RepoName string `json:"-"`
 }
 
-// AddReviewsCommand adds the 'reviews' command to the given parent command.
-func AddReviewsCommand(parent *clir.Command) {
+// addReviewsCommand adds the 'reviews' command to the given parent command.
+func addReviewsCommand(parent *clir.Command) {
 	var registryPath string
 	var author string
 	var showAll bool
@@ -175,13 +177,13 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	fmt.Println()
 	fmt.Printf("%d open PR(s)", len(allPRs))
 	if pending > 0 {
-		fmt.Printf(" · %s", prPendingStyle.Render(fmt.Sprintf("%d pending", pending)))
+		fmt.Printf(" * %s", prPendingStyle.Render(fmt.Sprintf("%d pending", pending)))
 	}
 	if approved > 0 {
-		fmt.Printf(" · %s", prApprovedStyle.Render(fmt.Sprintf("%d approved", approved)))
+		fmt.Printf(" * %s", prApprovedStyle.Render(fmt.Sprintf("%d approved", approved)))
 	}
 	if changesRequested > 0 {
-		fmt.Printf(" · %s", prChangesStyle.Render(fmt.Sprintf("%d changes requested", changesRequested)))
+		fmt.Printf(" * %s", prChangesStyle.Render(fmt.Sprintf("%d changes requested", changesRequested)))
 	}
 	fmt.Println()
 	fmt.Println()
@@ -243,18 +245,18 @@ func printPR(pr GitHubPR) {
 	// #12 [core-php] Webhook validation
 	num := prNumberStyle.Render(fmt.Sprintf("#%d", pr.Number))
 	repo := issueRepoStyle.Render(fmt.Sprintf("[%s]", pr.RepoName))
-	title := prTitleStyle.Render(truncate(pr.Title, 50))
+	title := prTitleStyle.Render(shared.Truncate(pr.Title, 50))
 	author := prAuthorStyle.Render("@" + pr.Author.Login)
 
 	// Review status
 	var status string
 	switch pr.ReviewDecision {
 	case "APPROVED":
-		status = prApprovedStyle.Render("✓ approved")
+		status = prApprovedStyle.Render("v approved")
 	case "CHANGES_REQUESTED":
-		status = prChangesStyle.Render("● changes requested")
+		status = prChangesStyle.Render("* changes requested")
 	default:
-		status = prPendingStyle.Render("○ pending review")
+		status = prPendingStyle.Render("o pending review")
 	}
 
 	// Draft indicator
@@ -263,7 +265,7 @@ func printPR(pr GitHubPR) {
 		draft = prDraftStyle.Render(" [draft]")
 	}
 
-	age := formatAge(pr.CreatedAt)
+	age := shared.FormatAge(pr.CreatedAt)
 
 	fmt.Printf("  %s %s %s%s %s  %s  %s\n", num, repo, title, draft, author, status, issueAgeStyle.Render(age))
 }

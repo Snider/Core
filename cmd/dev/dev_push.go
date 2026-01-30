@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
-// AddPushCommand adds the 'push' command to the given parent command.
-func AddPushCommand(parent *clir.Command) {
+// addPushCommand adds the 'push' command to the given parent command.
+func addPushCommand(parent *clir.Command) {
 	var registryPath string
 	var force bool
 
@@ -108,7 +109,7 @@ func runPush(registryPath string, force bool) error {
 	// Confirm unless --force
 	if !force {
 		fmt.Println()
-		if !confirm(fmt.Sprintf("Push %d commit(s) to %d repo(s)?", totalCommits, len(aheadRepos))) {
+		if !shared.Confirm(fmt.Sprintf("Push %d commit(s) to %d repo(s)?", totalCommits, len(aheadRepos))) {
 			fmt.Println("Aborted.")
 			return nil
 		}
@@ -127,10 +128,10 @@ func runPush(registryPath string, force bool) error {
 	var succeeded, failed int
 	for _, r := range results {
 		if r.Success {
-			fmt.Printf("  %s %s\n", successStyle.Render("✓"), r.Name)
+			fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
 			succeeded++
 		} else {
-			fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), r.Name, r.Error)
+			fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
 			failed++
 		}
 	}

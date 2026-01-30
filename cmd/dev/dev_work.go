@@ -1,4 +1,3 @@
-// Package dev provides multi-repo development workflow commands.
 package dev
 
 import (
@@ -11,52 +10,14 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
-var (
-	// Table styles
-	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#3b82f6")). // blue-500
-			Padding(0, 1)
-
-	cellStyle = lipgloss.NewStyle().
-			Padding(0, 1)
-
-	dirtyStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ef4444")). // red-500
-			Padding(0, 1)
-
-	aheadStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#22c55e")). // green-500
-			Padding(0, 1)
-
-	cleanStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")). // gray-500
-			Padding(0, 1)
-
-	repoNameStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#e2e8f0")). // gray-200
-			Padding(0, 1)
-
-	successStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#22c55e")). // green-500
-			Bold(true)
-
-	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ef4444")). // red-500
-			Bold(true)
-
-	dimStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
-)
-
-// AddWorkCommand adds the 'work' command to the given parent command.
-func AddWorkCommand(parent *clir.Command) {
+// addWorkCommand adds the 'work' command to the given parent command.
+func addWorkCommand(parent *clir.Command) {
 	var statusOnly bool
 	var autoCommit bool
 	var registryPath string
@@ -156,14 +117,15 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// Auto-commit dirty repos if requested
 	if autoCommit && len(dirtyRepos) > 0 {
 		fmt.Println()
-		fmt.Printf("%s\n", headerStyle.Render("Committing dirty repos with Claude..."))
+		hdrStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#3b82f6"))
+		fmt.Printf("%s\n", hdrStyle.Render("Committing dirty repos with Claude..."))
 		fmt.Println()
 
 		for _, s := range dirtyRepos {
 			if err := claudeCommit(ctx, s.Path, s.Name, registryPath); err != nil {
-				fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), s.Name, err)
+				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 			} else {
-				fmt.Printf("  %s %s\n", successStyle.Render("✓"), s.Name)
+				fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
 			}
 		}
 
@@ -205,7 +167,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	}
 
 	fmt.Println()
-	if !confirm("Push all?") {
+	if !shared.Confirm("Push all?") {
 		fmt.Println("Aborted.")
 		return nil
 	}
@@ -222,9 +184,9 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 	for _, r := range results {
 		if r.Success {
-			fmt.Printf("  %s %s\n", successStyle.Render("✓"), r.Name)
+			fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
 		} else {
-			fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), r.Name, r.Error)
+			fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
 		}
 	}
 
@@ -252,7 +214,7 @@ func printStatusTable(statuses []git.RepoStatus) {
 	)
 
 	// Print separator
-	fmt.Println(strings.Repeat("─", nameWidth+2+10+11+8+7))
+	fmt.Println(strings.Repeat("-", nameWidth+2+10+11+8+7))
 
 	// Print rows
 	for _, s := range statuses {
@@ -309,12 +271,12 @@ func printStatusTable(statuses []git.RepoStatus) {
 func claudeCommit(ctx context.Context, repoPath, repoName, registryPath string) error {
 	// Load AGENTS.md context if available
 	agentsPath := filepath.Join(filepath.Dir(registryPath), "AGENTS.md")
-	var context string
+	var agentContext string
 	if data, err := os.ReadFile(agentsPath); err == nil {
-		context = string(data) + "\n\n"
+		agentContext = string(data) + "\n\n"
 	}
 
-	prompt := context + "Review the uncommitted changes and create an appropriate commit. " +
+	prompt := agentContext + "Review the uncommitted changes and create an appropriate commit. " +
 		"Use Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>. Be concise."
 
 	cmd := exec.CommandContext(ctx, "claude", "-p", prompt, "--allowedTools", "Bash,Read,Glob,Grep")
@@ -324,12 +286,4 @@ func claudeCommit(ctx context.Context, repoPath, repoName, registryPath string) 
 	cmd.Stdin = os.Stdin
 
 	return cmd.Run()
-}
-
-func confirm(prompt string) bool {
-	fmt.Printf("%s [y/N] ", prompt)
-	var response string
-	fmt.Scanln(&response)
-	response = strings.ToLower(strings.TrimSpace(response))
-	return response == "y" || response == "yes"
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/leaanthony/clir"
 )
 
-// AddPullCommand adds the 'pull' command to the given parent command.
-func AddPullCommand(parent *clir.Command) {
+// addPullCommand adds the 'pull' command to the given parent command.
+func addPullCommand(parent *clir.Command) {
 	var registryPath string
 	var all bool
 
@@ -119,10 +119,10 @@ func runPull(registryPath string, all bool) error {
 
 		err := gitPull(ctx, s.Path)
 		if err != nil {
-			fmt.Printf("%s\n", errorStyle.Render("✗ "+err.Error()))
+			fmt.Printf("%s\n", errorStyle.Render("x "+err.Error()))
 			failed++
 		} else {
-			fmt.Printf("%s\n", successStyle.Render("✓"))
+			fmt.Printf("%s\n", successStyle.Render("v"))
 			succeeded++
 		}
 	}

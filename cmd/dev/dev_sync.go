@@ -15,8 +15,8 @@ import (
 	"golang.org/x/text/language"
 )
 
-// AddSyncCommand adds the 'sync' command to the given parent command.
-func AddSyncCommand(parent *clir.Command) {
+// addSyncCommand adds the 'sync' command to the given parent command.
+func addSyncCommand(parent *clir.Command) {
 	syncCmd := parent.NewSubCommand("sync", "Synchronizes the public service APIs with their internal implementations.")
 	syncCmd.LongDescription("This command scans the 'pkg' directory for services and ensures that the\ntop-level public API for each service is in sync with its internal implementation.\nIt automatically generates the necessary Go files with type aliases.")
 	syncCmd.Action(func() error {

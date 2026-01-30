@@ -6,10 +6,12 @@ import (
 	"sort"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
+// Impact-specific styles
 var (
 	impactDirectStyle = lipgloss.NewStyle().
 				Bold(true).
@@ -22,8 +24,8 @@ var (
 			Foreground(lipgloss.Color("#22c55e")) // green-500
 )
 
-// AddImpactCommand adds the 'impact' command to the given parent command.
-func AddImpactCommand(parent *clir.Command) {
+// addImpactCommand adds the 'impact' command to the given parent command.
+func addImpactCommand(parent *clir.Command) {
 	var registryPath string
 
 	impactCmd := parent.NewSubCommand("impact", "Show impact of changing a repo")
@@ -110,21 +112,21 @@ func runImpact(registryPath string, repoName string) error {
 	fmt.Println()
 
 	if len(allAffected) == 0 {
-		fmt.Printf("%s No repos depend on %s\n", impactSafeStyle.Render("✓"), repoName)
+		fmt.Printf("%s No repos depend on %s\n", impactSafeStyle.Render("v"), repoName)
 		return nil
 	}
 
 	// Direct dependents
 	if len(direct) > 0 {
 		fmt.Printf("%s %d direct dependent(s):\n",
-			impactDirectStyle.Render("●"),
+			impactDirectStyle.Render("*"),
 			len(direct),
 		)
 		for _, d := range direct {
 			r, _ := reg.Get(d)
 			desc := ""
 			if r != nil && r.Description != "" {
-				desc = dimStyle.Render(" - " + truncate(r.Description, 40))
+				desc = dimStyle.Render(" - " + shared.Truncate(r.Description, 40))
 			}
 			fmt.Printf("    %s%s\n", d, desc)
 		}
@@ -134,14 +136,14 @@ func runImpact(registryPath string, repoName string) error {
 	// Indirect dependents
 	if len(indirect) > 0 {
 		fmt.Printf("%s %d transitive dependent(s):\n",
-			impactIndirectStyle.Render("○"),
+			impactIndirectStyle.Render("o"),
 			len(indirect),
 		)
 		for _, d := range indirect {
 			r, _ := reg.Get(d)
 			desc := ""
 			if r != nil && r.Description != "" {
-				desc = dimStyle.Render(" - " + truncate(r.Description, 40))
+				desc = dimStyle.Render(" - " + shared.Truncate(r.Description, 40))
 			}
 			fmt.Printf("    %s%s\n", d, desc)
 		}

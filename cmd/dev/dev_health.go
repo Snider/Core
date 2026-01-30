@@ -6,35 +6,13 @@ import (
 	"os"
 	"sort"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/leaanthony/clir"
 )
 
-var (
-	healthLabelStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	healthValueStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#e2e8f0")) // gray-200
-
-	healthGoodStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	healthWarnStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	healthBadStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#ef4444")) // red-500
-)
-
-// AddHealthCommand adds the 'health' command to the given parent command.
-func AddHealthCommand(parent *clir.Command) {
+// addHealthCommand adds the 'health' command to the given parent command.
+func addHealthCommand(parent *clir.Command) {
 	var registryPath string
 	var verbose bool
 
@@ -108,11 +86,11 @@ func runHealth(registryPath string, verbose bool) error {
 
 	// Aggregate stats
 	var (
-		totalRepos   = len(statuses)
-		dirtyRepos   []string
-		aheadRepos   []string
-		behindRepos  []string
-		errorRepos   []string
+		totalRepos  = len(statuses)
+		dirtyRepos  []string
+		aheadRepos  []string
+		behindRepos []string
+		errorRepos  []string
 	)
 
 	for _, s := range statuses {
@@ -139,16 +117,16 @@ func runHealth(registryPath string, verbose bool) error {
 	// Verbose output
 	if verbose {
 		if len(dirtyRepos) > 0 {
-			fmt.Printf("%s %s\n", healthWarnStyle.Render("Dirty:"), formatRepoList(dirtyRepos))
+			fmt.Printf("%s %s\n", warningStyle.Render("Dirty:"), formatRepoList(dirtyRepos))
 		}
 		if len(aheadRepos) > 0 {
-			fmt.Printf("%s %s\n", healthGoodStyle.Render("Ahead:"), formatRepoList(aheadRepos))
+			fmt.Printf("%s %s\n", successStyle.Render("Ahead:"), formatRepoList(aheadRepos))
 		}
 		if len(behindRepos) > 0 {
-			fmt.Printf("%s %s\n", healthWarnStyle.Render("Behind:"), formatRepoList(behindRepos))
+			fmt.Printf("%s %s\n", warningStyle.Render("Behind:"), formatRepoList(behindRepos))
 		}
 		if len(errorRepos) > 0 {
-			fmt.Printf("%s %s\n", healthBadStyle.Render("Errors:"), formatRepoList(errorRepos))
+			fmt.Printf("%s %s\n", errorStyle.Render("Errors:"), formatRepoList(errorRepos))
 		}
 		fmt.Println()
 	}
@@ -158,62 +136,62 @@ func runHealth(registryPath string, verbose bool) error {
 
 func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
 	// Total repos
-	fmt.Print(healthValueStyle.Render(fmt.Sprintf("%d", total)))
-	fmt.Print(healthLabelStyle.Render(" repos"))
+	fmt.Print(valueStyle.Render(fmt.Sprintf("%d", total)))
+	fmt.Print(dimStyle.Render(" repos"))
 
 	// Separator
-	fmt.Print(healthLabelStyle.Render(" │ "))
+	fmt.Print(dimStyle.Render(" | "))
 
 	// Dirty
 	if len(dirty) > 0 {
-		fmt.Print(healthWarnStyle.Render(fmt.Sprintf("%d", len(dirty))))
-		fmt.Print(healthLabelStyle.Render(" dirty"))
+		fmt.Print(warningStyle.Render(fmt.Sprintf("%d", len(dirty))))
+		fmt.Print(dimStyle.Render(" dirty"))
 	} else {
-		fmt.Print(healthGoodStyle.Render("clean"))
+		fmt.Print(successStyle.Render("clean"))
 	}
 
 	// Separator
-	fmt.Print(healthLabelStyle.Render(" │ "))
+	fmt.Print(dimStyle.Render(" | "))
 
 	// Ahead
 	if len(ahead) > 0 {
-		fmt.Print(healthValueStyle.Render(fmt.Sprintf("%d", len(ahead))))
-		fmt.Print(healthLabelStyle.Render(" to push"))
+		fmt.Print(valueStyle.Render(fmt.Sprintf("%d", len(ahead))))
+		fmt.Print(dimStyle.Render(" to push"))
 	} else {
-		fmt.Print(healthGoodStyle.Render("synced"))
+		fmt.Print(successStyle.Render("synced"))
 	}
 
 	// Separator
-	fmt.Print(healthLabelStyle.Render(" │ "))
+	fmt.Print(dimStyle.Render(" | "))
 
 	// Behind
 	if len(behind) > 0 {
-		fmt.Print(healthWarnStyle.Render(fmt.Sprintf("%d", len(behind))))
-		fmt.Print(healthLabelStyle.Render(" to pull"))
+		fmt.Print(warningStyle.Render(fmt.Sprintf("%d", len(behind))))
+		fmt.Print(dimStyle.Render(" to pull"))
 	} else {
-		fmt.Print(healthGoodStyle.Render("up to date"))
+		fmt.Print(successStyle.Render("up to date"))
 	}
 
 	// Errors (only if any)
 	if len(errors) > 0 {
-		fmt.Print(healthLabelStyle.Render(" │ "))
-		fmt.Print(healthBadStyle.Render(fmt.Sprintf("%d", len(errors))))
-		fmt.Print(healthLabelStyle.Render(" errors"))
+		fmt.Print(dimStyle.Render(" | "))
+		fmt.Print(errorStyle.Render(fmt.Sprintf("%d", len(errors))))
+		fmt.Print(dimStyle.Render(" errors"))
 	}
 
 	fmt.Println()
 }
 
-func formatRepoList(repos []string) string {
-	if len(repos) <= 5 {
-		return joinRepos(repos)
+func formatRepoList(reposList []string) string {
+	if len(reposList) <= 5 {
+		return joinRepos(reposList)
 	}
-	return joinRepos(repos[:5]) + fmt.Sprintf(" +%d more", len(repos)-5)
+	return joinRepos(reposList[:5]) + fmt.Sprintf(" +%d more", len(reposList)-5)
 }
 
-func joinRepos(repos []string) string {
+func joinRepos(reposList []string) string {
 	result := ""
-	for i, r := range repos {
+	for i, r := range reposList {
 		if i > 0 {
 			result += ", "
 		}

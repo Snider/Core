@@ -9,23 +9,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/container"
 	"github.com/leaanthony/clir"
-)
-
-// Style aliases
-var (
-	repoNameStyle = shared.RepoNameStyle
-	successStyle  = shared.SuccessStyle
-	errorStyle    = shared.ErrorStyle
-	dimStyle      = shared.DimStyle
-)
-
-var (
-	varStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#f59e0b"))
-	defaultStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6b7280")).Italic(true)
 )
 
 // addVMTemplatesCommand adds the 'templates' command under vm.
