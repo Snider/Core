@@ -4,29 +4,17 @@ package build
 import (
 	"embed"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
 
-// Build command styles
+// Style aliases from shared package
 var (
-	buildHeaderStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#3b82f6")) // blue-500
-
-	buildTargetStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#e2e8f0")) // gray-200
-
-	buildSuccessStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	buildErrorStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#ef4444")) // red-500
-
-	buildDimStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
+	buildHeaderStyle  = shared.TitleStyle
+	buildTargetStyle  = shared.ValueStyle
+	buildSuccessStyle = shared.SuccessStyle
+	buildErrorStyle   = shared.ErrorStyle
+	buildDimStyle     = shared.DimStyle
 )
 
 //go:embed all:tmpl/gui

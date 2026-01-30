@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
@@ -142,51 +143,37 @@ func runHealth(registryPath string, verbose bool) error {
 }
 
 func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
-	// Total repos
-	fmt.Print(valueStyle.Render(fmt.Sprintf("%d", total)))
-	fmt.Print(dimStyle.Render(" repos"))
+	parts := []string{
+		shared.StatusPart(total, "repos", shared.ValueStyle),
+	}
 
-	// Separator
-	fmt.Print(dimStyle.Render(" | "))
-
-	// Dirty
+	// Dirty status
 	if len(dirty) > 0 {
-		fmt.Print(warningStyle.Render(fmt.Sprintf("%d", len(dirty))))
-		fmt.Print(dimStyle.Render(" dirty"))
+		parts = append(parts, shared.StatusPart(len(dirty), "dirty", shared.WarningStyle))
 	} else {
-		fmt.Print(successStyle.Render("clean"))
+		parts = append(parts, shared.StatusText("clean", shared.SuccessStyle))
 	}
 
-	// Separator
-	fmt.Print(dimStyle.Render(" | "))
-
-	// Ahead
+	// Push status
 	if len(ahead) > 0 {
-		fmt.Print(valueStyle.Render(fmt.Sprintf("%d", len(ahead))))
-		fmt.Print(dimStyle.Render(" to push"))
+		parts = append(parts, shared.StatusPart(len(ahead), "to push", shared.ValueStyle))
 	} else {
-		fmt.Print(successStyle.Render("synced"))
+		parts = append(parts, shared.StatusText("synced", shared.SuccessStyle))
 	}
 
-	// Separator
-	fmt.Print(dimStyle.Render(" | "))
-
-	// Behind
+	// Pull status
 	if len(behind) > 0 {
-		fmt.Print(warningStyle.Render(fmt.Sprintf("%d", len(behind))))
-		fmt.Print(dimStyle.Render(" to pull"))
+		parts = append(parts, shared.StatusPart(len(behind), "to pull", shared.WarningStyle))
 	} else {
-		fmt.Print(successStyle.Render("up to date"))
+		parts = append(parts, shared.StatusText("up to date", shared.SuccessStyle))
 	}
 
 	// Errors (only if any)
 	if len(errors) > 0 {
-		fmt.Print(dimStyle.Render(" | "))
-		fmt.Print(errorStyle.Render(fmt.Sprintf("%d", len(errors))))
-		fmt.Print(dimStyle.Render(" errors"))
+		parts = append(parts, shared.StatusPart(len(errors), "errors", shared.ErrorStyle))
 	}
 
-	fmt.Println()
+	fmt.Println(shared.StatusLine(parts...))
 }
 
 func formatRepoList(reposList []string) string {
