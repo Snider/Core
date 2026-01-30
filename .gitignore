@@ -14,5 +14,6 @@ coverage.html
 /coverage.txt
 bin/
 tasks
+/core
 
 

@@ -1,4 +1,4 @@
-// Package e provides a standardized error handling mechanism for the Core library.
+// Package core provides a standardized error handling mechanism for the Core library.
 // It allows for wrapping errors with contextual information, making it easier to
 // trace the origin of an error and provide meaningful feedback.
 //
@@ -13,7 +13,7 @@
 //     that is more informative than a raw stack trace.
 //   - Consistent error handling: Encourages a uniform approach to error
 //     handling across the entire codebase.
-package framework
+package core
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package framework
+package core
 
 import (
 	"context"
@@ -150,7 +150,7 @@ func (c *Core) ServiceStartup(ctx context.Context, options any) error {
 }
 
 // ServiceShutdown is the entry point for the Core service's shutdown lifecycle.
-// It is called by Wails when the application shuts down.
+// It is called by the GUI runtime when the application shuts down.
 func (c *Core) ServiceShutdown(ctx context.Context) error {
 	var agg error
 	if err := c.ACTION(ActionServiceShutdown{}); err != nil {
@@ -262,12 +262,19 @@ func MustServiceFor[T any](c *Core, name string) T {
 }
 
 // App returns the global application instance.
-// It panics if the Core has not been initialized.
+// It panics if the Core has not been initialized via SetInstance.
+// This is typically used by GUI runtimes that need global access.
 func App() any {
 	if instance == nil {
-		panic("framework.App() called before framework.Setup() was successfully initialized")
+		panic("core.App() called before core.SetInstance()")
 	}
 	return instance.App
+}
+
+// SetInstance sets the global Core instance for App() access.
+// This is typically called by GUI runtimes during initialization.
+func SetInstance(c *Core) {
+	instance = c
 }
 
 // Config returns the registered Config service.

@@ -1,4 +1,4 @@
-package framework
+package core
 
 import (
 	"context"
@@ -49,7 +49,6 @@ type ServiceFactory func() (any, error)
 // This is the most flexible way to create a new Runtime, as it allows for
 // the registration of any number of services.
 func NewWithFactories(app any, factories map[string]ServiceFactory) (*Runtime, error) {
-	services := make(map[string]any)
 	coreOpts := []Option{
 		WithApp(app),
 	}
@@ -66,7 +65,6 @@ func NewWithFactories(app any, factories map[string]ServiceFactory) (*Runtime, e
 		if err != nil {
 			return nil, fmt.Errorf("failed to create service %s: %w", name, err)
 		}
-		services[name] = svc
 		svcCopy := svc
 		coreOpts = append(coreOpts, WithName(name, func(c *Core) (any, error) { return svcCopy, nil }))
 	}
@@ -76,14 +74,10 @@ func NewWithFactories(app any, factories map[string]ServiceFactory) (*Runtime, e
 		return nil, err
 	}
 
-	// --- Type Assertions ---
-
-	rt := &Runtime{
+	return &Runtime{
 		app:  app,
 		Core: coreInstance,
-	}
-
-	return rt, nil
+	}, nil
 }
 
 // NewRuntime creates and wires together all application services.
@@ -104,7 +98,7 @@ func (r *Runtime) ServiceStartup(ctx context.Context, options any) {
 	r.Core.ServiceStartup(ctx, options)
 }
 
-// ServiceShutdown is called by Wails at application shutdown.
+// ServiceShutdown is called by the GUI runtime at application shutdown.
 // This is where the Core's shutdown lifecycle is initiated.
 func (r *Runtime) ServiceShutdown(ctx context.Context) {
 	if r.Core != nil {

@@ -11,7 +11,7 @@
 package framework
 
 import (
-	core "github.com/host-uk/core/pkg/framework/core"
+	"github.com/host-uk/core/pkg/framework/core"
 )
 
 // Re-export core types for cleaner imports
