@@ -513,7 +513,7 @@ func L(word string) string {
 // Use this for direct key lookups without auto-composition.
 //
 //	i18n._("cli.success")           // Raw lookup
-//	i18n.T("core.label.status")     // Smart: returns "Status:"
+//	i18n.T("i18n.label.status")     // Smart: returns "Status:"
 func _(messageID string, args ...any) string {
 	if svc := Default(); svc != nil {
 		return svc.Raw(messageID, args...)
@@ -626,25 +626,25 @@ func (s *Service) PluralCategory(n int) PluralCategory {
 //
 // The core.* namespace provides auto-composed grammar shortcuts:
 //
-//	T("core.label.status")              // → "Status:"
-//	T("core.progress.build")            // → "Building..."
-//	T("core.progress.check", "config")  // → "Checking config..."
-//	T("core.count.file", 5)             // → "5 files"
-//	T("core.done.delete", "file")       // → "File deleted"
-//	T("core.fail.delete", "file")       // → "Failed to delete file"
+//	T("i18n.label.status")              // → "Status:"
+//	T("i18n.progress.build")            // → "Building..."
+//	T("i18n.progress.check", "config")  // → "Checking config..."
+//	T("i18n.count.file", 5)             // → "5 files"
+//	T("i18n.done.delete", "file")       // → "File deleted"
+//	T("i18n.fail.delete", "file")       // → "Failed to delete file"
 //
 // For semantic intents, pass a Subject:
 //
 //	T("core.delete", S("file", "config.yaml")) // → "Delete config.yaml?"
 //
-// Use _() for raw key lookup without core.* magic.
+// Use _() for raw key lookup without i18n.* magic.
 func (s *Service) T(messageID string, args ...any) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Handle core.* namespace magic
-	if strings.HasPrefix(messageID, "core.") {
-		if result := s.handleCoreNamespace(messageID, args); result != "" {
+	// Handle i18n.* namespace magic
+	if strings.HasPrefix(messageID, "i18n.") {
+		if result := s.handleI18nNamespace(messageID, args); result != "" {
 			if s.debug {
 				return debugFormat(messageID, result)
 			}
@@ -672,19 +672,19 @@ func (s *Service) T(messageID string, args ...any) string {
 	return text
 }
 
-// handleCoreNamespace processes core.* namespace patterns.
+// handleI18nNamespace processes i18n.* namespace patterns.
 // Returns empty string if pattern not recognized.
 // Must be called with s.mu.RLock held.
-func (s *Service) handleCoreNamespace(key string, args []any) string {
-	// core.label.{word} → Label(word)
-	if strings.HasPrefix(key, "core.label.") {
-		word := strings.TrimPrefix(key, "core.label.")
+func (s *Service) handleI18nNamespace(key string, args []any) string {
+	// i18n.label.{word} → Label(word)
+	if strings.HasPrefix(key, "i18n.label.") {
+		word := strings.TrimPrefix(key, "i18n.label.")
 		return Label(word)
 	}
 
-	// core.progress.{verb} → Progress(verb) or ProgressSubject(verb, subj)
-	if strings.HasPrefix(key, "core.progress.") {
-		verb := strings.TrimPrefix(key, "core.progress.")
+	// i18n.progress.{verb} → Progress(verb) or ProgressSubject(verb, subj)
+	if strings.HasPrefix(key, "i18n.progress.") {
+		verb := strings.TrimPrefix(key, "i18n.progress.")
 		if len(args) > 0 {
 			if subj, ok := args[0].(string); ok {
 				return ProgressSubject(verb, subj)
@@ -693,9 +693,9 @@ func (s *Service) handleCoreNamespace(key string, args []any) string {
 		return Progress(verb)
 	}
 
-	// core.count.{noun} → "N noun(s)"
-	if strings.HasPrefix(key, "core.count.") {
-		noun := strings.TrimPrefix(key, "core.count.")
+	// i18n.count.{noun} → "N noun(s)"
+	if strings.HasPrefix(key, "i18n.count.") {
+		noun := strings.TrimPrefix(key, "i18n.count.")
 		if len(args) > 0 {
 			count := toInt(args[0])
 			return fmt.Sprintf("%d %s", count, Pluralize(noun, count))
@@ -703,9 +703,9 @@ func (s *Service) handleCoreNamespace(key string, args []any) string {
 		return noun
 	}
 
-	// core.done.{verb} → ActionResult(verb, subj)
-	if strings.HasPrefix(key, "core.done.") {
-		verb := strings.TrimPrefix(key, "core.done.")
+	// i18n.done.{verb} → ActionResult(verb, subj)
+	if strings.HasPrefix(key, "i18n.done.") {
+		verb := strings.TrimPrefix(key, "i18n.done.")
 		if len(args) > 0 {
 			if subj, ok := args[0].(string); ok {
 				return ActionResult(verb, subj)
@@ -714,25 +714,15 @@ func (s *Service) handleCoreNamespace(key string, args []any) string {
 		return Title(PastTense(verb))
 	}
 
-	// core.fail.{verb} → ActionFailed(verb, subj)
-	if strings.HasPrefix(key, "core.fail.") {
-		verb := strings.TrimPrefix(key, "core.fail.")
+	// i18n.fail.{verb} → ActionFailed(verb, subj)
+	if strings.HasPrefix(key, "i18n.fail.") {
+		verb := strings.TrimPrefix(key, "i18n.fail.")
 		if len(args) > 0 {
 			if subj, ok := args[0].(string); ok {
 				return ActionFailed(verb, subj)
 			}
 		}
 		return ActionFailed(verb, "")
-	}
-
-	// core.{intent} with Subject → C(intent, subject).Question
-	if len(args) > 0 {
-		if subject, ok := args[0].(*Subject); ok {
-			s.mu.RUnlock()
-			result := s.C(key, subject)
-			s.mu.RLock()
-			return result.Question
-		}
 	}
 
 	return ""

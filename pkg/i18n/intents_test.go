@@ -265,12 +265,12 @@ func TestIntentT_Integration(t *testing.T) {
 	svc, err := New()
 	require.NoError(t, err)
 
-	// Using T with core.* prefix and Subject should return Question form
-	result := svc.T("core.delete", S("file", "config.yaml"))
-	assert.Equal(t, "Delete config.yaml?", result)
+	// Using C with intent key and Subject
+	composed := svc.C("core.delete", S("file", "config.yaml"))
+	assert.Equal(t, "Delete config.yaml?", composed.Question)
 
 	// Using T with regular key should work normally
-	result = svc.T("cmd.dev.short")
+	result := svc.T("cmd.dev.short")
 	assert.Equal(t, "Multi-repo development workflow", result)
 }
 

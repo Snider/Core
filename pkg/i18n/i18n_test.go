@@ -140,16 +140,16 @@ func TestPluralization(t *testing.T) {
 	require.NoError(t, err)
 	SetDefault(svc)
 
-	// Singular - uses core.count.* magic
-	result := svc.T("core.count.item", 1)
+	// Singular - uses i18n.count.* magic
+	result := svc.T("i18n.count.item", 1)
 	assert.Equal(t, "1 item", result)
 
 	// Plural
-	result = svc.T("core.count.item", 5)
+	result = svc.T("i18n.count.item", 5)
 	assert.Equal(t, "5 items", result)
 
 	// Zero uses plural
-	result = svc.T("core.count.item", 0)
+	result = svc.T("i18n.count.item", 0)
 	assert.Equal(t, "0 items", result)
 }
 
@@ -320,7 +320,7 @@ func TestDebugMode(t *testing.T) {
 	})
 }
 
-func TestCoreNamespaceMagic(t *testing.T) {
+func TestI18nNamespaceMagic(t *testing.T) {
 	svc, err := New()
 	require.NoError(t, err)
 	SetDefault(svc)
@@ -331,16 +331,16 @@ func TestCoreNamespaceMagic(t *testing.T) {
 		args     []any
 		expected string
 	}{
-		{"label", "core.label.status", nil, "Status:"},
-		{"label version", "core.label.version", nil, "Version:"},
-		{"progress", "core.progress.build", nil, "Building..."},
-		{"progress check", "core.progress.check", nil, "Checking..."},
-		{"progress with subject", "core.progress.check", []any{"config"}, "Checking config..."},
-		{"count singular", "core.count.file", []any{1}, "1 file"},
-		{"count plural", "core.count.file", []any{5}, "5 files"},
-		{"done", "core.done.delete", []any{"file"}, "File deleted"},
-		{"done build", "core.done.build", []any{"project"}, "Project built"},
-		{"fail", "core.fail.delete", []any{"file"}, "Failed to delete file"},
+		{"label", "i18n.label.status", nil, "Status:"},
+		{"label version", "i18n.label.version", nil, "Version:"},
+		{"progress", "i18n.progress.build", nil, "Building..."},
+		{"progress check", "i18n.progress.check", nil, "Checking..."},
+		{"progress with subject", "i18n.progress.check", []any{"config"}, "Checking config..."},
+		{"count singular", "i18n.count.file", []any{1}, "1 file"},
+		{"count plural", "i18n.count.file", []any{5}, "5 files"},
+		{"done", "i18n.done.delete", []any{"file"}, "File deleted"},
+		{"done build", "i18n.done.build", []any{"project"}, "Project built"},
+		{"fail", "i18n.fail.delete", []any{"file"}, "Failed to delete file"},
 	}
 
 	for _, tt := range tests {
@@ -351,15 +351,15 @@ func TestCoreNamespaceMagic(t *testing.T) {
 	}
 }
 
-func TestRawBypassesCoreNamespace(t *testing.T) {
+func TestRawBypassesI18nNamespace(t *testing.T) {
 	svc, err := New()
 	require.NoError(t, err)
 
-	// Raw() should return key as-is since core.label.status isn't in JSON
-	result := svc.Raw("core.label.status")
-	assert.Equal(t, "core.label.status", result)
+	// Raw() should return key as-is since i18n.label.status isn't in JSON
+	result := svc.Raw("i18n.label.status")
+	assert.Equal(t, "i18n.label.status", result)
 
 	// T() should compose it
-	result = svc.T("core.label.status")
+	result = svc.T("i18n.label.status")
 	assert.Equal(t, "Status:", result)
 }
