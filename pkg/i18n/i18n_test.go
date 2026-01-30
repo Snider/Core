@@ -495,3 +495,83 @@ func TestNewWithFS(t *testing.T) {
 		assert.True(t, svc.Debug())
 	})
 }
+
+func TestConcurrentTranslation(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	t.Run("concurrent T calls", func(t *testing.T) {
+		var wg sync.WaitGroup
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				result := svc.T("cmd.dev.short")
+				assert.Equal(t, "Multi-repo development workflow", result)
+			}()
+		}
+		wg.Wait()
+	})
+
+	t.Run("concurrent T with args", func(t *testing.T) {
+		var wg sync.WaitGroup
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+			go func(n int) {
+				defer wg.Done()
+				result := svc.T("i18n.count.file", n)
+				if n == 1 {
+					assert.Equal(t, "1 file", result)
+				} else {
+					assert.Contains(t, result, "files")
+				}
+			}(i)
+		}
+		wg.Wait()
+	})
+
+	t.Run("concurrent read and write", func(t *testing.T) {
+		var wg sync.WaitGroup
+
+		// Readers
+		for i := 0; i < 50; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_ = svc.T("cmd.dev.short")
+				_ = svc.Language()
+				_ = svc.Formality()
+			}()
+		}
+
+		// Writers
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				svc.SetFormality(FormalityNeutral)
+				svc.SetDebug(false)
+			}()
+		}
+
+		wg.Wait()
+	})
+}
+
+func TestConcurrentDefault(t *testing.T) {
+	// Reset for test
+	defaultService.Store(nil)
+	defaultOnce = sync.Once{}
+	defaultErr = nil
+
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			svc := Default()
+			assert.NotNil(t, svc)
+		}()
+	}
+	wg.Wait()
+}

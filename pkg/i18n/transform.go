@@ -31,6 +31,20 @@ func toInt(v any) int {
 		return int(n)
 	case int32:
 		return int(n)
+	case int16:
+		return int(n)
+	case int8:
+		return int(n)
+	case uint:
+		return int(n)
+	case uint64:
+		return int(n)
+	case uint32:
+		return int(n)
+	case uint16:
+		return int(n)
+	case uint8:
+		return int(n)
 	case float64:
 		return int(n)
 	case float32:
@@ -50,6 +64,20 @@ func toInt64(v any) int64 {
 	case int64:
 		return n
 	case int32:
+		return int64(n)
+	case int16:
+		return int64(n)
+	case int8:
+		return int64(n)
+	case uint:
+		return int64(n)
+	case uint64:
+		return int64(n)
+	case uint32:
+		return int64(n)
+	case uint16:
+		return int64(n)
+	case uint8:
 		return int64(n)
 	case float64:
 		return int64(n)
@@ -74,6 +102,20 @@ func toFloat64(v any) float64 {
 	case int64:
 		return float64(n)
 	case int32:
+		return float64(n)
+	case int16:
+		return float64(n)
+	case int8:
+		return float64(n)
+	case uint:
+		return float64(n)
+	case uint64:
+		return float64(n)
+	case uint32:
+		return float64(n)
+	case uint16:
+		return float64(n)
+	case uint8:
 		return float64(n)
 	}
 	return 0

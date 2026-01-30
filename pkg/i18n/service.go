@@ -161,15 +161,17 @@ func Init() error {
 // Default returns the global i18n service, initializing if needed.
 // Thread-safe: can be called concurrently.
 func Default() *Service {
-	if defaultService.Load() == nil {
-		_ = Init()
-	}
+	_ = Init() // sync.Once handles idempotency
 	return defaultService.Load()
 }
 
 // SetDefault sets the global i18n service.
 // Thread-safe: can be called concurrently with Default().
+// Panics if s is nil.
 func SetDefault(s *Service) {
+	if s == nil {
+		panic("i18n: SetDefault called with nil service")
+	}
 	defaultService.Store(s)
 }
 
@@ -490,9 +492,14 @@ func (s *Service) getEffectiveFormality(data any) Formality {
 
 // handleMissingKey handles a missing translation key based on the current mode.
 // Must be called with s.mu.RLock held.
+//
+// In ModeStrict, this panics - use only in development/CI to catch missing keys.
+// In ModeCollect, this dispatches to OnMissingKey handler for logging/collection.
+// In ModeNormal (default), this returns the key as-is.
 func (s *Service) handleMissingKey(key string, args []any) string {
 	switch s.mode {
 	case ModeStrict:
+		// WARNING: Panics! Use ModeStrict only in development/CI environments.
 		panic(fmt.Sprintf("i18n: missing translation key %q", key))
 	case ModeCollect:
 		// Convert args to map for the action

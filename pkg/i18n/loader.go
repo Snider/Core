@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 	"strings"
 	"sync"
 )
@@ -18,6 +18,7 @@ type FSLoader struct {
 	// Cache of available languages (populated on first Languages() call)
 	languages []string
 	langOnce  sync.Once
+	langErr   error // Error from directory scan, if any
 }
 
 // NewFSLoader creates a loader for the given filesystem and directory.
@@ -40,7 +41,7 @@ func (l *FSLoader) Load(lang string) (map[string]Message, *GrammarData, error) {
 	var data []byte
 	var err error
 	for _, filename := range variants {
-		filePath := filepath.Join(l.dir, filename)
+		filePath := path.Join(l.dir, filename) // Use path.Join for fs.FS (forward slashes)
 		data, err = fs.ReadFile(l.fsys, filePath)
 		if err == nil {
 			break
@@ -69,10 +70,12 @@ func (l *FSLoader) Load(lang string) (map[string]Message, *GrammarData, error) {
 
 // Languages implements Loader.Languages - returns available language codes.
 // Thread-safe: uses sync.Once to ensure the directory is scanned only once.
+// Returns nil if the directory scan failed (check LanguagesErr for details).
 func (l *FSLoader) Languages() []string {
 	l.langOnce.Do(func() {
 		entries, err := fs.ReadDir(l.fsys, l.dir)
 		if err != nil {
+			l.langErr = fmt.Errorf("failed to read locale directory %q: %w", l.dir, err)
 			return
 		}
 
@@ -88,6 +91,13 @@ func (l *FSLoader) Languages() []string {
 	})
 
 	return l.languages
+}
+
+// LanguagesErr returns any error that occurred during Languages() scan.
+// Returns nil if the scan succeeded.
+func (l *FSLoader) LanguagesErr() error {
+	l.Languages() // Ensure scan has been attempted
+	return l.langErr
 }
 
 // Ensure FSLoader implements Loader at compile time.

@@ -393,8 +393,21 @@ func isVowel(r rune) bool {
 }
 
 // Title capitalizes the first letter of each word.
+// Uses unicode-aware casing for proper internationalization.
+// Word boundaries are defined as any non-letter character (matching strings.Title behavior).
 func Title(s string) string {
-	return strings.Title(s) //nolint:staticcheck // strings.Title is fine for our use case
+	var b strings.Builder
+	b.Grow(len(s))
+	prev := ' ' // Treat start of string as word boundary
+	for _, r := range s {
+		if !unicode.IsLetter(prev) && unicode.IsLetter(r) {
+			b.WriteRune(unicode.ToUpper(r))
+		} else {
+			b.WriteRune(r)
+		}
+		prev = r
+	}
+	return b.String()
 }
 
 // Quote wraps a string in double quotes.
