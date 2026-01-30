@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -60,9 +61,8 @@ var (
 func addIssuesCommand(parent *cobra.Command) {
 	issuesCmd := &cobra.Command{
 		Use:   "issues",
-		Short: "List open issues across all repos",
-		Long: `Fetches open issues from GitHub for all repos in the registry.
-Requires the 'gh' CLI to be installed and authenticated.`,
+		Short: i18n.T("cmd.dev.issues.short"),
+		Long:  i18n.T("cmd.dev.issues.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			limit := issuesLimit
 			if limit == 0 {
@@ -72,9 +72,9 @@ Requires the 'gh' CLI to be installed and authenticated.`,
 		},
 	}
 
-	issuesCmd.Flags().StringVar(&issuesRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
-	issuesCmd.Flags().IntVarP(&issuesLimit, "limit", "l", 10, "Max issues per repo")
-	issuesCmd.Flags().StringVarP(&issuesAssignee, "assignee", "a", "", "Filter by assignee (use @me for yourself)")
+	issuesCmd.Flags().StringVar(&issuesRegistryPath, "registry", "", i18n.T("cmd.dev.issues.flag.registry"))
+	issuesCmd.Flags().IntVarP(&issuesLimit, "limit", "l", 10, i18n.T("cmd.dev.issues.flag.limit"))
+	issuesCmd.Flags().StringVarP(&issuesAssignee, "assignee", "a", "", i18n.T("cmd.dev.issues.flag.assignee"))
 
 	parent.AddCommand(issuesCmd)
 }
@@ -82,7 +82,7 @@ Requires the 'gh' CLI to be installed and authenticated.`,
 func runIssues(registryPath string, limit int, assignee string) error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return fmt.Errorf("'gh' CLI not found. Install from https://cli.github.com/")
+		return fmt.Errorf(i18n.T("error.gh_not_found"))
 	}
 
 	// Find or use provided registry, fall back to directory scan
@@ -118,7 +118,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 	repoList := reg.List()
 	for i, repo := range repoList {
 		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render("Fetching"), i+1, len(repoList), repo.Name)
+		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("cli.progress.fetching")), i+1, len(repoList), repo.Name)
 
 		issues, err := fetchIssues(repoFullName, repo.Name, limit, assignee)
 		if err != nil {
@@ -136,11 +136,11 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	// Print issues
 	if len(allIssues) == 0 {
-		fmt.Println("No open issues found.")
+		fmt.Println(i18n.T("cmd.dev.issues.no_issues"))
 		return nil
 	}
 
-	fmt.Printf("\n%d open issue(s):\n\n", len(allIssues))
+	fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.issues.open_issues", map[string]interface{}{"Count": len(allIssues)}))
 
 	for _, issue := range allIssues {
 		printIssue(issue)
@@ -150,7 +150,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render("Error:"), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.issues.error_label")), err)
 		}
 	}
 

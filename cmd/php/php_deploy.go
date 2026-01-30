@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	phppkg "github.com/host-uk/core/pkg/php"
 	"github.com/spf13/cobra"
 )
@@ -41,22 +42,12 @@ var (
 func addPHPDeployCommand(parent *cobra.Command) {
 	deployCmd := &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy to Coolify",
-		Long: "Deploy the PHP application to Coolify.\n\n" +
-			"Requires configuration in .env:\n" +
-			"  COOLIFY_URL=https://coolify.example.com\n" +
-			"  COOLIFY_TOKEN=your-api-token\n" +
-			"  COOLIFY_APP_ID=production-app-id\n" +
-			"  COOLIFY_STAGING_APP_ID=staging-app-id (optional)\n\n" +
-			"Examples:\n" +
-			"  core php deploy              # Deploy to production\n" +
-			"  core php deploy --staging    # Deploy to staging\n" +
-			"  core php deploy --force      # Force deployment\n" +
-			"  core php deploy --wait       # Wait for deployment to complete",
+		Short: i18n.T("cmd.php.deploy.short"),
+		Long:  i18n.T("cmd.php.deploy.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			env := phppkg.EnvProduction
@@ -64,7 +55,7 @@ func addPHPDeployCommand(parent *cobra.Command) {
 				env = phppkg.EnvStaging
 			}
 
-			fmt.Printf("%s Deploying to %s...\n\n", dimStyle.Render("Deploy:"), env)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy.deploying", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
@@ -77,28 +68,28 @@ func addPHPDeployCommand(parent *cobra.Command) {
 
 			status, err := phppkg.Deploy(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("deployment failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.deploy_failed"), err)
 			}
 
 			printDeploymentStatus(status)
 
 			if deployWait {
 				if phppkg.IsDeploymentSuccessful(status.Status) {
-					fmt.Printf("\n%s Deployment completed successfully\n", successStyle.Render("Done:"))
+					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.deploy.success"))
 				} else {
-					fmt.Printf("\n%s Deployment ended with status: %s\n", errorStyle.Render("Warning:"), status.Status)
+					fmt.Printf("\n%s %s\n", errorStyle.Render(i18n.T("cmd.php.label.warning")), i18n.T("cmd.php.deploy.warning_status", map[string]interface{}{"Status": status.Status}))
 				}
 			} else {
-				fmt.Printf("\n%s Deployment triggered. Use 'core php deploy:status' to check progress.\n", successStyle.Render("Done:"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.deploy.triggered"))
 			}
 
 			return nil
 		},
 	}
 
-	deployCmd.Flags().BoolVar(&deployStaging, "staging", false, "Deploy to staging environment")
-	deployCmd.Flags().BoolVar(&deployForce, "force", false, "Force deployment even if no changes detected")
-	deployCmd.Flags().BoolVar(&deployWait, "wait", false, "Wait for deployment to complete")
+	deployCmd.Flags().BoolVar(&deployStaging, "staging", false, i18n.T("cmd.php.deploy.flag.staging"))
+	deployCmd.Flags().BoolVar(&deployForce, "force", false, i18n.T("cmd.php.deploy.flag.force"))
+	deployCmd.Flags().BoolVar(&deployWait, "wait", false, i18n.T("cmd.php.deploy.flag.wait"))
 
 	parent.AddCommand(deployCmd)
 }
@@ -111,16 +102,12 @@ var (
 func addPHPDeployStatusCommand(parent *cobra.Command) {
 	statusCmd := &cobra.Command{
 		Use:   "deploy:status",
-		Short: "Show deployment status",
-		Long: "Show the status of a deployment.\n\n" +
-			"Examples:\n" +
-			"  core php deploy:status                    # Latest production deployment\n" +
-			"  core php deploy:status --staging          # Latest staging deployment\n" +
-			"  core php deploy:status --id abc123        # Specific deployment",
+		Short: i18n.T("cmd.php.deploy_status.short"),
+		Long:  i18n.T("cmd.php.deploy_status.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			env := phppkg.EnvProduction
@@ -128,7 +115,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 				env = phppkg.EnvStaging
 			}
 
-			fmt.Printf("%s Checking %s deployment status...\n\n", dimStyle.Render("Deploy:"), env)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_status.checking", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
@@ -140,7 +127,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 
 			status, err := phppkg.DeployStatus(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("failed to get status: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.status_failed"), err)
 			}
 
 			printDeploymentStatus(status)
@@ -149,8 +136,8 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 		},
 	}
 
-	statusCmd.Flags().BoolVar(&deployStatusStaging, "staging", false, "Check staging environment")
-	statusCmd.Flags().StringVar(&deployStatusDeploymentID, "id", "", "Specific deployment ID")
+	statusCmd.Flags().BoolVar(&deployStatusStaging, "staging", false, i18n.T("cmd.php.deploy_status.flag.staging"))
+	statusCmd.Flags().StringVar(&deployStatusDeploymentID, "id", "", i18n.T("cmd.php.deploy_status.flag.id"))
 
 	parent.AddCommand(statusCmd)
 }
@@ -164,18 +151,12 @@ var (
 func addPHPDeployRollbackCommand(parent *cobra.Command) {
 	rollbackCmd := &cobra.Command{
 		Use:   "deploy:rollback",
-		Short: "Rollback to previous deployment",
-		Long: "Rollback to a previous deployment.\n\n" +
-			"If no deployment ID is specified, rolls back to the most recent\n" +
-			"successful deployment.\n\n" +
-			"Examples:\n" +
-			"  core php deploy:rollback                  # Rollback to previous\n" +
-			"  core php deploy:rollback --staging        # Rollback staging\n" +
-			"  core php deploy:rollback --id abc123      # Rollback to specific deployment",
+		Short: i18n.T("cmd.php.deploy_rollback.short"),
+		Long:  i18n.T("cmd.php.deploy_rollback.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			env := phppkg.EnvProduction
@@ -183,7 +164,7 @@ func addPHPDeployRollbackCommand(parent *cobra.Command) {
 				env = phppkg.EnvStaging
 			}
 
-			fmt.Printf("%s Rolling back %s...\n\n", dimStyle.Render("Deploy:"), env)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_rollback.rolling_back", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
@@ -196,28 +177,28 @@ func addPHPDeployRollbackCommand(parent *cobra.Command) {
 
 			status, err := phppkg.Rollback(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("rollback failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.rollback_failed"), err)
 			}
 
 			printDeploymentStatus(status)
 
 			if rollbackWait {
 				if phppkg.IsDeploymentSuccessful(status.Status) {
-					fmt.Printf("\n%s Rollback completed successfully\n", successStyle.Render("Done:"))
+					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.deploy_rollback.success"))
 				} else {
-					fmt.Printf("\n%s Rollback ended with status: %s\n", errorStyle.Render("Warning:"), status.Status)
+					fmt.Printf("\n%s %s\n", errorStyle.Render(i18n.T("cmd.php.label.warning")), i18n.T("cmd.php.deploy_rollback.warning_status", map[string]interface{}{"Status": status.Status}))
 				}
 			} else {
-				fmt.Printf("\n%s Rollback triggered. Use 'core php deploy:status' to check progress.\n", successStyle.Render("Done:"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.deploy_rollback.triggered"))
 			}
 
 			return nil
 		},
 	}
 
-	rollbackCmd.Flags().BoolVar(&rollbackStaging, "staging", false, "Rollback staging environment")
-	rollbackCmd.Flags().StringVar(&rollbackDeploymentID, "id", "", "Specific deployment ID to rollback to")
-	rollbackCmd.Flags().BoolVar(&rollbackWait, "wait", false, "Wait for rollback to complete")
+	rollbackCmd.Flags().BoolVar(&rollbackStaging, "staging", false, i18n.T("cmd.php.deploy_rollback.flag.staging"))
+	rollbackCmd.Flags().StringVar(&rollbackDeploymentID, "id", "", i18n.T("cmd.php.deploy_rollback.flag.id"))
+	rollbackCmd.Flags().BoolVar(&rollbackWait, "wait", false, i18n.T("cmd.php.deploy_rollback.flag.wait"))
 
 	parent.AddCommand(rollbackCmd)
 }
@@ -230,16 +211,12 @@ var (
 func addPHPDeployListCommand(parent *cobra.Command) {
 	listCmd := &cobra.Command{
 		Use:   "deploy:list",
-		Short: "List recent deployments",
-		Long: "List recent deployments.\n\n" +
-			"Examples:\n" +
-			"  core php deploy:list                      # List production deployments\n" +
-			"  core php deploy:list --staging            # List staging deployments\n" +
-			"  core php deploy:list --limit 20           # List more deployments",
+		Short: i18n.T("cmd.php.deploy_list.short"),
+		Long:  i18n.T("cmd.php.deploy_list.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			env := phppkg.EnvProduction
@@ -252,17 +229,17 @@ func addPHPDeployListCommand(parent *cobra.Command) {
 				limit = 10
 			}
 
-			fmt.Printf("%s Recent %s deployments:\n\n", dimStyle.Render("Deploy:"), env)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_list.recent", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
 			deployments, err := phppkg.ListDeployments(ctx, cwd, env, limit)
 			if err != nil {
-				return fmt.Errorf("failed to list deployments: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.list_deployments"), err)
 			}
 
 			if len(deployments) == 0 {
-				fmt.Printf("%s No deployments found\n", dimStyle.Render("Info:"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.deploy_list.none_found"))
 				return nil
 			}
 
@@ -274,8 +251,8 @@ func addPHPDeployListCommand(parent *cobra.Command) {
 		},
 	}
 
-	listCmd.Flags().BoolVar(&deployListStaging, "staging", false, "List staging deployments")
-	listCmd.Flags().IntVar(&deployListLimit, "limit", 0, "Number of deployments to list (default: 10)")
+	listCmd.Flags().BoolVar(&deployListStaging, "staging", false, i18n.T("cmd.php.deploy_list.flag.staging"))
+	listCmd.Flags().IntVar(&deployListLimit, "limit", 0, i18n.T("cmd.php.deploy_list.flag.limit"))
 
 	parent.AddCommand(listCmd)
 }
@@ -290,18 +267,18 @@ func printDeploymentStatus(status *phppkg.DeploymentStatus) {
 		statusStyle = phpDeployFailedStyle
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Status:"), statusStyle.Render(status.Status))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.status")), statusStyle.Render(status.Status))
 
 	if status.ID != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render("ID:"), status.ID)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.id")), status.ID)
 	}
 
 	if status.URL != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render("URL:"), linkStyle.Render(status.URL))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.url")), linkStyle.Render(status.URL))
 	}
 
 	if status.Branch != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render("Branch:"), status.Branch)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.branch")), status.Branch)
 	}
 
 	if status.Commit != "" {
@@ -309,26 +286,26 @@ func printDeploymentStatus(status *phppkg.DeploymentStatus) {
 		if len(commit) > 7 {
 			commit = commit[:7]
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render("Commit:"), commit)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.commit")), commit)
 		if status.CommitMessage != "" {
 			// Truncate long messages
 			msg := status.CommitMessage
 			if len(msg) > 60 {
 				msg = msg[:57] + "..."
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render("Message:"), msg)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.message")), msg)
 		}
 	}
 
 	if !status.StartedAt.IsZero() {
-		fmt.Printf("%s %s\n", dimStyle.Render("Started:"), status.StartedAt.Format(time.RFC3339))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.started")), status.StartedAt.Format(time.RFC3339))
 	}
 
 	if !status.CompletedAt.IsZero() {
-		fmt.Printf("%s %s\n", dimStyle.Render("Completed:"), status.CompletedAt.Format(time.RFC3339))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.completed")), status.CompletedAt.Format(time.RFC3339))
 		if !status.StartedAt.IsZero() {
 			duration := status.CompletedAt.Sub(status.StartedAt)
-			fmt.Printf("%s %s\n", dimStyle.Render("Duration:"), duration.Round(time.Second))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.duration")), duration.Round(time.Second))
 		}
 	}
 }
@@ -390,24 +367,24 @@ func formatTimeAgo(t time.Time) string {
 
 	switch {
 	case duration < time.Minute:
-		return "just now"
+		return i18n.T("cli.time.just_now")
 	case duration < time.Hour:
 		mins := int(duration.Minutes())
 		if mins == 1 {
-			return "1 minute ago"
+			return i18n.T("cli.time.minute_ago")
 		}
-		return fmt.Sprintf("%d minutes ago", mins)
+		return i18n.T("cli.time.minutes_ago", map[string]interface{}{"Count": mins})
 	case duration < 24*time.Hour:
 		hours := int(duration.Hours())
 		if hours == 1 {
-			return "1 hour ago"
+			return i18n.T("cli.time.hour_ago")
 		}
-		return fmt.Sprintf("%d hours ago", hours)
+		return i18n.T("cli.time.hours_ago", map[string]interface{}{"Count": hours})
 	default:
 		days := int(duration.Hours() / 24)
 		if days == 1 {
-			return "1 day ago"
+			return i18n.T("cli.time.day_ago")
 		}
-		return fmt.Sprintf("%d days ago", days)
+		return i18n.T("cli.time.days_ago", map[string]interface{}{"Count": days})
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -32,30 +33,19 @@ var (
 
 var taskCommitCmd = &cobra.Command{
 	Use:   "task:commit [task-id]",
-	Short: "Auto-commit changes with task reference",
-	Long: `Creates a git commit with a task reference and co-author attribution.
-
-Commit message format:
-  feat(scope): description
-
-  Task: #123
-  Co-Authored-By: Claude <noreply@anthropic.com>
-
-Examples:
-  core ai task:commit abc123 --message 'add user authentication'
-  core ai task:commit abc123 -m 'fix login bug' --scope auth
-  core ai task:commit abc123 -m 'update docs' --push`,
-	Args: cobra.ExactArgs(1),
+	Short: i18n.T("cmd.ai.task_commit.short"),
+	Long:  i18n.T("cmd.ai.task_commit.long"),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		taskID := args[0]
 
 		if taskCommitMessage == "" {
-			return fmt.Errorf("commit message required (--message or -m)")
+			return fmt.Errorf(i18n.T("cmd.ai.task_commit.message_required"))
 		}
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -66,7 +56,7 @@ Examples:
 		// Get task details
 		task, err := client.GetTask(ctx, taskID)
 		if err != nil {
-			return fmt.Errorf("failed to get task: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_task"), err)
 		}
 
 		// Build commit message with optional scope
@@ -81,35 +71,35 @@ Examples:
 		// Get current directory
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.working_dir"), err)
 		}
 
 		// Check for uncommitted changes
 		hasChanges, err := agentic.HasUncommittedChanges(ctx, cwd)
 		if err != nil {
-			return fmt.Errorf("failed to check git status: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.git_status"), err)
 		}
 
 		if !hasChanges {
-			fmt.Println("No uncommitted changes to commit.")
+			fmt.Println(i18n.T("cmd.ai.task_commit.no_changes"))
 			return nil
 		}
 
 		// Create commit
-		fmt.Printf("%s Creating commit for task %s...\n", dimStyle.Render(">>"), taskID)
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_commit.creating", map[string]interface{}{"ID": taskID}))
 		if err := agentic.AutoCommit(ctx, task, cwd, fullMessage); err != nil {
-			return fmt.Errorf("failed to commit: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.commit"), err)
 		}
 
-		fmt.Printf("%s Committed: %s\n", successStyle.Render(">>"), fullMessage)
+		fmt.Printf("%s %s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_commit.committed"), fullMessage)
 
 		// Push if requested
 		if taskCommitPush {
-			fmt.Printf("%s Pushing changes...\n", dimStyle.Render(">>"))
+			fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_commit.pushing"))
 			if err := agentic.PushChanges(ctx, cwd); err != nil {
-				return fmt.Errorf("failed to push: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.push"), err)
 			}
-			fmt.Printf("%s Changes pushed successfully\n", successStyle.Render(">>"))
+			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_commit.pushed"))
 		}
 
 		return nil
@@ -118,23 +108,15 @@ Examples:
 
 var taskPRCmd = &cobra.Command{
 	Use:   "task:pr [task-id]",
-	Short: "Create a pull request for a task",
-	Long: `Creates a GitHub pull request linked to a task.
-
-Requires the GitHub CLI (gh) to be installed and authenticated.
-
-Examples:
-  core ai task:pr abc123
-  core ai task:pr abc123 --title 'Add authentication feature'
-  core ai task:pr abc123 --draft --labels 'enhancement,needs-review'
-  core ai task:pr abc123 --base develop`,
-	Args: cobra.ExactArgs(1),
+	Short: i18n.T("cmd.ai.task_pr.short"),
+	Long:  i18n.T("cmd.ai.task_pr.long"),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		taskID := args[0]
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -145,31 +127,31 @@ Examples:
 		// Get task details
 		task, err := client.GetTask(ctx, taskID)
 		if err != nil {
-			return fmt.Errorf("failed to get task: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_task"), err)
 		}
 
 		// Get current directory
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.working_dir"), err)
 		}
 
 		// Check current branch
 		branch, err := agentic.GetCurrentBranch(ctx, cwd)
 		if err != nil {
-			return fmt.Errorf("failed to get current branch: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_branch"), err)
 		}
 
 		if branch == "main" || branch == "master" {
-			return fmt.Errorf("cannot create PR from %s branch; create a feature branch first", branch)
+			return fmt.Errorf(i18n.T("cmd.ai.task_pr.branch_error", map[string]interface{}{"Branch": branch}))
 		}
 
 		// Push current branch
-		fmt.Printf("%s Pushing branch %s...\n", dimStyle.Render(">>"), branch)
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_pr.pushing_branch", map[string]interface{}{"Branch": branch}))
 		if err := agentic.PushChanges(ctx, cwd); err != nil {
 			// Try setting upstream
 			if _, err := runGitCommand(cwd, "push", "-u", "origin", branch); err != nil {
-				return fmt.Errorf("failed to push branch: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.push_branch"), err)
 			}
 		}
 
@@ -185,14 +167,14 @@ Examples:
 		}
 
 		// Create PR
-		fmt.Printf("%s Creating pull request...\n", dimStyle.Render(">>"))
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_pr.creating"))
 		prURL, err := agentic.CreatePR(ctx, task, cwd, opts)
 		if err != nil {
-			return fmt.Errorf("failed to create PR: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.create_pr"), err)
 		}
 
-		fmt.Printf("%s Pull request created!\n", successStyle.Render(">>"))
-		fmt.Printf("   URL: %s\n", prURL)
+		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_pr.created"))
+		fmt.Printf("   %s %s\n", i18n.T("cmd.ai.label.url"), prURL)
 
 		return nil
 	},
@@ -200,15 +182,15 @@ Examples:
 
 func init() {
 	// task:commit command flags
-	taskCommitCmd.Flags().StringVarP(&taskCommitMessage, "message", "m", "", "Commit message (without task reference)")
-	taskCommitCmd.Flags().StringVar(&taskCommitScope, "scope", "", "Scope for the commit type (e.g., auth, api, ui)")
-	taskCommitCmd.Flags().BoolVar(&taskCommitPush, "push", false, "Push changes after committing")
+	taskCommitCmd.Flags().StringVarP(&taskCommitMessage, "message", "m", "", i18n.T("cmd.ai.task_commit.flag.message"))
+	taskCommitCmd.Flags().StringVar(&taskCommitScope, "scope", "", i18n.T("cmd.ai.task_commit.flag.scope"))
+	taskCommitCmd.Flags().BoolVar(&taskCommitPush, "push", false, i18n.T("cmd.ai.task_commit.flag.push"))
 
 	// task:pr command flags
-	taskPRCmd.Flags().StringVar(&taskPRTitle, "title", "", "PR title (defaults to task title)")
-	taskPRCmd.Flags().BoolVar(&taskPRDraft, "draft", false, "Create as draft PR")
-	taskPRCmd.Flags().StringVar(&taskPRLabels, "labels", "", "Labels to add (comma-separated)")
-	taskPRCmd.Flags().StringVar(&taskPRBase, "base", "", "Base branch (defaults to main)")
+	taskPRCmd.Flags().StringVar(&taskPRTitle, "title", "", i18n.T("cmd.ai.task_pr.flag.title"))
+	taskPRCmd.Flags().BoolVar(&taskPRDraft, "draft", false, i18n.T("cmd.ai.task_pr.flag.draft"))
+	taskPRCmd.Flags().StringVar(&taskPRLabels, "labels", "", i18n.T("cmd.ai.task_pr.flag.labels"))
+	taskPRCmd.Flags().StringVar(&taskPRBase, "base", "", i18n.T("cmd.ai.task_pr.flag.base"))
 }
 
 func addTaskCommitCommand(parent *cobra.Command) {

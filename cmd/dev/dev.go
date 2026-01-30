@@ -30,6 +30,7 @@ package dev
 
 import (
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -55,31 +56,8 @@ var (
 func AddCommands(root *cobra.Command) {
 	devCmd := &cobra.Command{
 		Use:   "dev",
-		Short: "Multi-repo development workflow",
-		Long: `Manage multiple git repositories and GitHub integration.
-
-Uses repos.yaml to discover repositories. Falls back to scanning
-the current directory if no registry is found.
-
-Git Operations:
-  work      Combined status -> commit -> push workflow
-  health    Quick repo health summary
-  commit    Claude-assisted commit messages
-  push      Push repos with unpushed commits
-  pull      Pull repos behind remote
-
-GitHub Integration (requires gh CLI):
-  issues    List open issues across repos
-  reviews   List PRs awaiting review
-  ci        Check GitHub Actions status
-  impact    Analyse dependency impact
-
-Dev Environment:
-  install   Download dev environment image
-  boot      Start dev environment VM
-  stop      Stop dev environment VM
-  shell     Open shell in dev VM
-  status    Check dev VM status`,
+		Short: i18n.T("cmd.dev.short"),
+		Long:  i18n.T("cmd.dev.long"),
 	}
 	root.AddCommand(devCmd)
 

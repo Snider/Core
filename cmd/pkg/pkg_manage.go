@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -15,11 +16,8 @@ import (
 func addPkgListCommand(parent *cobra.Command) {
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List installed packages",
-		Long: "Lists all packages in the current workspace.\n\n" +
-			"Reads from repos.yaml or scans for git repositories.\n\n" +
-			"Examples:\n" +
-			"  core pkg list",
+		Short: i18n.T("cmd.pkg.list.short"),
+		Long:  i18n.T("cmd.pkg.list.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPkgList()
 		},
@@ -31,12 +29,12 @@ func addPkgListCommand(parent *cobra.Command) {
 func runPkgList() error {
 	regPath, err := repos.FindRegistry()
 	if err != nil {
-		return fmt.Errorf("no repos.yaml found - run from workspace directory")
+		return fmt.Errorf(i18n.T("cmd.pkg.error.no_repos_yaml_workspace"))
 	}
 
 	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
-		return fmt.Errorf("failed to load registry: %w", err)
+		return fmt.Errorf(i18n.T("cmd.pkg.error.load_registry"), err)
 	}
 
 	basePath := reg.BasePath
@@ -49,11 +47,11 @@ func runPkgList() error {
 
 	allRepos := reg.List()
 	if len(allRepos) == 0 {
-		fmt.Println("No packages in registry.")
+		fmt.Println(i18n.T("cmd.pkg.list.no_packages"))
 		return nil
 	}
 
-	fmt.Printf("%s\n\n", repoNameStyle.Render("Installed Packages"))
+	fmt.Printf("%s\n\n", repoNameStyle.Render(i18n.T("cmd.pkg.list.title")))
 
 	var installed, missing int
 	for _, r := range allRepos {
@@ -76,7 +74,7 @@ func runPkgList() error {
 			desc = desc[:37] + "..."
 		}
 		if desc == "" {
-			desc = dimStyle.Render("(no description)")
+			desc = dimStyle.Render(i18n.T("cmd.pkg.no_description"))
 		}
 
 		fmt.Printf("  %s %s\n", status, repoNameStyle.Render(r.Name))
@@ -84,10 +82,10 @@ func runPkgList() error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %d installed, %d missing\n", dimStyle.Render("Total:"), installed, missing)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.pkg.list.total_label")), i18n.T("cmd.pkg.list.summary", map[string]int{"Installed": installed, "Missing": missing}))
 
 	if missing > 0 {
-		fmt.Printf("\nInstall missing: %s\n", dimStyle.Render("core setup"))
+		fmt.Printf("\n%s %s\n", i18n.T("cmd.pkg.list.install_missing"), dimStyle.Render("core setup"))
 	}
 
 	return nil
@@ -99,20 +97,17 @@ var updateAll bool
 func addPkgUpdateCommand(parent *cobra.Command) {
 	updateCmd := &cobra.Command{
 		Use:   "update [packages...]",
-		Short: "Update installed packages",
-		Long: "Pulls latest changes for installed packages.\n\n" +
-			"Examples:\n" +
-			"  core pkg update core-php       # Update specific package\n" +
-			"  core pkg update --all          # Update all packages",
+		Short: i18n.T("cmd.pkg.update.short"),
+		Long:  i18n.T("cmd.pkg.update.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !updateAll && len(args) == 0 {
-				return fmt.Errorf("specify package name or use --all")
+				return fmt.Errorf(i18n.T("cmd.pkg.error.specify_package"))
 			}
 			return runPkgUpdate(args, updateAll)
 		},
 	}
 
-	updateCmd.Flags().BoolVar(&updateAll, "all", false, "Update all packages")
+	updateCmd.Flags().BoolVar(&updateAll, "all", false, i18n.T("cmd.pkg.update.flag.all"))
 
 	parent.AddCommand(updateCmd)
 }
@@ -120,12 +115,12 @@ func addPkgUpdateCommand(parent *cobra.Command) {
 func runPkgUpdate(packages []string, all bool) error {
 	regPath, err := repos.FindRegistry()
 	if err != nil {
-		return fmt.Errorf("no repos.yaml found")
+		return fmt.Errorf(i18n.T("cmd.pkg.error.no_repos_yaml"))
 	}
 
 	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
-		return fmt.Errorf("failed to load registry: %w", err)
+		return fmt.Errorf(i18n.T("cmd.pkg.error.load_registry"), err)
 	}
 
 	basePath := reg.BasePath
@@ -145,14 +140,14 @@ func runPkgUpdate(packages []string, all bool) error {
 		toUpdate = packages
 	}
 
-	fmt.Printf("%s Updating %d package(s)\n\n", dimStyle.Render("Update:"), len(toUpdate))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.pkg.update.update_label")), i18n.T("cmd.pkg.update.updating", map[string]int{"Count": len(toUpdate)}))
 
 	var updated, skipped, failed int
 	for _, name := range toUpdate {
 		repoPath := filepath.Join(basePath, name)
 
 		if _, err := os.Stat(filepath.Join(repoPath, ".git")); os.IsNotExist(err) {
-			fmt.Printf("  %s %s (not installed)\n", dimStyle.Render("○"), name)
+			fmt.Printf("  %s %s (%s)\n", dimStyle.Render("○"), name, i18n.T("cmd.pkg.update.not_installed"))
 			skipped++
 			continue
 		}
@@ -169,7 +164,7 @@ func runPkgUpdate(packages []string, all bool) error {
 		}
 
 		if strings.Contains(string(output), "Already up to date") {
-			fmt.Printf("%s\n", dimStyle.Render("up to date"))
+			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.pkg.update.up_to_date")))
 		} else {
 			fmt.Printf("%s\n", successStyle.Render("✓"))
 		}
@@ -177,8 +172,8 @@ func runPkgUpdate(packages []string, all bool) error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %d updated, %d skipped, %d failed\n",
-		dimStyle.Render("Done:"), updated, skipped, failed)
+	fmt.Printf("%s %s\n",
+		dimStyle.Render(i18n.T("cmd.pkg.update.done_label")), i18n.T("cmd.pkg.update.summary", map[string]int{"Updated": updated, "Skipped": skipped, "Failed": failed}))
 
 	return nil
 }
@@ -187,10 +182,8 @@ func runPkgUpdate(packages []string, all bool) error {
 func addPkgOutdatedCommand(parent *cobra.Command) {
 	outdatedCmd := &cobra.Command{
 		Use:   "outdated",
-		Short: "Check for outdated packages",
-		Long: "Checks which packages have unpulled commits.\n\n" +
-			"Examples:\n" +
-			"  core pkg outdated",
+		Short: i18n.T("cmd.pkg.outdated.short"),
+		Long:  i18n.T("cmd.pkg.outdated.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPkgOutdated()
 		},
@@ -202,12 +195,12 @@ func addPkgOutdatedCommand(parent *cobra.Command) {
 func runPkgOutdated() error {
 	regPath, err := repos.FindRegistry()
 	if err != nil {
-		return fmt.Errorf("no repos.yaml found")
+		return fmt.Errorf(i18n.T("cmd.pkg.error.no_repos_yaml"))
 	}
 
 	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
-		return fmt.Errorf("failed to load registry: %w", err)
+		return fmt.Errorf(i18n.T("cmd.pkg.error.load_registry"), err)
 	}
 
 	basePath := reg.BasePath
@@ -218,7 +211,7 @@ func runPkgOutdated() error {
 		basePath = filepath.Join(filepath.Dir(regPath), basePath)
 	}
 
-	fmt.Printf("%s Checking for updates...\n\n", dimStyle.Render("Outdated:"))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.pkg.outdated.outdated_label")), i18n.T("cmd.pkg.outdated.checking"))
 
 	var outdated, upToDate, notInstalled int
 
@@ -242,8 +235,8 @@ func runPkgOutdated() error {
 
 		count := strings.TrimSpace(string(output))
 		if count != "0" {
-			fmt.Printf("  %s %s (%s commits behind)\n",
-				errorStyle.Render("↓"), repoNameStyle.Render(r.Name), count)
+			fmt.Printf("  %s %s (%s)\n",
+				errorStyle.Render("↓"), repoNameStyle.Render(r.Name), i18n.T("cmd.pkg.outdated.commits_behind", map[string]string{"Count": count}))
 			outdated++
 		} else {
 			upToDate++
@@ -252,11 +245,11 @@ func runPkgOutdated() error {
 
 	fmt.Println()
 	if outdated == 0 {
-		fmt.Printf("%s All packages up to date\n", successStyle.Render("Done:"))
+		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.pkg.outdated.done_label")), i18n.T("cmd.pkg.outdated.all_up_to_date"))
 	} else {
-		fmt.Printf("%s %d outdated, %d up to date\n",
-			dimStyle.Render("Summary:"), outdated, upToDate)
-		fmt.Printf("\nUpdate with: %s\n", dimStyle.Render("core pkg update --all"))
+		fmt.Printf("%s %s\n",
+			dimStyle.Render(i18n.T("cmd.pkg.outdated.summary_label")), i18n.T("cmd.pkg.outdated.summary", map[string]int{"Outdated": outdated, "UpToDate": upToDate}))
+		fmt.Printf("\n%s %s\n", i18n.T("cmd.pkg.outdated.update_with"), dimStyle.Render("core pkg update --all"))
 	}
 
 	return nil

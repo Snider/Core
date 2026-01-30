@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -16,12 +17,8 @@ var (
 func addGoFmtCommand(parent *cobra.Command) {
 	fmtCmd := &cobra.Command{
 		Use:   "fmt",
-		Short: "Format Go code",
-		Long: "Format Go code using gofmt or goimports.\n\n" +
-			"Examples:\n" +
-			"  core go fmt              # Check formatting\n" +
-			"  core go fmt --fix        # Fix formatting\n" +
-			"  core go fmt --diff       # Show diff",
+		Short: i18n.T("cmd.go.fmt.short"),
+		Long:  i18n.T("cmd.go.fmt.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmtArgs := []string{}
 			if fmtFix {
@@ -49,9 +46,9 @@ func addGoFmtCommand(parent *cobra.Command) {
 		},
 	}
 
-	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, "Fix formatting in place")
-	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, "Show diff of changes")
-	fmtCmd.Flags().BoolVar(&fmtCheck, "check", false, "Check only, exit 1 if not formatted")
+	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, i18n.T("cmd.go.fmt.flag.fix"))
+	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("cmd.go.fmt.flag.diff"))
+	fmtCmd.Flags().BoolVar(&fmtCheck, "check", false, i18n.T("cmd.go.fmt.flag.check"))
 
 	parent.AddCommand(fmtCmd)
 }
@@ -61,11 +58,8 @@ var lintFix bool
 func addGoLintCommand(parent *cobra.Command) {
 	lintCmd := &cobra.Command{
 		Use:   "lint",
-		Short: "Run golangci-lint",
-		Long: "Run golangci-lint on the codebase.\n\n" +
-			"Examples:\n" +
-			"  core go lint\n" +
-			"  core go lint --fix",
+		Short: i18n.T("cmd.go.lint.short"),
+		Long:  i18n.T("cmd.go.lint.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			lintArgs := []string{"run"}
 			if lintFix {
@@ -79,7 +73,7 @@ func addGoLintCommand(parent *cobra.Command) {
 		},
 	}
 
-	lintCmd.Flags().BoolVar(&lintFix, "fix", false, "Fix issues automatically")
+	lintCmd.Flags().BoolVar(&lintFix, "fix", false, i18n.T("cmd.go.lint.flag.fix"))
 
 	parent.AddCommand(lintCmd)
 }

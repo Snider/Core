@@ -10,42 +10,26 @@
 //   - claude: Claude Code CLI integration (planned)
 package ai
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/host-uk/core/pkg/i18n"
+	"github.com/spf13/cobra"
+)
 
 var aiCmd = &cobra.Command{
 	Use:   "ai",
-	Short: "AI agent task management",
-	Long: `Manage tasks from the core-agentic service for AI-assisted development.
-
-Commands:
-  tasks          List tasks (filterable by status, priority, labels)
-  task           View task details or auto-select highest priority
-  task:update    Update task status or progress
-  task:complete  Mark task as completed or failed
-  task:commit    Create git commit with task reference
-  task:pr        Create GitHub PR linked to task
-  claude         Claude Code integration
-
-Workflow:
-  core ai tasks                      # List pending tasks
-  core ai task --auto --claim        # Auto-select and claim a task
-  core ai task:commit <id> -m 'msg'  # Commit with task reference
-  core ai task:complete <id>         # Mark task done`,
+	Short: i18n.T("cmd.ai.short"),
+	Long:  i18n.T("cmd.ai.long"),
 }
 
 var claudeCmd = &cobra.Command{
 	Use:   "claude",
-	Short: "Claude Code integration",
-	Long: `Tools for working with Claude Code.
-
-Commands:
-  run       Run Claude in the current directory
-  config    Manage Claude configuration`,
+	Short: i18n.T("cmd.ai.claude.short"),
+	Long:  i18n.T("cmd.ai.claude.long"),
 }
 
 var claudeRunCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run Claude Code in the current directory",
+	Short: i18n.T("cmd.ai.claude.run.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runClaudeCode()
 	},
@@ -53,7 +37,7 @@ var claudeRunCmd = &cobra.Command{
 
 var claudeConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Manage Claude configuration",
+	Short: i18n.T("cmd.ai.claude.config.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return showClaudeConfig()
 	},

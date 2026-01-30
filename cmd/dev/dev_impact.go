@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -23,16 +24,15 @@ var impactRegistryPath string
 func addImpactCommand(parent *cobra.Command) {
 	impactCmd := &cobra.Command{
 		Use:   "impact <repo-name>",
-		Short: "Show impact of changing a repo",
-		Long: `Analyzes the dependency graph to show which repos
-would be affected by changes to the specified repo.`,
-		Args: cobra.ExactArgs(1),
+		Short: i18n.T("cmd.dev.impact.short"),
+		Long:  i18n.T("cmd.dev.impact.long"),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runImpact(impactRegistryPath, args[0])
 		},
 	}
 
-	impactCmd.Flags().StringVar(&impactRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	impactCmd.Flags().StringVar(&impactRegistryPath, "registry", "", i18n.T("cmd.dev.impact.flag.registry"))
 
 	parent.AddCommand(impactCmd)
 }
@@ -55,14 +55,14 @@ func runImpact(registryPath string, repoName string) error {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
 		} else {
-			return fmt.Errorf("impact analysis requires repos.yaml with dependency information")
+			return fmt.Errorf(i18n.T("cmd.dev.impact.requires_registry"))
 		}
 	}
 
 	// Check repo exists
 	repo, exists := reg.Get(repoName)
 	if !exists {
-		return fmt.Errorf("repo '%s' not found in registry", repoName)
+		return fmt.Errorf(i18n.T("error.repo_not_found", map[string]interface{}{"Name": repoName}))
 	}
 
 	// Build reverse dependency graph
@@ -91,22 +91,22 @@ func runImpact(registryPath string, repoName string) error {
 
 	// Print results
 	fmt.Println()
-	fmt.Printf("%s %s\n", dimStyle.Render("Impact analysis for"), repoNameStyle.Render(repoName))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.impact.analysis_for")), repoNameStyle.Render(repoName))
 	if repo.Description != "" {
 		fmt.Printf("%s\n", dimStyle.Render(repo.Description))
 	}
 	fmt.Println()
 
 	if len(allAffected) == 0 {
-		fmt.Printf("%s No repos depend on %s\n", impactSafeStyle.Render("v"), repoName)
+		fmt.Printf("%s %s\n", impactSafeStyle.Render("v"), i18n.T("cmd.dev.impact.no_dependents", map[string]interface{}{"Name": repoName}))
 		return nil
 	}
 
 	// Direct dependents
 	if len(direct) > 0 {
-		fmt.Printf("%s %d direct dependent(s):\n",
+		fmt.Printf("%s %s\n",
 			impactDirectStyle.Render("*"),
-			len(direct),
+			i18n.T("cmd.dev.impact.direct_dependents", map[string]interface{}{"Count": len(direct)}),
 		)
 		for _, d := range direct {
 			r, _ := reg.Get(d)
@@ -121,9 +121,9 @@ func runImpact(registryPath string, repoName string) error {
 
 	// Indirect dependents
 	if len(indirect) > 0 {
-		fmt.Printf("%s %d transitive dependent(s):\n",
+		fmt.Printf("%s %s\n",
 			impactIndirectStyle.Render("o"),
-			len(indirect),
+			i18n.T("cmd.dev.impact.transitive_dependents", map[string]interface{}{"Count": len(indirect)}),
 		)
 		for _, d := range indirect {
 			r, _ := reg.Get(d)
@@ -137,10 +137,13 @@ func runImpact(registryPath string, repoName string) error {
 	}
 
 	// Summary
-	fmt.Printf("%s Changes to %s affect %s\n",
-		dimStyle.Render("Summary:"),
-		repoNameStyle.Render(repoName),
-		impactDirectStyle.Render(fmt.Sprintf("%d/%d repos", len(allAffected), len(reg.Repos)-1)),
+	fmt.Printf("%s %s\n",
+		dimStyle.Render(i18n.T("cmd.dev.impact.summary")),
+		i18n.T("cmd.dev.impact.changes_affect", map[string]interface{}{
+			"Repo":     repoNameStyle.Render(repoName),
+			"Affected": len(allAffected),
+			"Total":    len(reg.Repos) - 1,
+		}),
 	)
 
 	return nil

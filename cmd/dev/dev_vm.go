@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/devops"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -28,14 +29,8 @@ func addVMCommands(parent *cobra.Command) {
 func addVMInstallCommand(parent *cobra.Command) {
 	installCmd := &cobra.Command{
 		Use:   "install",
-		Short: "Download and install the dev environment image",
-		Long: `Downloads the platform-specific dev environment image.
-
-The image includes Go, PHP, Node.js, Python, Docker, and Claude CLI.
-Downloads are cached at ~/.core/images/
-
-Examples:
-  core dev install`,
+		Short: i18n.T("cmd.dev.vm.install.short"),
+		Long:  i18n.T("cmd.dev.vm.install.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMInstall()
 		},
@@ -51,15 +46,15 @@ func runVMInstall() error {
 	}
 
 	if d.IsInstalled() {
-		fmt.Println(successStyle.Render("Dev environment already installed"))
+		fmt.Println(successStyle.Render(i18n.T("cmd.dev.vm.already_installed")))
 		fmt.Println()
-		fmt.Printf("Use %s to check for updates\n", dimStyle.Render("core dev update"))
+		fmt.Println(i18n.T("cmd.dev.vm.check_updates", map[string]interface{}{"Command": dimStyle.Render("core dev update")}))
 		return nil
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Image:"), devops.ImageName())
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.image_label")), devops.ImageName())
 	fmt.Println()
-	fmt.Println("Downloading dev environment...")
+	fmt.Println(i18n.T("cmd.dev.vm.downloading"))
 	fmt.Println()
 
 	ctx := context.Background()
@@ -70,7 +65,7 @@ func runVMInstall() error {
 		if total > 0 {
 			pct := int(float64(downloaded) / float64(total) * 100)
 			if pct != int(float64(lastProgress)/float64(total)*100) {
-				fmt.Printf("\r%s %d%%", dimStyle.Render("Progress:"), pct)
+				fmt.Printf("\r%s %d%%", dimStyle.Render(i18n.T("cmd.dev.vm.progress_label")), pct)
 				lastProgress = downloaded
 			}
 		}
@@ -84,9 +79,9 @@ func runVMInstall() error {
 
 	elapsed := time.Since(start).Round(time.Second)
 	fmt.Println()
-	fmt.Printf("%s in %s\n", successStyle.Render("Installed"), elapsed)
+	fmt.Println(i18n.T("cmd.dev.vm.installed_in", map[string]interface{}{"Duration": elapsed}))
 	fmt.Println()
-	fmt.Printf("Start with: %s\n", dimStyle.Render("core dev boot"))
+	fmt.Println(i18n.T("cmd.dev.vm.start_with", map[string]interface{}{"Command": dimStyle.Render("core dev boot")}))
 
 	return nil
 }
@@ -102,21 +97,16 @@ var (
 func addVMBootCommand(parent *cobra.Command) {
 	bootCmd := &cobra.Command{
 		Use:   "boot",
-		Short: "Start the dev environment",
-		Long: `Boots the dev environment VM.
-
-Examples:
-  core dev boot
-  core dev boot --memory 8192 --cpus 4
-  core dev boot --fresh`,
+		Short: i18n.T("cmd.dev.vm.boot.short"),
+		Long:  i18n.T("cmd.dev.vm.boot.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMBoot(vmBootMemory, vmBootCPUs, vmBootFresh)
 		},
 	}
 
-	bootCmd.Flags().IntVar(&vmBootMemory, "memory", 0, "Memory in MB (default: 4096)")
-	bootCmd.Flags().IntVar(&vmBootCPUs, "cpus", 0, "Number of CPUs (default: 2)")
-	bootCmd.Flags().BoolVar(&vmBootFresh, "fresh", false, "Stop existing and start fresh")
+	bootCmd.Flags().IntVar(&vmBootMemory, "memory", 0, i18n.T("cmd.dev.vm.boot.flag.memory"))
+	bootCmd.Flags().IntVar(&vmBootCPUs, "cpus", 0, i18n.T("cmd.dev.vm.boot.flag.cpus"))
+	bootCmd.Flags().BoolVar(&vmBootFresh, "fresh", false, i18n.T("cmd.dev.vm.boot.flag.fresh"))
 
 	parent.AddCommand(bootCmd)
 }
@@ -128,7 +118,7 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 	}
 
 	if !d.IsInstalled() {
-		return fmt.Errorf("dev environment not installed (run 'core dev install' first)")
+		return fmt.Errorf(i18n.T("cmd.dev.vm.not_installed"))
 	}
 
 	opts := devops.DefaultBootOptions()
@@ -140,9 +130,9 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 	}
 	opts.Fresh = fresh
 
-	fmt.Printf("%s %dMB, %d CPUs\n", dimStyle.Render("Config:"), opts.Memory, opts.CPUs)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.config_label")), i18n.T("cmd.dev.vm.config_value", map[string]interface{}{"Memory": opts.Memory, "CPUs": opts.CPUs}))
 	fmt.Println()
-	fmt.Println("Booting dev environment...")
+	fmt.Println(i18n.T("cmd.dev.vm.booting"))
 
 	ctx := context.Background()
 	if err := d.Boot(ctx, opts); err != nil {
@@ -150,10 +140,10 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 	}
 
 	fmt.Println()
-	fmt.Println(successStyle.Render("Dev environment running"))
+	fmt.Println(successStyle.Render(i18n.T("cmd.dev.vm.running")))
 	fmt.Println()
-	fmt.Printf("Connect with: %s\n", dimStyle.Render("core dev shell"))
-	fmt.Printf("SSH port:     %s\n", dimStyle.Render("2222"))
+	fmt.Println(i18n.T("cmd.dev.vm.connect_with", map[string]interface{}{"Command": dimStyle.Render("core dev shell")}))
+	fmt.Printf("%s %s\n", i18n.T("cmd.dev.vm.ssh_port"), dimStyle.Render("2222"))
 
 	return nil
 }
@@ -162,11 +152,8 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 func addVMStopCommand(parent *cobra.Command) {
 	stopCmd := &cobra.Command{
 		Use:   "stop",
-		Short: "Stop the dev environment",
-		Long: `Stops the running dev environment VM.
-
-Examples:
-  core dev stop`,
+		Short: i18n.T("cmd.dev.vm.stop.short"),
+		Long:  i18n.T("cmd.dev.vm.stop.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMStop()
 		},
@@ -188,17 +175,17 @@ func runVMStop() error {
 	}
 
 	if !running {
-		fmt.Println(dimStyle.Render("Dev environment is not running"))
+		fmt.Println(dimStyle.Render(i18n.T("cmd.dev.vm.not_running")))
 		return nil
 	}
 
-	fmt.Println("Stopping dev environment...")
+	fmt.Println(i18n.T("cmd.dev.vm.stopping"))
 
 	if err := d.Stop(ctx); err != nil {
 		return err
 	}
 
-	fmt.Println(successStyle.Render("Stopped"))
+	fmt.Println(successStyle.Render(i18n.T("cmd.dev.vm.stopped")))
 	return nil
 }
 
@@ -206,11 +193,8 @@ func runVMStop() error {
 func addVMStatusCommand(parent *cobra.Command) {
 	statusCmd := &cobra.Command{
 		Use:   "vm-status",
-		Short: "Show dev environment status",
-		Long: `Shows the current status of the dev environment.
-
-Examples:
-  core dev vm-status`,
+		Short: i18n.T("cmd.dev.vm.status.short"),
+		Long:  i18n.T("cmd.dev.vm.status.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMStatus()
 		},
@@ -231,19 +215,19 @@ func runVMStatus() error {
 		return err
 	}
 
-	fmt.Println(headerStyle.Render("Dev Environment Status"))
+	fmt.Println(headerStyle.Render(i18n.T("cmd.dev.vm.status_title")))
 	fmt.Println()
 
 	// Installation status
 	if status.Installed {
-		fmt.Printf("%s %s\n", dimStyle.Render("Installed:"), successStyle.Render("Yes"))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.installed_label")), successStyle.Render(i18n.T("cmd.dev.vm.installed_yes")))
 		if status.ImageVersion != "" {
-			fmt.Printf("%s %s\n", dimStyle.Render("Version:"), status.ImageVersion)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.version_label")), status.ImageVersion)
 		}
 	} else {
-		fmt.Printf("%s %s\n", dimStyle.Render("Installed:"), errorStyle.Render("No"))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.installed_label")), errorStyle.Render(i18n.T("cmd.dev.vm.installed_no")))
 		fmt.Println()
-		fmt.Printf("Install with: %s\n", dimStyle.Render("core dev install"))
+		fmt.Println(i18n.T("cmd.dev.vm.install_with", map[string]interface{}{"Command": dimStyle.Render("core dev install")}))
 		return nil
 	}
 
@@ -251,16 +235,16 @@ func runVMStatus() error {
 
 	// Running status
 	if status.Running {
-		fmt.Printf("%s %s\n", dimStyle.Render("Status:"), successStyle.Render("Running"))
-		fmt.Printf("%s %s\n", dimStyle.Render("Container:"), status.ContainerID[:8])
-		fmt.Printf("%s %dMB\n", dimStyle.Render("Memory:"), status.Memory)
-		fmt.Printf("%s %d\n", dimStyle.Render("CPUs:"), status.CPUs)
-		fmt.Printf("%s %d\n", dimStyle.Render("SSH Port:"), status.SSHPort)
-		fmt.Printf("%s %s\n", dimStyle.Render("Uptime:"), formatVMUptime(status.Uptime))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.status_label")), successStyle.Render(i18n.T("cmd.dev.vm.status_running")))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.container_label")), status.ContainerID[:8])
+		fmt.Printf("%s %dMB\n", dimStyle.Render(i18n.T("cmd.dev.vm.memory_label")), status.Memory)
+		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.dev.vm.cpus_label")), status.CPUs)
+		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.dev.vm.ssh_port")), status.SSHPort)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.uptime_label")), formatVMUptime(status.Uptime))
 	} else {
-		fmt.Printf("%s %s\n", dimStyle.Render("Status:"), dimStyle.Render("Stopped"))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.status_label")), dimStyle.Render(i18n.T("cmd.dev.vm.status_stopped")))
 		fmt.Println()
-		fmt.Printf("Start with: %s\n", dimStyle.Render("core dev boot"))
+		fmt.Println(i18n.T("cmd.dev.vm.start_with", map[string]interface{}{"Command": dimStyle.Render("core dev boot")}))
 	}
 
 	return nil
@@ -286,21 +270,14 @@ var vmShellConsole bool
 func addVMShellCommand(parent *cobra.Command) {
 	shellCmd := &cobra.Command{
 		Use:   "shell [-- command...]",
-		Short: "Connect to the dev environment",
-		Long: `Opens an interactive shell in the dev environment.
-
-Uses SSH by default, or serial console with --console.
-
-Examples:
-  core dev shell
-  core dev shell --console
-  core dev shell -- ls -la`,
+		Short: i18n.T("cmd.dev.vm.shell.short"),
+		Long:  i18n.T("cmd.dev.vm.shell.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMShell(vmShellConsole, args)
 		},
 	}
 
-	shellCmd.Flags().BoolVar(&vmShellConsole, "console", false, "Use serial console instead of SSH")
+	shellCmd.Flags().BoolVar(&vmShellConsole, "console", false, i18n.T("cmd.dev.vm.shell.flag.console"))
 
 	parent.AddCommand(shellCmd)
 }
@@ -330,22 +307,15 @@ var (
 func addVMServeCommand(parent *cobra.Command) {
 	serveCmd := &cobra.Command{
 		Use:   "serve",
-		Short: "Mount project and start dev server",
-		Long: `Mounts the current project into the dev environment and starts a dev server.
-
-Auto-detects the appropriate serve command based on project files.
-
-Examples:
-  core dev serve
-  core dev serve --port 3000
-  core dev serve --path public`,
+		Short: i18n.T("cmd.dev.vm.serve.short"),
+		Long:  i18n.T("cmd.dev.vm.serve.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMServe(vmServePort, vmServePath)
 		},
 	}
 
-	serveCmd.Flags().IntVarP(&vmServePort, "port", "p", 0, "Port to serve on (default: 8000)")
-	serveCmd.Flags().StringVar(&vmServePath, "path", "", "Subdirectory to serve")
+	serveCmd.Flags().IntVarP(&vmServePort, "port", "p", 0, i18n.T("cmd.dev.vm.serve.flag.port"))
+	serveCmd.Flags().StringVar(&vmServePath, "path", "", i18n.T("cmd.dev.vm.serve.flag.path"))
 
 	parent.AddCommand(serveCmd)
 }
@@ -377,21 +347,14 @@ var vmTestName string
 func addVMTestCommand(parent *cobra.Command) {
 	testCmd := &cobra.Command{
 		Use:   "test [-- command...]",
-		Short: "Run tests in the dev environment",
-		Long: `Runs tests in the dev environment.
-
-Auto-detects the test command based on project files, or uses .core/test.yaml.
-
-Examples:
-  core dev test
-  core dev test --name integration
-  core dev test -- go test -v ./...`,
+		Short: i18n.T("cmd.dev.vm.test.short"),
+		Long:  i18n.T("cmd.dev.vm.test.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMTest(vmTestName, args)
 		},
 	}
 
-	testCmd.Flags().StringVarP(&vmTestName, "name", "n", "", "Run named test command from .core/test.yaml")
+	testCmd.Flags().StringVarP(&vmTestName, "name", "n", "", i18n.T("cmd.dev.vm.test.flag.name"))
 
 	parent.AddCommand(testCmd)
 }
@@ -427,31 +390,16 @@ var (
 func addVMClaudeCommand(parent *cobra.Command) {
 	claudeCmd := &cobra.Command{
 		Use:   "claude",
-		Short: "Start sandboxed Claude session",
-		Long: `Starts a Claude Code session inside the dev environment sandbox.
-
-Provides isolation while forwarding selected credentials.
-Auto-boots the dev environment if not running.
-
-Auth options (default: all):
-  gh        - GitHub CLI auth
-  anthropic - Anthropic API key
-  ssh       - SSH agent forwarding
-  git       - Git config (name, email)
-
-Examples:
-  core dev claude
-  core dev claude --model opus
-  core dev claude --auth gh,anthropic
-  core dev claude --no-auth`,
+		Short: i18n.T("cmd.dev.vm.claude.short"),
+		Long:  i18n.T("cmd.dev.vm.claude.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMClaude(vmClaudeNoAuth, vmClaudeModel, vmClaudeAuthFlags)
 		},
 	}
 
-	claudeCmd.Flags().BoolVar(&vmClaudeNoAuth, "no-auth", false, "Don't forward any auth credentials")
-	claudeCmd.Flags().StringVarP(&vmClaudeModel, "model", "m", "", "Model to use (opus, sonnet)")
-	claudeCmd.Flags().StringSliceVar(&vmClaudeAuthFlags, "auth", nil, "Selective auth forwarding (gh,anthropic,ssh,git)")
+	claudeCmd.Flags().BoolVar(&vmClaudeNoAuth, "no-auth", false, i18n.T("cmd.dev.vm.claude.flag.no_auth"))
+	claudeCmd.Flags().StringVarP(&vmClaudeModel, "model", "m", "", i18n.T("cmd.dev.vm.claude.flag.model"))
+	claudeCmd.Flags().StringSliceVar(&vmClaudeAuthFlags, "auth", nil, i18n.T("cmd.dev.vm.claude.flag.auth"))
 
 	parent.AddCommand(claudeCmd)
 }
@@ -484,18 +432,14 @@ var vmUpdateApply bool
 func addVMUpdateCommand(parent *cobra.Command) {
 	updateCmd := &cobra.Command{
 		Use:   "update",
-		Short: "Check for and apply updates",
-		Long: `Checks for dev environment updates and optionally applies them.
-
-Examples:
-  core dev update
-  core dev update --apply`,
+		Short: i18n.T("cmd.dev.vm.update.short"),
+		Long:  i18n.T("cmd.dev.vm.update.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVMUpdate(vmUpdateApply)
 		},
 	}
 
-	updateCmd.Flags().BoolVar(&vmUpdateApply, "apply", false, "Download and apply the update")
+	updateCmd.Flags().BoolVar(&vmUpdateApply, "apply", false, i18n.T("cmd.dev.vm.update.flag.apply"))
 
 	parent.AddCommand(updateCmd)
 }
@@ -508,7 +452,7 @@ func runVMUpdate(apply bool) error {
 
 	ctx := context.Background()
 
-	fmt.Println("Checking for updates...")
+	fmt.Println(i18n.T("cmd.dev.vm.checking_updates"))
 	fmt.Println()
 
 	current, latest, hasUpdate, err := d.CheckUpdate(ctx)
@@ -516,38 +460,38 @@ func runVMUpdate(apply bool) error {
 		return fmt.Errorf("failed to check for updates: %w", err)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Current:"), valueStyle.Render(current))
-	fmt.Printf("%s %s\n", dimStyle.Render("Latest:"), valueStyle.Render(latest))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.current_label")), valueStyle.Render(current))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.latest_label")), valueStyle.Render(latest))
 	fmt.Println()
 
 	if !hasUpdate {
-		fmt.Println(successStyle.Render("Already up to date"))
+		fmt.Println(successStyle.Render(i18n.T("cmd.dev.vm.up_to_date")))
 		return nil
 	}
 
-	fmt.Println(warningStyle.Render("Update available"))
+	fmt.Println(warningStyle.Render(i18n.T("cmd.dev.vm.update_available")))
 	fmt.Println()
 
 	if !apply {
-		fmt.Printf("Run %s to update\n", dimStyle.Render("core dev update --apply"))
+		fmt.Println(i18n.T("cmd.dev.vm.run_to_update", map[string]interface{}{"Command": dimStyle.Render("core dev update --apply")}))
 		return nil
 	}
 
 	// Stop if running
 	running, _ := d.IsRunning(ctx)
 	if running {
-		fmt.Println("Stopping current instance...")
+		fmt.Println(i18n.T("cmd.dev.vm.stopping_current"))
 		_ = d.Stop(ctx)
 	}
 
-	fmt.Println("Downloading update...")
+	fmt.Println(i18n.T("cmd.dev.vm.downloading_update"))
 	fmt.Println()
 
 	start := time.Now()
 	err = d.Install(ctx, func(downloaded, total int64) {
 		if total > 0 {
 			pct := int(float64(downloaded) / float64(total) * 100)
-			fmt.Printf("\r%s %d%%", dimStyle.Render("Progress:"), pct)
+			fmt.Printf("\r%s %d%%", dimStyle.Render(i18n.T("cmd.dev.vm.progress_label")), pct)
 		}
 	})
 
@@ -559,7 +503,7 @@ func runVMUpdate(apply bool) error {
 
 	elapsed := time.Since(start).Round(time.Second)
 	fmt.Println()
-	fmt.Printf("%s in %s\n", successStyle.Render("Updated"), elapsed)
+	fmt.Println(i18n.T("cmd.dev.vm.updated_in", map[string]interface{}{"Duration": elapsed}))
 
 	return nil
 }

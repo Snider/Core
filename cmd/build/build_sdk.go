@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/sdk"
 )
 
@@ -20,7 +21,7 @@ func runBuildSDK(specPath, lang, version string, dryRun bool) error {
 
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.working_dir"), err)
 	}
 
 	// Load config
@@ -34,48 +35,48 @@ func runBuildSDK(specPath, lang, version string, dryRun bool) error {
 		s.SetVersion(version)
 	}
 
-	fmt.Printf("%s Generating SDKs\n", buildHeaderStyle.Render("Build SDK:"))
+	fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.sdk.label")), i18n.T("cmd.build.sdk.generating"))
 	if dryRun {
-		fmt.Printf("  %s\n", buildDimStyle.Render("(dry-run mode)"))
+		fmt.Printf("  %s\n", buildDimStyle.Render(i18n.T("cmd.build.sdk.dry_run_mode")))
 	}
 	fmt.Println()
 
 	// Detect spec
 	detectedSpec, err := s.DetectSpec()
 	if err != nil {
-		fmt.Printf("%s %v\n", buildErrorStyle.Render("Error:"), err)
+		fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), err)
 		return err
 	}
-	fmt.Printf("  Spec:      %s\n", buildTargetStyle.Render(detectedSpec))
+	fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.spec_label"), buildTargetStyle.Render(detectedSpec))
 
 	if dryRun {
 		if lang != "" {
-			fmt.Printf("  Language:  %s\n", buildTargetStyle.Render(lang))
+			fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.language_label"), buildTargetStyle.Render(lang))
 		} else {
-			fmt.Printf("  Languages: %s\n", buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
+			fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.languages_label"), buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
 		}
 		fmt.Println()
-		fmt.Printf("%s Would generate SDKs (dry-run)\n", buildSuccessStyle.Render("OK:"))
+		fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("cmd.build.label.ok")), i18n.T("cmd.build.sdk.would_generate"))
 		return nil
 	}
 
 	if lang != "" {
 		// Generate single language
 		if err := s.GenerateLanguage(ctx, lang); err != nil {
-			fmt.Printf("%s %v\n", buildErrorStyle.Render("Error:"), err)
+			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), err)
 			return err
 		}
-		fmt.Printf("  Generated: %s\n", buildTargetStyle.Render(lang))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.generated_label"), buildTargetStyle.Render(lang))
 	} else {
 		// Generate all
 		if err := s.Generate(ctx); err != nil {
-			fmt.Printf("%s %v\n", buildErrorStyle.Render("Error:"), err)
+			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), err)
 			return err
 		}
-		fmt.Printf("  Generated: %s\n", buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.generated_label"), buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
 	}
 
 	fmt.Println()
-	fmt.Printf("%s SDK generation complete\n", buildSuccessStyle.Render("Success:"))
+	fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("cmd.build.label.success")), i18n.T("cmd.build.sdk.complete"))
 	return nil
 }

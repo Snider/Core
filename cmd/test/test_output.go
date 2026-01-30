@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 type packageCoverage struct {
@@ -84,19 +85,19 @@ func printTestSummary(results testResults, showCoverage bool) {
 	// Print pass/fail summary
 	total := results.passed + results.failed
 	if total > 0 {
-		fmt.Printf("  %s %d passed", testPassStyle.Render("✓"), results.passed)
+		fmt.Printf("  %s %s", testPassStyle.Render("✓"), i18n.T("cmd.test.passed", map[string]interface{}{"Count": results.passed}))
 		if results.failed > 0 {
-			fmt.Printf("  %s %d failed", testFailStyle.Render("✗"), results.failed)
+			fmt.Printf("  %s %s", testFailStyle.Render("✗"), i18n.T("cmd.test.failed", map[string]interface{}{"Count": results.failed}))
 		}
 		if results.skipped > 0 {
-			fmt.Printf("  %s %d skipped", testSkipStyle.Render("○"), results.skipped)
+			fmt.Printf("  %s %s", testSkipStyle.Render("○"), i18n.T("cmd.test.skipped", map[string]interface{}{"Count": results.skipped}))
 		}
 		fmt.Println()
 	}
 
 	// Print failed packages
 	if len(results.failedPkgs) > 0 {
-		fmt.Printf("\n  Failed packages:\n")
+		fmt.Printf("\n  %s\n", i18n.T("cmd.test.failed_packages"))
 		for _, pkg := range results.failedPkgs {
 			fmt.Printf("    %s %s\n", testFailStyle.Render("✗"), pkg)
 		}
@@ -107,7 +108,7 @@ func printTestSummary(results testResults, showCoverage bool) {
 		printCoverageSummary(results)
 	} else if results.covCount > 0 {
 		avgCov := results.totalCov / float64(results.covCount)
-		fmt.Printf("\n  Coverage: %s\n", formatCoverage(avgCov))
+		fmt.Printf("\n  %s %s\n", i18n.T("cmd.test.label.coverage"), formatCoverage(avgCov))
 	}
 }
 
@@ -116,7 +117,7 @@ func printCoverageSummary(results testResults) {
 		return
 	}
 
-	fmt.Printf("\n  %s\n", testHeaderStyle.Render("Coverage by package:"))
+	fmt.Printf("\n  %s\n", testHeaderStyle.Render(i18n.T("cmd.test.coverage_by_package")))
 
 	// Sort packages by name
 	sort.Slice(results.packages, func(i, j int) bool {
@@ -145,8 +146,9 @@ func printCoverageSummary(results testResults) {
 	// Print average
 	if results.covCount > 0 {
 		avgCov := results.totalCov / float64(results.covCount)
-		padding := strings.Repeat(" ", maxLen-7+2)
-		fmt.Printf("\n    %s%s%s\n", testHeaderStyle.Render("Average"), padding, formatCoverage(avgCov))
+		avgLabel := i18n.T("cmd.test.label.average")
+		padding := strings.Repeat(" ", maxLen-len(avgLabel)+2)
+		fmt.Printf("\n    %s%s%s\n", testHeaderStyle.Render(avgLabel), padding, formatCoverage(avgCov))
 	}
 }
 

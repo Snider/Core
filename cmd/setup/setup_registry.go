@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -29,8 +30,8 @@ func runRegistrySetup(ctx context.Context, registryPath, only string, dryRun, al
 
 // runRegistrySetupWithReg runs setup with an already-loaded registry.
 func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryPath, only string, dryRun, all, runBuild bool) error {
-	fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
-	fmt.Printf("%s %s\n", dimStyle.Render("Org:"), reg.Org)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.setup.registry_label")), registryPath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.setup.org_label")), reg.Org)
 
 	// Determine base path for cloning
 	basePath := reg.BasePath
@@ -47,7 +48,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		basePath = filepath.Join(home, basePath[2:])
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Target:"), basePath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.setup.target_label")), basePath)
 
 	// Parse type filter
 	var typeFilter []string
@@ -55,7 +56,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		for _, t := range strings.Split(only, ",") {
 			typeFilter = append(typeFilter, strings.TrimSpace(t))
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render("Filter:"), only)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.setup.filter_label")), only)
 	}
 
 	// Ensure base path exists
@@ -136,15 +137,18 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 
 	// Summary
 	fmt.Println()
-	fmt.Printf("%d to clone, %d exist, %d skipped\n", len(toClone), exists, skipped)
+	fmt.Printf("%s, %s, %s\n",
+		i18n.T("cmd.setup.to_clone", map[string]interface{}{"Count": len(toClone)}),
+		i18n.T("cmd.setup.exist", map[string]interface{}{"Count": exists}),
+		i18n.T("cmd.setup.skipped", map[string]interface{}{"Count": skipped}))
 
 	if len(toClone) == 0 {
-		fmt.Println("\nNothing to clone.")
+		fmt.Printf("\n%s\n", i18n.T("cmd.setup.nothing_to_clone"))
 		return nil
 	}
 
 	if dryRun {
-		fmt.Println("\nWould clone:")
+		fmt.Printf("\n%s\n", i18n.T("cmd.setup.would_clone_list"))
 		for _, repo := range toClone {
 			fmt.Printf("  %s (%s)\n", repoNameStyle.Render(repo.Name), repo.Type)
 		}
@@ -158,7 +162,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 			return err
 		}
 		if !confirmed {
-			fmt.Println("Cancelled.")
+			fmt.Println(i18n.T("cmd.setup.cancelled"))
 			return nil
 		}
 	}
@@ -168,7 +172,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	var succeeded, failed int
 
 	for _, repo := range toClone {
-		fmt.Printf("  %s %s... ", dimStyle.Render("Cloning"), repo.Name)
+		fmt.Printf("  %s %s... ", dimStyle.Render(i18n.T("cmd.setup.cloning")), repo.Name)
 
 		repoPath := filepath.Join(basePath, repo.Name)
 
@@ -177,32 +181,32 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 			fmt.Printf("%s\n", errorStyle.Render("x "+err.Error()))
 			failed++
 		} else {
-			fmt.Printf("%s\n", successStyle.Render("done"))
+			fmt.Printf("%s\n", successStyle.Render(i18n.T("cmd.setup.done")))
 			succeeded++
 		}
 	}
 
 	// Summary
 	fmt.Println()
-	fmt.Printf("%s %d cloned", successStyle.Render("Done:"), succeeded)
+	fmt.Printf("%s %s", successStyle.Render(i18n.T("cmd.setup.done_label")), i18n.T("cmd.setup.cloned_count", map[string]interface{}{"Count": succeeded}))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(fmt.Sprintf("%d failed", failed)))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("cmd.setup.failed_count", map[string]interface{}{"Count": failed})))
 	}
 	if exists > 0 {
-		fmt.Printf(", %d already exist", exists)
+		fmt.Printf(", %s", i18n.T("cmd.setup.already_exist_count", map[string]interface{}{"Count": exists}))
 	}
 	fmt.Println()
 
 	// Run build if requested
 	if runBuild && succeeded > 0 {
 		fmt.Println()
-		fmt.Printf("%s Running build...\n", dimStyle.Render(">>"))
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.running_build"))
 		buildCmd := exec.Command("core", "build")
 		buildCmd.Dir = basePath
 		buildCmd.Stdout = os.Stdout
 		buildCmd.Stderr = os.Stderr
 		if err := buildCmd.Run(); err != nil {
-			return fmt.Errorf("build failed: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.setup.error.build_failed"), err)
 		}
 	}
 

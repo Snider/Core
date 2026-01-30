@@ -8,12 +8,14 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bool) error {
 	// Detect if we're in a Go project
 	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
-		return fmt.Errorf("no go.mod found - run from a Go project directory")
+		return fmt.Errorf(i18n.T("cmd.test.error.no_go_mod"))
 	}
 
 	// Build command arguments
@@ -52,10 +54,10 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 	cmd.Env = append(os.Environ(), getMacOSDeploymentTarget())
 
 	if !jsonOutput {
-		fmt.Printf("%s Running tests\n", testHeaderStyle.Render("Test:"))
-		fmt.Printf("  Package: %s\n", testDimStyle.Render(pkg))
+		fmt.Printf("%s %s\n", testHeaderStyle.Render(i18n.T("cmd.test.label.test")), i18n.T("cmd.test.running"))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.test.label.package"), testDimStyle.Render(pkg))
 		if run != "" {
-			fmt.Printf("  Filter:  %s\n", testDimStyle.Render(run))
+			fmt.Printf("  %s  %s\n", i18n.T("cmd.test.label.filter"), testDimStyle.Render(run))
 		}
 		fmt.Println()
 	}
@@ -91,7 +93,7 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 		// JSON output for CI/agents
 		printJSONResults(results, exitCode)
 		if exitCode != 0 {
-			return fmt.Errorf("tests failed")
+			return fmt.Errorf(i18n.T("cmd.test.error.tests_failed"))
 		}
 		return nil
 	}
@@ -106,11 +108,11 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 	}
 
 	if exitCode != 0 {
-		fmt.Printf("\n%s Tests failed\n", testFailStyle.Render("FAIL"))
-		return fmt.Errorf("tests failed")
+		fmt.Printf("\n%s %s\n", testFailStyle.Render(i18n.T("cli.fail")), i18n.T("cmd.test.tests_failed"))
+		return fmt.Errorf(i18n.T("cmd.test.error.tests_failed"))
 	}
 
-	fmt.Printf("\n%s All tests passed\n", testPassStyle.Render("PASS"))
+	fmt.Printf("\n%s %s\n", testPassStyle.Render(i18n.T("cli.pass")), i18n.T("cmd.test.all_passed"))
 	return nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/container"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -27,17 +28,8 @@ var (
 func addVMRunCommand(parent *cobra.Command) {
 	runCmd := &cobra.Command{
 		Use:   "run [image]",
-		Short: "Run a LinuxKit image or template",
-		Long: "Runs a LinuxKit image as a VM using the available hypervisor.\n\n" +
-			"Supported image formats: .iso, .qcow2, .vmdk, .raw\n\n" +
-			"You can also run from a template using --template, which will build and run\n" +
-			"the image automatically. Use --var to set template variables.\n\n" +
-			"Examples:\n" +
-			"  core vm run image.iso\n" +
-			"  core vm run -d image.qcow2\n" +
-			"  core vm run --name myvm --memory 2048 --cpus 4 image.iso\n" +
-			"  core vm run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n" +
-			"  core vm run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com",
+		Short: i18n.T("cmd.vm.run.short"),
+		Long:  i18n.T("cmd.vm.run.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts := container.RunOptions{
 				Name:    runName,
@@ -55,7 +47,7 @@ func addVMRunCommand(parent *cobra.Command) {
 
 			// Otherwise, require an image path
 			if len(args) == 0 {
-				return fmt.Errorf("image path is required (or use --template)")
+				return fmt.Errorf(i18n.T("cmd.vm.run.error.image_required"))
 			}
 			image := args[0]
 
@@ -63,13 +55,13 @@ func addVMRunCommand(parent *cobra.Command) {
 		},
 	}
 
-	runCmd.Flags().StringVar(&runName, "name", "", "Name for the container")
-	runCmd.Flags().BoolVarP(&runDetach, "detach", "d", false, "Run in detached mode (background)")
-	runCmd.Flags().IntVar(&runMemory, "memory", 0, "Memory in MB (default: 1024)")
-	runCmd.Flags().IntVar(&runCPUs, "cpus", 0, "Number of CPUs (default: 1)")
-	runCmd.Flags().IntVar(&runSSHPort, "ssh-port", 0, "SSH port for exec commands (default: 2222)")
-	runCmd.Flags().StringVar(&runTemplateName, "template", "", "Run from a LinuxKit template (build + run)")
-	runCmd.Flags().StringArrayVar(&runVarFlags, "var", nil, "Template variable in KEY=VALUE format (can be repeated)")
+	runCmd.Flags().StringVar(&runName, "name", "", i18n.T("cmd.vm.run.flag.name"))
+	runCmd.Flags().BoolVarP(&runDetach, "detach", "d", false, i18n.T("cmd.vm.run.flag.detach"))
+	runCmd.Flags().IntVar(&runMemory, "memory", 0, i18n.T("cmd.vm.run.flag.memory"))
+	runCmd.Flags().IntVar(&runCPUs, "cpus", 0, i18n.T("cmd.vm.run.flag.cpus"))
+	runCmd.Flags().IntVar(&runSSHPort, "ssh-port", 0, i18n.T("cmd.vm.run.flag.ssh_port"))
+	runCmd.Flags().StringVar(&runTemplateName, "template", "", i18n.T("cmd.vm.run.flag.template"))
+	runCmd.Flags().StringArrayVar(&runVarFlags, "var", nil, i18n.T("cmd.vm.run.flag.var"))
 
 	parent.AddCommand(runCmd)
 }
@@ -77,7 +69,7 @@ func addVMRunCommand(parent *cobra.Command) {
 func runContainer(image, name string, detach bool, memory, cpus, sshPort int) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf("failed to initialize container manager: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
 	}
 
 	opts := container.RunOptions{
@@ -88,27 +80,27 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 		SSHPort: sshPort,
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Image:"), image)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.image")), image)
 	if name != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render("Name:"), name)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.name")), name)
 	}
-	fmt.Printf("%s %s\n", dimStyle.Render("Hypervisor:"), manager.Hypervisor().Name())
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.hypervisor")), manager.Hypervisor().Name())
 	fmt.Println()
 
 	ctx := context.Background()
 	c, err := manager.Run(ctx, image, opts)
 	if err != nil {
-		return fmt.Errorf("failed to run container: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.run_container")+": %w", err)
 	}
 
 	if detach {
-		fmt.Printf("%s %s\n", successStyle.Render("Started:"), c.ID)
-		fmt.Printf("%s %d\n", dimStyle.Render("PID:"), c.PID)
+		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.vm.label.started")), c.ID)
+		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.vm.label.pid")), c.PID)
 		fmt.Println()
-		fmt.Printf("Use 'core vm logs %s' to view output\n", c.ID[:8])
-		fmt.Printf("Use 'core vm stop %s' to stop\n", c.ID[:8])
+		fmt.Println(i18n.T("cmd.vm.hint.view_logs", map[string]interface{}{"ID": c.ID[:8]}))
+		fmt.Println(i18n.T("cmd.vm.hint.stop", map[string]interface{}{"ID": c.ID[:8]}))
 	} else {
-		fmt.Printf("\n%s %s\n", dimStyle.Render("Container stopped:"), c.ID)
+		fmt.Printf("\n%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.container_stopped")), c.ID)
 	}
 
 	return nil
@@ -120,17 +112,14 @@ var psAll bool
 func addVMPsCommand(parent *cobra.Command) {
 	psCmd := &cobra.Command{
 		Use:   "ps",
-		Short: "List running VMs",
-		Long: "Lists all VMs. By default, only shows running VMs.\n\n" +
-			"Examples:\n" +
-			"  core vm ps\n" +
-			"  core vm ps -a",
+		Short: i18n.T("cmd.vm.ps.short"),
+		Long:  i18n.T("cmd.vm.ps.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listContainers(psAll)
 		},
 	}
 
-	psCmd.Flags().BoolVarP(&psAll, "all", "a", false, "Show all containers (including stopped)")
+	psCmd.Flags().BoolVarP(&psAll, "all", "a", false, i18n.T("cmd.vm.ps.flag.all"))
 
 	parent.AddCommand(psCmd)
 }
@@ -138,13 +127,13 @@ func addVMPsCommand(parent *cobra.Command) {
 func listContainers(all bool) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf("failed to initialize container manager: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
 	}
 
 	ctx := context.Background()
 	containers, err := manager.List(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list containers: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.list_containers")+": %w", err)
 	}
 
 	// Filter if not showing all
@@ -160,15 +149,15 @@ func listContainers(all bool) error {
 
 	if len(containers) == 0 {
 		if all {
-			fmt.Println("No containers")
+			fmt.Println(i18n.T("cmd.vm.ps.no_containers"))
 		} else {
-			fmt.Println("No running containers")
+			fmt.Println(i18n.T("cmd.vm.ps.no_running"))
 		}
 		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tIMAGE\tSTATUS\tSTARTED\tPID")
+	fmt.Fprintln(w, i18n.T("cmd.vm.ps.header"))
 	fmt.Fprintln(w, "--\t----\t-----\t------\t-------\t---")
 
 	for _, c := range containers {
@@ -217,14 +206,11 @@ func formatDuration(d time.Duration) string {
 func addVMStopCommand(parent *cobra.Command) {
 	stopCmd := &cobra.Command{
 		Use:   "stop <container-id>",
-		Short: "Stop a running VM",
-		Long: "Stops a running VM by ID.\n\n" +
-			"Examples:\n" +
-			"  core vm stop abc12345\n" +
-			"  core vm stop abc1",
+		Short: i18n.T("cmd.vm.stop.short"),
+		Long:  i18n.T("cmd.vm.stop.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("container ID is required")
+				return fmt.Errorf(i18n.T("cmd.vm.error.id_required"))
 			}
 			return stopContainer(args[0])
 		},
@@ -236,7 +222,7 @@ func addVMStopCommand(parent *cobra.Command) {
 func stopContainer(id string) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf("failed to initialize container manager: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
 	}
 
 	// Support partial ID matching
@@ -245,14 +231,14 @@ func stopContainer(id string) error {
 		return err
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Stopping:"), fullID[:8])
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.stop.stopping")), fullID[:8])
 
 	ctx := context.Background()
 	if err := manager.Stop(ctx, fullID); err != nil {
-		return fmt.Errorf("failed to stop container: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.stop_container")+": %w", err)
 	}
 
-	fmt.Printf("%s\n", successStyle.Render("Stopped"))
+	fmt.Printf("%s\n", successStyle.Render(i18n.T("cmd.vm.stop.stopped")))
 	return nil
 }
 
@@ -273,11 +259,11 @@ func resolveContainerID(manager *container.LinuxKitManager, partialID string) (s
 
 	switch len(matches) {
 	case 0:
-		return "", fmt.Errorf("no container found matching: %s", partialID)
+		return "", fmt.Errorf(i18n.T("cmd.vm.error.no_match", map[string]interface{}{"ID": partialID}))
 	case 1:
 		return matches[0].ID, nil
 	default:
-		return "", fmt.Errorf("multiple containers match '%s', be more specific", partialID)
+		return "", fmt.Errorf(i18n.T("cmd.vm.error.multiple_match", map[string]interface{}{"ID": partialID}))
 	}
 }
 
@@ -287,20 +273,17 @@ var logsFollow bool
 func addVMLogsCommand(parent *cobra.Command) {
 	logsCmd := &cobra.Command{
 		Use:   "logs <container-id>",
-		Short: "View VM logs",
-		Long: "View logs from a VM.\n\n" +
-			"Examples:\n" +
-			"  core vm logs abc12345\n" +
-			"  core vm logs -f abc1",
+		Short: i18n.T("cmd.vm.logs.short"),
+		Long:  i18n.T("cmd.vm.logs.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("container ID is required")
+				return fmt.Errorf(i18n.T("cmd.vm.error.id_required"))
 			}
 			return viewLogs(args[0], logsFollow)
 		},
 	}
 
-	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, "Follow log output")
+	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, i18n.T("cmd.vm.logs.flag.follow"))
 
 	parent.AddCommand(logsCmd)
 }
@@ -308,7 +291,7 @@ func addVMLogsCommand(parent *cobra.Command) {
 func viewLogs(id string, follow bool) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf("failed to initialize container manager: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
 	}
 
 	fullID, err := resolveContainerID(manager, id)
@@ -319,7 +302,7 @@ func viewLogs(id string, follow bool) error {
 	ctx := context.Background()
 	reader, err := manager.Logs(ctx, fullID, follow)
 	if err != nil {
-		return fmt.Errorf("failed to get logs: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.get_logs")+": %w", err)
 	}
 	defer reader.Close()
 
@@ -331,14 +314,11 @@ func viewLogs(id string, follow bool) error {
 func addVMExecCommand(parent *cobra.Command) {
 	execCmd := &cobra.Command{
 		Use:   "exec <container-id> <command> [args...]",
-		Short: "Execute a command in a VM",
-		Long: "Execute a command inside a running VM via SSH.\n\n" +
-			"Examples:\n" +
-			"  core vm exec abc12345 ls -la\n" +
-			"  core vm exec abc1 /bin/sh",
+		Short: i18n.T("cmd.vm.exec.short"),
+		Long:  i18n.T("cmd.vm.exec.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
-				return fmt.Errorf("container ID and command are required")
+				return fmt.Errorf(i18n.T("cmd.vm.error.id_and_cmd_required"))
 			}
 			return execInContainer(args[0], args[1:])
 		},
@@ -350,7 +330,7 @@ func addVMExecCommand(parent *cobra.Command) {
 func execInContainer(id string, cmd []string) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf("failed to initialize container manager: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
 	}
 
 	fullID, err := resolveContainerID(manager, id)

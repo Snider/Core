@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/pkg/i18n"
 	phppkg "github.com/host-uk/core/pkg/php"
 	"github.com/spf13/cobra"
 )
@@ -24,27 +25,21 @@ var (
 func addPHPTestCommand(parent *cobra.Command) {
 	testCmd := &cobra.Command{
 		Use:   "test",
-		Short: "Run PHP tests (PHPUnit/Pest)",
-		Long: "Run PHP tests using PHPUnit or Pest.\n\n" +
-			"Auto-detects Pest if tests/Pest.php exists, otherwise uses PHPUnit.\n\n" +
-			"Examples:\n" +
-			"  core php test                    # Run all tests\n" +
-			"  core php test --parallel         # Run tests in parallel\n" +
-			"  core php test --coverage         # Run with coverage\n" +
-			"  core php test --filter UserTest  # Filter by test name",
+		Short: i18n.T("cmd.php.test.short"),
+		Long:  i18n.T("cmd.php.test.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Detect test runner
 			runner := phppkg.DetectTestRunner(cwd)
-			fmt.Printf("%s Running tests with %s\n\n", dimStyle.Render("PHP:"), runner)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.test.running", map[string]interface{}{"Runner": runner}))
 
 			ctx := context.Background()
 
@@ -61,17 +56,17 @@ func addPHPTestCommand(parent *cobra.Command) {
 			}
 
 			if err := phppkg.RunTests(ctx, opts); err != nil {
-				return fmt.Errorf("tests failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.tests_failed"), err)
 			}
 
 			return nil
 		},
 	}
 
-	testCmd.Flags().BoolVar(&testParallel, "parallel", false, "Run tests in parallel")
-	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, "Generate code coverage")
-	testCmd.Flags().StringVar(&testFilter, "filter", "", "Filter tests by name pattern")
-	testCmd.Flags().StringVar(&testGroup, "group", "", "Run only tests in specified group")
+	testCmd.Flags().BoolVar(&testParallel, "parallel", false, i18n.T("cmd.php.test.flag.parallel"))
+	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("cmd.php.test.flag.coverage"))
+	testCmd.Flags().StringVar(&testFilter, "filter", "", i18n.T("cmd.php.test.flag.filter"))
+	testCmd.Flags().StringVar(&testGroup, "group", "", i18n.T("cmd.php.test.flag.group"))
 
 	parent.AddCommand(testCmd)
 }
@@ -84,33 +79,31 @@ var (
 func addPHPFmtCommand(parent *cobra.Command) {
 	fmtCmd := &cobra.Command{
 		Use:   "fmt [paths...]",
-		Short: "Format PHP code with Laravel Pint",
-		Long: "Format PHP code using Laravel Pint.\n\n" +
-			"Examples:\n" +
-			"  core php fmt           # Check formatting (dry-run)\n" +
-			"  core php fmt --fix     # Auto-fix formatting issues\n" +
-			"  core php fmt --diff    # Show diff of changes",
+		Short: i18n.T("cmd.php.fmt.short"),
+		Long:  i18n.T("cmd.php.fmt.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Detect formatter
 			formatter, found := phppkg.DetectFormatter(cwd)
 			if !found {
-				return fmt.Errorf("no formatter found (install Laravel Pint: composer require laravel/pint --dev)")
+				return fmt.Errorf(i18n.T("cmd.php.fmt.no_formatter"))
 			}
 
-			action := "Checking"
+			var msg string
 			if fmtFix {
-				action = "Formatting"
+				msg = i18n.T("cmd.php.fmt.formatting", map[string]interface{}{"Formatter": formatter})
+			} else {
+				msg = i18n.T("cmd.php.fmt.checking", map[string]interface{}{"Formatter": formatter})
 			}
-			fmt.Printf("%s %s code with %s\n\n", dimStyle.Render("PHP:"), action, formatter)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), msg)
 
 			ctx := context.Background()
 
@@ -128,23 +121,23 @@ func addPHPFmtCommand(parent *cobra.Command) {
 
 			if err := phppkg.Format(ctx, opts); err != nil {
 				if fmtFix {
-					return fmt.Errorf("formatting failed: %w", err)
+					return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.fmt_failed"), err)
 				}
-				return fmt.Errorf("formatting issues found: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.fmt_issues"), err)
 			}
 
 			if fmtFix {
-				fmt.Printf("\n%s Code formatted successfully\n", successStyle.Render("Done:"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.fmt.success"))
 			} else {
-				fmt.Printf("\n%s No formatting issues found\n", successStyle.Render("Done:"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.fmt.no_issues"))
 			}
 
 			return nil
 		},
 	}
 
-	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, "Auto-fix formatting issues")
-	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, "Show diff of changes")
+	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, i18n.T("cmd.php.fmt.flag.fix"))
+	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("cmd.php.fmt.flag.diff"))
 
 	parent.AddCommand(fmtCmd)
 }
@@ -157,30 +150,25 @@ var (
 func addPHPAnalyseCommand(parent *cobra.Command) {
 	analyseCmd := &cobra.Command{
 		Use:   "analyse [paths...]",
-		Short: "Run PHPStan static analysis",
-		Long: "Run PHPStan or Larastan static analysis.\n\n" +
-			"Auto-detects Larastan if installed, otherwise uses PHPStan.\n\n" +
-			"Examples:\n" +
-			"  core php analyse              # Run analysis\n" +
-			"  core php analyse --level 9    # Run at max strictness\n" +
-			"  core php analyse --memory 2G  # Increase memory limit",
+		Short: i18n.T("cmd.php.analyse.short"),
+		Long:  i18n.T("cmd.php.analyse.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Detect analyser
 			analyser, found := phppkg.DetectAnalyser(cwd)
 			if !found {
-				return fmt.Errorf("no static analyser found (install PHPStan: composer require phpstan/phpstan --dev)")
+				return fmt.Errorf(i18n.T("cmd.php.analyse.no_analyser"))
 			}
 
-			fmt.Printf("%s Running static analysis with %s\n\n", dimStyle.Render("PHP:"), analyser)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.analyse.running", map[string]interface{}{"Analyser": analyser}))
 
 			ctx := context.Background()
 
@@ -197,16 +185,16 @@ func addPHPAnalyseCommand(parent *cobra.Command) {
 			}
 
 			if err := phppkg.Analyse(ctx, opts); err != nil {
-				return fmt.Errorf("analysis found issues: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.analysis_issues"), err)
 			}
 
-			fmt.Printf("\n%s No issues found\n", successStyle.Render("Done:"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.analyse.no_issues"))
 			return nil
 		},
 	}
 
-	analyseCmd.Flags().IntVar(&analyseLevel, "level", 0, "PHPStan analysis level (0-9)")
-	analyseCmd.Flags().StringVar(&analyseMemory, "memory", "", "Memory limit (e.g., 2G)")
+	analyseCmd.Flags().IntVar(&analyseLevel, "level", 0, i18n.T("cmd.php.analyse.flag.level"))
+	analyseCmd.Flags().StringVar(&analyseMemory, "memory", "", i18n.T("cmd.php.analyse.flag.memory"))
 
 	parent.AddCommand(analyseCmd)
 }
@@ -225,39 +213,34 @@ var (
 func addPHPPsalmCommand(parent *cobra.Command) {
 	psalmCmd := &cobra.Command{
 		Use:   "psalm",
-		Short: "Run Psalm static analysis",
-		Long: "Run Psalm deep static analysis with Laravel plugin support.\n\n" +
-			"Psalm provides deeper type inference than PHPStan and catches\n" +
-			"different classes of bugs. Both should be run for best coverage.\n\n" +
-			"Examples:\n" +
-			"  core php psalm              # Run analysis\n" +
-			"  core php psalm --fix        # Auto-fix issues where possible\n" +
-			"  core php psalm --level 3    # Run at specific level (1-8)\n" +
-			"  core php psalm --baseline   # Generate baseline file",
+		Short: i18n.T("cmd.php.psalm.short"),
+		Long:  i18n.T("cmd.php.psalm.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Check if Psalm is available
 			_, found := phppkg.DetectPsalm(cwd)
 			if !found {
-				fmt.Printf("%s Psalm not found\n\n", errorStyle.Render("Error:"))
-				fmt.Printf("%s composer require --dev vimeo/psalm\n", dimStyle.Render("Install:"))
-				fmt.Printf("%s ./vendor/bin/psalm --init\n", dimStyle.Render("Setup:"))
-				return fmt.Errorf("psalm not installed")
+				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.T("cmd.php.label.error")), i18n.T("cmd.php.psalm.not_found"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.install")), i18n.T("cmd.php.psalm.install"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.setup")), i18n.T("cmd.php.psalm.setup"))
+				return fmt.Errorf(i18n.T("cmd.php.error.psalm_not_installed"))
 			}
 
-			action := "Analysing"
+			var msg string
 			if psalmFix {
-				action = "Analysing and fixing"
+				msg = i18n.T("cmd.php.psalm.analysing_fixing")
+			} else {
+				msg = i18n.T("cmd.php.psalm.analysing")
 			}
-			fmt.Printf("%s %s code with Psalm\n\n", dimStyle.Render("Psalm:"), action)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.psalm")), msg)
 
 			ctx := context.Background()
 
@@ -271,18 +254,18 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 			}
 
 			if err := phppkg.RunPsalm(ctx, opts); err != nil {
-				return fmt.Errorf("psalm found issues: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.psalm_issues"), err)
 			}
 
-			fmt.Printf("\n%s No issues found\n", successStyle.Render("Done:"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.psalm.no_issues"))
 			return nil
 		},
 	}
 
-	psalmCmd.Flags().IntVar(&psalmLevel, "level", 0, "Error level (1=strictest, 8=most lenient)")
-	psalmCmd.Flags().BoolVar(&psalmFix, "fix", false, "Auto-fix issues where possible")
-	psalmCmd.Flags().BoolVar(&psalmBaseline, "baseline", false, "Generate/update baseline file")
-	psalmCmd.Flags().BoolVar(&psalmShowInfo, "show-info", false, "Show info-level issues")
+	psalmCmd.Flags().IntVar(&psalmLevel, "level", 0, i18n.T("cmd.php.psalm.flag.level"))
+	psalmCmd.Flags().BoolVar(&psalmFix, "fix", false, i18n.T("cmd.php.psalm.flag.fix"))
+	psalmCmd.Flags().BoolVar(&psalmBaseline, "baseline", false, i18n.T("cmd.php.psalm.flag.baseline"))
+	psalmCmd.Flags().BoolVar(&psalmShowInfo, "show-info", false, i18n.T("cmd.php.psalm.flag.show_info"))
 
 	parent.AddCommand(psalmCmd)
 }
@@ -295,24 +278,19 @@ var (
 func addPHPAuditCommand(parent *cobra.Command) {
 	auditCmd := &cobra.Command{
 		Use:   "audit",
-		Short: "Security audit for dependencies",
-		Long: "Check PHP and JavaScript dependencies for known vulnerabilities.\n\n" +
-			"Runs composer audit and npm audit (if package.json exists).\n\n" +
-			"Examples:\n" +
-			"  core php audit           # Check all dependencies\n" +
-			"  core php audit --json    # Output as JSON\n" +
-			"  core php audit --fix     # Auto-fix where possible (npm only)",
+		Short: i18n.T("cmd.php.audit.short"),
+		Long:  i18n.T("cmd.php.audit.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
-			fmt.Printf("%s Scanning dependencies for vulnerabilities\n\n", dimStyle.Render("Audit:"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.audit")), i18n.T("cmd.php.audit.scanning"))
 
 			ctx := context.Background()
 
@@ -323,7 +301,7 @@ func addPHPAuditCommand(parent *cobra.Command) {
 				Output: os.Stdout,
 			})
 			if err != nil {
-				return fmt.Errorf("audit failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.audit_failed"), err)
 			}
 
 			// Print results
@@ -332,15 +310,15 @@ func addPHPAuditCommand(parent *cobra.Command) {
 
 			for _, result := range results {
 				icon := successStyle.Render("✓")
-				status := successStyle.Render("secure")
+				status := successStyle.Render(i18n.T("cmd.php.audit.secure"))
 
 				if result.Error != nil {
 					icon = errorStyle.Render("✗")
-					status = errorStyle.Render("error")
+					status = errorStyle.Render(i18n.T("cmd.php.audit.error"))
 					hasErrors = true
 				} else if result.Vulnerabilities > 0 {
 					icon = errorStyle.Render("✗")
-					status = errorStyle.Render(fmt.Sprintf("%d vulnerabilities", result.Vulnerabilities))
+					status = errorStyle.Render(i18n.T("cmd.php.audit.vulnerabilities", map[string]interface{}{"Count": result.Vulnerabilities}))
 					totalVulns += result.Vulnerabilities
 				}
 
@@ -363,22 +341,22 @@ func addPHPAuditCommand(parent *cobra.Command) {
 			fmt.Println()
 
 			if totalVulns > 0 {
-				fmt.Printf("%s Found %d vulnerabilities across dependencies\n", errorStyle.Render("Warning:"), totalVulns)
-				fmt.Printf("%s composer update && npm update\n", dimStyle.Render("Fix:"))
-				return fmt.Errorf("vulnerabilities found")
+				fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.php.label.warning")), i18n.T("cmd.php.audit.found_vulns", map[string]interface{}{"Count": totalVulns}))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.fix")), i18n.T("cmd.php.audit.fix_hint"))
+				return fmt.Errorf(i18n.T("cmd.php.error.vulns_found"))
 			}
 
 			if hasErrors {
-				return fmt.Errorf("audit completed with errors")
+				return fmt.Errorf(i18n.T("cmd.php.audit.completed_errors"))
 			}
 
-			fmt.Printf("%s All dependencies are secure\n", successStyle.Render("Done:"))
+			fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.audit.all_secure"))
 			return nil
 		},
 	}
 
-	auditCmd.Flags().BoolVar(&auditJSONOutput, "json", false, "Output in JSON format")
-	auditCmd.Flags().BoolVar(&auditFix, "fix", false, "Auto-fix vulnerabilities (npm only)")
+	auditCmd.Flags().BoolVar(&auditJSONOutput, "json", false, i18n.T("cmd.php.audit.flag.json"))
+	auditCmd.Flags().BoolVar(&auditFix, "fix", false, i18n.T("cmd.php.audit.flag.fix"))
 
 	parent.AddCommand(auditCmd)
 }
@@ -393,25 +371,19 @@ var (
 func addPHPSecurityCommand(parent *cobra.Command) {
 	securityCmd := &cobra.Command{
 		Use:   "security",
-		Short: "Security vulnerability scanning",
-		Long: "Scan for security vulnerabilities in configuration and code.\n\n" +
-			"Checks environment config, file permissions, code patterns,\n" +
-			"and runs security-focused static analysis.\n\n" +
-			"Examples:\n" +
-			"  core php security                    # Run all checks\n" +
-			"  core php security --severity=high   # Only high+ severity\n" +
-			"  core php security --json            # JSON output",
+		Short: i18n.T("cmd.php.security.short"),
+		Long:  i18n.T("cmd.php.security.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
-			fmt.Printf("%s Running security checks\n\n", dimStyle.Render("Security:"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.security")), i18n.T("cmd.php.security.running"))
 
 			ctx := context.Background()
 
@@ -424,7 +396,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 				Output:   os.Stdout,
 			})
 			if err != nil {
-				return fmt.Errorf("security check failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.security_failed"), err)
 			}
 
 			// Print results by category
@@ -436,7 +408,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 						fmt.Println()
 					}
 					currentCategory = category
-					fmt.Printf("  %s\n", dimStyle.Render(strings.ToUpper(category)+" CHECKS:"))
+					fmt.Printf("  %s\n", dimStyle.Render(strings.ToUpper(category)+i18n.T("cmd.php.security.checks_suffix")))
 				}
 
 				icon := successStyle.Render("✓")
@@ -448,7 +420,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 				if !check.Passed && check.Message != "" {
 					fmt.Printf("        %s\n", dimStyle.Render(check.Message))
 					if check.Fix != "" {
-						fmt.Printf("        %s %s\n", dimStyle.Render("Fix:"), check.Fix)
+						fmt.Printf("        %s %s\n", dimStyle.Render(i18n.T("cmd.php.security.fix_label")), check.Fix)
 					}
 				}
 			}
@@ -456,34 +428,34 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 			fmt.Println()
 
 			// Print summary
-			fmt.Printf("%s Security scan complete\n", dimStyle.Render("Summary:"))
-			fmt.Printf("  %s %d/%d\n", dimStyle.Render("Passed:"), result.Summary.Passed, result.Summary.Total)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.summary")), i18n.T("cmd.php.security.summary"))
+			fmt.Printf("  %s %d/%d\n", dimStyle.Render(i18n.T("cmd.php.security.passed")), result.Summary.Passed, result.Summary.Total)
 
 			if result.Summary.Critical > 0 {
-				fmt.Printf("  %s %d\n", phpSecurityCriticalStyle.Render("Critical:"), result.Summary.Critical)
+				fmt.Printf("  %s %d\n", phpSecurityCriticalStyle.Render(i18n.T("cmd.php.security.critical")), result.Summary.Critical)
 			}
 			if result.Summary.High > 0 {
-				fmt.Printf("  %s %d\n", phpSecurityHighStyle.Render("High:"), result.Summary.High)
+				fmt.Printf("  %s %d\n", phpSecurityHighStyle.Render(i18n.T("cmd.php.security.high")), result.Summary.High)
 			}
 			if result.Summary.Medium > 0 {
-				fmt.Printf("  %s %d\n", phpSecurityMediumStyle.Render("Medium:"), result.Summary.Medium)
+				fmt.Printf("  %s %d\n", phpSecurityMediumStyle.Render(i18n.T("cmd.php.security.medium")), result.Summary.Medium)
 			}
 			if result.Summary.Low > 0 {
-				fmt.Printf("  %s %d\n", phpSecurityLowStyle.Render("Low:"), result.Summary.Low)
+				fmt.Printf("  %s %d\n", phpSecurityLowStyle.Render(i18n.T("cmd.php.security.low")), result.Summary.Low)
 			}
 
 			if result.Summary.Critical > 0 || result.Summary.High > 0 {
-				return fmt.Errorf("critical or high severity issues found")
+				return fmt.Errorf(i18n.T("cmd.php.error.critical_high_issues"))
 			}
 
 			return nil
 		},
 	}
 
-	securityCmd.Flags().StringVar(&securitySeverity, "severity", "", "Minimum severity (critical, high, medium, low)")
-	securityCmd.Flags().BoolVar(&securityJSONOutput, "json", false, "Output in JSON format")
-	securityCmd.Flags().BoolVar(&securitySarif, "sarif", false, "Output in SARIF format (for GitHub Security)")
-	securityCmd.Flags().StringVar(&securityURL, "url", "", "URL to check HTTP headers (optional)")
+	securityCmd.Flags().StringVar(&securitySeverity, "severity", "", i18n.T("cmd.php.security.flag.severity"))
+	securityCmd.Flags().BoolVar(&securityJSONOutput, "json", false, i18n.T("cmd.php.security.flag.json"))
+	securityCmd.Flags().BoolVar(&securitySarif, "sarif", false, i18n.T("cmd.php.security.flag.sarif"))
+	securityCmd.Flags().StringVar(&securityURL, "url", "", i18n.T("cmd.php.security.flag.url"))
 
 	parent.AddCommand(securityCmd)
 }
@@ -497,25 +469,16 @@ var (
 func addPHPQACommand(parent *cobra.Command) {
 	qaCmd := &cobra.Command{
 		Use:   "qa",
-		Short: "Run full QA pipeline",
-		Long: "Run the complete quality assurance pipeline.\n\n" +
-			"Stages:\n" +
-			"  quick:    Security audit, code style, PHPStan\n" +
-			"  standard: Psalm, tests\n" +
-			"  full:     Rector dry-run, mutation testing (slow)\n\n" +
-			"Examples:\n" +
-			"  core php qa              # Run quick + standard stages\n" +
-			"  core php qa --quick      # Only quick checks\n" +
-			"  core php qa --full       # All stages including slow ones\n" +
-			"  core php qa --fix        # Auto-fix where possible",
+		Short: i18n.T("cmd.php.qa.short"),
+		Long:  i18n.T("cmd.php.qa.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Determine stages
@@ -532,18 +495,18 @@ func addPHPQACommand(parent *cobra.Command) {
 			for i, s := range stages {
 				stageNames[i] = string(s)
 			}
-			fmt.Printf("%s Running QA pipeline (%s)\n\n", dimStyle.Render("QA:"), strings.Join(stageNames, " → "))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.qa")), i18n.T("cmd.php.qa.running", map[string]interface{}{"Stages": strings.Join(stageNames, " -> ")}))
 
 			ctx := context.Background()
 			var allPassed = true
 			var results []phppkg.QACheckResult
 
 			for _, stage := range stages {
-				fmt.Printf("%s\n", phpQAStageStyle.Render("═══ "+strings.ToUpper(string(stage))+" STAGE ═══"))
+				fmt.Printf("%s\n", phpQAStageStyle.Render(i18n.T("cmd.php.qa.stage_prefix")+strings.ToUpper(string(stage))+i18n.T("cmd.php.qa.stage_suffix")))
 
 				checks := phppkg.GetQAChecks(cwd, stage)
 				if len(checks) == 0 {
-					fmt.Printf("  %s\n\n", dimStyle.Render("No checks available"))
+					fmt.Printf("  %s\n\n", dimStyle.Render(i18n.T("cmd.php.qa.no_checks")))
 					continue
 				}
 
@@ -553,10 +516,10 @@ func addPHPQACommand(parent *cobra.Command) {
 					results = append(results, result)
 
 					icon := phpQAPassedStyle.Render("✓")
-					status := phpQAPassedStyle.Render("passed")
+					status := phpQAPassedStyle.Render(i18n.T("cmd.php.qa.passed"))
 					if !result.Passed {
 						icon = phpQAFailedStyle.Render("✗")
-						status = phpQAFailedStyle.Render("failed")
+						status = phpQAFailedStyle.Render(i18n.T("cmd.php.qa.failed"))
 						allPassed = false
 					}
 
@@ -577,33 +540,33 @@ func addPHPQACommand(parent *cobra.Command) {
 			}
 
 			if allPassed {
-				fmt.Printf("%s All checks passed (%d/%d)\n", phpQAPassedStyle.Render("QA PASSED:"), passedCount, len(results))
+				fmt.Printf("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("cmd.php.qa.all_passed", map[string]interface{}{"Passed": passedCount, "Total": len(results)}))
 				return nil
 			}
 
-			fmt.Printf("%s Some checks failed (%d/%d passed)\n\n", phpQAFailedStyle.Render("QA FAILED:"), passedCount, len(results))
+			fmt.Printf("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("cmd.php.qa.some_failed", map[string]interface{}{"Passed": passedCount, "Total": len(results)}))
 
 			// Show what needs fixing
-			fmt.Printf("%s\n", dimStyle.Render("To fix:"))
+			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.php.qa.to_fix")))
 			for _, check := range failedChecks {
 				fixCmd := getQAFixCommand(check.Name, qaFix)
 				issue := check.Output
 				if issue == "" {
 					issue = "issues found"
 				}
-				fmt.Printf("  %s %s\n", phpQAFailedStyle.Render("•"), check.Name+": "+issue)
+				fmt.Printf("  %s %s\n", phpQAFailedStyle.Render("*"), check.Name+": "+issue)
 				if fixCmd != "" {
-					fmt.Printf("    %s %s\n", dimStyle.Render("→"), fixCmd)
+					fmt.Printf("    %s %s\n", dimStyle.Render("->"), fixCmd)
 				}
 			}
 
-			return fmt.Errorf("QA pipeline failed")
+			return fmt.Errorf(i18n.T("cmd.php.qa.pipeline_failed"))
 		},
 	}
 
-	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, "Only run quick checks")
-	qaCmd.Flags().BoolVar(&qaFull, "full", false, "Run all stages including slow checks")
-	qaCmd.Flags().BoolVar(&qaFix, "fix", false, "Auto-fix issues where possible")
+	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, i18n.T("cmd.php.qa.flag.quick"))
+	qaCmd.Flags().BoolVar(&qaFull, "full", false, i18n.T("cmd.php.qa.flag.full"))
+	qaCmd.Flags().BoolVar(&qaFix, "fix", false, i18n.T("cmd.php.qa.flag.fix"))
 
 	parent.AddCommand(qaCmd)
 }
@@ -611,25 +574,25 @@ func addPHPQACommand(parent *cobra.Command) {
 func getQAFixCommand(checkName string, fixEnabled bool) string {
 	switch checkName {
 	case "audit":
-		return "composer update && npm update"
+		return i18n.T("cmd.php.qa.fix_audit")
 	case "fmt":
 		if fixEnabled {
 			return ""
 		}
 		return "core php fmt --fix"
 	case "analyse":
-		return "Fix PHPStan errors shown above"
+		return i18n.T("cmd.php.qa.fix_phpstan")
 	case "psalm":
-		return "Fix Psalm errors shown above"
+		return i18n.T("cmd.php.qa.fix_psalm")
 	case "test":
-		return "Fix failing tests shown above"
+		return i18n.T("cmd.php.qa.fix_tests")
 	case "rector":
 		if fixEnabled {
 			return ""
 		}
 		return "core php rector --fix"
 	case "infection":
-		return "Improve test coverage for mutated code"
+		return i18n.T("cmd.php.qa.fix_infection")
 	}
 	return ""
 }
@@ -662,42 +625,42 @@ func runQACheck(ctx context.Context, dir string, checkName string, fix bool) php
 		err := phppkg.Format(ctx, phppkg.FormatOptions{Dir: dir, Fix: fix, Output: io.Discard})
 		result.Passed = err == nil
 		if err != nil {
-			result.Output = "Code style issues found"
+			result.Output = i18n.T("cmd.php.qa.issue_style")
 		}
 
 	case "analyse":
 		err := phppkg.Analyse(ctx, phppkg.AnalyseOptions{Dir: dir, Output: &buf})
 		result.Passed = err == nil
 		if err != nil {
-			result.Output = "Static analysis errors"
+			result.Output = i18n.T("cmd.php.qa.issue_analysis")
 		}
 
 	case "psalm":
 		err := phppkg.RunPsalm(ctx, phppkg.PsalmOptions{Dir: dir, Fix: fix, Output: io.Discard})
 		result.Passed = err == nil
 		if err != nil {
-			result.Output = "Type errors found"
+			result.Output = i18n.T("cmd.php.qa.issue_types")
 		}
 
 	case "test":
 		err := phppkg.RunTests(ctx, phppkg.TestOptions{Dir: dir, Output: io.Discard})
 		result.Passed = err == nil
 		if err != nil {
-			result.Output = "Test failures"
+			result.Output = i18n.T("cmd.php.qa.issue_tests")
 		}
 
 	case "rector":
 		err := phppkg.RunRector(ctx, phppkg.RectorOptions{Dir: dir, Fix: fix, Output: io.Discard})
 		result.Passed = err == nil
 		if err != nil {
-			result.Output = "Code improvements available"
+			result.Output = i18n.T("cmd.php.qa.issue_rector")
 		}
 
 	case "infection":
 		err := phppkg.RunInfection(ctx, phppkg.InfectionOptions{Dir: dir, Output: io.Discard})
 		result.Passed = err == nil
 		if err != nil {
-			result.Output = "Mutation score below threshold"
+			result.Output = i18n.T("cmd.php.qa.issue_mutation")
 		}
 	}
 
@@ -714,37 +677,33 @@ var (
 func addPHPRectorCommand(parent *cobra.Command) {
 	rectorCmd := &cobra.Command{
 		Use:   "rector",
-		Short: "Automated code refactoring",
-		Long: "Run Rector for automated code improvements and PHP upgrades.\n\n" +
-			"Rector can automatically upgrade PHP syntax, improve code quality,\n" +
-			"and apply framework-specific refactorings.\n\n" +
-			"Examples:\n" +
-			"  core php rector              # Dry-run (show changes)\n" +
-			"  core php rector --fix        # Apply changes\n" +
-			"  core php rector --diff       # Show detailed diff",
+		Short: i18n.T("cmd.php.rector.short"),
+		Long:  i18n.T("cmd.php.rector.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Check if Rector is available
 			if !phppkg.DetectRector(cwd) {
-				fmt.Printf("%s Rector not found\n\n", errorStyle.Render("Error:"))
-				fmt.Printf("%s composer require --dev rector/rector\n", dimStyle.Render("Install:"))
-				fmt.Printf("%s ./vendor/bin/rector init\n", dimStyle.Render("Setup:"))
-				return fmt.Errorf("rector not installed")
+				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.T("cmd.php.label.error")), i18n.T("cmd.php.rector.not_found"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.install")), i18n.T("cmd.php.rector.install"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.setup")), i18n.T("cmd.php.rector.setup"))
+				return fmt.Errorf(i18n.T("cmd.php.error.rector_not_installed"))
 			}
 
-			action := "Analysing"
+			var msg string
 			if rectorFix {
-				action = "Refactoring"
+				msg = i18n.T("cmd.php.rector.refactoring")
+			} else {
+				msg = i18n.T("cmd.php.rector.analysing")
 			}
-			fmt.Printf("%s %s code with Rector\n\n", dimStyle.Render("Rector:"), action)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.rector")), msg)
 
 			ctx := context.Background()
 
@@ -758,25 +717,25 @@ func addPHPRectorCommand(parent *cobra.Command) {
 
 			if err := phppkg.RunRector(ctx, opts); err != nil {
 				if rectorFix {
-					return fmt.Errorf("rector failed: %w", err)
+					return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.rector_failed"), err)
 				}
 				// Dry-run returns non-zero if changes would be made
-				fmt.Printf("\n%s Changes suggested (use --fix to apply)\n", phpQAWarningStyle.Render("Info:"))
+				fmt.Printf("\n%s %s\n", phpQAWarningStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.rector.changes_suggested"))
 				return nil
 			}
 
 			if rectorFix {
-				fmt.Printf("\n%s Code refactored successfully\n", successStyle.Render("Done:"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.rector.refactored"))
 			} else {
-				fmt.Printf("\n%s No changes needed\n", successStyle.Render("Done:"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.rector.no_changes"))
 			}
 			return nil
 		},
 	}
 
-	rectorCmd.Flags().BoolVar(&rectorFix, "fix", false, "Apply changes (default is dry-run)")
-	rectorCmd.Flags().BoolVar(&rectorDiff, "diff", false, "Show detailed diff of changes")
-	rectorCmd.Flags().BoolVar(&rectorClearCache, "clear-cache", false, "Clear Rector cache before running")
+	rectorCmd.Flags().BoolVar(&rectorFix, "fix", false, i18n.T("cmd.php.rector.flag.fix"))
+	rectorCmd.Flags().BoolVar(&rectorDiff, "diff", false, i18n.T("cmd.php.rector.flag.diff"))
+	rectorCmd.Flags().BoolVar(&rectorClearCache, "clear-cache", false, i18n.T("cmd.php.rector.flag.clear_cache"))
 
 	parent.AddCommand(rectorCmd)
 }
@@ -792,34 +751,27 @@ var (
 func addPHPInfectionCommand(parent *cobra.Command) {
 	infectionCmd := &cobra.Command{
 		Use:   "infection",
-		Short: "Mutation testing for test quality",
-		Long: "Run Infection mutation testing to measure test suite quality.\n\n" +
-			"Mutation testing modifies your code and checks if tests catch\n" +
-			"the changes. High mutation score = high quality tests.\n\n" +
-			"Warning: This can be slow on large codebases.\n\n" +
-			"Examples:\n" +
-			"  core php infection                    # Run mutation testing\n" +
-			"  core php infection --min-msi=70      # Require 70% mutation score\n" +
-			"  core php infection --filter=User     # Only test User* files",
+		Short: i18n.T("cmd.php.infection.short"),
+		Long:  i18n.T("cmd.php.infection.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
-				return fmt.Errorf("not a PHP project (missing composer.json)")
+				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
 			// Check if Infection is available
 			if !phppkg.DetectInfection(cwd) {
-				fmt.Printf("%s Infection not found\n\n", errorStyle.Render("Error:"))
-				fmt.Printf("%s composer require --dev infection/infection\n", dimStyle.Render("Install:"))
-				return fmt.Errorf("infection not installed")
+				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.T("cmd.php.label.error")), i18n.T("cmd.php.infection.not_found"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.install")), i18n.T("cmd.php.infection.install"))
+				return fmt.Errorf(i18n.T("cmd.php.error.infection_not_installed"))
 			}
 
-			fmt.Printf("%s Running mutation testing\n", dimStyle.Render("Infection:"))
-			fmt.Printf("%s This may take a while...\n\n", dimStyle.Render("Note:"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.infection")), i18n.T("cmd.php.infection.running"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.infection.note"))
 
 			ctx := context.Background()
 
@@ -834,19 +786,19 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 			}
 
 			if err := phppkg.RunInfection(ctx, opts); err != nil {
-				return fmt.Errorf("mutation testing failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.infection_failed"), err)
 			}
 
-			fmt.Printf("\n%s Mutation testing complete\n", successStyle.Render("Done:"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.infection.complete"))
 			return nil
 		},
 	}
 
-	infectionCmd.Flags().IntVar(&infectionMinMSI, "min-msi", 0, "Minimum mutation score indicator (0-100, default: 50)")
-	infectionCmd.Flags().IntVar(&infectionMinCoveredMSI, "min-covered-msi", 0, "Minimum covered mutation score (0-100, default: 70)")
-	infectionCmd.Flags().IntVar(&infectionThreads, "threads", 0, "Number of parallel threads (default: 4)")
-	infectionCmd.Flags().StringVar(&infectionFilter, "filter", "", "Filter files by pattern")
-	infectionCmd.Flags().BoolVar(&infectionOnlyCovered, "only-covered", false, "Only mutate covered code")
+	infectionCmd.Flags().IntVar(&infectionMinMSI, "min-msi", 0, i18n.T("cmd.php.infection.flag.min_msi"))
+	infectionCmd.Flags().IntVar(&infectionMinCoveredMSI, "min-covered-msi", 0, i18n.T("cmd.php.infection.flag.min_covered_msi"))
+	infectionCmd.Flags().IntVar(&infectionThreads, "threads", 0, i18n.T("cmd.php.infection.flag.threads"))
+	infectionCmd.Flags().StringVar(&infectionFilter, "filter", "", i18n.T("cmd.php.infection.flag.filter"))
+	infectionCmd.Flags().BoolVar(&infectionOnlyCovered, "only-covered", false, i18n.T("cmd.php.infection.flag.only_covered"))
 
 	parent.AddCommand(infectionCmd)
 }

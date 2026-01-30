@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/host-uk/core/pkg/i18n"
 	phppkg "github.com/host-uk/core/pkg/php"
 	"github.com/spf13/cobra"
 )
@@ -11,15 +12,8 @@ import (
 func addPHPPackagesCommands(parent *cobra.Command) {
 	packagesCmd := &cobra.Command{
 		Use:   "packages",
-		Short: "Manage local PHP packages",
-		Long: "Link and manage local PHP packages for development.\n\n" +
-			"Similar to npm link, this adds path repositories to composer.json\n" +
-			"for developing packages alongside your project.\n\n" +
-			"Commands:\n" +
-			"  link    - Link local packages by path\n" +
-			"  unlink  - Unlink packages by name\n" +
-			"  update  - Update linked packages\n" +
-			"  list    - List linked packages",
+		Short: i18n.T("cmd.php.packages.short"),
+		Long:  i18n.T("cmd.php.packages.long"),
 	}
 	parent.AddCommand(packagesCmd)
 
@@ -32,27 +26,22 @@ func addPHPPackagesCommands(parent *cobra.Command) {
 func addPHPPackagesLinkCommand(parent *cobra.Command) {
 	linkCmd := &cobra.Command{
 		Use:   "link [paths...]",
-		Short: "Link local packages",
-		Long: "Link local PHP packages for development.\n\n" +
-			"Adds path repositories to composer.json with symlink enabled.\n" +
-			"The package name is auto-detected from each path's composer.json.\n\n" +
-			"Examples:\n" +
-			"  core php packages link ../my-package\n" +
-			"  core php packages link ../pkg-a ../pkg-b",
-		Args: cobra.MinimumNArgs(1),
+		Short: i18n.T("cmd.php.packages.link.short"),
+		Long:  i18n.T("cmd.php.packages.link.long"),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
-			fmt.Printf("%s Linking packages...\n\n", dimStyle.Render("PHP:"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.link.linking"))
 
 			if err := phppkg.LinkPackages(cwd, args); err != nil {
-				return fmt.Errorf("failed to link packages: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.link_packages"), err)
 			}
 
-			fmt.Printf("\n%s Packages linked. Run 'composer update' to install.\n", successStyle.Render("Done:"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.packages.link.done"))
 			return nil
 		},
 	}
@@ -63,26 +52,22 @@ func addPHPPackagesLinkCommand(parent *cobra.Command) {
 func addPHPPackagesUnlinkCommand(parent *cobra.Command) {
 	unlinkCmd := &cobra.Command{
 		Use:   "unlink [packages...]",
-		Short: "Unlink packages",
-		Long: "Remove linked packages from composer.json.\n\n" +
-			"Removes path repositories by package name.\n\n" +
-			"Examples:\n" +
-			"  core php packages unlink vendor/my-package\n" +
-			"  core php packages unlink vendor/pkg-a vendor/pkg-b",
-		Args: cobra.MinimumNArgs(1),
+		Short: i18n.T("cmd.php.packages.unlink.short"),
+		Long:  i18n.T("cmd.php.packages.unlink.long"),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
-			fmt.Printf("%s Unlinking packages...\n\n", dimStyle.Render("PHP:"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.unlink.unlinking"))
 
 			if err := phppkg.UnlinkPackages(cwd, args); err != nil {
-				return fmt.Errorf("failed to unlink packages: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.unlink_packages"), err)
 			}
 
-			fmt.Printf("\n%s Packages unlinked. Run 'composer update' to remove.\n", successStyle.Render("Done:"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.packages.unlink.done"))
 			return nil
 		},
 	}
@@ -93,25 +78,21 @@ func addPHPPackagesUnlinkCommand(parent *cobra.Command) {
 func addPHPPackagesUpdateCommand(parent *cobra.Command) {
 	updateCmd := &cobra.Command{
 		Use:   "update [packages...]",
-		Short: "Update linked packages",
-		Long: "Run composer update for linked packages.\n\n" +
-			"If no packages specified, updates all packages.\n\n" +
-			"Examples:\n" +
-			"  core php packages update\n" +
-			"  core php packages update vendor/my-package",
+		Short: i18n.T("cmd.php.packages.update.short"),
+		Long:  i18n.T("cmd.php.packages.update.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
-			fmt.Printf("%s Updating packages...\n\n", dimStyle.Render("PHP:"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.update.updating"))
 
 			if err := phppkg.UpdatePackages(cwd, args); err != nil {
-				return fmt.Errorf("composer update failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.update_packages"), err)
 			}
 
-			fmt.Printf("\n%s Packages updated\n", successStyle.Render("Done:"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.packages.update.done"))
 			return nil
 		},
 	}
@@ -122,31 +103,30 @@ func addPHPPackagesUpdateCommand(parent *cobra.Command) {
 func addPHPPackagesListCommand(parent *cobra.Command) {
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List linked packages",
-		Long: "List all locally linked packages.\n\n" +
-			"Shows package name, path, and version for each linked package.",
+		Short: i18n.T("cmd.php.packages.list.short"),
+		Long:  i18n.T("cmd.php.packages.list.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("failed to get working directory: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
 			}
 
 			packages, err := phppkg.ListLinkedPackages(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to list packages: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.list_packages"), err)
 			}
 
 			if len(packages) == 0 {
-				fmt.Printf("%s No linked packages found\n", dimStyle.Render("PHP:"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.list.none_found"))
 				return nil
 			}
 
-			fmt.Printf("%s Linked packages:\n\n", dimStyle.Render("PHP:"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.list.linked"))
 
 			for _, pkg := range packages {
 				name := pkg.Name
 				if name == "" {
-					name = "(unknown)"
+					name = i18n.T("cmd.php.packages.list.unknown")
 				}
 				version := pkg.Version
 				if version == "" {
@@ -154,8 +134,8 @@ func addPHPPackagesListCommand(parent *cobra.Command) {
 				}
 
 				fmt.Printf("  %s %s\n", successStyle.Render("*"), name)
-				fmt.Printf("    %s %s\n", dimStyle.Render("Path:"), pkg.Path)
-				fmt.Printf("    %s %s\n", dimStyle.Render("Version:"), version)
+				fmt.Printf("    %s %s\n", dimStyle.Render(i18n.T("cmd.php.packages.list.path")), pkg.Path)
+				fmt.Printf("    %s %s\n", dimStyle.Render(i18n.T("cmd.php.packages.list.version")), version)
 				fmt.Println()
 			}
 

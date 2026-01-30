@@ -12,15 +12,17 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 // runRepoSetup sets up the current repository with .core/ configuration.
 func runRepoSetup(repoPath string, dryRun bool) error {
-	fmt.Printf("%s Setting up repository: %s\n", dimStyle.Render(">>"), repoPath)
+	fmt.Printf("%s %s: %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.repo.setting_up"), repoPath)
 
 	// Detect project type
 	projectType := detectProjectType(repoPath)
-	fmt.Printf("%s Detected project type: %s\n", dimStyle.Render(">>"), projectType)
+	fmt.Printf("%s %s: %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.repo.detected_type"), projectType)
 
 	// Create .core directory
 	coreDir := filepath.Join(repoPath, ".core")
@@ -39,7 +41,7 @@ func runRepoSetup(repoPath string, dryRun bool) error {
 	}
 
 	if dryRun {
-		fmt.Printf("\n%s Would create:\n", dimStyle.Render(">>"))
+		fmt.Printf("\n%s %s:\n", dimStyle.Render(">>"), i18n.T("cmd.setup.repo.would_create"))
 		for filename, content := range configs {
 			fmt.Printf("\n  %s:\n", filepath.Join(coreDir, filename))
 			// Indent content for display
@@ -55,7 +57,7 @@ func runRepoSetup(repoPath string, dryRun bool) error {
 		if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 			return fmt.Errorf("failed to write %s: %w", filename, err)
 		}
-		fmt.Printf("%s Created %s\n", successStyle.Render(">>"), configPath)
+		fmt.Printf("%s %s %s\n", successStyle.Render(">>"), i18n.T("cmd.setup.repo.created"), configPath)
 	}
 
 	return nil

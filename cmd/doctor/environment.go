@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -44,7 +45,7 @@ func checkGitHubCLI() bool {
 func checkWorkspace() {
 	registryPath, err := repos.FindRegistry()
 	if err == nil {
-		fmt.Printf("  %s Found repos.yaml at %s\n", successStyle.Render("✓"), registryPath)
+		fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("cmd.doctor.repos_yaml_found", map[string]interface{}{"Path": registryPath}))
 
 		reg, err := repos.LoadRegistry(registryPath)
 		if err == nil {
@@ -69,9 +70,9 @@ func checkWorkspace() {
 					cloned++
 				}
 			}
-			fmt.Printf("  %s %d/%d repos cloned\n", successStyle.Render("✓"), cloned, len(allRepos))
+			fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("cmd.doctor.repos_cloned", map[string]interface{}{"Cloned": cloned, "Total": len(allRepos)}))
 		}
 	} else {
-		fmt.Printf("  %s No repos.yaml found (run from workspace directory)\n", dimStyle.Render("○"))
+		fmt.Printf("  %s %s\n", dimStyle.Render("○"), i18n.T("cmd.doctor.no_repos_yaml"))
 	}
 }

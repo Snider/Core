@@ -3,6 +3,7 @@ package pkg
 
 import (
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -20,14 +21,8 @@ var (
 func AddPkgCommands(root *cobra.Command) {
 	pkgCmd := &cobra.Command{
 		Use:   "pkg",
-		Short: "Package management for core-* repos",
-		Long: "Manage host-uk/core-* packages and repositories.\n\n" +
-			"Commands:\n" +
-			"  search    Search GitHub for packages\n" +
-			"  install   Clone a package from GitHub\n" +
-			"  list      List installed packages\n" +
-			"  update    Update installed packages\n" +
-			"  outdated  Check for outdated packages",
+		Short: i18n.T("cmd.pkg.short"),
+		Long:  i18n.T("cmd.pkg.long"),
 	}
 
 	root.AddCommand(pkgCmd)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -61,18 +62,16 @@ var (
 func addReviewsCommand(parent *cobra.Command) {
 	reviewsCmd := &cobra.Command{
 		Use:   "reviews",
-		Short: "List PRs needing review across all repos",
-		Long: `Fetches open PRs from GitHub for all repos in the registry.
-Shows review status (approved, changes requested, pending).
-Requires the 'gh' CLI to be installed and authenticated.`,
+		Short: i18n.T("cmd.dev.reviews.short"),
+		Long:  i18n.T("cmd.dev.reviews.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runReviews(reviewsRegistryPath, reviewsAuthor, reviewsShowAll)
 		},
 	}
 
-	reviewsCmd.Flags().StringVar(&reviewsRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
-	reviewsCmd.Flags().StringVar(&reviewsAuthor, "author", "", "Filter by PR author")
-	reviewsCmd.Flags().BoolVar(&reviewsShowAll, "all", false, "Show all PRs including drafts")
+	reviewsCmd.Flags().StringVar(&reviewsRegistryPath, "registry", "", i18n.T("cmd.dev.reviews.flag.registry"))
+	reviewsCmd.Flags().StringVar(&reviewsAuthor, "author", "", i18n.T("cmd.dev.reviews.flag.author"))
+	reviewsCmd.Flags().BoolVar(&reviewsShowAll, "all", false, i18n.T("cmd.dev.reviews.flag.all"))
 
 	parent.AddCommand(reviewsCmd)
 }
@@ -80,7 +79,7 @@ Requires the 'gh' CLI to be installed and authenticated.`,
 func runReviews(registryPath string, author string, showAll bool) error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return fmt.Errorf("'gh' CLI not found. Install from https://cli.github.com/")
+		return fmt.Errorf(i18n.T("error.gh_not_found"))
 	}
 
 	// Find or use provided registry, fall back to directory scan
@@ -116,7 +115,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	repoList := reg.List()
 	for i, repo := range repoList {
 		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render("Fetching"), i+1, len(repoList), repo.Name)
+		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("cli.progress.fetching")), i+1, len(repoList), repo.Name)
 
 		prs, err := fetchPRs(repoFullName, repo.Name, author)
 		if err != nil {
@@ -147,7 +146,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 
 	// Print PRs
 	if len(allPRs) == 0 {
-		fmt.Println("No open PRs found.")
+		fmt.Println(i18n.T("cmd.dev.reviews.no_prs"))
 		return nil
 	}
 
@@ -165,15 +164,15 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%d open PR(s)", len(allPRs))
+	fmt.Printf("%s", i18n.T("cmd.dev.reviews.open_prs", map[string]interface{}{"Count": len(allPRs)}))
 	if pending > 0 {
-		fmt.Printf(" * %s", prPendingStyle.Render(fmt.Sprintf("%d pending", pending)))
+		fmt.Printf(" * %s", prPendingStyle.Render(i18n.T("cmd.dev.reviews.pending", map[string]interface{}{"Count": pending})))
 	}
 	if approved > 0 {
-		fmt.Printf(" * %s", prApprovedStyle.Render(fmt.Sprintf("%d approved", approved)))
+		fmt.Printf(" * %s", prApprovedStyle.Render(i18n.T("cmd.dev.reviews.approved", map[string]interface{}{"Count": approved})))
 	}
 	if changesRequested > 0 {
-		fmt.Printf(" * %s", prChangesStyle.Render(fmt.Sprintf("%d changes requested", changesRequested)))
+		fmt.Printf(" * %s", prChangesStyle.Render(i18n.T("cmd.dev.reviews.changes_requested", map[string]interface{}{"Count": changesRequested})))
 	}
 	fmt.Println()
 	fmt.Println()
@@ -186,7 +185,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render("Error:"), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.issues.error_label")), err)
 		}
 	}
 
@@ -242,17 +241,17 @@ func printPR(pr GitHubPR) {
 	var status string
 	switch pr.ReviewDecision {
 	case "APPROVED":
-		status = prApprovedStyle.Render("v approved")
+		status = prApprovedStyle.Render(i18n.T("cmd.dev.reviews.status_approved"))
 	case "CHANGES_REQUESTED":
-		status = prChangesStyle.Render("* changes requested")
+		status = prChangesStyle.Render(i18n.T("cmd.dev.reviews.status_changes"))
 	default:
-		status = prPendingStyle.Render("o pending review")
+		status = prPendingStyle.Render(i18n.T("cmd.dev.reviews.status_pending"))
 	}
 
 	// Draft indicator
 	draft := ""
 	if pr.IsDraft {
-		draft = prDraftStyle.Render(" [draft]")
+		draft = prDraftStyle.Render(" " + i18n.T("cmd.dev.reviews.draft"))
 	}
 
 	age := shared.FormatAge(pr.CreatedAt)

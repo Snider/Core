@@ -13,6 +13,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"golang.org/x/term"
 )
@@ -35,11 +36,11 @@ func promptSetupChoice() (string, error) {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
-				Title("This directory is a git repository").
-				Description("What would you like to do?").
+				Title(i18n.T("cmd.setup.wizard.git_repo_title")).
+				Description(i18n.T("cmd.setup.wizard.what_to_do")).
 				Options(
-					huh.NewOption("Setup Working Directory", "setup").Selected(true),
-					huh.NewOption("Create Package (clone repos into subdirectory)", "package"),
+					huh.NewOption(i18n.T("cmd.setup.wizard.option_setup"), "setup").Selected(true),
+					huh.NewOption(i18n.T("cmd.setup.wizard.option_package"), "package"),
 				).
 				Value(&choice),
 		),
@@ -59,8 +60,8 @@ func promptProjectName(defaultName string) (string, error) {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Title("Project directory name").
-				Description("Enter the name for your new workspace directory").
+				Title(i18n.T("cmd.setup.wizard.project_name_title")).
+				Description(i18n.T("cmd.setup.wizard.project_name_desc")).
 				Placeholder(defaultName).
 				Value(&name),
 		),
@@ -158,14 +159,14 @@ func runPackageWizard(reg *repos.Registry, preselectedTypes []string) ([]string,
 	// Header styling
 	headerStyle := shared.TitleStyle.MarginBottom(1)
 
-	fmt.Println(headerStyle.Render("Package Selection"))
-	fmt.Println("Use space to select/deselect, enter to confirm")
+	fmt.Println(headerStyle.Render(i18n.T("cmd.setup.wizard.package_selection")))
+	fmt.Println(i18n.T("cmd.setup.wizard.selection_hint"))
 	fmt.Println()
 
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
-				Title("Select packages to clone").
+				Title(i18n.T("cmd.setup.wizard.select_packages")).
 				Options(options...).
 				Value(&selected).
 				Filterable(true).
@@ -195,9 +196,9 @@ func confirmClone(count int, target string) (bool, error) {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
-				Title(fmt.Sprintf("Clone %d packages to %s?", count, target)).
-				Affirmative("Yes, clone").
-				Negative("Cancel").
+				Title(i18n.T("cmd.setup.wizard.confirm_clone", map[string]interface{}{"Count": count, "Target": target})).
+				Affirmative(i18n.T("cmd.setup.wizard.confirm_yes")).
+				Negative(i18n.T("cmd.setup.wizard.confirm_cancel")).
 				Value(&confirmed),
 		),
 	).WithTheme(wizardTheme())

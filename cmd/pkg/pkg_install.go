@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -20,22 +21,18 @@ var (
 func addPkgInstallCommand(parent *cobra.Command) {
 	installCmd := &cobra.Command{
 		Use:   "install <org/repo>",
-		Short: "Clone a package from GitHub",
-		Long: "Clones a repository from GitHub.\n\n" +
-			"Examples:\n" +
-			"  core pkg install host-uk/core-php\n" +
-			"  core pkg install host-uk/core-tenant --dir ./packages\n" +
-			"  core pkg install host-uk/core-admin --add",
+		Short: i18n.T("cmd.pkg.install.short"),
+		Long:  i18n.T("cmd.pkg.install.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("repository is required (e.g., core pkg install host-uk/core-php)")
+				return fmt.Errorf(i18n.T("cmd.pkg.error.repo_required"))
 			}
 			return runPkgInstall(args[0], installTargetDir, installAddToReg)
 		},
 	}
 
-	installCmd.Flags().StringVar(&installTargetDir, "dir", "", "Target directory (default: ./packages or current dir)")
-	installCmd.Flags().BoolVar(&installAddToReg, "add", false, "Add to repos.yaml registry")
+	installCmd.Flags().StringVar(&installTargetDir, "dir", "", i18n.T("cmd.pkg.install.flag.dir"))
+	installCmd.Flags().BoolVar(&installAddToReg, "add", false, i18n.T("cmd.pkg.install.flag.add"))
 
 	parent.AddCommand(installCmd)
 }
@@ -46,7 +43,7 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 	// Parse org/repo
 	parts := strings.Split(repoArg, "/")
 	if len(parts) != 2 {
-		return fmt.Errorf("invalid repo format: use org/repo (e.g., host-uk/core-php)")
+		return fmt.Errorf(i18n.T("cmd.pkg.error.invalid_repo_format"))
 	}
 	org, repoName := parts[0], parts[1]
 
@@ -76,19 +73,19 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 	repoPath := filepath.Join(targetDir, repoName)
 
 	if _, err := os.Stat(filepath.Join(repoPath, ".git")); err == nil {
-		fmt.Printf("%s %s already exists at %s\n", dimStyle.Render("Skip:"), repoName, repoPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.pkg.install.skip_label")), i18n.T("cmd.pkg.install.already_exists", map[string]string{"Name": repoName, "Path": repoPath}))
 		return nil
 	}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+		return fmt.Errorf(i18n.T("cmd.pkg.error.create_directory"), err)
 	}
 
-	fmt.Printf("%s %s/%s\n", dimStyle.Render("Installing:"), org, repoName)
-	fmt.Printf("%s %s\n", dimStyle.Render("Target:"), repoPath)
+	fmt.Printf("%s %s/%s\n", dimStyle.Render(i18n.T("cmd.pkg.install.installing_label")), org, repoName)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.pkg.install.target_label")), repoPath)
 	fmt.Println()
 
-	fmt.Printf("  %s... ", dimStyle.Render("Cloning"))
+	fmt.Printf("  %s... ", dimStyle.Render(i18n.T("cmd.pkg.install.cloning")))
 	err := gitClone(ctx, org, repoName, repoPath)
 	if err != nil {
 		fmt.Printf("%s\n", errorStyle.Render("✗ "+err.Error()))
@@ -98,14 +95,14 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 
 	if addToRegistry {
 		if err := addToRegistryFile(org, repoName); err != nil {
-			fmt.Printf("  %s add to registry: %s\n", errorStyle.Render("✗"), err)
+			fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), i18n.T("cmd.pkg.install.add_to_registry"), err)
 		} else {
-			fmt.Printf("  %s added to repos.yaml\n", successStyle.Render("✓"))
+			fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("cmd.pkg.install.added_to_registry"))
 		}
 	}
 
 	fmt.Println()
-	fmt.Printf("%s Installed %s\n", successStyle.Render("Done:"), repoName)
+	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.pkg.install.done_label")), i18n.T("cmd.pkg.install.installed", map[string]string{"Name": repoName}))
 
 	return nil
 }
@@ -113,7 +110,7 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 func addToRegistryFile(org, repoName string) error {
 	regPath, err := repos.FindRegistry()
 	if err != nil {
-		return fmt.Errorf("no repos.yaml found")
+		return fmt.Errorf(i18n.T("cmd.pkg.error.no_repos_yaml"))
 	}
 
 	reg, err := repos.LoadRegistry(regPath)

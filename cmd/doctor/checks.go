@@ -3,6 +3,8 @@ package doctor
 import (
 	"os/exec"
 	"strings"
+
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 // check represents a tool check configuration
@@ -14,68 +16,72 @@ type check struct {
 	versionFlag string
 }
 
-// requiredChecks are tools that must be installed
-var requiredChecks = []check{
-	{
-		name:        "Git",
-		description: "Version control",
-		command:     "git",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
-	{
-		name:        "GitHub CLI",
-		description: "GitHub integration (issues, PRs, CI)",
-		command:     "gh",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
-	{
-		name:        "PHP",
-		description: "Laravel packages",
-		command:     "php",
-		args:        []string{"-v"},
-		versionFlag: "-v",
-	},
-	{
-		name:        "Composer",
-		description: "PHP dependencies",
-		command:     "composer",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
-	{
-		name:        "Node.js",
-		description: "Frontend builds",
-		command:     "node",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
+// requiredChecks returns tools that must be installed
+func requiredChecks() []check {
+	return []check{
+		{
+			name:        i18n.T("cmd.doctor.check.git.name"),
+			description: i18n.T("cmd.doctor.check.git.description"),
+			command:     "git",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+		{
+			name:        i18n.T("cmd.doctor.check.gh.name"),
+			description: i18n.T("cmd.doctor.check.gh.description"),
+			command:     "gh",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+		{
+			name:        i18n.T("cmd.doctor.check.php.name"),
+			description: i18n.T("cmd.doctor.check.php.description"),
+			command:     "php",
+			args:        []string{"-v"},
+			versionFlag: "-v",
+		},
+		{
+			name:        i18n.T("cmd.doctor.check.composer.name"),
+			description: i18n.T("cmd.doctor.check.composer.description"),
+			command:     "composer",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+		{
+			name:        i18n.T("cmd.doctor.check.node.name"),
+			description: i18n.T("cmd.doctor.check.node.description"),
+			command:     "node",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+	}
 }
 
-// optionalChecks are tools that are nice to have
-var optionalChecks = []check{
-	{
-		name:        "pnpm",
-		description: "Fast package manager",
-		command:     "pnpm",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
-	{
-		name:        "Claude Code",
-		description: "AI-assisted development",
-		command:     "claude",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
-	{
-		name:        "Docker",
-		description: "Container runtime",
-		command:     "docker",
-		args:        []string{"--version"},
-		versionFlag: "--version",
-	},
+// optionalChecks returns tools that are nice to have
+func optionalChecks() []check {
+	return []check{
+		{
+			name:        i18n.T("cmd.doctor.check.pnpm.name"),
+			description: i18n.T("cmd.doctor.check.pnpm.description"),
+			command:     "pnpm",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+		{
+			name:        i18n.T("cmd.doctor.check.claude.name"),
+			description: i18n.T("cmd.doctor.check.claude.description"),
+			command:     "claude",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+		{
+			name:        i18n.T("cmd.doctor.check.docker.name"),
+			description: i18n.T("cmd.doctor.check.docker.description"),
+			command:     "docker",
+			args:        []string{"--version"},
+			versionFlag: "--version",
+		},
+	}
 }
 
 // runCheck executes a tool check and returns success status and version info

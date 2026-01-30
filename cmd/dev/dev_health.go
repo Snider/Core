@@ -8,6 +8,7 @@ import (
 
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -22,16 +23,15 @@ var (
 func addHealthCommand(parent *cobra.Command) {
 	healthCmd := &cobra.Command{
 		Use:   "health",
-		Short: "Quick health check across all repos",
-		Long: `Shows a summary of repository health:
-total repos, dirty repos, unpushed commits, etc.`,
+		Short: i18n.T("cmd.dev.health.short"),
+		Long:  i18n.T("cmd.dev.health.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runHealth(healthRegistryPath, healthVerbose)
 		},
 	}
 
-	healthCmd.Flags().StringVar(&healthRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
-	healthCmd.Flags().BoolVarP(&healthVerbose, "verbose", "v", false, "Show detailed breakdown")
+	healthCmd.Flags().StringVar(&healthRegistryPath, "registry", "", i18n.T("cmd.dev.health.flag.registry"))
+	healthCmd.Flags().BoolVarP(&healthVerbose, "verbose", "v", false, i18n.T("cmd.dev.health.flag.verbose"))
 
 	parent.AddCommand(healthCmd)
 }
@@ -77,7 +77,7 @@ func runHealth(registryPath string, verbose bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("No git repositories found.")
+		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -125,16 +125,16 @@ func runHealth(registryPath string, verbose bool) error {
 	// Verbose output
 	if verbose {
 		if len(dirtyRepos) > 0 {
-			fmt.Printf("%s %s\n", warningStyle.Render("Dirty:"), formatRepoList(dirtyRepos))
+			fmt.Printf("%s %s\n", warningStyle.Render(i18n.T("cmd.dev.health.dirty_label")), formatRepoList(dirtyRepos))
 		}
 		if len(aheadRepos) > 0 {
-			fmt.Printf("%s %s\n", successStyle.Render("Ahead:"), formatRepoList(aheadRepos))
+			fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.dev.health.ahead_label")), formatRepoList(aheadRepos))
 		}
 		if len(behindRepos) > 0 {
-			fmt.Printf("%s %s\n", warningStyle.Render("Behind:"), formatRepoList(behindRepos))
+			fmt.Printf("%s %s\n", warningStyle.Render(i18n.T("cmd.dev.health.behind_label")), formatRepoList(behindRepos))
 		}
 		if len(errorRepos) > 0 {
-			fmt.Printf("%s %s\n", errorStyle.Render("Errors:"), formatRepoList(errorRepos))
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.health.errors_label")), formatRepoList(errorRepos))
 		}
 		fmt.Println()
 	}
@@ -144,33 +144,33 @@ func runHealth(registryPath string, verbose bool) error {
 
 func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
 	parts := []string{
-		shared.StatusPart(total, "repos", shared.ValueStyle),
+		shared.StatusPart(total, i18n.T("cmd.dev.health.repos"), shared.ValueStyle),
 	}
 
 	// Dirty status
 	if len(dirty) > 0 {
-		parts = append(parts, shared.StatusPart(len(dirty), "dirty", shared.WarningStyle))
+		parts = append(parts, shared.StatusPart(len(dirty), i18n.T("cmd.dev.health.dirty"), shared.WarningStyle))
 	} else {
-		parts = append(parts, shared.StatusText("clean", shared.SuccessStyle))
+		parts = append(parts, shared.StatusText(i18n.T("cmd.dev.status.clean"), shared.SuccessStyle))
 	}
 
 	// Push status
 	if len(ahead) > 0 {
-		parts = append(parts, shared.StatusPart(len(ahead), "to push", shared.ValueStyle))
+		parts = append(parts, shared.StatusPart(len(ahead), i18n.T("cmd.dev.health.to_push"), shared.ValueStyle))
 	} else {
-		parts = append(parts, shared.StatusText("synced", shared.SuccessStyle))
+		parts = append(parts, shared.StatusText(i18n.T("cmd.dev.health.synced"), shared.SuccessStyle))
 	}
 
 	// Pull status
 	if len(behind) > 0 {
-		parts = append(parts, shared.StatusPart(len(behind), "to pull", shared.WarningStyle))
+		parts = append(parts, shared.StatusPart(len(behind), i18n.T("cmd.dev.health.to_pull"), shared.WarningStyle))
 	} else {
-		parts = append(parts, shared.StatusText("up to date", shared.SuccessStyle))
+		parts = append(parts, shared.StatusText(i18n.T("cmd.dev.health.up_to_date"), shared.SuccessStyle))
 	}
 
 	// Errors (only if any)
 	if len(errors) > 0 {
-		parts = append(parts, shared.StatusPart(len(errors), "errors", shared.ErrorStyle))
+		parts = append(parts, shared.StatusPart(len(errors), i18n.T("cmd.dev.health.errors"), shared.ErrorStyle))
 	}
 
 	fmt.Println(shared.StatusLine(parts...))
@@ -180,7 +180,7 @@ func formatRepoList(reposList []string) string {
 	if len(reposList) <= 5 {
 		return joinRepos(reposList)
 	}
-	return joinRepos(reposList[:5]) + fmt.Sprintf(" +%d more", len(reposList)-5)
+	return joinRepos(reposList[:5]) + " " + i18n.T("cmd.dev.health.more", map[string]interface{}{"Count": len(reposList) - 5})
 }
 
 func joinRepos(reposList []string) string {

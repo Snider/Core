@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -13,14 +14,15 @@ var docsListRegistryPath string
 
 var docsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List documentation across repos",
+	Short: i18n.T("cmd.docs.list.short"),
+	Long:  i18n.T("cmd.docs.list.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runDocsList(docsListRegistryPath)
 	},
 }
 
 func init() {
-	docsListCmd.Flags().StringVar(&docsListRegistryPath, "registry", "", "Path to repos.yaml")
+	docsListCmd.Flags().StringVar(&docsListRegistryPath, "registry", "", i18n.T("cmd.docs.list.flag.registry"))
 }
 
 func runDocsList(registryPath string) error {
@@ -30,11 +32,11 @@ func runDocsList(registryPath string) error {
 	}
 
 	fmt.Printf("\n%-20s  %-8s  %-8s  %-10s  %s\n",
-		headerStyle.Render("Repo"),
-		headerStyle.Render("README"),
-		headerStyle.Render("CLAUDE"),
-		headerStyle.Render("CHANGELOG"),
-		headerStyle.Render("docs/"),
+		headerStyle.Render(i18n.T("cmd.docs.list.header.repo")),
+		headerStyle.Render(i18n.T("cmd.docs.list.header.readme")),
+		headerStyle.Render(i18n.T("cmd.docs.list.header.claude")),
+		headerStyle.Render(i18n.T("cmd.docs.list.header.changelog")),
+		headerStyle.Render(i18n.T("cmd.docs.list.header.docs")),
 	)
 	fmt.Println(strings.Repeat("─", 70))
 
@@ -48,7 +50,7 @@ func runDocsList(registryPath string) error {
 
 		docsDir := shared.CheckMark(false)
 		if len(info.DocsFiles) > 0 {
-			docsDir = docsFoundStyle.Render(fmt.Sprintf("%d files", len(info.DocsFiles)))
+			docsDir = docsFoundStyle.Render(i18n.T("cmd.docs.list.files_count", map[string]interface{}{"Count": len(info.DocsFiles)}))
 		}
 
 		fmt.Printf("%-20s  %-8s  %-8s  %-10s  %s\n",
@@ -67,10 +69,9 @@ func runDocsList(registryPath string) error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %d with docs, %d without\n",
-		shared.Label("Coverage"),
-		withDocs,
-		withoutDocs,
+	fmt.Printf("%s %s\n",
+		shared.Label(i18n.T("cmd.docs.list.coverage_label")),
+		i18n.T("cmd.docs.list.coverage_summary", map[string]interface{}{"WithDocs": withDocs, "WithoutDocs": withoutDocs}),
 	)
 
 	return nil

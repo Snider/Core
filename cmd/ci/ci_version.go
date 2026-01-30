@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/release"
 )
 
@@ -11,14 +12,14 @@ import (
 func runCIReleaseVersion() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.working_dir"), err)
 	}
 
 	version, err := release.DetermineVersion(projectDir)
 	if err != nil {
-		return fmt.Errorf("failed to determine version: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.determine_version"), err)
 	}
 
-	fmt.Printf("Version: %s\n", releaseValueStyle.Render(version))
+	fmt.Printf("%s %s\n", i18n.T("cmd.ci.label.version"), releaseValueStyle.Render(version))
 	return nil
 }

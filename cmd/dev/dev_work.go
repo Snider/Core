@@ -11,6 +11,7 @@ import (
 
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -26,19 +27,16 @@ var (
 func addWorkCommand(parent *cobra.Command) {
 	workCmd := &cobra.Command{
 		Use:   "work",
-		Short: "Multi-repo git operations",
-		Long: `Manage git status, commits, and pushes across multiple repositories.
-
-Reads repos.yaml to discover repositories and their relationships.
-Shows status, optionally commits with Claude, and pushes changes.`,
+		Short: i18n.T("cmd.dev.work.short"),
+		Long:  i18n.T("cmd.dev.work.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runWork(workRegistryPath, workStatusOnly, workAutoCommit)
 		},
 	}
 
-	workCmd.Flags().BoolVar(&workStatusOnly, "status", false, "Show status only, don't push")
-	workCmd.Flags().BoolVar(&workAutoCommit, "commit", false, "Use Claude to commit dirty repos before pushing")
-	workCmd.Flags().StringVar(&workRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	workCmd.Flags().BoolVar(&workStatusOnly, "status", false, i18n.T("cmd.dev.work.flag.status"))
+	workCmd.Flags().BoolVar(&workAutoCommit, "commit", false, i18n.T("cmd.dev.work.flag.commit"))
+	workCmd.Flags().StringVar(&workRegistryPath, "registry", "", i18n.T("cmd.dev.work.flag.registry"))
 
 	parent.AddCommand(workCmd)
 }
@@ -55,7 +53,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n\n", dimStyle.Render("Registry:"), registryPath)
+		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -63,7 +61,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render("Registry:"), registryPath)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
@@ -71,7 +69,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to scan directory: %w", err)
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render("Scanning:"), cwd)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 		}
 	}
 
@@ -87,7 +85,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("No git repositories found.")
+		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -124,7 +122,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// Auto-commit dirty repos if requested
 	if autoCommit && len(dirtyRepos) > 0 {
 		fmt.Println()
-		fmt.Printf("%s\n", shared.TitleStyle.Render("Committing dirty repos with Claude..."))
+		fmt.Printf("%s\n", shared.TitleStyle.Render(i18n.T("cmd.dev.commit.committing")))
 		fmt.Println()
 
 		for _, s := range dirtyRepos {
@@ -154,7 +152,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	if statusOnly {
 		if len(dirtyRepos) > 0 && !autoCommit {
 			fmt.Println()
-			fmt.Printf("%s\n", dimStyle.Render("Use --commit to have Claude create commits"))
+			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.dev.work.use_commit_flag")))
 		}
 		return nil
 	}
@@ -162,19 +160,19 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// Push repos with unpushed commits
 	if len(aheadRepos) == 0 {
 		fmt.Println()
-		fmt.Println("All repos up to date.")
+		fmt.Println(i18n.T("cmd.dev.work.all_up_to_date"))
 		return nil
 	}
 
 	fmt.Println()
-	fmt.Printf("%d repo(s) with unpushed commits:\n", len(aheadRepos))
+	fmt.Printf("%s\n", i18n.T("cmd.dev.work.repos_with_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	for _, s := range aheadRepos {
-		fmt.Printf("  %s: %d commit(s)\n", s.Name, s.Ahead)
+		fmt.Printf("  %s: %s\n", s.Name, i18n.T("cmd.dev.work.commits_count", map[string]interface{}{"Count": s.Ahead}))
 	}
 
 	fmt.Println()
-	if !shared.Confirm("Push all?") {
-		fmt.Println("Aborted.")
+	if !shared.Confirm(i18n.T("cmd.dev.push.confirm")) {
+		fmt.Println(i18n.T("cli.aborted"))
 		return nil
 	}
 
@@ -211,11 +209,11 @@ func printStatusTable(statuses []git.RepoStatus) {
 	// Print header with fixed-width formatting
 	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth,
-		shared.TitleStyle.Render("Repo"),
-		shared.TitleStyle.Render("Modified"),
-		shared.TitleStyle.Render("Untracked"),
-		shared.TitleStyle.Render("Staged"),
-		shared.TitleStyle.Render("Ahead"),
+		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_repo")),
+		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_modified")),
+		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_untracked")),
+		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_staged")),
+		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_ahead")),
 	)
 
 	// Print separator
@@ -227,7 +225,7 @@ func printStatusTable(statuses []git.RepoStatus) {
 			paddedName := fmt.Sprintf("%-*s", nameWidth, s.Name)
 			fmt.Printf("%s  %s\n",
 				repoNameStyle.Render(paddedName),
-				errorStyle.Render("error: "+s.Error.Error()),
+				errorStyle.Render(i18n.T("cmd.dev.work.error_prefix")+" "+s.Error.Error()),
 			)
 			continue
 		}

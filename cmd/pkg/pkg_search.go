@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/cache"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -27,14 +28,8 @@ var (
 func addPkgSearchCommand(parent *cobra.Command) {
 	searchCmd := &cobra.Command{
 		Use:   "search",
-		Short: "Search GitHub for packages",
-		Long: "Searches GitHub for repositories matching a pattern.\n" +
-			"Uses gh CLI for authenticated search. Results are cached for 1 hour.\n\n" +
-			"Examples:\n" +
-			"  core pkg search                           # List all host-uk repos\n" +
-			"  core pkg search --pattern 'core-*'        # Search for core-* repos\n" +
-			"  core pkg search --org mycompany           # Search different org\n" +
-			"  core pkg search --refresh                 # Bypass cache",
+		Short: i18n.T("cmd.pkg.search.short"),
+		Long:  i18n.T("cmd.pkg.search.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			org := searchOrg
 			pattern := searchPattern
@@ -52,11 +47,11 @@ func addPkgSearchCommand(parent *cobra.Command) {
 		},
 	}
 
-	searchCmd.Flags().StringVar(&searchOrg, "org", "", "GitHub organization (default: host-uk)")
-	searchCmd.Flags().StringVar(&searchPattern, "pattern", "", "Repo name pattern (* for wildcard)")
-	searchCmd.Flags().StringVar(&searchType, "type", "", "Filter by type in name (mod, services, plug, website)")
-	searchCmd.Flags().IntVar(&searchLimit, "limit", 0, "Max results (default 50)")
-	searchCmd.Flags().BoolVar(&searchRefresh, "refresh", false, "Bypass cache and fetch fresh data")
+	searchCmd.Flags().StringVar(&searchOrg, "org", "", i18n.T("cmd.pkg.search.flag.org"))
+	searchCmd.Flags().StringVar(&searchPattern, "pattern", "", i18n.T("cmd.pkg.search.flag.pattern"))
+	searchCmd.Flags().StringVar(&searchType, "type", "", i18n.T("cmd.pkg.search.flag.type"))
+	searchCmd.Flags().IntVar(&searchLimit, "limit", 0, i18n.T("cmd.pkg.search.flag.limit"))
+	searchCmd.Flags().BoolVar(&searchRefresh, "refresh", false, i18n.T("cmd.pkg.search.flag.refresh"))
 
 	parent.AddCommand(searchCmd)
 }
@@ -91,22 +86,22 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		if found, err := c.Get(cacheKey, &ghRepos); found && err == nil {
 			fromCache = true
 			age := c.Age(cacheKey)
-			fmt.Printf("%s %s %s\n", dimStyle.Render("Cache:"), org, dimStyle.Render(fmt.Sprintf("(%s ago)", age.Round(time.Second))))
+			fmt.Printf("%s %s %s\n", dimStyle.Render(i18n.T("cmd.pkg.search.cache_label")), org, dimStyle.Render(fmt.Sprintf("(%s ago)", age.Round(time.Second))))
 		}
 	}
 
 	// Fetch from GitHub if not cached
 	if !fromCache {
 		if !ghAuthenticated() {
-			return fmt.Errorf("gh CLI not authenticated. Run: gh auth login")
+			return fmt.Errorf(i18n.T("cmd.pkg.error.gh_not_authenticated"))
 		}
 
 		if os.Getenv("GH_TOKEN") != "" {
-			fmt.Printf("%s GH_TOKEN env var is set - this may cause auth issues\n", dimStyle.Render("Note:"))
-			fmt.Printf("%s Unset it with: unset GH_TOKEN\n\n", dimStyle.Render(""))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.pkg.search.note_label")), i18n.T("cmd.pkg.search.gh_token_warning"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(""), i18n.T("cmd.pkg.search.gh_token_unset"))
 		}
 
-		fmt.Printf("%s %s... ", dimStyle.Render("Fetching:"), org)
+		fmt.Printf("%s %s... ", dimStyle.Render(i18n.T("cmd.pkg.search.fetching_label")), org)
 
 		cmd := exec.Command("gh", "repo", "list", org,
 			"--json", "name,description,visibility,updatedAt,primaryLanguage",
@@ -117,13 +112,13 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 			fmt.Println()
 			errStr := strings.TrimSpace(string(output))
 			if strings.Contains(errStr, "401") || strings.Contains(errStr, "Bad credentials") {
-				return fmt.Errorf("authentication failed - try: unset GH_TOKEN && gh auth login")
+				return fmt.Errorf(i18n.T("cmd.pkg.error.auth_failed"))
 			}
-			return fmt.Errorf("search failed: %s", errStr)
+			return fmt.Errorf(i18n.T("cmd.pkg.error.search_failed"), errStr)
 		}
 
 		if err := json.Unmarshal(output, &ghRepos); err != nil {
-			return fmt.Errorf("failed to parse results: %w", err)
+			return fmt.Errorf(i18n.T("cmd.pkg.error.parse_results"), err)
 		}
 
 		if c != nil {
@@ -146,7 +141,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 	}
 
 	if len(filtered) == 0 {
-		fmt.Println("No repositories found matching pattern.")
+		fmt.Println(i18n.T("cmd.pkg.search.no_repos_found"))
 		return nil
 	}
 
@@ -154,12 +149,12 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		return filtered[i].Name < filtered[j].Name
 	})
 
-	fmt.Printf("Found %d repositories:\n\n", len(filtered))
+	fmt.Printf(i18n.T("cmd.pkg.search.found_repos", map[string]int{"Count": len(filtered)}) + "\n\n")
 
 	for _, r := range filtered {
 		visibility := ""
 		if r.Visibility == "private" {
-			visibility = dimStyle.Render(" [private]")
+			visibility = dimStyle.Render(" " + i18n.T("cmd.pkg.search.private_label"))
 		}
 
 		desc := r.Description
@@ -167,7 +162,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 			desc = desc[:47] + "..."
 		}
 		if desc == "" {
-			desc = dimStyle.Render("(no description)")
+			desc = dimStyle.Render(i18n.T("cmd.pkg.no_description"))
 		}
 
 		fmt.Printf("  %s%s\n", repoNameStyle.Render(r.Name), visibility)
@@ -175,7 +170,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 	}
 
 	fmt.Println()
-	fmt.Printf("Install with: %s\n", dimStyle.Render(fmt.Sprintf("core pkg install %s/<repo-name>", org)))
+	fmt.Printf("%s %s\n", i18n.T("cmd.pkg.search.install_with"), dimStyle.Render(fmt.Sprintf("core pkg install %s/<repo-name>", org)))
 
 	return nil
 }

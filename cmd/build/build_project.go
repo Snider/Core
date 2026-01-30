@@ -17,6 +17,7 @@ import (
 	buildpkg "github.com/host-uk/core/pkg/build"
 	"github.com/host-uk/core/pkg/build/builders"
 	"github.com/host-uk/core/pkg/build/signing"
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 // runProjectBuild handles the main `core build` command with auto-detection.
@@ -24,13 +25,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.working_dir"), err)
 	}
 
 	// Load configuration from .core/build.yaml (or defaults)
 	buildCfg, err := buildpkg.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.load_config"), err)
 	}
 
 	// Detect project type if not specified
@@ -40,11 +41,10 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	} else {
 		projectType, err = buildpkg.PrimaryType(projectDir)
 		if err != nil {
-			return fmt.Errorf("failed to detect project type: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.detect_type"), err)
 		}
 		if projectType == "" {
-			return fmt.Errorf("no supported project type detected in %s\n"+
-				"Supported types: go (go.mod), wails (wails.json), node (package.json), php (composer.json)", projectDir)
+			return fmt.Errorf("%s", i18n.T("cmd.build.error.no_project_type", map[string]interface{}{"Dir": projectDir}))
 		}
 	}
 
@@ -82,11 +82,11 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 
 	// Print build info (unless CI mode)
 	if !ciMode {
-		fmt.Printf("%s Building project\n", buildHeaderStyle.Render("Build:"))
-		fmt.Printf("  Type:    %s\n", buildTargetStyle.Render(string(projectType)))
-		fmt.Printf("  Output:  %s\n", buildTargetStyle.Render(outputDir))
-		fmt.Printf("  Binary:  %s\n", buildTargetStyle.Render(binaryName))
-		fmt.Printf("  Targets: %s\n", buildTargetStyle.Render(formatTargets(buildTargets)))
+		fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.build")), i18n.T("cmd.build.building_project"))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.build.label.type"), buildTargetStyle.Render(string(projectType)))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.build.label.output"), buildTargetStyle.Render(outputDir))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.build.label.binary"), buildTargetStyle.Render(binaryName))
+		fmt.Printf("  %s %s\n", i18n.T("cmd.build.label.targets"), buildTargetStyle.Render(formatTargets(buildTargets)))
 		fmt.Println()
 	}
 
@@ -120,13 +120,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	artifacts, err := builder.Build(ctx, cfg, buildTargets)
 	if err != nil {
 		if !ciMode {
-			fmt.Printf("%s Build failed: %v\n", buildErrorStyle.Render("Error:"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.build_failed"), err)
 		}
 		return err
 	}
 
 	if !ciMode {
-		fmt.Printf("%s Built %d artifact(s)\n", buildSuccessStyle.Render("Success:"), len(artifacts))
+		fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("cmd.build.label.success")), i18n.T("cmd.build.built_artifacts", map[string]interface{}{"Count": len(artifacts)}))
 		fmt.Println()
 		for _, artifact := range artifacts {
 			relPath, err := filepath.Rel(projectDir, artifact.Path)
@@ -153,7 +153,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	if signCfg.Enabled && runtime.GOOS == "darwin" {
 		if !ciMode {
 			fmt.Println()
-			fmt.Printf("%s Signing binaries...\n", buildHeaderStyle.Render("Sign:"))
+			fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.sign")), i18n.T("cmd.build.signing_binaries"))
 		}
 
 		// Convert buildpkg.Artifact to signing.Artifact
@@ -164,7 +164,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 
 		if err := signing.SignBinaries(ctx, signCfg, signingArtifacts); err != nil {
 			if !ciMode {
-				fmt.Printf("%s Signing failed: %v\n", buildErrorStyle.Render("Error:"), err)
+				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.signing_failed"), err)
 			}
 			return err
 		}
@@ -172,7 +172,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		if signCfg.MacOS.Notarize {
 			if err := signing.NotarizeBinaries(ctx, signCfg, signingArtifacts); err != nil {
 				if !ciMode {
-					fmt.Printf("%s Notarization failed: %v\n", buildErrorStyle.Render("Error:"), err)
+					fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.notarization_failed"), err)
 				}
 				return err
 			}
@@ -184,13 +184,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	if doArchive && len(artifacts) > 0 {
 		if !ciMode {
 			fmt.Println()
-			fmt.Printf("%s Creating archives...\n", buildHeaderStyle.Render("Archive:"))
+			fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.archive")), i18n.T("cmd.build.creating_archives"))
 		}
 
 		archivedArtifacts, err = buildpkg.ArchiveAll(artifacts)
 		if err != nil {
 			if !ciMode {
-				fmt.Printf("%s Archive failed: %v\n", buildErrorStyle.Render("Error:"), err)
+				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.archive_failed"), err)
 			}
 			return err
 		}
@@ -240,7 +240,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		// JSON output for CI
 		output, err := json.MarshalIndent(outputArtifacts, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to marshal artifacts: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.marshal_artifacts"), err)
 		}
 		fmt.Println(string(output))
 	}
@@ -252,13 +252,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string, artifacts []buildpkg.Artifact, signCfg signing.SignConfig, ciMode bool) ([]buildpkg.Artifact, error) {
 	if !ciMode {
 		fmt.Println()
-		fmt.Printf("%s Computing checksums...\n", buildHeaderStyle.Render("Checksum:"))
+		fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.checksum")), i18n.T("cmd.build.computing_checksums"))
 	}
 
 	checksummedArtifacts, err := buildpkg.ChecksumAll(artifacts)
 	if err != nil {
 		if !ciMode {
-			fmt.Printf("%s Checksum failed: %v\n", buildErrorStyle.Render("Error:"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.checksum_failed"), err)
 		}
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 	checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
 	if err := buildpkg.WriteChecksumFile(checksummedArtifacts, checksumPath); err != nil {
 		if !ciMode {
-			fmt.Printf("%s Failed to write CHECKSUMS.txt: %v\n", buildErrorStyle.Render("Error:"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.write_checksums"), err)
 		}
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 	if signCfg.Enabled {
 		if err := signing.SignChecksums(ctx, signCfg, checksumPath); err != nil {
 			if !ciMode {
-				fmt.Printf("%s GPG signing failed: %v\n", buildErrorStyle.Render("Error:"), err)
+				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.gpg_signing_failed"), err)
 			}
 			return nil, err
 		}
@@ -321,7 +321,7 @@ func parseTargets(targetsFlag string) ([]buildpkg.Target, error) {
 
 		osArch := strings.Split(part, "/")
 		if len(osArch) != 2 {
-			return nil, fmt.Errorf("invalid target format %q, expected OS/arch (e.g., linux/amd64)", part)
+			return nil, fmt.Errorf("%s", i18n.T("cmd.build.error.invalid_target", map[string]interface{}{"Target": part}))
 		}
 
 		targets = append(targets, buildpkg.Target{
@@ -331,7 +331,7 @@ func parseTargets(targetsFlag string) ([]buildpkg.Target, error) {
 	}
 
 	if len(targets) == 0 {
-		return nil, fmt.Errorf("no valid targets specified")
+		return nil, fmt.Errorf("%s", i18n.T("cmd.build.error.no_targets"))
 	}
 
 	return targets, nil
@@ -360,10 +360,10 @@ func getBuilder(projectType buildpkg.ProjectType) (buildpkg.Builder, error) {
 	case buildpkg.ProjectTypeTaskfile:
 		return builders.NewTaskfileBuilder(), nil
 	case buildpkg.ProjectTypeNode:
-		return nil, fmt.Errorf("Node.js builder not yet implemented")
+		return nil, fmt.Errorf("%s", i18n.T("cmd.build.error.node_not_implemented"))
 	case buildpkg.ProjectTypePHP:
-		return nil, fmt.Errorf("PHP builder not yet implemented")
+		return nil, fmt.Errorf("%s", i18n.T("cmd.build.error.php_not_implemented"))
 	default:
-		return nil, fmt.Errorf("unsupported project type: %s", projectType)
+		return nil, fmt.Errorf("%s: %s", i18n.T("cmd.build.error.unsupported_type"), projectType)
 	}
 }

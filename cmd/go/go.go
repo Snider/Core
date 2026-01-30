@@ -5,6 +5,7 @@ package gocmd
 
 import (
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -19,16 +20,8 @@ var (
 func AddGoCommands(root *cobra.Command) {
 	goCmd := &cobra.Command{
 		Use:   "go",
-		Short: "Go development tools",
-		Long: "Go development tools with enhanced output and environment setup.\n\n" +
-			"Commands:\n" +
-			"  test     Run tests\n" +
-			"  cov      Run tests with coverage report\n" +
-			"  fmt      Format Go code\n" +
-			"  lint     Run golangci-lint\n" +
-			"  install  Install Go binary\n" +
-			"  mod      Module management (tidy, download, verify)\n" +
-			"  work     Workspace management",
+		Short: i18n.T("cmd.go.short"),
+		Long:  i18n.T("cmd.go.long"),
 	}
 
 	root.AddCommand(goCmd)

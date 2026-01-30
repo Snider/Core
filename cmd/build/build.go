@@ -5,6 +5,7 @@ import (
 	"embed"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -54,16 +55,8 @@ var (
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Build projects with auto-detection and cross-compilation",
-	Long: `Builds the current project with automatic type detection.
-Supports Go, Wails, Docker, LinuxKit, and Taskfile projects.
-Configuration can be provided via .core/build.yaml or command-line flags.
-
-Examples:
-  core build                              # Auto-detect and build
-  core build --type docker                # Build Docker image
-  core build --type linuxkit              # Build LinuxKit image
-  core build --type linuxkit --config linuxkit.yml --format qcow2-bios`,
+	Short: i18n.T("cmd.build.short"),
+	Long:  i18n.T("cmd.build.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName, noSign, notarize)
 	},
@@ -71,7 +64,7 @@ Examples:
 
 var fromPathCmd = &cobra.Command{
 	Use:   "from-path",
-	Short: "Build from a local directory.",
+	Short: i18n.T("cmd.build.from_path.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if fromPath == "" {
 			return errPathRequired
@@ -82,7 +75,7 @@ var fromPathCmd = &cobra.Command{
 
 var pwaCmd = &cobra.Command{
 	Use:   "pwa",
-	Short: "Build from a live PWA URL.",
+	Short: i18n.T("cmd.build.pwa.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if pwaURL == "" {
 			return errURLRequired
@@ -93,14 +86,8 @@ var pwaCmd = &cobra.Command{
 
 var sdkBuildCmd = &cobra.Command{
 	Use:   "sdk",
-	Short: "Generate API SDKs from OpenAPI spec",
-	Long: `Generates typed API clients from OpenAPI specifications.
-Supports TypeScript, Python, Go, and PHP.
-
-Examples:
-  core build sdk                    # Generate all configured SDKs
-  core build sdk --lang typescript  # Generate only TypeScript SDK
-  core build sdk --spec api.yaml    # Use specific OpenAPI spec`,
+	Short: i18n.T("cmd.build.sdk.short"),
+	Long:  i18n.T("cmd.build.sdk.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runBuildSDK(sdkSpec, sdkLang, sdkVersion, sdkDryRun)
 	},
@@ -108,34 +95,34 @@ Examples:
 
 func init() {
 	// Main build command flags
-	buildCmd.Flags().StringVar(&buildType, "type", "", "Builder type (go, wails, docker, linuxkit, taskfile) - auto-detected if not specified")
-	buildCmd.Flags().BoolVar(&ciMode, "ci", false, "CI mode - minimal output with JSON artifact list at the end")
-	buildCmd.Flags().StringVar(&targets, "targets", "", "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)")
-	buildCmd.Flags().StringVar(&outputDir, "output", "", "Output directory for artifacts (default: dist)")
-	buildCmd.Flags().BoolVar(&doArchive, "archive", true, "Create archives (tar.gz for linux/darwin, zip for windows)")
-	buildCmd.Flags().BoolVar(&doChecksum, "checksum", true, "Generate SHA256 checksums and CHECKSUMS.txt")
+	buildCmd.Flags().StringVar(&buildType, "type", "", i18n.T("cmd.build.flag.type"))
+	buildCmd.Flags().BoolVar(&ciMode, "ci", false, i18n.T("cmd.build.flag.ci"))
+	buildCmd.Flags().StringVar(&targets, "targets", "", i18n.T("cmd.build.flag.targets"))
+	buildCmd.Flags().StringVar(&outputDir, "output", "", i18n.T("cmd.build.flag.output"))
+	buildCmd.Flags().BoolVar(&doArchive, "archive", true, i18n.T("cmd.build.flag.archive"))
+	buildCmd.Flags().BoolVar(&doChecksum, "checksum", true, i18n.T("cmd.build.flag.checksum"))
 
 	// Docker/LinuxKit specific
-	buildCmd.Flags().StringVar(&configPath, "config", "", "Config file path (for linuxkit: YAML config, for docker: Dockerfile)")
-	buildCmd.Flags().StringVar(&format, "format", "", "Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk)")
-	buildCmd.Flags().BoolVar(&push, "push", false, "Push Docker image after build")
-	buildCmd.Flags().StringVar(&imageName, "image", "", "Docker image name (e.g., host-uk/core-devops)")
+	buildCmd.Flags().StringVar(&configPath, "config", "", i18n.T("cmd.build.flag.config"))
+	buildCmd.Flags().StringVar(&format, "format", "", i18n.T("cmd.build.flag.format"))
+	buildCmd.Flags().BoolVar(&push, "push", false, i18n.T("cmd.build.flag.push"))
+	buildCmd.Flags().StringVar(&imageName, "image", "", i18n.T("cmd.build.flag.image"))
 
 	// Signing flags
-	buildCmd.Flags().BoolVar(&noSign, "no-sign", false, "Skip all code signing")
-	buildCmd.Flags().BoolVar(&notarize, "notarize", false, "Enable macOS notarization (requires Apple credentials)")
+	buildCmd.Flags().BoolVar(&noSign, "no-sign", false, i18n.T("cmd.build.flag.no_sign"))
+	buildCmd.Flags().BoolVar(&notarize, "notarize", false, i18n.T("cmd.build.flag.notarize"))
 
 	// from-path subcommand flags
-	fromPathCmd.Flags().StringVar(&fromPath, "path", "", "The path to the static web application files.")
+	fromPathCmd.Flags().StringVar(&fromPath, "path", "", i18n.T("cmd.build.from_path.flag.path"))
 
 	// pwa subcommand flags
-	pwaCmd.Flags().StringVar(&pwaURL, "url", "", "The URL of the PWA to build.")
+	pwaCmd.Flags().StringVar(&pwaURL, "url", "", i18n.T("cmd.build.pwa.flag.url"))
 
 	// sdk subcommand flags
-	sdkBuildCmd.Flags().StringVar(&sdkSpec, "spec", "", "Path to OpenAPI spec file")
-	sdkBuildCmd.Flags().StringVar(&sdkLang, "lang", "", "Generate only this language (typescript, python, go, php)")
-	sdkBuildCmd.Flags().StringVar(&sdkVersion, "version", "", "Version to embed in generated SDKs")
-	sdkBuildCmd.Flags().BoolVar(&sdkDryRun, "dry-run", false, "Show what would be generated without writing files")
+	sdkBuildCmd.Flags().StringVar(&sdkSpec, "spec", "", i18n.T("cmd.build.sdk.flag.spec"))
+	sdkBuildCmd.Flags().StringVar(&sdkLang, "lang", "", i18n.T("cmd.build.sdk.flag.lang"))
+	sdkBuildCmd.Flags().StringVar(&sdkVersion, "version", "", i18n.T("cmd.build.sdk.flag.version"))
+	sdkBuildCmd.Flags().BoolVar(&sdkDryRun, "dry-run", false, i18n.T("cmd.build.sdk.flag.dry_run"))
 
 	// Add subcommands
 	buildCmd.AddCommand(fromPathCmd)

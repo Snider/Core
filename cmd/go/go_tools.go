@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -17,13 +18,8 @@ var (
 func addGoInstallCommand(parent *cobra.Command) {
 	installCmd := &cobra.Command{
 		Use:   "install [path]",
-		Short: "Install Go binary",
-		Long: "Install Go binary to $GOPATH/bin.\n\n" +
-			"Examples:\n" +
-			"  core go install              # Install current module\n" +
-			"  core go install ./cmd/core   # Install specific path\n" +
-			"  core go install --no-cgo     # Pure Go (no C dependencies)\n" +
-			"  core go install -v           # Verbose output",
+		Short: i18n.T("cmd.go.install.short"),
+		Long:  i18n.T("cmd.go.install.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get install path from args or default to current dir
 			installPath := "./..."
@@ -42,10 +38,10 @@ func addGoInstallCommand(parent *cobra.Command) {
 				}
 			}
 
-			fmt.Printf("%s Installing\n", dimStyle.Render("Install:"))
-			fmt.Printf("  %s %s\n", dimStyle.Render("Path:"), installPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.go.install.label")), i18n.T("cmd.go.install.installing"))
+			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.install.path_label")), installPath)
 			if installNoCgo {
-				fmt.Printf("  %s %s\n", dimStyle.Render("CGO:"), "disabled")
+				fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.install.cgo_label")), i18n.T("cmd.go.install.cgo_disabled"))
 			}
 
 			cmdArgs := []string{"install"}
@@ -62,7 +58,7 @@ func addGoInstallCommand(parent *cobra.Command) {
 			execCmd.Stderr = os.Stderr
 
 			if err := execCmd.Run(); err != nil {
-				fmt.Printf("\n%s\n", errorStyle.Render("FAIL Install failed"))
+				fmt.Printf("\n%s\n", errorStyle.Render(i18n.T("cmd.go.install.failed")))
 				return err
 			}
 
@@ -74,13 +70,13 @@ func addGoInstallCommand(parent *cobra.Command) {
 			}
 			binDir := filepath.Join(gopath, "bin")
 
-			fmt.Printf("\n%s Installed to %s\n", successStyle.Render("OK"), binDir)
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.go.install.success")), i18n.T("cmd.go.install.installed_to", map[string]interface{}{"Path": binDir}))
 			return nil
 		},
 	}
 
-	installCmd.Flags().BoolVarP(&installVerbose, "verbose", "v", false, "Verbose output")
-	installCmd.Flags().BoolVar(&installNoCgo, "no-cgo", false, "Disable CGO (CGO_ENABLED=0)")
+	installCmd.Flags().BoolVarP(&installVerbose, "verbose", "v", false, i18n.T("cmd.go.install.flag.verbose"))
+	installCmd.Flags().BoolVar(&installNoCgo, "no-cgo", false, i18n.T("cmd.go.install.flag.no_cgo"))
 
 	parent.AddCommand(installCmd)
 }
@@ -88,19 +84,14 @@ func addGoInstallCommand(parent *cobra.Command) {
 func addGoModCommand(parent *cobra.Command) {
 	modCmd := &cobra.Command{
 		Use:   "mod",
-		Short: "Module management",
-		Long: "Go module management commands.\n\n" +
-			"Commands:\n" +
-			"  tidy      Add missing and remove unused modules\n" +
-			"  download  Download modules to local cache\n" +
-			"  verify    Verify dependencies\n" +
-			"  graph     Print module dependency graph",
+		Short: i18n.T("cmd.go.mod.short"),
+		Long:  i18n.T("cmd.go.mod.long"),
 	}
 
 	// tidy
 	tidyCmd := &cobra.Command{
 		Use:   "tidy",
-		Short: "Tidy go.mod",
+		Short: i18n.T("cmd.go.mod.tidy.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "tidy")
 			execCmd.Stdout = os.Stdout
@@ -112,7 +103,7 @@ func addGoModCommand(parent *cobra.Command) {
 	// download
 	downloadCmd := &cobra.Command{
 		Use:   "download",
-		Short: "Download modules",
+		Short: i18n.T("cmd.go.mod.download.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "download")
 			execCmd.Stdout = os.Stdout
@@ -124,7 +115,7 @@ func addGoModCommand(parent *cobra.Command) {
 	// verify
 	verifyCmd := &cobra.Command{
 		Use:   "verify",
-		Short: "Verify dependencies",
+		Short: i18n.T("cmd.go.mod.verify.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "verify")
 			execCmd.Stdout = os.Stdout
@@ -136,7 +127,7 @@ func addGoModCommand(parent *cobra.Command) {
 	// graph
 	graphCmd := &cobra.Command{
 		Use:   "graph",
-		Short: "Print dependency graph",
+		Short: i18n.T("cmd.go.mod.graph.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "graph")
 			execCmd.Stdout = os.Stdout
@@ -155,18 +146,14 @@ func addGoModCommand(parent *cobra.Command) {
 func addGoWorkCommand(parent *cobra.Command) {
 	workCmd := &cobra.Command{
 		Use:   "work",
-		Short: "Workspace management",
-		Long: "Go workspace management commands.\n\n" +
-			"Commands:\n" +
-			"  sync    Sync go.work with modules\n" +
-			"  init    Initialize go.work\n" +
-			"  use     Add module to workspace",
+		Short: i18n.T("cmd.go.work.short"),
+		Long:  i18n.T("cmd.go.work.long"),
 	}
 
 	// sync
 	syncCmd := &cobra.Command{
 		Use:   "sync",
-		Short: "Sync workspace",
+		Short: i18n.T("cmd.go.work.sync.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			execCmd := exec.Command("go", "work", "sync")
 			execCmd.Stdout = os.Stdout
@@ -178,7 +165,7 @@ func addGoWorkCommand(parent *cobra.Command) {
 	// init
 	initCmd := &cobra.Command{
 		Use:   "init",
-		Short: "Initialize workspace",
+		Short: i18n.T("cmd.go.work.init.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			execCmd := exec.Command("go", "work", "init")
 			execCmd.Stdout = os.Stdout
@@ -200,13 +187,13 @@ func addGoWorkCommand(parent *cobra.Command) {
 	// use
 	useCmd := &cobra.Command{
 		Use:   "use [modules...]",
-		Short: "Add module to workspace",
+		Short: i18n.T("cmd.go.work.use.short"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				// Auto-detect modules
 				modules := findGoModules(".")
 				if len(modules) == 0 {
-					return fmt.Errorf("no go.mod files found")
+					return fmt.Errorf(i18n.T("cmd.go.work.error.no_modules"))
 				}
 				for _, mod := range modules {
 					execCmd := exec.Command("go", "work", "use", mod)
@@ -215,7 +202,7 @@ func addGoWorkCommand(parent *cobra.Command) {
 					if err := execCmd.Run(); err != nil {
 						return err
 					}
-					fmt.Printf("Added %s\n", mod)
+					fmt.Println(i18n.T("cmd.go.work.added", map[string]interface{}{"Module": mod}))
 				}
 				return nil
 			}

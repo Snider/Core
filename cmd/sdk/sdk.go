@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	sdkpkg "github.com/host-uk/core/pkg/sdk"
 	"github.com/spf13/cobra"
 )
@@ -20,13 +21,8 @@ var (
 
 var sdkCmd = &cobra.Command{
 	Use:   "sdk",
-	Short: "SDK validation and API compatibility tools",
-	Long: `Tools for validating OpenAPI specs and checking API compatibility.
-To generate SDKs, use: core build sdk
-
-Commands:
-  diff      Check for breaking API changes
-  validate  Validate OpenAPI spec syntax`,
+	Short: i18n.T("cmd.sdk.short"),
+	Long:  i18n.T("cmd.sdk.long"),
 }
 
 var diffBasePath string
@@ -34,7 +30,8 @@ var diffSpecPath string
 
 var sdkDiffCmd = &cobra.Command{
 	Use:   "diff",
-	Short: "Check for breaking API changes",
+	Short: i18n.T("cmd.sdk.diff.short"),
+	Long:  i18n.T("cmd.sdk.diff.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runSDKDiff(diffBasePath, diffSpecPath)
 	},
@@ -44,7 +41,8 @@ var validateSpecPath string
 
 var sdkValidateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validate OpenAPI spec",
+	Short: i18n.T("cmd.sdk.validate.short"),
+	Long:  i18n.T("cmd.sdk.validate.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runSDKValidate(validateSpecPath)
 	},
@@ -52,11 +50,11 @@ var sdkValidateCmd = &cobra.Command{
 
 func init() {
 	// sdk diff flags
-	sdkDiffCmd.Flags().StringVar(&diffBasePath, "base", "", "Base spec (version tag or file)")
-	sdkDiffCmd.Flags().StringVar(&diffSpecPath, "spec", "", "Current spec file")
+	sdkDiffCmd.Flags().StringVar(&diffBasePath, "base", "", i18n.T("cmd.sdk.diff.flag.base"))
+	sdkDiffCmd.Flags().StringVar(&diffSpecPath, "spec", "", i18n.T("cmd.sdk.diff.flag.spec"))
 
 	// sdk validate flags
-	sdkValidateCmd.Flags().StringVar(&validateSpecPath, "spec", "", "Path to OpenAPI spec file")
+	sdkValidateCmd.Flags().StringVar(&validateSpecPath, "spec", "", i18n.T("cmd.sdk.validate.flag.spec"))
 
 	// Add subcommands
 	sdkCmd.AddCommand(sdkDiffCmd)
@@ -66,7 +64,7 @@ func init() {
 func runSDKDiff(basePath, specPath string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.sdk.error.working_dir"), err)
 	}
 
 	// Detect current spec if not provided
@@ -79,49 +77,49 @@ func runSDKDiff(basePath, specPath string) error {
 	}
 
 	if basePath == "" {
-		return fmt.Errorf("--base is required (version tag or file path)")
+		return fmt.Errorf(i18n.T("cmd.sdk.diff.error.base_required"))
 	}
 
-	fmt.Printf("%s Checking for breaking changes\n", sdkHeaderStyle.Render("SDK Diff:"))
-	fmt.Printf("  Base:     %s\n", sdkDimStyle.Render(basePath))
-	fmt.Printf("  Current:  %s\n", sdkDimStyle.Render(specPath))
+	fmt.Printf("%s %s\n", sdkHeaderStyle.Render(i18n.T("cmd.sdk.diff.label")), i18n.T("cmd.sdk.diff.checking"))
+	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.diff.base_label"), sdkDimStyle.Render(basePath))
+	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.diff.current_label"), sdkDimStyle.Render(specPath))
 	fmt.Println()
 
 	result, err := sdkpkg.Diff(basePath, specPath)
 	if err != nil {
-		fmt.Printf("%s %v\n", sdkErrorStyle.Render("Error:"), err)
+		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.T("cmd.sdk.label.error")), err)
 		os.Exit(2)
 	}
 
 	if result.Breaking {
-		fmt.Printf("%s %s\n", sdkErrorStyle.Render("Breaking:"), result.Summary)
+		fmt.Printf("%s %s\n", sdkErrorStyle.Render(i18n.T("cmd.sdk.diff.breaking")), result.Summary)
 		for _, change := range result.Changes {
 			fmt.Printf("  - %s\n", change)
 		}
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s %s\n", sdkSuccessStyle.Render("OK:"), result.Summary)
+	fmt.Printf("%s %s\n", sdkSuccessStyle.Render(i18n.T("cmd.sdk.label.ok")), result.Summary)
 	return nil
 }
 
 func runSDKValidate(specPath string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.sdk.error.working_dir"), err)
 	}
 
 	s := sdkpkg.New(projectDir, &sdkpkg.Config{Spec: specPath})
 
-	fmt.Printf("%s Validating OpenAPI spec\n", sdkHeaderStyle.Render("SDK:"))
+	fmt.Printf("%s %s\n", sdkHeaderStyle.Render(i18n.T("cmd.sdk.label.sdk")), i18n.T("cmd.sdk.validate.validating"))
 
 	detectedPath, err := s.DetectSpec()
 	if err != nil {
-		fmt.Printf("%s %v\n", sdkErrorStyle.Render("Error:"), err)
+		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.T("cmd.sdk.label.error")), err)
 		return err
 	}
 
-	fmt.Printf("  Spec: %s\n", sdkDimStyle.Render(detectedPath))
-	fmt.Printf("%s Spec is valid\n", sdkSuccessStyle.Render("OK:"))
+	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.validate.spec_label"), sdkDimStyle.Render(detectedPath))
+	fmt.Printf("%s %s\n", sdkSuccessStyle.Render(i18n.T("cmd.sdk.label.ok")), i18n.T("cmd.sdk.validate.valid"))
 	return nil
 }

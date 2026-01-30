@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/host-uk/core/pkg/git"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -21,16 +22,15 @@ var (
 func addPullCommand(parent *cobra.Command) {
 	pullCmd := &cobra.Command{
 		Use:   "pull",
-		Short: "Pull updates across all repos",
-		Long: `Pulls updates for all repos.
-By default only pulls repos that are behind. Use --all to pull all repos.`,
+		Short: i18n.T("cmd.dev.pull.short"),
+		Long:  i18n.T("cmd.dev.pull.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPull(pullRegistryPath, pullAll)
 		},
 	}
 
-	pullCmd.Flags().StringVar(&pullRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
-	pullCmd.Flags().BoolVar(&pullAll, "all", false, "Pull all repos, not just those behind")
+	pullCmd.Flags().StringVar(&pullRegistryPath, "registry", "", i18n.T("cmd.dev.pull.flag.registry"))
+	pullCmd.Flags().BoolVar(&pullAll, "all", false, i18n.T("cmd.dev.pull.flag.all"))
 
 	parent.AddCommand(pullCmd)
 }
@@ -47,7 +47,7 @@ func runPull(registryPath string, all bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -55,7 +55,7 @@ func runPull(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
@@ -63,7 +63,7 @@ func runPull(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to scan directory: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render("Scanning:"), cwd)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 		}
 	}
 
@@ -79,7 +79,7 @@ func runPull(registryPath string, all bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("No git repositories found.")
+		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -101,19 +101,19 @@ func runPull(registryPath string, all bool) error {
 	}
 
 	if len(toPull) == 0 {
-		fmt.Println("All repos up to date. Nothing to pull.")
+		fmt.Println(i18n.T("cmd.dev.pull.all_up_to_date"))
 		return nil
 	}
 
 	// Show what we're pulling
 	if all {
-		fmt.Printf("\nPulling %d repo(s):\n\n", len(toPull))
+		fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.pull.pulling_repos", map[string]interface{}{"Count": len(toPull)}))
 	} else {
-		fmt.Printf("\n%d repo(s) behind upstream:\n\n", len(toPull))
+		fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.pull.repos_behind", map[string]interface{}{"Count": len(toPull)}))
 		for _, s := range toPull {
 			fmt.Printf("  %s: %s\n",
 				repoNameStyle.Render(s.Name),
-				dimStyle.Render(fmt.Sprintf("%d commit(s) behind", s.Behind)),
+				dimStyle.Render(i18n.T("cmd.dev.pull.commits_behind", map[string]interface{}{"Count": s.Behind})),
 			)
 		}
 		fmt.Println()
@@ -122,7 +122,7 @@ func runPull(registryPath string, all bool) error {
 	// Pull each repo
 	var succeeded, failed int
 	for _, s := range toPull {
-		fmt.Printf("  %s %s... ", dimStyle.Render("Pulling"), s.Name)
+		fmt.Printf("  %s %s... ", dimStyle.Render(i18n.T("cmd.dev.pull.pulling")), s.Name)
 
 		err := gitPull(ctx, s.Path)
 		if err != nil {
@@ -136,9 +136,9 @@ func runPull(registryPath string, all bool) error {
 
 	// Summary
 	fmt.Println()
-	fmt.Printf("%s %d pulled", successStyle.Render("Done:"), succeeded)
+	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.pull.done_pulled", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(fmt.Sprintf("%d failed", failed)))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("cmd.dev.count_failed", map[string]interface{}{"Count": failed})))
 	}
 	fmt.Println()
 

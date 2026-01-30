@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -46,10 +47,8 @@ var (
 func addCICommand(parent *cobra.Command) {
 	ciCmd := &cobra.Command{
 		Use:   "ci",
-		Short: "Check CI status across all repos",
-		Long: `Fetches GitHub Actions workflow status for all repos.
-Shows latest run status for each repo.
-Requires the 'gh' CLI to be installed and authenticated.`,
+		Short: i18n.T("cmd.dev.ci.short"),
+		Long:  i18n.T("cmd.dev.ci.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			branch := ciBranch
 			if branch == "" {
@@ -59,9 +58,9 @@ Requires the 'gh' CLI to be installed and authenticated.`,
 		},
 	}
 
-	ciCmd.Flags().StringVar(&ciRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
-	ciCmd.Flags().StringVarP(&ciBranch, "branch", "b", "main", "Filter by branch")
-	ciCmd.Flags().BoolVar(&ciFailedOnly, "failed", false, "Show only failed runs")
+	ciCmd.Flags().StringVar(&ciRegistryPath, "registry", "", i18n.T("cmd.dev.ci.flag.registry"))
+	ciCmd.Flags().StringVarP(&ciBranch, "branch", "b", "main", i18n.T("cmd.dev.ci.flag.branch"))
+	ciCmd.Flags().BoolVar(&ciFailedOnly, "failed", false, i18n.T("cmd.dev.ci.flag.failed"))
 
 	parent.AddCommand(ciCmd)
 }
@@ -69,7 +68,7 @@ Requires the 'gh' CLI to be installed and authenticated.`,
 func runCI(registryPath string, branch string, failedOnly bool) error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return fmt.Errorf("'gh' CLI not found. Install from https://cli.github.com/")
+		return fmt.Errorf(i18n.T("error.gh_not_found"))
 	}
 
 	// Find or use provided registry
@@ -105,7 +104,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	repoList := reg.List()
 	for i, repo := range repoList {
 		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render("Checking"), i+1, len(repoList), repo.Name)
+		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("cli.progress.checking")), i+1, len(repoList), repo.Name)
 
 		runs, err := fetchWorkflowRuns(repoFullName, repo.Name, branch)
 		if err != nil {
@@ -147,18 +146,18 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 
 	// Print summary
 	fmt.Println()
-	fmt.Printf("%d repos checked", len(repoList))
+	fmt.Printf("%s", i18n.T("cmd.dev.ci.repos_checked", map[string]interface{}{"Count": len(repoList)}))
 	if success > 0 {
-		fmt.Printf(" * %s", ciSuccessStyle.Render(fmt.Sprintf("%d passing", success)))
+		fmt.Printf(" * %s", ciSuccessStyle.Render(i18n.T("cmd.dev.ci.passing", map[string]interface{}{"Count": success})))
 	}
 	if failed > 0 {
-		fmt.Printf(" * %s", ciFailureStyle.Render(fmt.Sprintf("%d failing", failed)))
+		fmt.Printf(" * %s", ciFailureStyle.Render(i18n.T("cmd.dev.ci.failing", map[string]interface{}{"Count": failed})))
 	}
 	if pending > 0 {
-		fmt.Printf(" * %s", ciPendingStyle.Render(fmt.Sprintf("%d pending", pending)))
+		fmt.Printf(" * %s", ciPendingStyle.Render(i18n.T("cmd.dev.ci.pending", map[string]interface{}{"Count": pending})))
 	}
 	if len(noCI) > 0 {
-		fmt.Printf(" * %s", ciSkippedStyle.Render(fmt.Sprintf("%d no CI", len(noCI))))
+		fmt.Printf(" * %s", ciSkippedStyle.Render(i18n.T("cmd.dev.ci.no_ci", map[string]interface{}{"Count": len(noCI)})))
 	}
 	fmt.Println()
 	fmt.Println()
@@ -183,7 +182,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render("Error:"), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.ci.error_label")), err)
 		}
 	}
 

@@ -4,6 +4,7 @@ package php
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -51,14 +52,8 @@ var (
 func AddPHPCommands(root *cobra.Command) {
 	phpCmd := &cobra.Command{
 		Use:   "php",
-		Short: "Laravel/PHP development tools",
-		Long: "Manage Laravel development environment with FrankenPHP.\n\n" +
-			"Services orchestrated:\n" +
-			"  - FrankenPHP/Octane (port 8000, HTTPS on 443)\n" +
-			"  - Vite dev server (port 5173)\n" +
-			"  - Laravel Horizon (queue workers)\n" +
-			"  - Laravel Reverb (WebSocket, port 8080)\n" +
-			"  - Redis (port 6379)",
+		Short: i18n.T("cmd.php.short"),
+		Long:  i18n.T("cmd.php.long"),
 	}
 	root.AddCommand(phpCmd)
 

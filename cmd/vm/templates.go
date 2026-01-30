@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/host-uk/core/pkg/container"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -17,14 +18,8 @@ import (
 func addVMTemplatesCommand(parent *cobra.Command) {
 	templatesCmd := &cobra.Command{
 		Use:   "templates",
-		Short: "Manage LinuxKit templates",
-		Long: "Manage LinuxKit YAML templates for building VMs.\n\n" +
-			"Templates provide pre-configured LinuxKit configurations for common use cases.\n" +
-			"They support variable substitution with ${VAR} and ${VAR:-default} syntax.\n\n" +
-			"Examples:\n" +
-			"  core vm templates                    # List available templates\n" +
-			"  core vm templates show core-dev      # Show template content\n" +
-			"  core vm templates vars server-php    # Show template variables",
+		Short: i18n.T("cmd.vm.templates.short"),
+		Long:  i18n.T("cmd.vm.templates.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTemplates()
 		},
@@ -41,14 +36,11 @@ func addVMTemplatesCommand(parent *cobra.Command) {
 func addTemplatesShowCommand(parent *cobra.Command) {
 	showCmd := &cobra.Command{
 		Use:   "show <template-name>",
-		Short: "Display template content",
-		Long: "Display the content of a LinuxKit template.\n\n" +
-			"Examples:\n" +
-			"  core templates show core-dev\n" +
-			"  core templates show server-php",
+		Short: i18n.T("cmd.vm.templates.show.short"),
+		Long:  i18n.T("cmd.vm.templates.show.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("template name is required")
+				return fmt.Errorf(i18n.T("cmd.vm.error.template_required"))
 			}
 			return showTemplate(args[0])
 		},
@@ -61,15 +53,11 @@ func addTemplatesShowCommand(parent *cobra.Command) {
 func addTemplatesVarsCommand(parent *cobra.Command) {
 	varsCmd := &cobra.Command{
 		Use:   "vars <template-name>",
-		Short: "Show template variables",
-		Long: "Display all variables used in a template.\n\n" +
-			"Shows required variables (no default) and optional variables (with defaults).\n\n" +
-			"Examples:\n" +
-			"  core templates vars core-dev\n" +
-			"  core templates vars server-php",
+		Short: i18n.T("cmd.vm.templates.vars.short"),
+		Long:  i18n.T("cmd.vm.templates.vars.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("template name is required")
+				return fmt.Errorf(i18n.T("cmd.vm.error.template_required"))
 			}
 			return showTemplateVars(args[0])
 		},
@@ -82,14 +70,14 @@ func listTemplates() error {
 	templates := container.ListTemplates()
 
 	if len(templates) == 0 {
-		fmt.Println("No templates available.")
+		fmt.Println(i18n.T("cmd.vm.templates.no_templates"))
 		return nil
 	}
 
-	fmt.Printf("%s\n\n", repoNameStyle.Render("Available LinuxKit Templates"))
+	fmt.Printf("%s\n\n", repoNameStyle.Render(i18n.T("cmd.vm.templates.title")))
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "NAME\tDESCRIPTION")
+	fmt.Fprintln(w, i18n.T("cmd.vm.templates.header"))
 	fmt.Fprintln(w, "----\t-----------")
 
 	for _, tmpl := range templates {
@@ -102,9 +90,9 @@ func listTemplates() error {
 	w.Flush()
 
 	fmt.Println()
-	fmt.Printf("Show template: %s\n", dimStyle.Render("core vm templates show <name>"))
-	fmt.Printf("Show variables: %s\n", dimStyle.Render("core vm templates vars <name>"))
-	fmt.Printf("Run from template: %s\n", dimStyle.Render("core vm run --template <name> --var SSH_KEY=\"...\""))
+	fmt.Printf("%s %s\n", i18n.T("cmd.vm.templates.hint.show"), dimStyle.Render("core vm templates show <name>"))
+	fmt.Printf("%s %s\n", i18n.T("cmd.vm.templates.hint.vars"), dimStyle.Render("core vm templates vars <name>"))
+	fmt.Printf("%s %s\n", i18n.T("cmd.vm.templates.hint.run"), dimStyle.Render("core vm run --template <name> --var SSH_KEY=\"...\""))
 
 	return nil
 }
@@ -115,7 +103,7 @@ func showTemplate(name string) error {
 		return err
 	}
 
-	fmt.Printf("%s %s\n\n", dimStyle.Render("Template:"), repoNameStyle.Render(name))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.vm.label.template")), repoNameStyle.Render(name))
 	fmt.Println(content)
 
 	return nil
@@ -129,10 +117,10 @@ func showTemplateVars(name string) error {
 
 	required, optional := container.ExtractVariables(content)
 
-	fmt.Printf("%s %s\n\n", dimStyle.Render("Template:"), repoNameStyle.Render(name))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.vm.label.template")), repoNameStyle.Render(name))
 
 	if len(required) > 0 {
-		fmt.Printf("%s\n", errorStyle.Render("Required Variables (no default):"))
+		fmt.Printf("%s\n", errorStyle.Render(i18n.T("cmd.vm.templates.vars.required")))
 		for _, v := range required {
 			fmt.Printf("  %s\n", varStyle.Render("${"+v+"}"))
 		}
@@ -140,7 +128,7 @@ func showTemplateVars(name string) error {
 	}
 
 	if len(optional) > 0 {
-		fmt.Printf("%s\n", successStyle.Render("Optional Variables (with defaults):"))
+		fmt.Printf("%s\n", successStyle.Render(i18n.T("cmd.vm.templates.vars.optional")))
 		for v, def := range optional {
 			fmt.Printf("  %s = %s\n",
 				varStyle.Render("${"+v+"}"),
@@ -150,7 +138,7 @@ func showTemplateVars(name string) error {
 	}
 
 	if len(required) == 0 && len(optional) == 0 {
-		fmt.Println("No variables in this template.")
+		fmt.Println(i18n.T("cmd.vm.templates.vars.none"))
 	}
 
 	return nil
@@ -161,63 +149,63 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	// Apply template with variables
 	content, err := container.ApplyTemplate(templateName, vars)
 	if err != nil {
-		return fmt.Errorf("failed to apply template: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.apply_template")+": %w", err)
 	}
 
 	// Create a temporary directory for the build
 	tmpDir, err := os.MkdirTemp("", "core-linuxkit-*")
 	if err != nil {
-		return fmt.Errorf("failed to create temp directory: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.create_temp")+": %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
 	// Write the YAML file
 	yamlPath := filepath.Join(tmpDir, templateName+".yml")
 	if err := os.WriteFile(yamlPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write template: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.write_template")+": %w", err)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Template:"), repoNameStyle.Render(templateName))
-	fmt.Printf("%s %s\n", dimStyle.Render("Building:"), yamlPath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.template")), repoNameStyle.Render(templateName))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.building")), yamlPath)
 
 	// Build the image using linuxkit
 	outputPath := filepath.Join(tmpDir, templateName)
 	if err := buildLinuxKitImage(yamlPath, outputPath); err != nil {
-		return fmt.Errorf("failed to build image: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.build_image")+": %w", err)
 	}
 
 	// Find the built image (linuxkit creates .iso or other format)
 	imagePath := findBuiltImage(outputPath)
 	if imagePath == "" {
-		return fmt.Errorf("no image found after build")
+		return fmt.Errorf(i18n.T("cmd.vm.error.no_image_found"))
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Image:"), imagePath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.image")), imagePath)
 	fmt.Println()
 
 	// Run the image
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf("failed to initialize container manager: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Hypervisor:"), manager.Hypervisor().Name())
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.hypervisor")), manager.Hypervisor().Name())
 	fmt.Println()
 
 	ctx := context.Background()
 	c, err := manager.Run(ctx, imagePath, runOpts)
 	if err != nil {
-		return fmt.Errorf("failed to run container: %w", err)
+		return fmt.Errorf(i18n.T("cmd.vm.error.run_container")+": %w", err)
 	}
 
 	if runOpts.Detach {
-		fmt.Printf("%s %s\n", successStyle.Render("Started:"), c.ID)
-		fmt.Printf("%s %d\n", dimStyle.Render("PID:"), c.PID)
+		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.vm.label.started")), c.ID)
+		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.vm.label.pid")), c.PID)
 		fmt.Println()
-		fmt.Printf("Use 'core vm logs %s' to view output\n", c.ID[:8])
-		fmt.Printf("Use 'core vm stop %s' to stop\n", c.ID[:8])
+		fmt.Println(i18n.T("cmd.vm.hint.view_logs", map[string]interface{}{"ID": c.ID[:8]}))
+		fmt.Println(i18n.T("cmd.vm.hint.stop", map[string]interface{}{"ID": c.ID[:8]}))
 	} else {
-		fmt.Printf("\n%s %s\n", dimStyle.Render("Container stopped:"), c.ID)
+		fmt.Printf("\n%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.container_stopped")), c.ID)
 	}
 
 	return nil
@@ -298,7 +286,7 @@ func lookupLinuxKit() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("linuxkit not found. Install with: brew install linuxkit (macOS) or see https://github.com/linuxkit/linuxkit")
+	return "", fmt.Errorf(i18n.T("cmd.vm.error.linuxkit_not_found"))
 }
 
 // ParseVarFlags parses --var flags into a map.

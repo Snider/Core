@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -18,16 +19,17 @@ var (
 
 var docsSyncCmd = &cobra.Command{
 	Use:   "sync",
-	Short: "Sync documentation to core-php/docs/packages/",
+	Short: i18n.T("cmd.docs.sync.short"),
+	Long:  i18n.T("cmd.docs.sync.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runDocsSync(docsSyncRegistryPath, docsSyncOutputDir, docsSyncDryRun)
 	},
 }
 
 func init() {
-	docsSyncCmd.Flags().StringVar(&docsSyncRegistryPath, "registry", "", "Path to repos.yaml")
-	docsSyncCmd.Flags().BoolVar(&docsSyncDryRun, "dry-run", false, "Show what would be synced without copying")
-	docsSyncCmd.Flags().StringVar(&docsSyncOutputDir, "output", "", "Output directory (default: core-php/docs/packages)")
+	docsSyncCmd.Flags().StringVar(&docsSyncRegistryPath, "registry", "", i18n.T("cmd.docs.sync.flag.registry"))
+	docsSyncCmd.Flags().BoolVar(&docsSyncDryRun, "dry-run", false, i18n.T("cmd.docs.sync.flag.dry_run"))
+	docsSyncCmd.Flags().StringVar(&docsSyncOutputDir, "output", "", i18n.T("cmd.docs.sync.flag.output"))
 }
 
 // packageOutputName maps repo name to output folder name
@@ -81,11 +83,11 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	}
 
 	if len(docsInfo) == 0 {
-		fmt.Println("No documentation found in any repos.")
+		fmt.Println(i18n.T("cmd.docs.sync.no_docs_found"))
 		return nil
 	}
 
-	fmt.Printf("\n%s %d repo(s) with docs/ directories\n\n", dimStyle.Render("Found"), len(docsInfo))
+	fmt.Printf("\n%s %s\n\n", dimStyle.Render(i18n.T("cmd.docs.sync.found_label")), i18n.T("cmd.docs.sync.repos_with_docs", map[string]interface{}{"Count": len(docsInfo)}))
 
 	// Show what will be synced
 	var totalFiles int
@@ -95,25 +97,26 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		fmt.Printf("  %s → %s %s\n",
 			repoNameStyle.Render(info.Name),
 			docsFileStyle.Render("packages/"+outName+"/"),
-			dimStyle.Render(fmt.Sprintf("(%d files)", len(info.DocsFiles))))
+			dimStyle.Render(i18n.T("cmd.docs.sync.files_count", map[string]interface{}{"Count": len(info.DocsFiles)})))
 
 		for _, f := range info.DocsFiles {
 			fmt.Printf("    %s\n", dimStyle.Render(f))
 		}
 	}
 
-	fmt.Printf("\n%s %d files from %d repos → %s\n",
-		dimStyle.Render("Total:"), totalFiles, len(docsInfo), outputDir)
+	fmt.Printf("\n%s %s\n",
+		dimStyle.Render(i18n.T("cmd.docs.sync.total_label")),
+		i18n.T("cmd.docs.sync.total_summary", map[string]interface{}{"Files": totalFiles, "Repos": len(docsInfo), "Output": outputDir}))
 
 	if dryRun {
-		fmt.Printf("\n%s\n", dimStyle.Render("Dry run - no files copied"))
+		fmt.Printf("\n%s\n", dimStyle.Render(i18n.T("cmd.docs.sync.dry_run_notice")))
 		return nil
 	}
 
 	// Confirm
 	fmt.Println()
-	if !confirm("Sync?") {
-		fmt.Println("Aborted.")
+	if !confirm(i18n.T("cmd.docs.sync.confirm")) {
+		fmt.Println(i18n.T("cli.confirm.abort"))
 		return nil
 	}
 
@@ -147,7 +150,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		synced++
 	}
 
-	fmt.Printf("\n%s Synced %d packages\n", successStyle.Render("Done:"), synced)
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.docs.sync.done_label")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
 
 	return nil
 }

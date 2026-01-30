@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -45,7 +46,7 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 		return fmt.Errorf("failed to get working directory: %w", err)
 	}
 
-	fmt.Printf("%s Bootstrap mode (no repos.yaml found)\n", dimStyle.Render(">>"))
+	fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.bootstrap_mode"))
 
 	var targetDir string
 
@@ -58,7 +59,7 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 	if empty {
 		// Clone into current directory
 		targetDir = cwd
-		fmt.Printf("%s Cloning into current directory\n", dimStyle.Render(">>"))
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.cloning_current_dir"))
 	} else {
 		// Directory has content - check if it's a git repo root
 		isRepo := isGitRepoRoot(cwd)
@@ -90,7 +91,7 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 		}
 
 		targetDir = filepath.Join(cwd, projectName)
-		fmt.Printf("%s Creating project directory: %s\n", dimStyle.Render(">>"), projectName)
+		fmt.Printf("%s %s: %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.creating_project_dir"), projectName)
 
 		if !dryRun {
 			if err := os.MkdirAll(targetDir, 0755); err != nil {
@@ -102,25 +103,25 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 	// Clone core-devops first
 	devopsPath := filepath.Join(targetDir, devopsRepo)
 	if _, err := os.Stat(filepath.Join(devopsPath, ".git")); os.IsNotExist(err) {
-		fmt.Printf("%s Cloning %s...\n", dimStyle.Render(">>"), devopsRepo)
+		fmt.Printf("%s %s %s...\n", dimStyle.Render(">>"), i18n.T("cmd.setup.cloning"), devopsRepo)
 
 		if !dryRun {
 			if err := gitClone(ctx, defaultOrg, devopsRepo, devopsPath); err != nil {
 				return fmt.Errorf("failed to clone %s: %w", devopsRepo, err)
 			}
-			fmt.Printf("%s %s cloned\n", successStyle.Render(">>"), devopsRepo)
+			fmt.Printf("%s %s %s\n", successStyle.Render(">>"), devopsRepo, i18n.T("cmd.setup.cloned"))
 		} else {
-			fmt.Printf("  Would clone %s/%s to %s\n", defaultOrg, devopsRepo, devopsPath)
+			fmt.Printf("  %s %s/%s to %s\n", i18n.T("cmd.setup.would_clone"), defaultOrg, devopsRepo, devopsPath)
 		}
 	} else {
-		fmt.Printf("%s %s already exists\n", dimStyle.Render(">>"), devopsRepo)
+		fmt.Printf("%s %s %s\n", dimStyle.Render(">>"), devopsRepo, i18n.T("cmd.setup.already_exists"))
 	}
 
 	// Load the repos.yaml from core-devops
 	registryPath := filepath.Join(devopsPath, devopsReposYaml)
 
 	if dryRun {
-		fmt.Printf("\n%s Would load registry from %s and present package wizard\n", dimStyle.Render(">>"), registryPath)
+		fmt.Printf("\n%s %s %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.would_load_registry"), registryPath)
 		return nil
 	}
 

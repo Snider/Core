@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -32,18 +33,8 @@ var (
 
 var tasksCmd = &cobra.Command{
 	Use:   "tasks",
-	Short: "List available tasks from core-agentic",
-	Long: `Lists tasks from the core-agentic service.
-
-Configuration is loaded from:
-  1. Environment variables (AGENTIC_TOKEN, AGENTIC_BASE_URL)
-  2. .env file in current directory
-  3. ~/.core/agentic.yaml
-
-Examples:
-  core ai tasks
-  core ai tasks --status pending --priority high
-  core ai tasks --labels bug,urgent`,
+	Short: i18n.T("cmd.ai.tasks.short"),
+	Long:  i18n.T("cmd.ai.tasks.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		limit := tasksLimit
 		if limit == 0 {
@@ -52,7 +43,7 @@ Examples:
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -77,11 +68,11 @@ Examples:
 
 		tasks, err := client.ListTasks(ctx, opts)
 		if err != nil {
-			return fmt.Errorf("failed to list tasks: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.list_tasks"), err)
 		}
 
 		if len(tasks) == 0 {
-			fmt.Println("No tasks found.")
+			fmt.Println(i18n.T("cmd.ai.tasks.none_found"))
 			return nil
 		}
 
@@ -92,18 +83,12 @@ Examples:
 
 var taskCmd = &cobra.Command{
 	Use:   "task [task-id]",
-	Short: "Show task details or auto-select a task",
-	Long: `Shows details of a specific task or auto-selects the highest priority task.
-
-Examples:
-  core ai task abc123           # Show task details
-  core ai task abc123 --claim   # Show and claim the task
-  core ai task abc123 --context # Show task with gathered context
-  core ai task --auto           # Auto-select highest priority pending task`,
+	Short: i18n.T("cmd.ai.task.short"),
+	Long:  i18n.T("cmd.ai.task.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -126,11 +111,11 @@ Examples:
 				Limit:  50,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to list tasks: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.list_tasks"), err)
 			}
 
 			if len(tasks) == 0 {
-				fmt.Println("No pending tasks available.")
+				fmt.Println(i18n.T("cmd.ai.task.no_pending"))
 				return nil
 			}
 
@@ -150,12 +135,12 @@ Examples:
 			taskClaim = true // Auto-select implies claiming
 		} else {
 			if taskID == "" {
-				return fmt.Errorf("task ID required (or use --auto)")
+				return fmt.Errorf(i18n.T("cmd.ai.task.id_required"))
 			}
 
 			task, err = client.GetTask(ctx, taskID)
 			if err != nil {
-				return fmt.Errorf("failed to get task: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_task"), err)
 			}
 		}
 
@@ -164,7 +149,7 @@ Examples:
 			cwd, _ := os.Getwd()
 			taskCtx, err := agentic.BuildTaskContext(task, cwd)
 			if err != nil {
-				fmt.Printf("%s Failed to build context: %s\n", errorStyle.Render(">>"), err)
+				fmt.Printf("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("cmd.ai.task.context_failed"), err)
 			} else {
 				fmt.Println(taskCtx.FormatContext())
 			}
@@ -174,15 +159,15 @@ Examples:
 
 		if taskClaim && task.Status == agentic.StatusPending {
 			fmt.Println()
-			fmt.Printf("%s Claiming task...\n", dimStyle.Render(">>"))
+			fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task.claiming"))
 
 			claimedTask, err := client.ClaimTask(ctx, task.ID)
 			if err != nil {
-				return fmt.Errorf("failed to claim task: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.claim_task"), err)
 			}
 
-			fmt.Printf("%s Task claimed successfully!\n", successStyle.Render(">>"))
-			fmt.Printf("   Status: %s\n", formatTaskStatus(claimedTask.Status))
+			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task.claimed"))
+			fmt.Printf("   %s %s\n", i18n.T("cmd.ai.label.status"), formatTaskStatus(claimedTask.Status))
 		}
 
 		return nil
@@ -191,16 +176,16 @@ Examples:
 
 func init() {
 	// tasks command flags
-	tasksCmd.Flags().StringVar(&tasksStatus, "status", "", "Filter by status (pending, in_progress, completed, blocked)")
-	tasksCmd.Flags().StringVar(&tasksPriority, "priority", "", "Filter by priority (critical, high, medium, low)")
-	tasksCmd.Flags().StringVar(&tasksLabels, "labels", "", "Filter by labels (comma-separated)")
-	tasksCmd.Flags().IntVar(&tasksLimit, "limit", 20, "Max number of tasks to return")
-	tasksCmd.Flags().StringVar(&tasksProject, "project", "", "Filter by project")
+	tasksCmd.Flags().StringVar(&tasksStatus, "status", "", i18n.T("cmd.ai.tasks.flag.status"))
+	tasksCmd.Flags().StringVar(&tasksPriority, "priority", "", i18n.T("cmd.ai.tasks.flag.priority"))
+	tasksCmd.Flags().StringVar(&tasksLabels, "labels", "", i18n.T("cmd.ai.tasks.flag.labels"))
+	tasksCmd.Flags().IntVar(&tasksLimit, "limit", 20, i18n.T("cmd.ai.tasks.flag.limit"))
+	tasksCmd.Flags().StringVar(&tasksProject, "project", "", i18n.T("cmd.ai.tasks.flag.project"))
 
 	// task command flags
-	taskCmd.Flags().BoolVar(&taskAutoSelect, "auto", false, "Auto-select highest priority pending task")
-	taskCmd.Flags().BoolVar(&taskClaim, "claim", false, "Claim the task after showing details")
-	taskCmd.Flags().BoolVar(&taskShowContext, "context", false, "Show gathered context for AI collaboration")
+	taskCmd.Flags().BoolVar(&taskAutoSelect, "auto", false, i18n.T("cmd.ai.task.flag.auto"))
+	taskCmd.Flags().BoolVar(&taskClaim, "claim", false, i18n.T("cmd.ai.task.flag.claim"))
+	taskCmd.Flags().BoolVar(&taskShowContext, "context", false, i18n.T("cmd.ai.task.flag.context"))
 }
 
 func addTasksCommand(parent *cobra.Command) {
@@ -212,7 +197,7 @@ func addTaskCommand(parent *cobra.Command) {
 }
 
 func printTaskList(tasks []agentic.Task) {
-	fmt.Printf("\n%d task(s) found:\n\n", len(tasks))
+	fmt.Printf("\n%s\n\n", i18n.T("cmd.ai.tasks.found", map[string]interface{}{"Count": len(tasks)}))
 
 	for _, task := range tasks {
 		id := taskIDStyle.Render(task.ID)
@@ -231,37 +216,37 @@ func printTaskList(tasks []agentic.Task) {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s\n", dimStyle.Render("Use 'core ai task <id>' to view details"))
+	fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.ai.tasks.hint")))
 }
 
 func printTaskDetails(task *agentic.Task) {
 	fmt.Println()
-	fmt.Printf("%s %s\n", dimStyle.Render("ID:"), taskIDStyle.Render(task.ID))
-	fmt.Printf("%s %s\n", dimStyle.Render("Title:"), taskTitleStyle.Render(task.Title))
-	fmt.Printf("%s %s\n", dimStyle.Render("Priority:"), formatTaskPriority(task.Priority))
-	fmt.Printf("%s %s\n", dimStyle.Render("Status:"), formatTaskStatus(task.Status))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.id")), taskIDStyle.Render(task.ID))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.title")), taskTitleStyle.Render(task.Title))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.priority")), formatTaskPriority(task.Priority))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.status")), formatTaskStatus(task.Status))
 
 	if task.Project != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render("Project:"), task.Project)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.project")), task.Project)
 	}
 
 	if len(task.Labels) > 0 {
-		fmt.Printf("%s %s\n", dimStyle.Render("Labels:"), taskLabelStyle.Render(strings.Join(task.Labels, ", ")))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.labels")), taskLabelStyle.Render(strings.Join(task.Labels, ", ")))
 	}
 
 	if task.ClaimedBy != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render("Claimed by:"), task.ClaimedBy)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.claimed_by")), task.ClaimedBy)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render("Created:"), formatAge(task.CreatedAt))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.created")), formatAge(task.CreatedAt))
 
 	fmt.Println()
-	fmt.Printf("%s\n", dimStyle.Render("Description:"))
+	fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.description")))
 	fmt.Println(task.Description)
 
 	if len(task.Files) > 0 {
 		fmt.Println()
-		fmt.Printf("%s\n", dimStyle.Render("Related files:"))
+		fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.related_files")))
 		for _, f := range task.Files {
 			fmt.Printf("  - %s\n", f)
 		}
@@ -269,20 +254,20 @@ func printTaskDetails(task *agentic.Task) {
 
 	if len(task.Dependencies) > 0 {
 		fmt.Println()
-		fmt.Printf("%s %s\n", dimStyle.Render("Blocked by:"), strings.Join(task.Dependencies, ", "))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.blocked_by")), strings.Join(task.Dependencies, ", "))
 	}
 }
 
 func formatTaskPriority(p agentic.TaskPriority) string {
 	switch p {
 	case agentic.PriorityCritical:
-		return taskPriorityHighStyle.Render("[CRITICAL]")
+		return taskPriorityHighStyle.Render("[" + i18n.T("cmd.ai.priority.critical") + "]")
 	case agentic.PriorityHigh:
-		return taskPriorityHighStyle.Render("[HIGH]")
+		return taskPriorityHighStyle.Render("[" + i18n.T("cmd.ai.priority.high") + "]")
 	case agentic.PriorityMedium:
-		return taskPriorityMediumStyle.Render("[MEDIUM]")
+		return taskPriorityMediumStyle.Render("[" + i18n.T("cmd.ai.priority.medium") + "]")
 	case agentic.PriorityLow:
-		return taskPriorityLowStyle.Render("[LOW]")
+		return taskPriorityLowStyle.Render("[" + i18n.T("cmd.ai.priority.low") + "]")
 	default:
 		return dimStyle.Render("[" + string(p) + "]")
 	}
@@ -291,13 +276,13 @@ func formatTaskPriority(p agentic.TaskPriority) string {
 func formatTaskStatus(s agentic.TaskStatus) string {
 	switch s {
 	case agentic.StatusPending:
-		return taskStatusPendingStyle.Render("pending")
+		return taskStatusPendingStyle.Render(i18n.T("cmd.ai.status.pending"))
 	case agentic.StatusInProgress:
-		return taskStatusInProgressStyle.Render("in_progress")
+		return taskStatusInProgressStyle.Render(i18n.T("cmd.ai.status.in_progress"))
 	case agentic.StatusCompleted:
-		return taskStatusCompletedStyle.Render("completed")
+		return taskStatusCompletedStyle.Render(i18n.T("cmd.ai.status.completed"))
 	case agentic.StatusBlocked:
-		return taskStatusBlockedStyle.Render("blocked")
+		return taskStatusBlockedStyle.Render(i18n.T("cmd.ai.status.blocked"))
 	default:
 		return dimStyle.Render(string(s))
 	}

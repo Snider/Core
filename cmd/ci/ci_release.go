@@ -3,6 +3,7 @@ package ci
 
 import (
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -31,13 +32,8 @@ var (
 
 var ciCmd = &cobra.Command{
 	Use:   "ci",
-	Short: "Publish releases (dry-run by default)",
-	Long: `Publishes pre-built artifacts from dist/ to configured targets.
-Run 'core build' first to create artifacts.
-
-SAFE BY DEFAULT: Runs in dry-run mode unless --we-are-go-for-launch is specified.
-
-Configuration: .core/release.yaml`,
+	Short: i18n.T("cmd.ci.short"),
+	Long:  i18n.T("cmd.ci.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dryRun := !ciGoForLaunch
 		return runCIPublish(dryRun, ciVersion, ciDraft, ciPrerelease)
@@ -46,8 +42,8 @@ Configuration: .core/release.yaml`,
 
 var ciInitCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize release configuration",
-	Long:  "Creates a .core/release.yaml configuration file interactively.",
+	Short: i18n.T("cmd.ci.init.short"),
+	Long:  i18n.T("cmd.ci.init.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runCIReleaseInit()
 	},
@@ -55,8 +51,8 @@ var ciInitCmd = &cobra.Command{
 
 var ciChangelogCmd = &cobra.Command{
 	Use:   "changelog",
-	Short: "Generate changelog",
-	Long:  "Generates a changelog from conventional commits.",
+	Short: i18n.T("cmd.ci.changelog.short"),
+	Long:  i18n.T("cmd.ci.changelog.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runChangelog(changelogFromRef, changelogToRef)
 	},
@@ -64,8 +60,8 @@ var ciChangelogCmd = &cobra.Command{
 
 var ciVersionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Show or set version",
-	Long:  "Shows the determined version or validates a version string.",
+	Short: i18n.T("cmd.ci.version.short"),
+	Long:  i18n.T("cmd.ci.version.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runCIReleaseVersion()
 	},
@@ -73,14 +69,14 @@ var ciVersionCmd = &cobra.Command{
 
 func init() {
 	// Main ci command flags
-	ciCmd.Flags().BoolVar(&ciGoForLaunch, "we-are-go-for-launch", false, "Actually publish (default is dry-run for safety)")
-	ciCmd.Flags().StringVar(&ciVersion, "version", "", "Version to release (e.g., v1.2.3)")
-	ciCmd.Flags().BoolVar(&ciDraft, "draft", false, "Create release as a draft")
-	ciCmd.Flags().BoolVar(&ciPrerelease, "prerelease", false, "Mark release as a prerelease")
+	ciCmd.Flags().BoolVar(&ciGoForLaunch, "we-are-go-for-launch", false, i18n.T("cmd.ci.flag.go_for_launch"))
+	ciCmd.Flags().StringVar(&ciVersion, "version", "", i18n.T("cmd.ci.flag.version"))
+	ciCmd.Flags().BoolVar(&ciDraft, "draft", false, i18n.T("cmd.ci.flag.draft"))
+	ciCmd.Flags().BoolVar(&ciPrerelease, "prerelease", false, i18n.T("cmd.ci.flag.prerelease"))
 
 	// Changelog subcommand flags
-	ciChangelogCmd.Flags().StringVar(&changelogFromRef, "from", "", "Starting ref (default: previous tag)")
-	ciChangelogCmd.Flags().StringVar(&changelogToRef, "to", "", "Ending ref (default: HEAD)")
+	ciChangelogCmd.Flags().StringVar(&changelogFromRef, "from", "", i18n.T("cmd.ci.changelog.flag.from"))
+	ciChangelogCmd.Flags().StringVar(&changelogToRef, "to", "", i18n.T("cmd.ci.changelog.flag.to"))
 
 	// Add subcommands
 	ciCmd.AddCommand(ciInitCmd)

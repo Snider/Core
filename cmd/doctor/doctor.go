@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -20,27 +21,26 @@ var doctorVerbose bool
 
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
-	Short: "Check development environment",
-	Long: `Checks that all required tools are installed and configured.
-Run this before 'core setup' to ensure your environment is ready.`,
+	Short: i18n.T("cmd.doctor.short"),
+	Long:  i18n.T("cmd.doctor.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runDoctor(doctorVerbose)
 	},
 }
 
 func init() {
-	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, "Show detailed version information")
+	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, i18n.T("cmd.doctor.verbose_flag"))
 }
 
 func runDoctor(verbose bool) error {
-	fmt.Println("Checking development environment...")
+	fmt.Println(i18n.T("cmd.doctor.checking"))
 	fmt.Println()
 
 	var passed, failed, optional int
 
 	// Check required tools
-	fmt.Println("Required:")
-	for _, c := range requiredChecks {
+	fmt.Println(i18n.T("cmd.doctor.required"))
+	for _, c := range requiredChecks() {
 		ok, version := runCheck(c)
 		if ok {
 			if verbose {
@@ -56,8 +56,8 @@ func runDoctor(verbose bool) error {
 	}
 
 	// Check optional tools
-	fmt.Println("\nOptional:")
-	for _, c := range optionalChecks {
+	fmt.Printf("\n%s\n", i18n.T("cmd.doctor.optional"))
+	for _, c := range optionalChecks() {
 		ok, version := runCheck(c)
 		if ok {
 			if verbose {
@@ -73,34 +73,34 @@ func runDoctor(verbose bool) error {
 	}
 
 	// Check GitHub access
-	fmt.Println("\nGitHub Access:")
+	fmt.Printf("\n%s\n", i18n.T("cmd.doctor.github"))
 	if checkGitHubSSH() {
-		fmt.Println(shared.CheckResult(true, "SSH key found", ""))
+		fmt.Println(shared.CheckResult(true, i18n.T("cmd.doctor.ssh_found"), ""))
 	} else {
-		fmt.Printf("  %s SSH key missing - run: ssh-keygen && gh ssh-key add\n", errorStyle.Render(shared.SymbolCross))
+		fmt.Printf("  %s %s\n", errorStyle.Render(shared.SymbolCross), i18n.T("cmd.doctor.ssh_missing"))
 		failed++
 	}
 
 	if checkGitHubCLI() {
-		fmt.Println(shared.CheckResult(true, "CLI authenticated", ""))
+		fmt.Println(shared.CheckResult(true, i18n.T("cmd.doctor.cli_auth"), ""))
 	} else {
-		fmt.Printf("  %s CLI authentication - run: gh auth login\n", errorStyle.Render(shared.SymbolCross))
+		fmt.Printf("  %s %s\n", errorStyle.Render(shared.SymbolCross), i18n.T("cmd.doctor.cli_auth_missing"))
 		failed++
 	}
 
 	// Check workspace
-	fmt.Println("\nWorkspace:")
+	fmt.Printf("\n%s\n", i18n.T("cmd.doctor.workspace"))
 	checkWorkspace()
 
 	// Summary
 	fmt.Println()
 	if failed > 0 {
-		fmt.Println(shared.Error(fmt.Sprintf("Doctor: %d issues found", failed)))
-		fmt.Println("\nInstall missing tools:")
+		fmt.Println(shared.Error(i18n.T("cmd.doctor.issues", map[string]interface{}{"Count": failed})))
+		fmt.Printf("\n%s\n", i18n.T("cmd.doctor.install_missing"))
 		printInstallInstructions()
-		return fmt.Errorf("%d required tools missing", failed)
+		return fmt.Errorf("%s", i18n.T("cmd.doctor.issues_error", map[string]interface{}{"Count": failed}))
 	}
 
-	fmt.Println(shared.Success("Doctor: Environment ready"))
+	fmt.Println(shared.Success(i18n.T("cmd.doctor.ready")))
 	return nil
 }

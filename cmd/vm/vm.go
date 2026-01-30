@@ -4,6 +4,7 @@ package vm
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -25,17 +26,8 @@ var (
 func AddVMCommands(root *cobra.Command) {
 	vmCmd := &cobra.Command{
 		Use:   "vm",
-		Short: "LinuxKit VM management",
-		Long: "Manage LinuxKit virtual machines.\n\n" +
-			"LinuxKit VMs are lightweight, immutable VMs built from YAML templates.\n" +
-			"They run using qemu or hyperkit depending on your system.\n\n" +
-			"Commands:\n" +
-			"  run        Run a VM from image or template\n" +
-			"  ps         List running VMs\n" +
-			"  stop       Stop a running VM\n" +
-			"  logs       View VM logs\n" +
-			"  exec       Execute command in VM\n" +
-			"  templates  Manage LinuxKit templates",
+		Short: i18n.T("cmd.vm.short"),
+		Long:  i18n.T("cmd.vm.long"),
 	}
 
 	root.AddCommand(vmCmd)

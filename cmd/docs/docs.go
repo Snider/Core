@@ -3,6 +3,7 @@ package docs
 
 import (
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -21,9 +22,8 @@ var (
 
 var docsCmd = &cobra.Command{
 	Use:   "docs",
-	Short: "Documentation management",
-	Long: `Manage documentation across all repos.
-Scan for docs, check coverage, and sync to core-php/docs/packages/.`,
+	Short: i18n.T("cmd.docs.short"),
+	Long:  i18n.T("cmd.docs.long"),
 }
 
 func init() {

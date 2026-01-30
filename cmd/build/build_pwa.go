@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/leaanthony/debme"
 	"github.com/leaanthony/gosod"
 	"golang.org/x/net/html"
@@ -26,22 +27,22 @@ import (
 // Error sentinels for build commands
 var (
 	errPathRequired = errors.New("the --path flag is required")
-	errURLRequired  = errors.New("a URL argument is required")
+	errURLRequired  = errors.New("the --url flag is required")
 )
 
 // runPwaBuild downloads a PWA from URL and builds it.
 func runPwaBuild(pwaURL string) error {
-	fmt.Printf("Starting PWA build from URL: %s\n", pwaURL)
+	fmt.Printf("%s %s\n", i18n.T("cmd.build.pwa.starting"), pwaURL)
 
 	tempDir, err := os.MkdirTemp("", "core-pwa-build-*")
 	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.create_temp_dir"), err)
 	}
 	// defer os.RemoveAll(tempDir) // Keep temp dir for debugging
-	fmt.Printf("Downloading PWA to temporary directory: %s\n", tempDir)
+	fmt.Printf("%s %s\n", i18n.T("cmd.build.pwa.downloading_to"), tempDir)
 
 	if err := downloadPWA(pwaURL, tempDir); err != nil {
-		return fmt.Errorf("failed to download PWA: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.download_failed"), err)
 	}
 
 	return runBuild(tempDir)
@@ -52,48 +53,48 @@ func downloadPWA(baseURL, destDir string) error {
 	// Fetch the main HTML page
 	resp, err := http.Get(baseURL)
 	if err != nil {
-		return fmt.Errorf("failed to fetch URL %s: %w", baseURL, err)
+		return fmt.Errorf("%s %s: %w", i18n.T("cmd.build.pwa.error.fetch_url"), baseURL, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.read_response"), err)
 	}
 
 	// Find the manifest URL from the HTML
 	manifestURL, err := findManifestURL(string(body), baseURL)
 	if err != nil {
 		// If no manifest, it's not a PWA, but we can still try to package it as a simple site.
-		fmt.Println("Warning: no manifest file found. Proceeding with basic site download.")
+		fmt.Printf("%s %s\n", i18n.T("cmd.build.pwa.warning"), i18n.T("cmd.build.pwa.no_manifest"))
 		if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
-			return fmt.Errorf("failed to write index.html: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.write_index"), err)
 		}
 		return nil
 	}
 
-	fmt.Printf("Found manifest: %s\n", manifestURL)
+	fmt.Printf("%s %s\n", i18n.T("cmd.build.pwa.found_manifest"), manifestURL)
 
 	// Fetch and parse the manifest
 	manifest, err := fetchManifest(manifestURL)
 	if err != nil {
-		return fmt.Errorf("failed to fetch or parse manifest: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.fetch_manifest"), err)
 	}
 
 	// Download all assets listed in the manifest
 	assets := collectAssets(manifest, manifestURL)
 	for _, assetURL := range assets {
 		if err := downloadAsset(assetURL, destDir); err != nil {
-			fmt.Printf("Warning: failed to download asset %s: %v\n", assetURL, err)
+			fmt.Printf("%s %s %s: %v\n", i18n.T("cmd.build.pwa.warning"), i18n.T("cmd.build.pwa.asset_download_failed"), assetURL, err)
 		}
 	}
 
 	// Also save the root index.html
 	if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
-		return fmt.Errorf("failed to write index.html: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.write_index"), err)
 	}
 
-	fmt.Println("PWA download complete.")
+	fmt.Println(i18n.T("cmd.build.pwa.download_complete"))
 	return nil
 }
 
@@ -129,7 +130,7 @@ func findManifestURL(htmlContent, baseURL string) (string, error) {
 	f(doc)
 
 	if manifestPath == "" {
-		return "", fmt.Errorf("no <link rel=\"manifest\"> tag found")
+		return "", fmt.Errorf("%s", i18n.T("cmd.build.pwa.error.no_manifest_tag"))
 	}
 
 	base, err := url.Parse(baseURL)
@@ -218,14 +219,14 @@ func downloadAsset(assetURL, destDir string) error {
 
 // runBuild builds a desktop application from a local directory.
 func runBuild(fromPath string) error {
-	fmt.Printf("Starting build from path: %s\n", fromPath)
+	fmt.Printf("%s %s\n", i18n.T("cmd.build.from_path.starting"), fromPath)
 
 	info, err := os.Stat(fromPath)
 	if err != nil {
-		return fmt.Errorf("invalid path specified: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.invalid_path"), err)
 	}
 	if !info.IsDir() {
-		return fmt.Errorf("path specified must be a directory")
+		return fmt.Errorf("%s", i18n.T("cmd.build.from_path.error.must_be_directory"))
 	}
 
 	buildDir := ".core/build/app"
@@ -237,33 +238,33 @@ func runBuild(fromPath string) error {
 	outputExe := appName
 
 	if err := os.RemoveAll(buildDir); err != nil {
-		return fmt.Errorf("failed to clean build directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.clean_build_dir"), err)
 	}
 
 	// 1. Generate the project from the embedded template
-	fmt.Println("Generating application from template...")
+	fmt.Println(i18n.T("cmd.build.from_path.generating_template"))
 	templateFS, err := debme.FS(guiTemplate, "tmpl/gui")
 	if err != nil {
-		return fmt.Errorf("failed to anchor template filesystem: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.anchor_template"), err)
 	}
 	sod := gosod.New(templateFS)
 	if sod == nil {
-		return fmt.Errorf("failed to create new sod instance")
+		return fmt.Errorf("%s", i18n.T("cmd.build.from_path.error.create_sod"))
 	}
 
 	templateData := map[string]string{"AppName": appName}
 	if err := sod.Extract(buildDir, templateData); err != nil {
-		return fmt.Errorf("failed to extract template: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.extract_template"), err)
 	}
 
 	// 2. Copy the user's web app files
-	fmt.Println("Copying application files...")
+	fmt.Println(i18n.T("cmd.build.from_path.copying_files"))
 	if err := copyDir(fromPath, htmlDir); err != nil {
-		return fmt.Errorf("failed to copy application files: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.copy_files"), err)
 	}
 
 	// 3. Compile the application
-	fmt.Println("Compiling application...")
+	fmt.Println(i18n.T("cmd.build.from_path.compiling"))
 
 	// Run go mod tidy
 	cmd := exec.Command("go", "mod", "tidy")
@@ -271,7 +272,7 @@ func runBuild(fromPath string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("go mod tidy failed: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.go_mod_tidy"), err)
 	}
 
 	// Run go build
@@ -280,10 +281,10 @@ func runBuild(fromPath string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("go build failed: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.go_build"), err)
 	}
 
-	fmt.Printf("\nBuild successful! Executable created at: %s/%s\n", buildDir, outputExe)
+	fmt.Printf("\n%s %s/%s\n", i18n.T("cmd.build.from_path.success"), buildDir, outputExe)
 	return nil
 }
 

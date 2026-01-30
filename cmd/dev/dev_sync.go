@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -19,15 +20,13 @@ import (
 func addSyncCommand(parent *cobra.Command) {
 	syncCmd := &cobra.Command{
 		Use:   "sync",
-		Short: "Synchronizes the public service APIs with their internal implementations.",
-		Long: `This command scans the 'pkg' directory for services and ensures that the
-top-level public API for each service is in sync with its internal implementation.
-It automatically generates the necessary Go files with type aliases.`,
+		Short: i18n.T("cmd.dev.sync.short"),
+		Long:  i18n.T("cmd.dev.sync.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := runSync(); err != nil {
-				return fmt.Errorf("Error: %w", err)
+				return fmt.Errorf("%s %w", i18n.T("cmd.dev.sync.error_prefix"), err)
 			}
-			fmt.Println("Public APIs synchronized successfully.")
+			fmt.Println(i18n.T("cmd.dev.sync.success"))
 			return nil
 		},
 	}

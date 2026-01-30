@@ -7,6 +7,7 @@ import (
 
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
+	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -21,16 +22,15 @@ var (
 func addPushCommand(parent *cobra.Command) {
 	pushCmd := &cobra.Command{
 		Use:   "push",
-		Short: "Push commits across all repos",
-		Long: `Pushes unpushed commits for all repos.
-Shows repos with commits to push and confirms before pushing.`,
+		Short: i18n.T("cmd.dev.push.short"),
+		Long:  i18n.T("cmd.dev.push.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPush(pushRegistryPath, pushForce)
 		},
 	}
 
-	pushCmd.Flags().StringVar(&pushRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
-	pushCmd.Flags().BoolVarP(&pushForce, "force", "f", false, "Skip confirmation prompt")
+	pushCmd.Flags().StringVar(&pushRegistryPath, "registry", "", i18n.T("cmd.dev.push.flag.registry"))
+	pushCmd.Flags().BoolVarP(&pushForce, "force", "f", false, i18n.T("cmd.dev.push.flag.force"))
 
 	parent.AddCommand(pushCmd)
 }
@@ -47,7 +47,7 @@ func runPush(registryPath string, force bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -55,7 +55,7 @@ func runPush(registryPath string, force bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render("Registry:"), registryPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
@@ -63,7 +63,7 @@ func runPush(registryPath string, force bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to scan directory: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render("Scanning:"), cwd)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 		}
 	}
 
@@ -79,7 +79,7 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("No git repositories found.")
+		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -98,17 +98,17 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	if len(aheadRepos) == 0 {
-		fmt.Println("All repos up to date. Nothing to push.")
+		fmt.Println(i18n.T("cmd.dev.push.all_up_to_date"))
 		return nil
 	}
 
 	// Show repos to push
-	fmt.Printf("\n%d repo(s) with unpushed commits:\n\n", len(aheadRepos))
+	fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.push.repos_with_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	totalCommits := 0
 	for _, s := range aheadRepos {
 		fmt.Printf("  %s: %s\n",
 			repoNameStyle.Render(s.Name),
-			aheadStyle.Render(fmt.Sprintf("%d commit(s)", s.Ahead)),
+			aheadStyle.Render(i18n.T("cmd.dev.push.commits_count", map[string]interface{}{"Count": s.Ahead})),
 		)
 		totalCommits += s.Ahead
 	}
@@ -116,8 +116,8 @@ func runPush(registryPath string, force bool) error {
 	// Confirm unless --force
 	if !force {
 		fmt.Println()
-		if !shared.Confirm(fmt.Sprintf("Push %d commit(s) to %d repo(s)?", totalCommits, len(aheadRepos))) {
-			fmt.Println("Aborted.")
+		if !shared.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": totalCommits, "Repos": len(aheadRepos)})) {
+			fmt.Println(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
@@ -145,9 +145,9 @@ func runPush(registryPath string, force bool) error {
 
 	// Summary
 	fmt.Println()
-	fmt.Printf("%s %d pushed", successStyle.Render("Done:"), succeeded)
+	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.push.done_pushed", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(fmt.Sprintf("%d failed", failed)))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("cmd.dev.count_failed", map[string]interface{}{"Count": failed})))
 	}
 	fmt.Println()
 
