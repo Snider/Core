@@ -144,9 +144,8 @@ var (
 
 func addPHPStanCommand(parent *cobra.Command) {
 	stanCmd := &cobra.Command{
-		Use:     "stan [paths...]",
-		Aliases: []string{"analyse"},
-		Short:   i18n.T("cmd.php.analyse.short"),
+		Use:   "stan [paths...]",
+		Short: i18n.T("cmd.php.analyse.short"),
 		Long:    i18n.T("cmd.php.analyse.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
