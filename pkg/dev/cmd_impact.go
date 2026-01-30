@@ -139,7 +139,7 @@ func runImpact(registryPath string, repoName string) error {
 
 	// Summary
 	fmt.Printf("%s %s\n",
-		dimStyle.Render(i18n.T("common.label.summary")),
+		dimStyle.Render(i18n.Label("summary")),
 		i18n.T("cmd.dev.impact.changes_affect", map[string]interface{}{
 			"Repo":     repoNameStyle.Render(repoName),
 			"Affected": len(allAffected),

@@ -15,13 +15,13 @@ import (
 func runCIReleaseInit() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 	}
 
 	// Check if config already exists
 	if release.ConfigExists(projectDir) {
 		fmt.Printf("%s %s %s\n",
-			releaseDimStyle.Render(i18n.T("common.label.note")),
+			releaseDimStyle.Render(i18n.Label("note")),
 			i18n.T("cmd.ci.init.config_exists"),
 			release.ConfigPath(projectDir))
 
@@ -61,12 +61,12 @@ func runCIReleaseInit() error {
 
 	// Write config
 	if err := release.WriteConfig(cfg, projectDir); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "write config"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.write", "config"), err)
 	}
 
 	fmt.Println()
 	fmt.Printf("%s %s %s\n",
-		releaseSuccessStyle.Render(i18n.T("common.label.success")),
+		releaseSuccessStyle.Render(i18n.T("i18n.done.pass")),
 		i18n.T("cmd.ci.init.config_written"),
 		release.ConfigPath(projectDir))
 

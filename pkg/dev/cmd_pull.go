@@ -47,7 +47,7 @@ func runPull(registryPath string, all bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -55,7 +55,7 @@ func runPull(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()

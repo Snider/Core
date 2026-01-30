@@ -43,7 +43,7 @@ var tasksCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -68,7 +68,7 @@ var tasksCmd = &cobra.Command{
 
 		tasks, err := client.ListTasks(ctx, opts)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "list tasks"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.list", "tasks"), err)
 		}
 
 		if len(tasks) == 0 {
@@ -88,7 +88,7 @@ var taskCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -111,7 +111,7 @@ var taskCmd = &cobra.Command{
 				Limit:  50,
 			})
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "list tasks"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.list", "tasks"), err)
 			}
 
 			if len(tasks) == 0 {
@@ -140,7 +140,7 @@ var taskCmd = &cobra.Command{
 
 			task, err = client.GetTask(ctx, taskID)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get task"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "task"), err)
 			}
 		}
 
@@ -149,7 +149,7 @@ var taskCmd = &cobra.Command{
 			cwd, _ := os.Getwd()
 			taskCtx, err := agentic.BuildTaskContext(task, cwd)
 			if err != nil {
-				fmt.Printf("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("common.error.failed", map[string]any{"Action": "build context"}), err)
+				fmt.Printf("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("i18n.fail.build", "context"), err)
 			} else {
 				fmt.Println(taskCtx.FormatContext())
 			}
@@ -163,11 +163,11 @@ var taskCmd = &cobra.Command{
 
 			claimedTask, err := client.ClaimTask(ctx, task.ID)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "claim task"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.claim", "task"), err)
 			}
 
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("common.success.completed", map[string]any{"Action": "Task claimed"}))
-			fmt.Printf("   %s %s\n", i18n.T("common.label.status"), formatTaskStatus(claimedTask.Status))
+			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.claim", "task"))
+			fmt.Printf("   %s %s\n", i18n.Label("status"), formatTaskStatus(claimedTask.Status))
 		}
 
 		return nil
@@ -225,10 +225,10 @@ func printTaskDetails(task *agentic.Task) {
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.id")), taskIDStyle.Render(task.ID))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.title")), taskTitleStyle.Render(task.Title))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.priority")), formatTaskPriority(task.Priority))
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.status")), formatTaskStatus(task.Status))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("status")), formatTaskStatus(task.Status))
 
 	if task.Project != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.project")), task.Project)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("project")), task.Project)
 	}
 
 	if len(task.Labels) > 0 {

@@ -85,12 +85,12 @@ func printTestSummary(results testResults, showCoverage bool) {
 	// Print pass/fail summary
 	total := results.passed + results.failed
 	if total > 0 {
-		fmt.Printf("  %s %s", testPassStyle.Render("✓"), i18n.T("common.count.passed", map[string]interface{}{"Count": results.passed}))
+		fmt.Printf("  %s %s", testPassStyle.Render("✓"), i18n.T("i18n.count.passed", results.passed))
 		if results.failed > 0 {
-			fmt.Printf("  %s %s", testFailStyle.Render("✗"), i18n.T("common.count.failed", map[string]interface{}{"Count": results.failed}))
+			fmt.Printf("  %s %s", testFailStyle.Render("✗"), i18n.T("i18n.count.failed", results.failed))
 		}
 		if results.skipped > 0 {
-			fmt.Printf("  %s %s", testSkipStyle.Render("○"), i18n.T("common.count.skipped", map[string]interface{}{"Count": results.skipped}))
+			fmt.Printf("  %s %s", testSkipStyle.Render("○"), i18n.T("i18n.count.skipped", results.skipped))
 		}
 		fmt.Println()
 	}
@@ -108,7 +108,7 @@ func printTestSummary(results testResults, showCoverage bool) {
 		printCoverageSummary(results)
 	} else if results.covCount > 0 {
 		avgCov := results.totalCov / float64(results.covCount)
-		fmt.Printf("\n  %s %s\n", i18n.T("common.label.coverage"), formatCoverage(avgCov))
+		fmt.Printf("\n  %s %s\n", i18n.Label("coverage"), formatCoverage(avgCov))
 	}
 }
 

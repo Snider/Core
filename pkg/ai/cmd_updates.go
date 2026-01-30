@@ -40,7 +40,7 @@ var taskUpdateCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -57,10 +57,10 @@ var taskUpdateCmd = &cobra.Command{
 		}
 
 		if err := client.UpdateTask(ctx, taskID, update); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "update task"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.update", "task"), err)
 		}
 
-		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("common.success.completed", map[string]any{"Action": "Task updated"}))
+		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.update", "task"))
 		return nil
 	},
 }
@@ -75,7 +75,7 @@ var taskCompleteCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -90,13 +90,13 @@ var taskCompleteCmd = &cobra.Command{
 		}
 
 		if err := client.CompleteTask(ctx, taskID, result); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "complete task"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.complete", "task"), err)
 		}
 
 		if taskCompleteFailed {
 			fmt.Printf("%s %s\n", errorStyle.Render(">>"), i18n.T("cmd.ai.task_complete.failed", map[string]interface{}{"ID": taskID}))
 		} else {
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("common.success.completed", map[string]any{"Action": "Task completed"}))
+			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.complete", "task"))
 		}
 		return nil
 	},

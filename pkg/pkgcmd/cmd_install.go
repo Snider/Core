@@ -74,16 +74,16 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 	repoPath := filepath.Join(targetDir, repoName)
 
 	if _, err := os.Stat(filepath.Join(repoPath, ".git")); err == nil {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.skip")), i18n.T("cmd.pkg.install.already_exists", map[string]string{"Name": repoName, "Path": repoPath}))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("skip")), i18n.T("cmd.pkg.install.already_exists", map[string]string{"Name": repoName, "Path": repoPath}))
 		return nil
 	}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create directory"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.create", "directory"), err)
 	}
 
 	fmt.Printf("%s %s/%s\n", dimStyle.Render(i18n.T("cmd.pkg.install.installing_label")), org, repoName)
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.target")), repoPath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("target")), repoPath)
 	fmt.Println()
 
 	fmt.Printf("  %s... ", dimStyle.Render(i18n.T("common.status.cloning")))
@@ -103,7 +103,7 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.pkg.install.installed", map[string]string{"Name": repoName}))
+	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("i18n.done.install")), i18n.T("cmd.pkg.install.installed", map[string]string{"Name": repoName}))
 
 	return nil
 }

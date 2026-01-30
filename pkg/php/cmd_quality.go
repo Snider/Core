@@ -27,14 +27,14 @@ func addPHPTestCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
 				return errors.New(i18n.T("cmd.php.error.not_php"))
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("common.progress.running", map[string]any{"Task": "tests"}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "tests"))
 
 			ctx := context.Background()
 
@@ -51,7 +51,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 			}
 
 			if err := RunTests(ctx, opts); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "run tests"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.run", "tests"), err)
 			}
 
 			return nil
@@ -79,7 +79,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -96,7 +96,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 			if fmtFix {
 				msg = i18n.T("cmd.php.fmt.formatting", map[string]interface{}{"Formatter": formatter})
 			} else {
-				msg = i18n.T("common.progress.checking", map[string]any{"Item": "code style"})
+				msg = i18n.ProgressSubject("check", "code style")
 			}
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), msg)
 
@@ -122,9 +122,9 @@ func addPHPFmtCommand(parent *cobra.Command) {
 			}
 
 			if fmtFix {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Code formatted"}))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Code formatted"}))
 			} else {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.fmt.no_issues"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.fmt.no_issues"))
 			}
 
 			return nil
@@ -150,7 +150,7 @@ func addPHPStanCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -163,7 +163,7 @@ func addPHPStanCommand(parent *cobra.Command) {
 				return errors.New(i18n.T("cmd.php.analyse.no_analyser"))
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("common.progress.running", map[string]any{"Task": "static analysis"}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "static analysis"))
 
 			ctx := context.Background()
 
@@ -183,7 +183,7 @@ func addPHPStanCommand(parent *cobra.Command) {
 				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.analysis_issues"), err)
 			}
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.result.no_issues"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.result.no_issues"))
 			return nil
 		},
 	}
@@ -213,7 +213,7 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -223,8 +223,8 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 			// Check if Psalm is available
 			_, found := DetectPsalm(cwd)
 			if !found {
-				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.php.psalm.not_found"))
-				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.install")), i18n.T("cmd.php.psalm.install"))
+				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.Label("error")), i18n.T("cmd.php.psalm.not_found"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("install")), i18n.T("cmd.php.psalm.install"))
 				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.setup")), i18n.T("cmd.php.psalm.setup"))
 				return errors.New(i18n.T("cmd.php.error.psalm_not_installed"))
 			}
@@ -252,7 +252,7 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.psalm_issues"), err)
 			}
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.result.no_issues"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.result.no_issues"))
 			return nil
 		},
 	}
@@ -278,7 +278,7 @@ func addPHPAuditCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -336,8 +336,8 @@ func addPHPAuditCommand(parent *cobra.Command) {
 			fmt.Println()
 
 			if totalVulns > 0 {
-				fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.warning")), i18n.T("cmd.php.audit.found_vulns", map[string]interface{}{"Count": totalVulns}))
-				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.fix")), i18n.T("common.hint.fix_deps"))
+				fmt.Printf("%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("cmd.php.audit.found_vulns", map[string]interface{}{"Count": totalVulns}))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("fix")), i18n.T("common.hint.fix_deps"))
 				return errors.New(i18n.T("cmd.php.error.vulns_found"))
 			}
 
@@ -345,7 +345,7 @@ func addPHPAuditCommand(parent *cobra.Command) {
 				return errors.New(i18n.T("cmd.php.audit.completed_errors"))
 			}
 
-			fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.audit.all_secure"))
+			fmt.Printf("%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.audit.all_secure"))
 			return nil
 		},
 	}
@@ -371,14 +371,14 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
 				return errors.New(i18n.T("cmd.php.error.not_php"))
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.security")), i18n.T("common.progress.running", map[string]any{"Task": "security checks"}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.security")), i18n.ProgressSubject("run", "security checks"))
 
 			ctx := context.Background()
 
@@ -415,7 +415,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 				if !check.Passed && check.Message != "" {
 					fmt.Printf("        %s\n", dimStyle.Render(check.Message))
 					if check.Fix != "" {
-						fmt.Printf("        %s %s\n", dimStyle.Render(i18n.T("common.label.fix")), check.Fix)
+						fmt.Printf("        %s %s\n", dimStyle.Render(i18n.Label("fix")), check.Fix)
 					}
 				}
 			}
@@ -423,7 +423,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 			fmt.Println()
 
 			// Print summary
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.summary")), i18n.T("cmd.php.security.summary"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("summary")), i18n.T("cmd.php.security.summary"))
 			fmt.Printf("  %s %d/%d\n", dimStyle.Render(i18n.T("cmd.php.security.passed")), result.Summary.Passed, result.Summary.Total)
 
 			if result.Summary.Critical > 0 {
@@ -469,7 +469,7 @@ func addPHPQACommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -493,13 +493,13 @@ func addPHPQACommand(parent *cobra.Command) {
 			// Create QA runner using pkg/process
 			runner, err := NewQARunner(cwd, qaFix)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create QA runner"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.create", "QA runner"), err)
 			}
 
 			// Run all checks with dependency ordering
 			result, err := runner.Run(ctx, stages)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "run QA checks"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.run", "QA checks"), err)
 			}
 
 			// Display results by stage
@@ -619,7 +619,7 @@ func addPHPRectorCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -628,8 +628,8 @@ func addPHPRectorCommand(parent *cobra.Command) {
 
 			// Check if Rector is available
 			if !DetectRector(cwd) {
-				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.php.rector.not_found"))
-				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.install")), i18n.T("cmd.php.rector.install"))
+				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.Label("error")), i18n.T("cmd.php.rector.not_found"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("install")), i18n.T("cmd.php.rector.install"))
 				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.setup")), i18n.T("cmd.php.rector.setup"))
 				return errors.New(i18n.T("cmd.php.error.rector_not_installed"))
 			}
@@ -662,9 +662,9 @@ func addPHPRectorCommand(parent *cobra.Command) {
 			}
 
 			if rectorFix {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Code refactored"}))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Code refactored"}))
 			} else {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.rector.no_changes"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.rector.no_changes"))
 			}
 			return nil
 		},
@@ -693,7 +693,7 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			if !IsPHPProject(cwd) {
@@ -702,12 +702,12 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 
 			// Check if Infection is available
 			if !DetectInfection(cwd) {
-				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.php.infection.not_found"))
-				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.install")), i18n.T("cmd.php.infection.install"))
+				fmt.Printf("%s %s\n\n", errorStyle.Render(i18n.Label("error")), i18n.T("cmd.php.infection.not_found"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("install")), i18n.T("cmd.php.infection.install"))
 				return errors.New(i18n.T("cmd.php.error.infection_not_installed"))
 			}
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.infection")), i18n.T("common.progress.running", map[string]any{"Task": "mutation testing"}))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.infection")), i18n.ProgressSubject("run", "mutation testing"))
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.infection.note"))
 
 			ctx := context.Background()
@@ -726,7 +726,7 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.infection_failed"), err)
 			}
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.infection.complete"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.infection.complete"))
 			return nil
 		},
 	}

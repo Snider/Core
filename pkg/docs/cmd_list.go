@@ -32,7 +32,7 @@ func runDocsList(registryPath string) error {
 	}
 
 	fmt.Printf("\n%-20s  %-8s  %-8s  %-10s  %s\n",
-		headerStyle.Render(i18n.T("common.label.repo")),
+		headerStyle.Render(i18n.Label("repo")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.readme")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.claude")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.changelog")),
@@ -70,7 +70,7 @@ func runDocsList(registryPath string) error {
 
 	fmt.Println()
 	fmt.Printf("%s %s\n",
-		cli.Label(i18n.T("common.label.coverage")),
+		cli.Label(i18n.Label("coverage")),
 		i18n.T("cmd.docs.list.coverage_summary", map[string]interface{}{"WithDocs": withDocs, "WithoutDocs": withoutDocs}),
 	)
 

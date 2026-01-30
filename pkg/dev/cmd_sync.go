@@ -24,9 +24,9 @@ func addSyncCommand(parent *cobra.Command) {
 		Long:  i18n.T("cmd.dev.sync.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := runSync(); err != nil {
-				return fmt.Errorf("%s %w", i18n.T("common.label.error"), err)
+				return fmt.Errorf("%s %w", i18n.Label("error"), err)
 			}
-			fmt.Println(i18n.T("common.success.completed", map[string]any{"Action": "Public APIs synchronized"}))
+			fmt.Println(i18n.T("i18n.done.sync", "public APIs"))
 			return nil
 		},
 	}

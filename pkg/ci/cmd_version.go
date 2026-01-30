@@ -12,14 +12,14 @@ import (
 func runCIReleaseVersion() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 	}
 
 	version, err := release.DetermineVersion(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "determine version"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.determine", "version"), err)
 	}
 
-	fmt.Printf("%s %s\n", i18n.T("common.label.version"), releaseValueStyle.Render(version))
+	fmt.Printf("%s %s\n", i18n.Label("version"), releaseValueStyle.Render(version))
 	return nil
 }

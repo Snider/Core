@@ -98,7 +98,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		}
 
 		if os.Getenv("GH_TOKEN") != "" {
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.note")), i18n.T("cmd.pkg.search.gh_token_warning"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("note")), i18n.T("cmd.pkg.search.gh_token_warning"))
 			fmt.Printf("%s %s\n\n", dimStyle.Render(""), i18n.T("cmd.pkg.search.gh_token_unset"))
 		}
 
@@ -119,7 +119,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		}
 
 		if err := json.Unmarshal(output, &ghRepos); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "parse results"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.parse", "results"), err)
 		}
 
 		if c != nil {

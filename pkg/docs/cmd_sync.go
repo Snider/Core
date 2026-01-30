@@ -105,7 +105,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	}
 
 	fmt.Printf("\n%s %s\n",
-		dimStyle.Render(i18n.T("common.label.total")),
+		dimStyle.Render(i18n.Label("total")),
 		i18n.T("cmd.docs.sync.total_summary", map[string]interface{}{"Files": totalFiles, "Repos": len(docsInfo), "Output": outputDir}))
 
 	if dryRun {
@@ -150,7 +150,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		synced++
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("i18n.done.sync")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
 
 	return nil
 }

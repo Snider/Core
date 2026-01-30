@@ -31,7 +31,7 @@ func addPHPBuildCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			ctx := context.Background()
@@ -92,7 +92,7 @@ func runPHPBuildDocker(ctx context.Context, projectDir string, opts dockerBuildO
 	// Show detected configuration
 	config, err := DetectDockerfileConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "detect project configuration"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.detect", "project configuration"), err)
 	}
 
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.php_version")), config.PHPVersion)
@@ -128,17 +128,17 @@ func runPHPBuildDocker(ctx context.Context, projectDir string, opts dockerBuildO
 		buildOpts.Tag = "latest"
 	}
 
-	fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.T("common.label.image")), buildOpts.ImageName, buildOpts.Tag)
+	fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.Label("image")), buildOpts.ImageName, buildOpts.Tag)
 	if opts.Platform != "" {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.platform")), opts.Platform)
 	}
 	fmt.Println()
 
 	if err := BuildDocker(ctx, buildOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.build"), err)
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Docker image built"}))
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Docker image built"}))
 	fmt.Printf("%s docker run -p 80:80 -p 443:443 %s:%s\n",
 		dimStyle.Render(i18n.T("cmd.php.build.docker_run_with")),
 		buildOpts.ImageName, buildOpts.Tag)
@@ -168,15 +168,15 @@ func runPHPBuildLinuxKit(ctx context.Context, projectDir string, opts linuxKitBu
 		buildOpts.Template = "server-php"
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.template")), buildOpts.Template)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("template")), buildOpts.Template)
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.format")), buildOpts.Format)
 	fmt.Println()
 
 	if err := BuildLinuxKit(ctx, buildOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.build"), err)
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "LinuxKit image built"}))
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "LinuxKit image built"}))
 	return nil
 }
 
@@ -224,8 +224,8 @@ func addPHPServeCommand(parent *cobra.Command) {
 				Output:        os.Stdout,
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("common.progress.running", map[string]any{"Task": "production container"}))
-			fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.T("common.label.image")), imageName, func() string {
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "production container"))
+			fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.Label("image")), imageName, func() string {
 				if serveTag == "" {
 					return "latest"
 				}
@@ -246,7 +246,7 @@ func addPHPServeCommand(parent *cobra.Command) {
 			fmt.Println()
 
 			if err := ServeProduction(ctx, opts); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "start container"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.start", "container"), err)
 			}
 
 			if !serveDetach {
@@ -280,7 +280,7 @@ func addPHPShellCommand(parent *cobra.Command) {
 			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.shell.opening", map[string]interface{}{"Container": args[0]}))
 
 			if err := Shell(ctx, args[0]); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "open shell"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.open", "shell"), err)
 			}
 
 			return nil

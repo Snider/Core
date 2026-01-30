@@ -30,7 +30,7 @@ func runRegistrySetup(ctx context.Context, registryPath, only string, dryRun, al
 
 // runRegistrySetupWithReg runs setup with an already-loaded registry.
 func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryPath, only string, dryRun, all, runBuild bool) error {
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.setup.org_label")), reg.Org)
 
 	// Determine base path for cloning
@@ -48,7 +48,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		basePath = filepath.Join(home, basePath[2:])
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.target")), basePath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("target")), basePath)
 
 	// Parse type filter
 	var typeFilter []string
@@ -56,7 +56,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		for _, t := range strings.Split(only, ",") {
 			typeFilter = append(typeFilter, strings.TrimSpace(t))
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.filter")), only)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("filter")), only)
 	}
 
 	// Ensure base path exists
@@ -188,9 +188,9 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 
 	// Summary
 	fmt.Println()
-	fmt.Printf("%s %s", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.setup.cloned_count", map[string]interface{}{"Count": succeeded}))
+	fmt.Printf("%s %s", successStyle.Render(i18n.Label("done")), i18n.T("cmd.setup.cloned_count", map[string]interface{}{"Count": succeeded}))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("i18n.count.failed", failed)))
 	}
 	if exists > 0 {
 		fmt.Printf(", %s", i18n.T("cmd.setup.already_exist_count", map[string]interface{}{"Count": exists}))
@@ -200,13 +200,13 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	// Run build if requested
 	if runBuild && succeeded > 0 {
 		fmt.Println()
-		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("common.progress.running", map[string]any{"Task": "build"}))
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("run", "build"))
 		buildCmd := exec.Command("core", "build")
 		buildCmd.Dir = basePath
 		buildCmd.Stdout = os.Stdout
 		buildCmd.Stderr = os.Stderr
 		if err := buildCmd.Run(); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
+			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.run", "build"), err)
 		}
 	}
 

@@ -244,7 +244,7 @@ func printStatusTable(statuses []git.RepoStatus) {
 	// Print header with fixed-width formatting
 	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth,
-		cli.TitleStyle.Render(i18n.T("common.label.repo")),
+		cli.TitleStyle.Render(i18n.Label("repo")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_modified")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_untracked")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_staged")),
@@ -341,7 +341,7 @@ func loadRegistry(registryPath string) ([]string, map[string]string, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
+		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -349,7 +349,7 @@ func loadRegistry(registryPath string) ([]string, map[string]string, error) {
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()

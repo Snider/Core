@@ -186,7 +186,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.error")), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}
 	}
 
