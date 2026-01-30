@@ -87,6 +87,9 @@ func RunTests(ctx context.Context, opts TestOptions) error {
 	cmd.Stderr = opts.Output
 	cmd.Stdin = os.Stdin
 
+	// Set XDEBUG_MODE=coverage to avoid PHPUnit 11 warning
+	cmd.Env = append(os.Environ(), "XDEBUG_MODE=coverage")
+
 	return cmd.Run()
 }
 
