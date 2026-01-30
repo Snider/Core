@@ -18,12 +18,6 @@ func OnMissingKey(h MissingKeyHandler) {
 	missingKeyHandler = h
 }
 
-// SetActionHandler registers a handler for missing key dispatches.
-// Deprecated: Use OnMissingKey instead.
-func SetActionHandler(h func(action MissingKeyAction)) {
-	OnMissingKey(h)
-}
-
 // dispatchMissingKey creates and dispatches a MissingKey event.
 // Called internally when a key is missing in ModeCollect.
 func dispatchMissingKey(key string, args map[string]any) {

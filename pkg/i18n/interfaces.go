@@ -486,10 +486,6 @@ type MissingKey struct {
 	CallerLine int            // Line number where T() was called
 }
 
-// MissingKeyAction is an alias for backwards compatibility.
-// Deprecated: Use MissingKey instead.
-type MissingKeyAction = MissingKey
-
 // PluralRule is a function that determines the plural category for a count.
 // Each language has its own plural rule based on CLDR data.
 //

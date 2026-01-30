@@ -26,28 +26,28 @@ func TestMode_String(t *testing.T) {
 	}
 }
 
-func TestMissingKeyAction(t *testing.T) {
-	action := MissingKeyAction{
+func TestMissingKey(t *testing.T) {
+	mk := MissingKey{
 		Key:        "test.missing.key",
 		Args:       map[string]any{"Name": "test"},
 		CallerFile: "/path/to/file.go",
 		CallerLine: 42,
 	}
 
-	assert.Equal(t, "test.missing.key", action.Key)
-	assert.Equal(t, "test", action.Args["Name"])
-	assert.Equal(t, "/path/to/file.go", action.CallerFile)
-	assert.Equal(t, 42, action.CallerLine)
+	assert.Equal(t, "test.missing.key", mk.Key)
+	assert.Equal(t, "test", mk.Args["Name"])
+	assert.Equal(t, "/path/to/file.go", mk.CallerFile)
+	assert.Equal(t, 42, mk.CallerLine)
 }
 
-func TestSetActionHandler(t *testing.T) {
+func TestOnMissingKey(t *testing.T) {
 	// Reset handler after test
-	defer SetActionHandler(nil)
+	defer OnMissingKey(nil)
 
 	t.Run("sets handler", func(t *testing.T) {
-		var received MissingKeyAction
-		SetActionHandler(func(action MissingKeyAction) {
-			received = action
+		var received MissingKey
+		OnMissingKey(func(mk MissingKey) {
+			received = mk
 		})
 
 		dispatchMissingKey("test.key", map[string]any{"foo": "bar"})
@@ -57,7 +57,7 @@ func TestSetActionHandler(t *testing.T) {
 	})
 
 	t.Run("nil handler", func(t *testing.T) {
-		SetActionHandler(nil)
+		OnMissingKey(nil)
 		// Should not panic
 		dispatchMissingKey("test.key", nil)
 	})
@@ -66,10 +66,10 @@ func TestSetActionHandler(t *testing.T) {
 		called1 := false
 		called2 := false
 
-		SetActionHandler(func(action MissingKeyAction) {
+		OnMissingKey(func(mk MissingKey) {
 			called1 = true
 		})
-		SetActionHandler(func(action MissingKeyAction) {
+		OnMissingKey(func(mk MissingKey) {
 			called2 = true
 		})
 
@@ -138,16 +138,16 @@ func TestModeStrict_MissingKey(t *testing.T) {
 
 func TestModeCollect_MissingKey(t *testing.T) {
 	// Reset handler after test
-	defer SetActionHandler(nil)
+	defer OnMissingKey(nil)
 
 	svc, err := New()
 	require.NoError(t, err)
 
 	svc.SetMode(ModeCollect)
 
-	var received MissingKeyAction
-	SetActionHandler(func(action MissingKeyAction) {
-		received = action
+	var received MissingKey
+	OnMissingKey(func(mk MissingKey) {
+		received = mk
 	})
 
 	// Missing key should dispatch action and return [key]
@@ -159,4 +159,3 @@ func TestModeCollect_MissingKey(t *testing.T) {
 	assert.NotEmpty(t, received.CallerFile)
 	assert.Greater(t, received.CallerLine, 0)
 }
-
