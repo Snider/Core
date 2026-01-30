@@ -13,7 +13,7 @@ const (
 	ModeNormal Mode = iota
 	// ModeStrict panics immediately when a translation is missing (dev/CI).
 	ModeStrict
-	// ModeCollect dispatches a MissingKeyAction and returns [key] (QA testing).
+	// ModeCollect dispatches MissingKey actions and returns [key] (QA testing).
 	ModeCollect
 )
 
@@ -31,31 +31,45 @@ func (m Mode) String() string {
 	}
 }
 
-// MissingKeyAction is dispatched when a translation key is not found in collect mode.
-// It contains caller information for debugging and QA purposes.
-type MissingKeyAction struct {
+// MissingKey is dispatched when a translation key is not found in ModeCollect.
+// Used by QA tools to collect and report missing translations.
+type MissingKey struct {
 	Key        string         // The missing translation key
 	Args       map[string]any // Arguments passed to the translation
-	CallerFile string         // Source file where T() was called
-	CallerLine int            // Line number where T() was called
+	CallerFile string         // Source file where T()/C() was called
+	CallerLine int            // Line number where T()/C() was called
 }
 
-// ActionHandler is a function that handles MissingKeyAction dispatches.
-// Register handlers via SetActionHandler to receive missing key notifications.
-type ActionHandler func(action MissingKeyAction)
+// MissingKeyAction is an alias for backwards compatibility.
+// Deprecated: Use MissingKey instead.
+type MissingKeyAction = MissingKey
 
-var actionHandler ActionHandler
+// MissingKeyHandler receives missing key events for analysis.
+type MissingKeyHandler func(missing MissingKey)
 
-// SetActionHandler registers a handler for MissingKeyAction dispatches.
-// Only one handler can be active at a time; subsequent calls replace the previous handler.
-func SetActionHandler(h ActionHandler) {
-	actionHandler = h
+var missingKeyHandler MissingKeyHandler
+
+// OnMissingKey registers a handler for missing translation keys.
+// Called when T() or C() can't find a key in ModeCollect.
+//
+//	i18n.SetMode(i18n.ModeCollect)
+//	i18n.OnMissingKey(func(m i18n.MissingKey) {
+//	    log.Printf("MISSING: %s at %s:%d", m.Key, m.CallerFile, m.CallerLine)
+//	})
+func OnMissingKey(h MissingKeyHandler) {
+	missingKeyHandler = h
 }
 
-// dispatchMissingKey creates and dispatches a MissingKeyAction.
-// Called internally when a key is missing in collect mode.
+// SetActionHandler registers a handler for missing key dispatches.
+// Deprecated: Use OnMissingKey instead.
+func SetActionHandler(h func(action MissingKeyAction)) {
+	OnMissingKey(h)
+}
+
+// dispatchMissingKey creates and dispatches a MissingKey event.
+// Called internally when a key is missing in ModeCollect.
 func dispatchMissingKey(key string, args map[string]any) {
-	if actionHandler == nil {
+	if missingKeyHandler == nil {
 		return
 	}
 
@@ -65,7 +79,7 @@ func dispatchMissingKey(key string, args map[string]any) {
 		line = 0
 	}
 
-	actionHandler(MissingKeyAction{
+	missingKeyHandler(MissingKey{
 		Key:        key,
 		Args:       args,
 		CallerFile: file,
