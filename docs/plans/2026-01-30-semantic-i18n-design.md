@@ -371,6 +371,112 @@ if !cli.Confirm("core.commit", i18n.S("file", path).Count(len(files))) {
 }
 ```
 
+## Grammar Fundamentals
+
+Parts of speech we need to handle:
+
+| Part | Role | Example | Transforms |
+|------|------|---------|------------|
+| **Verb** | Action | delete, save, commit | tense (past/present), mood (imperative) |
+| **Noun** | Subject/Object | file, commit, user | plurality, gender, case |
+| **Article** | Determiner | a/an, the | vowel-awareness, gender agreement |
+| **Adjective** | Describes noun | modified, new, deleted | gender/number agreement |
+| **Preposition** | Relation | in, from, to | - |
+
+### Verb Conjugation
+
+```json
+{
+  "common": {
+    "verb": {
+      "delete": {
+        "base": "delete",
+        "past": "deleted",
+        "gerund": "deleting",
+        "imperative": "delete"
+      }
+    }
+  }
+}
+```
+
+For most English verbs, derive automatically:
+- `past`: base + "ed" (or irregular lookup)
+- `gerund`: base + "ing"
+
+### Noun Handling
+
+```json
+{
+  "common": {
+    "noun": {
+      "file": {
+        "one": "file",
+        "other": "files",
+        "gender": "neuter"
+      }
+    }
+  }
+}
+```
+
+### Article Selection
+
+English: a/an based on next word's sound (not letter)
+- "a file", "an item", "a user", "an hour"
+
+Other languages: gender agreement (der/die/das, le/la, etc.)
+
+## DX Improvements
+
+### 1. Compile-Time Validation
+- `go generate` checks all `T("core.X")` calls have matching JSON keys
+- Warns on missing `_meta` fields
+- Type-checks template variables
+
+### 2. IDE Support
+- JSON schema for autocomplete in translation files
+- Go constants generated from JSON keys: `i18n.CoreDelete` instead of `"core.delete"`
+
+### 3. Fallback Chain
+```
+T("core.delete", subject)
+  → try core.delete.question
+  → try core.delete (plain string)
+  → try common.action.delete
+  → return "Delete {{.Subject}}?" (hardcoded fallback)
+```
+
+### 4. Debug Mode
+```go
+i18n.Debug(true)  // Shows: [core.delete] Delete file.txt?
+```
+
+### 5. Short Subject Syntax
+```go
+// Instead of:
+i18n.T("core.delete", i18n.S("file", path))
+
+// Allow:
+i18n.T("core.delete", path)  // Infers subject type from intent's expected noun
+```
+
+### 6. Fluent Chaining
+```go
+i18n.T("core.delete").
+    Subject("file", path).
+    Count(3).
+    Question()  // Returns just the question string
+```
+
+## Notes for Future Implementation
+
+- Use `github.com/gertd/go-pluralize` for English plurality
+- Consider `github.com/nicksnyder/go-i18n` patterns for CLDR plural rules
+- Store compiled templates in sync.Map for caching
+- `_meta` parsing happens once at load time, not per-call
+- CLI prompt chars from `common.prompt.*` - allows `[j/N]` for German
+
 ## Open Questions
 
 1. **Verb conjugation library** - Use existing Go library or build custom?
