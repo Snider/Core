@@ -343,3 +343,56 @@ func TestRawBypassesI18nNamespace(t *testing.T) {
 	result = svc.T("i18n.label.status")
 	assert.Equal(t, "Status:", result)
 }
+
+func TestFormalityMessageSelection(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	// Add test messages with formality variants
+	svc.AddMessages("en-GB", map[string]string{
+		"greeting":           "Hello",
+		"greeting._formal":   "Good morning, sir",
+		"greeting._informal": "Hey there",
+		"farewell":           "Goodbye",
+		"farewell._formal":   "Farewell",
+	})
+
+	t.Run("neutral formality uses base key", func(t *testing.T) {
+		svc.SetFormality(FormalityNeutral)
+		assert.Equal(t, "Hello", svc.T("greeting"))
+		assert.Equal(t, "Goodbye", svc.T("farewell"))
+	})
+
+	t.Run("formal uses ._formal variant", func(t *testing.T) {
+		svc.SetFormality(FormalityFormal)
+		assert.Equal(t, "Good morning, sir", svc.T("greeting"))
+		assert.Equal(t, "Farewell", svc.T("farewell"))
+	})
+
+	t.Run("informal uses ._informal variant", func(t *testing.T) {
+		svc.SetFormality(FormalityInformal)
+		assert.Equal(t, "Hey there", svc.T("greeting"))
+		// No informal variant for farewell, falls back to base
+		assert.Equal(t, "Goodbye", svc.T("farewell"))
+	})
+
+	t.Run("subject formality overrides service formality", func(t *testing.T) {
+		svc.SetFormality(FormalityNeutral)
+
+		// Subject with formal overrides neutral service
+		result := svc.T("greeting", S("user", "test").Formal())
+		assert.Equal(t, "Good morning, sir", result)
+
+		// Subject with informal overrides neutral service
+		result = svc.T("greeting", S("user", "test").Informal())
+		assert.Equal(t, "Hey there", result)
+	})
+
+	t.Run("subject formality overrides service formal", func(t *testing.T) {
+		svc.SetFormality(FormalityFormal)
+
+		// Subject with informal overrides formal service
+		result := svc.T("greeting", S("user", "test").Informal())
+		assert.Equal(t, "Hey there", result)
+	})
+}

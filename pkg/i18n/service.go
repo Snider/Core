@@ -414,6 +414,24 @@ func (s *Service) resolveWithFallback(messageID string, data any) string {
 // Returns empty string if not found.
 // Must be called with s.mu.RLock held.
 func (s *Service) tryResolve(lang, key string, data any) string {
+	// Determine effective formality
+	formality := s.getEffectiveFormality(data)
+
+	// Try formality-specific key first (key._formal or key._informal)
+	if formality != FormalityNeutral {
+		formalityKey := key + "._" + formality.String()
+		if text := s.resolveMessage(lang, formalityKey, data); text != "" {
+			return text
+		}
+	}
+
+	// Fall back to base key
+	return s.resolveMessage(lang, key, data)
+}
+
+// resolveMessage resolves a single message key without formality fallback.
+// Must be called with s.mu.RLock held.
+func (s *Service) resolveMessage(lang, key string, data any) string {
 	msg, ok := s.getMessage(lang, key)
 	if !ok {
 		return ""
@@ -436,6 +454,28 @@ func (s *Service) tryResolve(lang, key string, data any) string {
 	}
 
 	return text
+}
+
+// getEffectiveFormality returns the formality to use for translation.
+// Priority: Subject.formality > Service.formality > FormalityNeutral
+// Must be called with s.mu.RLock held.
+func (s *Service) getEffectiveFormality(data any) Formality {
+	// Check if data is a Subject with explicit formality
+	if subj, ok := data.(*Subject); ok && subj != nil {
+		if subj.formality != FormalityNeutral {
+			return subj.formality
+		}
+	}
+
+	// Check if data is a map with Formality field
+	if m, ok := data.(map[string]any); ok {
+		if f, ok := m["Formality"].(Formality); ok && f != FormalityNeutral {
+			return f
+		}
+	}
+
+	// Fall back to service default
+	return s.formality
 }
 
 // handleMissingKey handles a missing translation key based on the current mode.
