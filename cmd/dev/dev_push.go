@@ -141,9 +141,7 @@ func runPush(registryPath string, force bool) error {
 			succeeded++
 		} else {
 			// Check if this is a non-fast-forward error (diverged branch)
-			isNFF := git.IsNonFastForward(r.Error)
-			fmt.Fprintf(os.Stderr, "[DEBUG] IsNonFastForward=%v, err=%q\n", isNFF, r.Error)
-			if isNFF {
+			if git.IsNonFastForward(r.Error) {
 				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), r.Name, i18n.T("cmd.dev.push.diverged"))
 				divergedRepos = append(divergedRepos, r)
 			} else {
