@@ -114,3 +114,38 @@ type Message struct {
 	Many  string // Larger numbers (Slavic: 5+, Arabic: 11-99)
 	Other string // Default/fallback form
 }
+
+// ForCategory returns the appropriate text for a plural category.
+// Falls back through the category hierarchy to find a non-empty string.
+func (m Message) ForCategory(cat PluralCategory) string {
+	switch cat {
+	case PluralZero:
+		if m.Zero != "" {
+			return m.Zero
+		}
+	case PluralOne:
+		if m.One != "" {
+			return m.One
+		}
+	case PluralTwo:
+		if m.Two != "" {
+			return m.Two
+		}
+	case PluralFew:
+		if m.Few != "" {
+			return m.Few
+		}
+	case PluralMany:
+		if m.Many != "" {
+			return m.Many
+		}
+	}
+	// Fallback to Other, then One, then Text
+	if m.Other != "" {
+		return m.Other
+	}
+	if m.One != "" {
+		return m.One
+	}
+	return m.Text
+}
