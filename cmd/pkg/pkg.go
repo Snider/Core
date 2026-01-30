@@ -2,19 +2,19 @@
 package pkg
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style and utility aliases
 var (
-	repoNameStyle   = shared.RepoNameStyle
-	successStyle    = shared.SuccessStyle
-	errorStyle      = shared.ErrorStyle
-	dimStyle        = shared.DimStyle
-	ghAuthenticated = shared.GhAuthenticated
-	gitClone        = shared.GitClone
+	repoNameStyle   = cli.RepoNameStyle
+	successStyle    = cli.SuccessStyle
+	errorStyle      = cli.ErrorStyle
+	dimStyle        = cli.DimStyle
+	ghAuthenticated = cli.GhAuthenticated
+	gitClone        = cli.GitClone
 )
 
 // AddPkgCommands adds the 'pkg' command and subcommands for package management.

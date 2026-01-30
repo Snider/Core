@@ -3,23 +3,23 @@ package vm
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
 var (
-	repoNameStyle = shared.RepoNameStyle
-	successStyle  = shared.SuccessStyle
-	errorStyle    = shared.ErrorStyle
-	dimStyle      = shared.DimStyle
+	repoNameStyle = cli.RepoNameStyle
+	successStyle  = cli.SuccessStyle
+	errorStyle    = cli.ErrorStyle
+	dimStyle      = cli.DimStyle
 )
 
 // VM-specific styles
 var (
-	varStyle     = lipgloss.NewStyle().Foreground(shared.ColourAmber500)
-	defaultStyle = lipgloss.NewStyle().Foreground(shared.ColourGray500).Italic(true)
+	varStyle     = lipgloss.NewStyle().Foreground(cli.ColourAmber500)
+	defaultStyle = lipgloss.NewStyle().Foreground(cli.ColourGray500).Italic(true)
 )
 
 // AddVMCommands adds container-related commands under 'vm' to the CLI.

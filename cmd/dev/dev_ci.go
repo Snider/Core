@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
@@ -16,10 +16,10 @@ import (
 
 // CI-specific styles (aliases to shared)
 var (
-	ciSuccessStyle = shared.SuccessStyle
-	ciFailureStyle = shared.ErrorStyle
-	ciPendingStyle = shared.StatusWarningStyle
-	ciSkippedStyle = shared.DimStyle
+	ciSuccessStyle = cli.SuccessStyle
+	ciFailureStyle = cli.ErrorStyle
+	ciPendingStyle = cli.StatusWarningStyle
+	ciSkippedStyle = cli.DimStyle
 )
 
 // WorkflowRun represents a GitHub Actions workflow run
@@ -246,10 +246,10 @@ func printWorkflowRun(run WorkflowRun) {
 	}
 
 	// Workflow name (truncated)
-	workflowName := shared.Truncate(run.Name, 20)
+	workflowName := cli.Truncate(run.Name, 20)
 
 	// Age
-	age := shared.FormatAge(run.UpdatedAt)
+	age := cli.FormatAge(run.UpdatedAt)
 
 	fmt.Printf("  %s %-18s %-22s %s\n",
 		status,

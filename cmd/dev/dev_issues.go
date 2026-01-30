@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
@@ -17,12 +17,12 @@ import (
 
 // Issue-specific styles (aliases to shared)
 var (
-	issueRepoStyle     = shared.DimStyle
-	issueNumberStyle   = shared.TitleStyle
-	issueTitleStyle    = shared.ValueStyle
-	issueLabelStyle    = shared.WarningStyle
-	issueAssigneeStyle = shared.StatusSuccessStyle
-	issueAgeStyle      = shared.DimStyle
+	issueRepoStyle     = cli.DimStyle
+	issueNumberStyle   = cli.TitleStyle
+	issueTitleStyle    = cli.ValueStyle
+	issueLabelStyle    = cli.WarningStyle
+	issueAssigneeStyle = cli.StatusSuccessStyle
+	issueAgeStyle      = cli.DimStyle
 )
 
 // GitHubIssue represents a GitHub issue from the API.
@@ -201,7 +201,7 @@ func printIssue(issue GitHubIssue) {
 	// #42 [core-bio] Fix avatar upload
 	num := issueNumberStyle.Render(fmt.Sprintf("#%d", issue.Number))
 	repo := issueRepoStyle.Render(fmt.Sprintf("[%s]", issue.RepoName))
-	title := issueTitleStyle.Render(shared.Truncate(issue.Title, 60))
+	title := issueTitleStyle.Render(cli.Truncate(issue.Title, 60))
 
 	line := fmt.Sprintf("  %s %s %s", num, repo, title)
 
@@ -224,7 +224,7 @@ func printIssue(issue GitHubIssue) {
 	}
 
 	// Add age
-	age := shared.FormatAge(issue.CreatedAt)
+	age := cli.FormatAge(issue.CreatedAt)
 	line += " " + issueAgeStyle.Render(age)
 
 	fmt.Println(line)

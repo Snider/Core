@@ -2,22 +2,22 @@
 package docs
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style and utility aliases from shared
 var (
-	repoNameStyle    = shared.RepoNameStyle
-	successStyle     = shared.SuccessStyle
-	errorStyle       = shared.ErrorStyle
-	dimStyle         = shared.DimStyle
-	headerStyle      = shared.HeaderStyle
-	confirm          = shared.Confirm
-	docsFoundStyle   = shared.SuccessStyle
-	docsMissingStyle = shared.DimStyle
-	docsFileStyle    = shared.InfoStyle
+	repoNameStyle    = cli.RepoNameStyle
+	successStyle     = cli.SuccessStyle
+	errorStyle       = cli.ErrorStyle
+	dimStyle         = cli.DimStyle
+	headerStyle      = cli.HeaderStyle
+	confirm          = cli.Confirm
+	docsFoundStyle   = cli.SuccessStyle
+	docsMissingStyle = cli.DimStyle
+	docsFileStyle    = cli.InfoStyle
 )
 
 var docsCmd = &cobra.Command{

@@ -4,16 +4,16 @@
 package gocmd
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases for shared styles
 var (
-	successStyle = shared.SuccessStyle
-	errorStyle   = shared.ErrorStyle
-	dimStyle     = shared.DimStyle
+	successStyle = cli.SuccessStyle
+	errorStyle   = cli.ErrorStyle
+	dimStyle     = cli.DimStyle
 )
 
 // AddGoCommands adds Go development commands.

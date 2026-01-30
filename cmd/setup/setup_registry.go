@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 )
@@ -216,7 +216,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 // gitClone clones a repository using gh CLI or git.
 func gitClone(ctx context.Context, org, repo, path string) error {
 	// Try gh clone first with HTTPS (works without SSH keys)
-	if shared.GhAuthenticated() {
+	if cli.GhAuthenticated() {
 		// Use HTTPS URL directly to bypass git_protocol config
 		httpsURL := fmt.Sprintf("https://github.com/%s/%s.git", org, repo)
 		cmd := exec.CommandContext(ctx, "gh", "repo", "clone", httpsURL, path)

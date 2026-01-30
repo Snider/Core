@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
@@ -128,7 +128,7 @@ func runCommit(registryPath string, all bool) error {
 	// Confirm unless --all
 	if !all {
 		fmt.Println()
-		if !shared.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
+		if !cli.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
 			fmt.Println(i18n.T("cli.aborted"))
 			return nil
 		}
@@ -207,7 +207,7 @@ func runCommitSingleRepo(ctx context.Context, repoPath string, all bool) error {
 	// Confirm unless --all
 	if !all {
 		fmt.Println()
-		if !shared.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
+		if !cli.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
 			fmt.Println(i18n.T("cli.aborted"))
 			return nil
 		}

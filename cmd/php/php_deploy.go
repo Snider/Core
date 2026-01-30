@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	phppkg "github.com/host-uk/core/pkg/php"
 	"github.com/spf13/cobra"
@@ -14,9 +14,9 @@ import (
 
 // Deploy command styles (aliases to shared)
 var (
-	phpDeployStyle        = shared.DeploySuccessStyle
-	phpDeployPendingStyle = shared.StatusWarningStyle
-	phpDeployFailedStyle  = shared.StatusErrorStyle
+	phpDeployStyle        = cli.DeploySuccessStyle
+	phpDeployPendingStyle = cli.StatusWarningStyle
+	phpDeployFailedStyle  = cli.StatusErrorStyle
 )
 
 func addPHPDeployCommands(parent *cobra.Command) {

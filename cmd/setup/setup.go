@@ -2,17 +2,17 @@
 package setup
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared package
 var (
-	repoNameStyle = shared.RepoNameStyle
-	successStyle  = shared.SuccessStyle
-	errorStyle    = shared.ErrorStyle
-	dimStyle      = shared.DimStyle
+	repoNameStyle = cli.RepoNameStyle
+	successStyle  = cli.SuccessStyle
+	errorStyle    = cli.ErrorStyle
+	dimStyle      = cli.DimStyle
 )
 
 // Default organization and devops repo for bootstrap

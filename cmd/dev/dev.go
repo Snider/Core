@@ -29,27 +29,27 @@
 package dev
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared package
 var (
-	successStyle  = shared.SuccessStyle
-	errorStyle    = shared.ErrorStyle
-	warningStyle  = shared.WarningStyle
-	dimStyle      = shared.DimStyle
-	valueStyle    = shared.ValueStyle
-	headerStyle   = shared.HeaderStyle
-	repoNameStyle = shared.RepoNameStyle
+	successStyle  = cli.SuccessStyle
+	errorStyle    = cli.ErrorStyle
+	warningStyle  = cli.WarningStyle
+	dimStyle      = cli.DimStyle
+	valueStyle    = cli.ValueStyle
+	headerStyle   = cli.HeaderStyle
+	repoNameStyle = cli.RepoNameStyle
 )
 
 // Table styles for status display (extends shared styles with cell padding)
 var (
-	dirtyStyle = shared.GitDirtyStyle.Padding(0, 1)
-	aheadStyle = shared.GitAheadStyle.Padding(0, 1)
-	cleanStyle = shared.GitCleanStyle.Padding(0, 1)
+	dirtyStyle = cli.GitDirtyStyle.Padding(0, 1)
+	aheadStyle = cli.GitAheadStyle.Padding(0, 1)
+	cleanStyle = cli.GitCleanStyle.Padding(0, 1)
 )
 
 // AddCommands registers the 'dev' command and all subcommands.

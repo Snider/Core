@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
@@ -17,13 +17,13 @@ import (
 
 // PR-specific styles (aliases to shared)
 var (
-	prNumberStyle   = shared.PrNumberStyle
-	prTitleStyle    = shared.ValueStyle
-	prAuthorStyle   = shared.InfoStyle
-	prApprovedStyle = shared.SuccessStyle
-	prChangesStyle  = shared.WarningStyle
-	prPendingStyle  = shared.DimStyle
-	prDraftStyle    = shared.DimStyle
+	prNumberStyle   = cli.PrNumberStyle
+	prTitleStyle    = cli.ValueStyle
+	prAuthorStyle   = cli.InfoStyle
+	prApprovedStyle = cli.SuccessStyle
+	prChangesStyle  = cli.WarningStyle
+	prPendingStyle  = cli.DimStyle
+	prDraftStyle    = cli.DimStyle
 )
 
 // GitHubPR represents a GitHub pull request.
@@ -234,7 +234,7 @@ func printPR(pr GitHubPR) {
 	// #12 [core-php] Webhook validation
 	num := prNumberStyle.Render(fmt.Sprintf("#%d", pr.Number))
 	repo := issueRepoStyle.Render(fmt.Sprintf("[%s]", pr.RepoName))
-	title := prTitleStyle.Render(shared.Truncate(pr.Title, 50))
+	title := prTitleStyle.Render(cli.Truncate(pr.Title, 50))
 	author := prAuthorStyle.Render("@" + pr.Author.Login)
 
 	// Review status
@@ -254,7 +254,7 @@ func printPR(pr GitHubPR) {
 		draft = prDraftStyle.Render(" " + i18n.T("cmd.dev.reviews.draft"))
 	}
 
-	age := shared.FormatAge(pr.CreatedAt)
+	age := cli.FormatAge(pr.CreatedAt)
 
 	fmt.Printf("  %s %s %s%s %s  %s  %s\n", num, repo, title, draft, author, status, issueAgeStyle.Render(age))
 }

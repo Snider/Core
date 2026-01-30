@@ -4,18 +4,18 @@ package build
 import (
 	"embed"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared package
 var (
-	buildHeaderStyle  = shared.TitleStyle
-	buildTargetStyle  = shared.ValueStyle
-	buildSuccessStyle = shared.SuccessStyle
-	buildErrorStyle   = shared.ErrorStyle
-	buildDimStyle     = shared.DimStyle
+	buildHeaderStyle  = cli.TitleStyle
+	buildTargetStyle  = cli.ValueStyle
+	buildSuccessStyle = cli.SuccessStyle
+	buildErrorStyle   = cli.ErrorStyle
+	buildDimStyle     = cli.DimStyle
 )
 
 //go:embed all:tmpl/gui

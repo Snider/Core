@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
@@ -119,7 +119,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	}
 
 	if cov > 0 {
-		fmt.Printf("\n  %s %s\n", shared.ProgressLabel(i18n.T("cmd.go.test.coverage")), shared.FormatCoverage(cov))
+		fmt.Printf("\n  %s %s\n", cli.ProgressLabel(i18n.T("cmd.go.test.coverage")), cli.FormatCoverage(cov))
 	}
 
 	if err == nil {
@@ -241,7 +241,7 @@ func addGoCovCommand(parent *cobra.Command) {
 
 			// Print coverage summary
 			fmt.Println()
-			fmt.Printf("  %s %s\n", shared.ProgressLabel(i18n.T("label.total")), shared.FormatCoverage(totalCov))
+			fmt.Printf("  %s %s\n", cli.ProgressLabel(i18n.T("label.total")), cli.FormatCoverage(totalCov))
 
 			// Generate HTML if requested
 			if covHTML || covOpen {

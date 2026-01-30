@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
@@ -122,7 +122,7 @@ func runPush(registryPath string, force bool) error {
 	// Confirm unless --force
 	if !force {
 		fmt.Println()
-		if !shared.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": totalCommits, "Repos": len(aheadRepos)})) {
+		if !cli.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": totalCommits, "Repos": len(aheadRepos)})) {
 			fmt.Println(i18n.T("cli.aborted"))
 			return nil
 		}
@@ -161,7 +161,7 @@ func runPush(registryPath string, force bool) error {
 	if len(divergedRepos) > 0 {
 		fmt.Println()
 		fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
-		if shared.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
+		if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
 			fmt.Println()
 			for _, r := range divergedRepos {
 				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), r.Name)
@@ -226,7 +226,7 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 			}
 			fmt.Println()
 			fmt.Println()
-			if shared.Confirm(i18n.T("cmd.dev.push.uncommitted_changes_commit")) {
+			if cli.Confirm(i18n.T("cmd.dev.push.uncommitted_changes_commit")) {
 				fmt.Println()
 				// Use edit-enabled commit if only untracked files (may need .gitignore fix)
 				var err error
@@ -260,7 +260,7 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 	// Confirm unless --force
 	if !force {
 		fmt.Println()
-		if !shared.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": s.Ahead, "Repos": 1})) {
+		if !cli.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": s.Ahead, "Repos": 1})) {
 			fmt.Println(i18n.T("cli.aborted"))
 			return nil
 		}
@@ -275,7 +275,7 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 			fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), repoName, i18n.T("cmd.dev.push.diverged"))
 			fmt.Println()
 			fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
-			if shared.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
+			if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
 				fmt.Println()
 				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), repoName)
 				if pullErr := git.Pull(ctx, repoPath); pullErr != nil {

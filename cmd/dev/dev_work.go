@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/agentic"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
@@ -109,7 +109,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// Auto-commit dirty repos if requested
 	if autoCommit && len(dirtyRepos) > 0 {
 		fmt.Println()
-		fmt.Printf("%s\n", shared.TitleStyle.Render(i18n.T("cmd.dev.commit.committing")))
+		fmt.Printf("%s\n", cli.TitleStyle.Render(i18n.T("cmd.dev.commit.committing")))
 		fmt.Println()
 
 		for _, s := range dirtyRepos {
@@ -168,7 +168,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	}
 
 	fmt.Println()
-	if !shared.Confirm(i18n.T("cmd.dev.push.confirm")) {
+	if !cli.Confirm(i18n.T("cmd.dev.push.confirm")) {
 		fmt.Println(i18n.T("cli.aborted"))
 		return nil
 	}
@@ -203,7 +203,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	if len(divergedRepos) > 0 {
 		fmt.Println()
 		fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
-		if shared.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
+		if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
 			fmt.Println()
 			for _, s := range divergedRepos {
 				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), s.Name)
@@ -244,11 +244,11 @@ func printStatusTable(statuses []git.RepoStatus) {
 	// Print header with fixed-width formatting
 	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth,
-		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_repo")),
-		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_modified")),
-		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_untracked")),
-		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_staged")),
-		shared.TitleStyle.Render(i18n.T("cmd.dev.work.table_ahead")),
+		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_repo")),
+		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_modified")),
+		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_untracked")),
+		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_staged")),
+		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_ahead")),
 	)
 
 	// Print separator

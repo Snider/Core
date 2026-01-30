@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 )
 
@@ -153,7 +153,7 @@ func printCoverageSummary(results testResults) {
 }
 
 func formatCoverage(cov float64) string {
-	return shared.FormatCoverage(cov)
+	return cli.FormatCoverage(cov)
 }
 
 func shortenPackageName(name string) string {

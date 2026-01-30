@@ -1,11 +1,11 @@
-// Package shared provides common utilities and styles for CLI commands.
+// Package cli provides common utilities and styles for CLI commands.
 //
 // This package contains:
 //   - Terminal styling using lipgloss with Tailwind colours
 //   - Unicode symbols for consistent visual indicators
 //   - Helper functions for common output patterns
 //   - Git and GitHub CLI utilities
-package shared
+package cli
 
 import (
 	"fmt"

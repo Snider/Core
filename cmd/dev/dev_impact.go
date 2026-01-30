@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
@@ -12,9 +12,9 @@ import (
 
 // Impact-specific styles (aliases to shared)
 var (
-	impactDirectStyle   = shared.ErrorStyle
-	impactIndirectStyle = shared.StatusWarningStyle
-	impactSafeStyle     = shared.StatusSuccessStyle
+	impactDirectStyle   = cli.ErrorStyle
+	impactIndirectStyle = cli.StatusWarningStyle
+	impactSafeStyle     = cli.StatusSuccessStyle
 )
 
 // Impact command flags
@@ -112,7 +112,7 @@ func runImpact(registryPath string, repoName string) error {
 			r, _ := reg.Get(d)
 			desc := ""
 			if r != nil && r.Description != "" {
-				desc = dimStyle.Render(" - " + shared.Truncate(r.Description, 40))
+				desc = dimStyle.Render(" - " + cli.Truncate(r.Description, 40))
 			}
 			fmt.Printf("    %s%s\n", d, desc)
 		}
@@ -129,7 +129,7 @@ func runImpact(registryPath string, repoName string) error {
 			r, _ := reg.Get(d)
 			desc := ""
 			if r != nil && r.Description != "" {
-				desc = dimStyle.Render(" - " + shared.Truncate(r.Description, 40))
+				desc = dimStyle.Render(" - " + cli.Truncate(r.Description, 40))
 			}
 			fmt.Printf("    %s%s\n", d, desc)
 		}

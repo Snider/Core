@@ -3,49 +3,49 @@ package php
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
 var (
-	successStyle = shared.SuccessStyle
-	errorStyle   = shared.ErrorStyle
-	dimStyle     = shared.DimStyle
-	linkStyle    = shared.LinkStyle
+	successStyle = cli.SuccessStyle
+	errorStyle   = cli.ErrorStyle
+	dimStyle     = cli.DimStyle
+	linkStyle    = cli.LinkStyle
 )
 
 // Service colors for log output (domain-specific, keep local)
 var (
-	phpFrankenPHPStyle = lipgloss.NewStyle().Foreground(shared.ColourIndigo500)
-	phpViteStyle       = lipgloss.NewStyle().Foreground(shared.ColourYellow500)
-	phpHorizonStyle    = lipgloss.NewStyle().Foreground(shared.ColourOrange500)
-	phpReverbStyle     = lipgloss.NewStyle().Foreground(shared.ColourViolet500)
-	phpRedisStyle      = lipgloss.NewStyle().Foreground(shared.ColourRed500)
+	phpFrankenPHPStyle = lipgloss.NewStyle().Foreground(cli.ColourIndigo500)
+	phpViteStyle       = lipgloss.NewStyle().Foreground(cli.ColourYellow500)
+	phpHorizonStyle    = lipgloss.NewStyle().Foreground(cli.ColourOrange500)
+	phpReverbStyle     = lipgloss.NewStyle().Foreground(cli.ColourViolet500)
+	phpRedisStyle      = lipgloss.NewStyle().Foreground(cli.ColourRed500)
 )
 
 // Status styles (from shared)
 var (
-	phpStatusRunning = shared.SuccessStyle
-	phpStatusStopped = shared.StatusPendingStyle
-	phpStatusError   = shared.ErrorStyle
+	phpStatusRunning = cli.SuccessStyle
+	phpStatusStopped = cli.StatusPendingStyle
+	phpStatusError   = cli.ErrorStyle
 )
 
 // QA command styles (from shared)
 var (
-	phpQAPassedStyle  = shared.SuccessStyle
-	phpQAFailedStyle  = shared.ErrorStyle
-	phpQAWarningStyle = shared.WarningStyle
-	phpQAStageStyle   = shared.StageStyle
+	phpQAPassedStyle  = cli.SuccessStyle
+	phpQAFailedStyle  = cli.ErrorStyle
+	phpQAWarningStyle = cli.WarningStyle
+	phpQAStageStyle   = cli.StageStyle
 )
 
 // Security severity styles (from shared)
 var (
-	phpSecurityCriticalStyle = shared.SeverityCriticalStyle
-	phpSecurityHighStyle     = shared.SeverityHighStyle
-	phpSecurityMediumStyle   = shared.SeverityMediumStyle
-	phpSecurityLowStyle      = shared.SeverityLowStyle
+	phpSecurityCriticalStyle = cli.SeverityCriticalStyle
+	phpSecurityHighStyle     = cli.SeverityHighStyle
+	phpSecurityMediumStyle   = cli.SeverityMediumStyle
+	phpSecurityLowStyle      = cli.SeverityLowStyle
 )
 
 // AddPHPCommands adds PHP/Laravel development commands.

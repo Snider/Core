@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	sdkpkg "github.com/host-uk/core/pkg/sdk"
 	"github.com/spf13/cobra"
@@ -13,10 +13,10 @@ import (
 
 // SDK styles (aliases to shared)
 var (
-	sdkHeaderStyle  = shared.TitleStyle
-	sdkSuccessStyle = shared.SuccessStyle
-	sdkErrorStyle   = shared.ErrorStyle
-	sdkDimStyle     = shared.DimStyle
+	sdkHeaderStyle  = cli.TitleStyle
+	sdkSuccessStyle = cli.SuccessStyle
+	sdkErrorStyle   = cli.ErrorStyle
+	sdkDimStyle     = cli.DimStyle
 )
 
 var sdkCmd = &cobra.Command{

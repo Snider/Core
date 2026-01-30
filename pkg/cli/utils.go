@@ -1,4 +1,4 @@
-package shared
+package cli
 
 import (
 	"context"

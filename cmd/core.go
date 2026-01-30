@@ -19,17 +19,17 @@ package cmd
 import (
 	"os"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/spf13/cobra"
 )
 
 // Terminal styles using Tailwind colour palette (from shared package).
 var (
 	// coreStyle is used for primary headings and the CLI name.
-	coreStyle = shared.RepoNameStyle
+	coreStyle = cli.RepoNameStyle
 
 	// linkStyle is used for URLs and clickable references.
-	linkStyle = shared.LinkStyle
+	linkStyle = cli.LinkStyle
 )
 
 // rootCmd is the base command for the CLI.

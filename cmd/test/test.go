@@ -4,21 +4,21 @@
 package testcmd
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
 var (
-	testHeaderStyle  = shared.RepoNameStyle
-	testPassStyle    = shared.SuccessStyle
-	testFailStyle    = shared.ErrorStyle
-	testSkipStyle    = shared.WarningStyle
-	testDimStyle     = shared.DimStyle
-	testCovHighStyle = shared.CoverageHighStyle
-	testCovMedStyle  = shared.CoverageMedStyle
-	testCovLowStyle  = shared.CoverageLowStyle
+	testHeaderStyle  = cli.RepoNameStyle
+	testPassStyle    = cli.SuccessStyle
+	testFailStyle    = cli.ErrorStyle
+	testSkipStyle    = cli.WarningStyle
+	testDimStyle     = cli.DimStyle
+	testCovHighStyle = cli.CoverageHighStyle
+	testCovMedStyle  = cli.CoverageMedStyle
+	testCovLowStyle  = cli.CoverageLowStyle
 )
 
 // Flag variables for test command

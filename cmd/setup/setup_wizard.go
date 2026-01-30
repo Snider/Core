@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 	"golang.org/x/term"
@@ -157,7 +157,7 @@ func runPackageWizard(reg *repos.Registry, preselectedTypes []string) ([]string,
 	var selected []string
 
 	// Header styling
-	headerStyle := shared.TitleStyle.MarginBottom(1)
+	headerStyle := cli.TitleStyle.MarginBottom(1)
 
 	fmt.Println(headerStyle.Render(i18n.T("cmd.setup.wizard.package_selection")))
 	fmt.Println(i18n.T("cmd.setup.wizard.selection_hint"))

@@ -4,16 +4,16 @@ package doctor
 import (
 	"fmt"
 
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
 var (
-	successStyle = shared.SuccessStyle
-	errorStyle   = shared.ErrorStyle
-	dimStyle     = shared.DimStyle
+	successStyle = cli.SuccessStyle
+	errorStyle   = cli.ErrorStyle
+	dimStyle     = cli.DimStyle
 )
 
 // Flag variable for doctor command
@@ -44,13 +44,13 @@ func runDoctor(verbose bool) error {
 		ok, version := runCheck(c)
 		if ok {
 			if verbose {
-				fmt.Println(shared.CheckResult(true, c.name, version))
+				fmt.Println(cli.CheckResult(true, c.name, version))
 			} else {
-				fmt.Println(shared.CheckResult(true, c.name, ""))
+				fmt.Println(cli.CheckResult(true, c.name, ""))
 			}
 			passed++
 		} else {
-			fmt.Printf("  %s %s - %s\n", errorStyle.Render(shared.SymbolCross), c.name, c.description)
+			fmt.Printf("  %s %s - %s\n", errorStyle.Render(cli.SymbolCross), c.name, c.description)
 			failed++
 		}
 	}
@@ -61,13 +61,13 @@ func runDoctor(verbose bool) error {
 		ok, version := runCheck(c)
 		if ok {
 			if verbose {
-				fmt.Println(shared.CheckResult(true, c.name, version))
+				fmt.Println(cli.CheckResult(true, c.name, version))
 			} else {
-				fmt.Println(shared.CheckResult(true, c.name, ""))
+				fmt.Println(cli.CheckResult(true, c.name, ""))
 			}
 			passed++
 		} else {
-			fmt.Printf("  %s %s - %s\n", dimStyle.Render(shared.SymbolSkip), c.name, dimStyle.Render(c.description))
+			fmt.Printf("  %s %s - %s\n", dimStyle.Render(cli.SymbolSkip), c.name, dimStyle.Render(c.description))
 			optional++
 		}
 	}
@@ -75,16 +75,16 @@ func runDoctor(verbose bool) error {
 	// Check GitHub access
 	fmt.Printf("\n%s\n", i18n.T("cmd.doctor.github"))
 	if checkGitHubSSH() {
-		fmt.Println(shared.CheckResult(true, i18n.T("cmd.doctor.ssh_found"), ""))
+		fmt.Println(cli.CheckResult(true, i18n.T("cmd.doctor.ssh_found"), ""))
 	} else {
-		fmt.Printf("  %s %s\n", errorStyle.Render(shared.SymbolCross), i18n.T("cmd.doctor.ssh_missing"))
+		fmt.Printf("  %s %s\n", errorStyle.Render(cli.SymbolCross), i18n.T("cmd.doctor.ssh_missing"))
 		failed++
 	}
 
 	if checkGitHubCLI() {
-		fmt.Println(shared.CheckResult(true, i18n.T("cmd.doctor.cli_auth"), ""))
+		fmt.Println(cli.CheckResult(true, i18n.T("cmd.doctor.cli_auth"), ""))
 	} else {
-		fmt.Printf("  %s %s\n", errorStyle.Render(shared.SymbolCross), i18n.T("cmd.doctor.cli_auth_missing"))
+		fmt.Printf("  %s %s\n", errorStyle.Render(cli.SymbolCross), i18n.T("cmd.doctor.cli_auth_missing"))
 		failed++
 	}
 
@@ -95,12 +95,12 @@ func runDoctor(verbose bool) error {
 	// Summary
 	fmt.Println()
 	if failed > 0 {
-		fmt.Println(shared.Error(i18n.T("cmd.doctor.issues", map[string]interface{}{"Count": failed})))
+		fmt.Println(cli.Error(i18n.T("cmd.doctor.issues", map[string]interface{}{"Count": failed})))
 		fmt.Printf("\n%s\n", i18n.T("cmd.doctor.install_missing"))
 		printInstallInstructions()
 		return fmt.Errorf("%s", i18n.T("cmd.doctor.issues_error", map[string]interface{}{"Count": failed}))
 	}
 
-	fmt.Println(shared.Success(i18n.T("cmd.doctor.ready")))
+	fmt.Println(cli.Success(i18n.T("cmd.doctor.ready")))
 	return nil
 }

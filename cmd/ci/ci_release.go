@@ -2,18 +2,18 @@
 package ci
 
 import (
-	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
 var (
-	releaseHeaderStyle  = shared.RepoNameStyle
-	releaseSuccessStyle = shared.SuccessStyle
-	releaseErrorStyle   = shared.ErrorStyle
-	releaseDimStyle     = shared.DimStyle
-	releaseValueStyle   = shared.ValueStyle
+	releaseHeaderStyle  = cli.RepoNameStyle
+	releaseSuccessStyle = cli.SuccessStyle
+	releaseErrorStyle   = cli.ErrorStyle
+	releaseDimStyle     = cli.DimStyle
+	releaseValueStyle   = cli.ValueStyle
 )
 
 // Flag variables for ci command
