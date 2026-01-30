@@ -2,14 +2,42 @@
 package i18n
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/text/language"
 )
+
+// Service provides internationalization and localization.
+type Service struct {
+	messages       map[string]map[string]Message // lang -> key -> message
+	currentLang    string
+	fallbackLang   string
+	availableLangs []language.Tag
+	mode           Mode         // Translation mode (Normal, Strict, Collect)
+	debug          bool         // Debug mode shows key prefixes
+	formality      Formality    // Default formality level for translations
+	handlers       []KeyHandler // Handler chain for dynamic key patterns
+	mu             sync.RWMutex
+}
+
+// Default is the global i18n service instance.
+var (
+	defaultService *Service
+	defaultOnce    sync.Once
+	defaultErr     error
+)
+
+//go:embed locales/*.json
+var localeFS embed.FS
+
+// Ensure Service implements Translator at compile time.
+var _ Translator = (*Service)(nil)
 
 // New creates a new i18n service with embedded locales.
 func New() (*Service, error) {
@@ -21,6 +49,7 @@ func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
 	s := &Service{
 		messages:     make(map[string]map[string]Message),
 		fallbackLang: "en-GB",
+		handlers:     DefaultHandlers(),
 	}
 
 	entries, err := fs.ReadDir(fsys, dir)
@@ -209,7 +238,40 @@ func (s *Service) PluralCategory(n int) PluralCategory {
 	return GetPluralCategory(s.currentLang, n)
 }
 
-// T translates a message by its ID with smart i18n.* namespace handling.
+// AddHandler appends a handler to the end of the handler chain.
+// Later handlers have lower priority (run if earlier handlers don't match).
+func (s *Service) AddHandler(h KeyHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.handlers = append(s.handlers, h)
+}
+
+// PrependHandler inserts a handler at the start of the handler chain.
+// Prepended handlers have highest priority (run first).
+func (s *Service) PrependHandler(h KeyHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.handlers = append([]KeyHandler{h}, s.handlers...)
+}
+
+// ClearHandlers removes all handlers from the chain.
+// Useful for testing or disabling all i18n.* magic.
+func (s *Service) ClearHandlers() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.handlers = nil
+}
+
+// Handlers returns a copy of the current handler chain.
+func (s *Service) Handlers() []KeyHandler {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make([]KeyHandler, len(s.handlers))
+	copy(result, s.handlers)
+	return result
+}
+
+// T translates a message by its ID with handler chain support.
 //
 // # i18n Namespace Magic
 //
@@ -226,118 +288,31 @@ func (s *Service) PluralCategory(n int) PluralCategory {
 //
 //	T("core.delete", S("file", "config.yaml")) // → "Delete config.yaml?"
 //
-// Use _() for raw key lookup without i18n.* magic.
+// Use Raw() for direct key lookup without handler chain processing.
 func (s *Service) T(messageID string, args ...any) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Handle i18n.* namespace magic
-	if strings.HasPrefix(messageID, "i18n.") {
-		if result := s.handleI18nNamespace(messageID, args); result != "" {
-			if s.debug {
-				return debugFormat(messageID, result)
-			}
-			return result
+	// Run handler chain - handlers can intercept and process keys
+	result := RunHandlerChain(s.handlers, messageID, args, func() string {
+		// Fallback: standard message lookup
+		var data any
+		if len(args) > 0 {
+			data = args[0]
 		}
-	}
-
-	// Get template data
-	var data any
-	if len(args) > 0 {
-		data = args[0]
-	}
-
-	// Try fallback chain
-	text := s.resolveWithFallback(messageID, data)
-	if text == "" {
-		return s.handleMissingKey(messageID, args)
-	}
+		text := s.resolveWithFallback(messageID, data)
+		if text == "" {
+			return s.handleMissingKey(messageID, args)
+		}
+		return text
+	})
 
 	// Debug mode: prefix with key
 	if s.debug {
-		return debugFormat(messageID, text)
+		return debugFormat(messageID, result)
 	}
 
-	return text
-}
-
-// handleI18nNamespace processes i18n.* namespace patterns.
-// Returns empty string if pattern not recognized.
-// Must be called with s.mu.RLock held.
-func (s *Service) handleI18nNamespace(key string, args []any) string {
-	// i18n.label.{word} → Label(word)
-	if strings.HasPrefix(key, "i18n.label.") {
-		word := strings.TrimPrefix(key, "i18n.label.")
-		return Label(word)
-	}
-
-	// i18n.progress.{verb} → Progress(verb) or ProgressSubject(verb, subj)
-	if strings.HasPrefix(key, "i18n.progress.") {
-		verb := strings.TrimPrefix(key, "i18n.progress.")
-		if len(args) > 0 {
-			if subj, ok := args[0].(string); ok {
-				return ProgressSubject(verb, subj)
-			}
-		}
-		return Progress(verb)
-	}
-
-	// i18n.count.{noun} → "N noun(s)"
-	if strings.HasPrefix(key, "i18n.count.") {
-		noun := strings.TrimPrefix(key, "i18n.count.")
-		if len(args) > 0 {
-			count := toInt(args[0])
-			return fmt.Sprintf("%d %s", count, Pluralize(noun, count))
-		}
-		return noun
-	}
-
-	// i18n.done.{verb} → ActionResult(verb, subj)
-	if strings.HasPrefix(key, "i18n.done.") {
-		verb := strings.TrimPrefix(key, "i18n.done.")
-		if len(args) > 0 {
-			if subj, ok := args[0].(string); ok {
-				return ActionResult(verb, subj)
-			}
-		}
-		return Title(PastTense(verb))
-	}
-
-	// i18n.fail.{verb} → ActionFailed(verb, subj)
-	if strings.HasPrefix(key, "i18n.fail.") {
-		verb := strings.TrimPrefix(key, "i18n.fail.")
-		if len(args) > 0 {
-			if subj, ok := args[0].(string); ok {
-				return ActionFailed(verb, subj)
-			}
-		}
-		return ActionFailed(verb, "")
-	}
-
-	// i18n.numeric.* namespace (for N() helper)
-	if strings.HasPrefix(key, "i18n.numeric.") && len(args) > 0 {
-		format := strings.TrimPrefix(key, "i18n.numeric.")
-		switch format {
-		case "number", "int":
-			return FormatNumber(toInt64(args[0]))
-		case "decimal", "float":
-			return FormatDecimal(toFloat64(args[0]))
-		case "percent", "pct":
-			return FormatPercent(toFloat64(args[0]))
-		case "bytes", "size":
-			return FormatBytes(toInt64(args[0]))
-		case "ordinal", "ord":
-			return FormatOrdinal(toInt(args[0]))
-		case "ago":
-			if len(args) >= 2 {
-				if unit, ok := args[1].(string); ok {
-					return FormatAgo(toInt(args[0]), unit)
-				}
-			}
-		}
-	}
-
-	return ""
+	return result
 }
 
 // resolveWithFallback implements the fallback chain for message resolution.

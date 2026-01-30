@@ -110,6 +110,22 @@ func N(format string, value any) string {
 	return T("i18n.numeric."+format, value)
 }
 
+// AddHandler appends a handler to the default service's handler chain.
+// Does nothing if the service is not initialized.
+func AddHandler(h KeyHandler) {
+	if svc := Default(); svc != nil {
+		svc.AddHandler(h)
+	}
+}
+
+// PrependHandler inserts a handler at the start of the default service's handler chain.
+// Does nothing if the service is not initialized.
+func PrependHandler(h KeyHandler) {
+	if svc := Default(); svc != nil {
+		svc.PrependHandler(h)
+	}
+}
+
 // --- Template helpers ---
 
 // executeIntentTemplate executes an intent template with the given data.
