@@ -1,0 +1,94 @@
+{
+	"cli.success": "Erfolg",
+	"cli.error": "Fehler",
+	"cli.warning": "Warnung",
+	"cli.info": "Info",
+	"cli.done": "Fertig",
+	"cli.failed": "Fehlgeschlagen",
+	"cli.pass": "BESTANDEN",
+	"cli.fail": "FEHLGESCHLAGEN",
+	"cli.ok": "OK",
+	"cli.skip": "Übersprungen",
+	"cli.pending": "Ausstehend",
+	"cli.running": "Läuft",
+	"cli.completed": "Abgeschlossen",
+	"cli.cancelled": "Abgebrochen",
+	"cli.aborted": "Abgebrochen",
+
+	"cli.confirm.yes": "Ja",
+	"cli.confirm.no": "Nein",
+	"cli.confirm.proceed": "Fortfahren?",
+	"cli.confirm.continue": "Weiter?",
+	"cli.confirm.abort": "Vorgang abgebrochen",
+
+	"cli.progress.checking": "Prüfe",
+	"cli.progress.fetching": "Lade",
+	"cli.progress.loading": "Lade",
+	"cli.progress.processing": "Verarbeite",
+	"cli.progress.installing": "Installiere",
+	"cli.progress.building": "Baue",
+	"cli.progress.deploying": "Deploye",
+	"cli.progress.testing": "Teste",
+
+	"cli.time.just_now": "gerade eben",
+	"cli.time.seconds_ago": "vor {{.Count}} Sekunden",
+	"cli.time.minute_ago": "vor 1 Minute",
+	"cli.time.minutes_ago": "vor {{.Count}} Minuten",
+	"cli.time.hour_ago": "vor 1 Stunde",
+	"cli.time.hours_ago": "vor {{.Count}} Stunden",
+	"cli.time.day_ago": "vor 1 Tag",
+	"cli.time.days_ago": "vor {{.Count}} Tagen",
+	"cli.time.week_ago": "vor 1 Woche",
+	"cli.time.weeks_ago": "vor {{.Count}} Wochen",
+
+	"cli.count.items": {
+		"one": "{{.Count}} Element",
+		"other": "{{.Count}} Elemente"
+	},
+	"cli.count.files": {
+		"one": "{{.Count}} Datei",
+		"other": "{{.Count}} Dateien"
+	},
+	"cli.count.repos": {
+		"one": "{{.Count}} Repository",
+		"other": "{{.Count}} Repositories"
+	},
+	"cli.count.commits": {
+		"one": "{{.Count}} Commit",
+		"other": "{{.Count}} Commits"
+	},
+
+	"cmd.dev.short": "Multi-Repository-Entwicklung",
+	"cmd.dev.status.dirty": "geändert",
+	"cmd.dev.status.clean": "sauber",
+	"cmd.dev.status.ahead": "voraus",
+	"cmd.dev.status.behind": "zurück",
+	"cmd.dev.status.synced": "synchronisiert",
+
+	"cmd.dev.push.confirm": "Alle pushen?",
+	"cmd.dev.commit.committing": "Committe geänderte Repos mit Claude...",
+
+	"cmd.doctor.short": "Entwicklungsumgebung prüfen",
+	"cmd.doctor.checking": "Prüfe Entwicklungsumgebung...",
+	"cmd.doctor.required": "Erforderlich",
+	"cmd.doctor.optional": "Optional",
+	"cmd.doctor.ready": "Umgebung bereit",
+
+	"error.not_found": "Nicht gefunden: {{.Item}}",
+	"error.invalid": "Ungültig: {{.Item}}",
+	"error.permission": "Zugriff verweigert: {{.Item}}",
+	"error.timeout": "Zeitüberschreitung",
+	"error.gh_not_found": "'gh' CLI nicht gefunden. Installieren von https://cli.github.com/",
+
+	"label.status": "Status",
+	"label.branch": "Branch",
+	"label.commit": "Commit",
+	"label.coverage": "Abdeckung",
+	"label.total": "Gesamt",
+
+	"lang.en": "Englisch",
+	"lang.de": "Deutsch",
+	"lang.es": "Spanisch",
+	"lang.fr": "Französisch",
+	"lang.zh": "Chinesisch"
+}

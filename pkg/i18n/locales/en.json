@@ -1,0 +1,185 @@
+{
+	"cli.success": "Success",
+	"cli.error": "Error",
+	"cli.warning": "Warning",
+	"cli.info": "Info",
+	"cli.done": "Done",
+	"cli.failed": "Failed",
+	"cli.pass": "PASS",
+	"cli.fail": "FAIL",
+	"cli.ok": "OK",
+	"cli.skip": "Skipped",
+	"cli.pending": "Pending",
+	"cli.running": "Running",
+	"cli.completed": "Completed",
+	"cli.cancelled": "Cancelled",
+	"cli.aborted": "Aborted",
+
+	"cli.confirm.yes": "Yes",
+	"cli.confirm.no": "No",
+	"cli.confirm.proceed": "Proceed?",
+	"cli.confirm.continue": "Continue?",
+	"cli.confirm.abort": "Operation aborted",
+
+	"cli.progress.checking": "Checking",
+	"cli.progress.fetching": "Fetching",
+	"cli.progress.loading": "Loading",
+	"cli.progress.processing": "Processing",
+	"cli.progress.installing": "Installing",
+	"cli.progress.building": "Building",
+	"cli.progress.deploying": "Deploying",
+	"cli.progress.testing": "Testing",
+
+	"cli.time.just_now": "just now",
+	"cli.time.seconds_ago": "{{.Count}} seconds ago",
+	"cli.time.minute_ago": "1 minute ago",
+	"cli.time.minutes_ago": "{{.Count}} minutes ago",
+	"cli.time.hour_ago": "1 hour ago",
+	"cli.time.hours_ago": "{{.Count}} hours ago",
+	"cli.time.day_ago": "1 day ago",
+	"cli.time.days_ago": "{{.Count}} days ago",
+	"cli.time.week_ago": "1 week ago",
+	"cli.time.weeks_ago": "{{.Count}} weeks ago",
+
+	"cli.count.items": {
+		"one": "{{.Count}} item",
+		"other": "{{.Count}} items"
+	},
+	"cli.count.files": {
+		"one": "{{.Count}} file",
+		"other": "{{.Count}} files"
+	},
+	"cli.count.repos": {
+		"one": "{{.Count}} repo",
+		"other": "{{.Count}} repos"
+	},
+	"cli.count.commits": {
+		"one": "{{.Count}} commit",
+		"other": "{{.Count}} commits"
+	},
+
+	"cmd.dev.short": "Multi-repo development workflow",
+	"cmd.dev.work.short": "Combined status, commit, and push workflow",
+	"cmd.dev.health.short": "Quick repo health summary",
+	"cmd.dev.commit.short": "Claude-assisted commit messages",
+	"cmd.dev.push.short": "Push repos with unpushed commits",
+	"cmd.dev.pull.short": "Pull repos behind remote",
+	"cmd.dev.issues.short": "List open issues across repos",
+	"cmd.dev.reviews.short": "List PRs awaiting review",
+	"cmd.dev.ci.short": "Check GitHub Actions status",
+	"cmd.dev.impact.short": "Analyse dependency impact",
+
+	"cmd.dev.status.dirty": "dirty",
+	"cmd.dev.status.clean": "clean",
+	"cmd.dev.status.ahead": "ahead",
+	"cmd.dev.status.behind": "behind",
+	"cmd.dev.status.synced": "synced",
+	"cmd.dev.status.diverged": "diverged",
+	"cmd.dev.status.conflict": "conflict",
+
+	"cmd.dev.push.confirm": "Push all?",
+	"cmd.dev.push.success": "Pushed successfully",
+	"cmd.dev.push.failed": "Push failed",
+	"cmd.dev.push.nothing": "Nothing to push",
+
+	"cmd.dev.commit.committing": "Committing dirty repos with Claude...",
+	"cmd.dev.commit.success": "Committed successfully",
+	"cmd.dev.commit.failed": "Commit failed",
+
+	"cmd.php.short": "Laravel/PHP development tools",
+	"cmd.php.dev.short": "Start development servers",
+	"cmd.php.test.short": "Run PHPUnit tests",
+	"cmd.php.fmt.short": "Format code with Pint",
+	"cmd.php.analyse.short": "Run static analysis",
+	"cmd.php.build.short": "Build production assets",
+	"cmd.php.deploy.short": "Deploy to Coolify",
+	"cmd.php.qa.short": "Run all quality checks",
+
+	"cmd.php.test.running": "Running tests",
+	"cmd.php.test.passed": "All tests passed",
+	"cmd.php.test.failed": "Some tests failed",
+
+	"cmd.go.short": "Go development tools",
+	"cmd.go.test.short": "Run tests with coverage",
+	"cmd.go.fmt.short": "Format Go code",
+	"cmd.go.build.short": "Build Go binaries",
+	"cmd.go.cov.short": "Run tests with coverage report",
+
+	"cmd.go.test.running": "Running tests",
+	"cmd.go.test.passed": "All tests passed",
+	"cmd.go.test.failed": "Some tests failed",
+	"cmd.go.test.coverage": "Coverage",
+
+	"cmd.doctor.short": "Check development environment",
+	"cmd.doctor.checking": "Checking development environment...",
+	"cmd.doctor.required": "Required",
+	"cmd.doctor.optional": "Optional",
+	"cmd.doctor.github": "GitHub Access",
+	"cmd.doctor.workspace": "Workspace",
+	"cmd.doctor.ready": "Environment ready",
+	"cmd.doctor.issues": "{{.Count}} issues found",
+
+	"cmd.setup.short": "Set up development workspace",
+	"cmd.setup.cloning": "Cloning repositories...",
+	"cmd.setup.complete": "Setup complete",
+
+	"cmd.build.short": "Build and release tools",
+	"cmd.build.building": "Building...",
+	"cmd.build.complete": "Build complete",
+
+	"cmd.ai.short": "AI task management",
+	"cmd.ai.tasks.short": "List tasks",
+	"cmd.ai.task.short": "View task details",
+
+	"cmd.vm.short": "LinuxKit VM management",
+	"cmd.vm.run.short": "Run a VM from image or template",
+	"cmd.vm.ps.short": "List running VMs",
+	"cmd.vm.stop.short": "Stop a running VM",
+	"cmd.vm.logs.short": "View VM logs",
+
+	"cmd.docs.short": "Documentation tools",
+	"cmd.docs.list.short": "List documentation files",
+	"cmd.docs.sync.short": "Sync docs to central location",
+
+	"cmd.pkg.short": "Package management",
+	"cmd.pkg.install.short": "Install packages",
+	"cmd.pkg.search.short": "Search packages",
+
+	"cmd.ci.short": "CI/CD tools",
+	"cmd.ci.release.short": "Create a release",
+
+	"cmd.sdk.short": "SDK validation tools",
+	"cmd.sdk.diff.short": "Check for breaking API changes",
+	"cmd.sdk.validate.short": "Validate OpenAPI spec",
+
+	"cmd.test.short": "Test runner",
+	"cmd.test.running": "Running tests...",
+
+	"error.not_found": "Not found: {{.Item}}",
+	"error.invalid": "Invalid: {{.Item}}",
+	"error.permission": "Permission denied: {{.Item}}",
+	"error.timeout": "Operation timed out",
+	"error.network": "Network error: {{.Message}}",
+	"error.gh_not_found": "'gh' CLI not found. Install from https://cli.github.com/",
+	"error.registry_not_found": "No repos.yaml found",
+	"error.repo_not_found": "Repository '{{.Name}}' not found",
+
+	"label.status": "Status",
+	"label.branch": "Branch",
+	"label.commit": "Commit",
+	"label.message": "Message",
+	"label.author": "Author",
+	"label.date": "Date",
+	"label.duration": "Duration",
+	"label.coverage": "Coverage",
+	"label.package": "Package",
+	"label.registry": "Registry",
+	"label.scanning": "Scanning",
+	"label.total": "Total",
+
+	"lang.en": "English",
+	"lang.de": "German",
+	"lang.es": "Spanish",
+	"lang.fr": "French",
+	"lang.zh": "Chinese"
+}
