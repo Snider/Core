@@ -31,22 +31,6 @@ func (m Mode) String() string {
 	}
 }
 
-// MissingKey is dispatched when a translation key is not found in ModeCollect.
-// Used by QA tools to collect and report missing translations.
-type MissingKey struct {
-	Key        string         // The missing translation key
-	Args       map[string]any // Arguments passed to the translation
-	CallerFile string         // Source file where T()/C() was called
-	CallerLine int            // Line number where T()/C() was called
-}
-
-// MissingKeyAction is an alias for backwards compatibility.
-// Deprecated: Use MissingKey instead.
-type MissingKeyAction = MissingKey
-
-// MissingKeyHandler receives missing key events for analysis.
-type MissingKeyHandler func(missing MissingKey)
-
 var missingKeyHandler MissingKeyHandler
 
 // OnMissingKey registers a handler for missing translation keys.

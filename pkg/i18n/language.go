@@ -115,10 +115,6 @@ func (g GrammaticalGender) String() string {
 	}
 }
 
-// PluralRule is a function that determines the plural category for a count.
-// Each language has its own plural rule based on CLDR data.
-type PluralRule func(n int) PluralCategory
-
 // rtlLanguages contains language codes that use right-to-left text direction.
 var rtlLanguages = map[string]bool{
 	"ar":    true, // Arabic

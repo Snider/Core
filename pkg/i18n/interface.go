@@ -78,3 +78,33 @@ type Translator interface {
 
 // Ensure Service implements Translator at compile time.
 var _ Translator = (*Service)(nil)
+
+// --- Function type interfaces ---
+
+// MissingKeyHandler receives missing key events for analysis.
+// Used in ModeCollect to capture translation keys that need to be added.
+//
+//	i18n.OnMissingKey(func(m i18n.MissingKey) {
+//	    log.Printf("MISSING: %s at %s:%d", m.Key, m.CallerFile, m.CallerLine)
+//	})
+type MissingKeyHandler func(missing MissingKey)
+
+// MissingKey is dispatched when a translation key is not found in ModeCollect.
+// Used by QA tools to collect and report missing translations.
+type MissingKey struct {
+	Key        string         // The missing translation key
+	Args       map[string]any // Arguments passed to the translation
+	CallerFile string         // Source file where T()/C() was called
+	CallerLine int            // Line number where T()/C() was called
+}
+
+// MissingKeyAction is an alias for backwards compatibility.
+// Deprecated: Use MissingKey instead.
+type MissingKeyAction = MissingKey
+
+// PluralRule is a function that determines the plural category for a count.
+// Each language has its own plural rule based on CLDR data.
+//
+//	rule := i18n.GetPluralRule("ru")
+//	category := rule(5) // Returns PluralMany for Russian
+type PluralRule func(n int) PluralCategory
