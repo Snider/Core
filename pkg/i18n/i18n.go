@@ -1,38 +1,30 @@
 // Package i18n provides internationalization for the CLI.
 //
-// It is designed to be extended by the GUI version, which can import this
-// package and add additional translations for GUI-specific strings.
+// Locale files use nested JSON for compatibility with translation tools:
+//
+//	{
+//	    "cli": {
+//	        "success": "Operation completed",
+//	        "count": {
+//	            "items": {
+//	                "one": "{{.Count}} item",
+//	                "other": "{{.Count}} items"
+//	            }
+//	        }
+//	    }
+//	}
+//
+// Keys are accessed with dot notation: T("cli.success"), T("cli.count.items")
 //
 // # Getting Started
 //
 //	svc, err := i18n.New()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
 //	fmt.Println(svc.T("cli.success"))
-//
-// # Extending for GUI
-//
-// The GUI can extend this package by creating its own Service that embeds
-// this one and loads additional locale files:
-//
-//	guiService, err := i18n.NewWithFS(guiLocaleFS, "locales")
-//
-// # Locale Files
-//
-// Locale files are JSON with message IDs as keys. Supports both simple strings
-// and go-i18n format with pluralization:
-//
-//	{
-//	    "cli.success": "Operation completed successfully",
-//	    "cli.items_found": {
-//	        "one": "{{.Count}} item found",
-//	        "other": "{{.Count}} items found"
-//	    }
-//	}
+//	fmt.Println(svc.T("cli.count.items", map[string]any{"Count": 5}))
 package i18n
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -41,78 +33,193 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"text/template"
 
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
 
 //go:embed locales/*.json
 var localeFS embed.FS
 
+// Message represents a translation - either a simple string or plural forms.
+type Message struct {
+	Text  string // Simple string value
+	One   string // Singular form (count == 1)
+	Other string // Plural form (count != 1)
+}
+
+// IsPlural returns true if this message has plural forms.
+func (m Message) IsPlural() bool {
+	return m.One != "" || m.Other != ""
+}
+
+// Service provides internationalization and localization.
+type Service struct {
+	messages       map[string]map[string]Message // lang -> key -> message
+	currentLang    string
+	fallbackLang   string
+	availableLangs []language.Tag
+	mu             sync.RWMutex
+}
+
 // Default is the global i18n service instance.
-// Initialized lazily on first use or via Init().
 var (
 	defaultService *Service
 	defaultOnce    sync.Once
 	defaultErr     error
 )
 
-// Service provides internationalization and localization.
-type Service struct {
-	bundle         *i18n.Bundle
-	localizer      *i18n.Localizer
-	currentLang    string
-	availableLangs []language.Tag
-	mu             sync.RWMutex
-}
-
 // New creates a new i18n service with embedded locales.
-// The service is initialized with the system language or English as fallback.
 func New() (*Service, error) {
 	return NewWithFS(localeFS, "locales")
 }
 
 // NewWithFS creates a new i18n service loading locales from the given filesystem.
-// This allows the GUI to provide its own locale files.
 func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
-	bundle := i18n.NewBundle(language.BritishEnglish)
-	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
-
-	availableLangs, err := loadLocalesFromFS(bundle, fsys, dir)
-	if err != nil {
-		return nil, err
+	s := &Service{
+		messages:     make(map[string]map[string]Message),
+		fallbackLang: "en-GB",
 	}
 
-	s := &Service{
-		bundle:         bundle,
-		availableLangs: availableLangs,
-		currentLang:    "en-GB",
+	entries, err := fs.ReadDir(fsys, dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read locales directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+
+		filePath := filepath.Join(dir, entry.Name())
+		data, err := fs.ReadFile(fsys, filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read locale %s: %w", entry.Name(), err)
+		}
+
+		lang := strings.TrimSuffix(entry.Name(), ".json")
+		// Normalise underscore to hyphen (en_GB -> en-GB)
+		lang = strings.ReplaceAll(lang, "_", "-")
+
+		if err := s.loadJSON(lang, data); err != nil {
+			return nil, fmt.Errorf("failed to parse locale %s: %w", entry.Name(), err)
+		}
+
+		tag := language.Make(lang)
+		s.availableLangs = append(s.availableLangs, tag)
+	}
+
+	if len(s.availableLangs) == 0 {
+		return nil, fmt.Errorf("no locale files found in %s", dir)
 	}
 
 	// Try to detect system language
-	if detected, err := detectLanguage(availableLangs); err == nil && detected != "" {
-		_ = s.SetLanguage(detected)
+	if detected := detectLanguage(s.availableLangs); detected != "" {
+		s.currentLang = detected
 	} else {
-		_ = s.SetLanguage("en-GB")
+		s.currentLang = s.fallbackLang
 	}
 
 	return s, nil
 }
 
-// NewWithBundle creates a service from an existing bundle.
-// Useful for extending the CLI i18n with GUI-specific translations.
-func NewWithBundle(bundle *i18n.Bundle, langs []language.Tag) *Service {
-	s := &Service{
-		bundle:         bundle,
-		availableLangs: langs,
-		currentLang:    "en-GB",
+// loadJSON parses nested JSON and flattens to dot-notation keys.
+func (s *Service) loadJSON(lang string, data []byte) error {
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
 	}
-	_ = s.SetLanguage("en-GB")
-	return s
+
+	messages := make(map[string]Message)
+	flatten("", raw, messages)
+	s.messages[lang] = messages
+	return nil
 }
 
+// flatten recursively flattens nested maps into dot-notation keys.
+func flatten(prefix string, data map[string]any, out map[string]Message) {
+	for key, value := range data {
+		fullKey := key
+		if prefix != "" {
+			fullKey = prefix + "." + key
+		}
+
+		switch v := value.(type) {
+		case string:
+			out[fullKey] = Message{Text: v}
+
+		case map[string]any:
+			// Check if this is a plural object (has "one" or "other" keys)
+			if isPluralObject(v) {
+				msg := Message{}
+				if one, ok := v["one"].(string); ok {
+					msg.One = one
+				}
+				if other, ok := v["other"].(string); ok {
+					msg.Other = other
+				}
+				out[fullKey] = msg
+			} else {
+				// Recurse into nested object
+				flatten(fullKey, v, out)
+			}
+		}
+	}
+}
+
+// isPluralObject checks if a map represents plural forms.
+func isPluralObject(m map[string]any) bool {
+	_, hasOne := m["one"]
+	_, hasOther := m["other"]
+	// It's a plural object if it has one/other and no nested objects
+	if !hasOne && !hasOther {
+		return false
+	}
+	for _, v := range m {
+		if _, isMap := v.(map[string]any); isMap {
+			return false
+		}
+	}
+	return true
+}
+
+func detectLanguage(supported []language.Tag) string {
+	langEnv := os.Getenv("LANG")
+	if langEnv == "" {
+		langEnv = os.Getenv("LC_ALL")
+		if langEnv == "" {
+			langEnv = os.Getenv("LC_MESSAGES")
+		}
+	}
+	if langEnv == "" {
+		return ""
+	}
+
+	// Parse LANG format: en_GB.UTF-8 -> en-GB
+	baseLang := strings.Split(langEnv, ".")[0]
+	baseLang = strings.ReplaceAll(baseLang, "_", "-")
+
+	parsedLang, err := language.Parse(baseLang)
+	if err != nil {
+		return ""
+	}
+
+	if len(supported) == 0 {
+		return ""
+	}
+
+	matcher := language.NewMatcher(supported)
+	bestMatch, _, confidence := matcher.Match(parsedLang)
+
+	if confidence >= language.Low {
+		return bestMatch.String()
+	}
+	return ""
+}
+
+// --- Global convenience functions ---
+
 // Init initializes the default global service.
-// Safe to call multiple times; only the first call has effect.
 func Init() error {
 	defaultOnce.Do(func() {
 		defaultService, defaultErr = New()
@@ -129,87 +236,21 @@ func Default() *Service {
 }
 
 // SetDefault sets the global i18n service.
-// Useful for GUI to replace with an extended service.
 func SetDefault(s *Service) {
 	defaultService = s
 }
 
 // T translates a message using the default service.
-// Shorthand for Default().T(messageID, args...).
-func T(messageID string, args ...interface{}) string {
-	return Default().T(messageID, args...)
+func T(messageID string, args ...any) string {
+	if svc := Default(); svc != nil {
+		return svc.T(messageID, args...)
+	}
+	return messageID
 }
 
-// --- Language Management ---
-
-func loadLocalesFromFS(bundle *i18n.Bundle, fsys fs.FS, dir string) ([]language.Tag, error) {
-	entries, err := fs.ReadDir(fsys, dir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read locales directory: %w", err)
-	}
-
-	var langs []language.Tag
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-
-		filePath := filepath.Join(dir, entry.Name())
-		if _, err := bundle.LoadMessageFileFS(fsys, filePath); err != nil {
-			return nil, fmt.Errorf("failed to load locale %s: %w", entry.Name(), err)
-		}
-
-		lang := strings.TrimSuffix(entry.Name(), ".json")
-		tag := language.Make(lang)
-		langs = append(langs, tag)
-	}
-
-	if len(langs) == 0 {
-		return nil, fmt.Errorf("no locale files found in %s", dir)
-	}
-
-	return langs, nil
-}
-
-func detectLanguage(supported []language.Tag) (string, error) {
-	langEnv := os.Getenv("LANG")
-	if langEnv == "" {
-		// Try LC_ALL, LC_MESSAGES as fallbacks
-		langEnv = os.Getenv("LC_ALL")
-		if langEnv == "" {
-			langEnv = os.Getenv("LC_MESSAGES")
-		}
-	}
-	if langEnv == "" {
-		return "", nil
-	}
-
-	// Parse LANG format: en_GB.UTF-8 -> en-GB
-	baseLang := strings.Split(langEnv, ".")[0]
-	baseLang = strings.ReplaceAll(baseLang, "_", "-")
-
-	parsedLang, err := language.Parse(baseLang)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse language tag '%s': %w", baseLang, err)
-	}
-
-	if len(supported) == 0 {
-		return "", nil
-	}
-
-	matcher := language.NewMatcher(supported)
-	_, index, confidence := matcher.Match(parsedLang)
-
-	if confidence >= language.Low {
-		return supported[index].String(), nil
-	}
-	return "", nil
-}
-
-// --- Public Service Methods ---
+// --- Service methods ---
 
 // SetLanguage sets the language for translations.
-// The language tag should be a valid BCP 47 tag (e.g., "en", "en-GB", "de").
 func (s *Service) SetLanguage(lang string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -230,7 +271,6 @@ func (s *Service) SetLanguage(lang string) error {
 		return fmt.Errorf("unsupported language: %s", lang)
 	}
 
-	s.localizer = i18n.NewLocalizer(s.bundle, bestMatch.String())
 	s.currentLang = bestMatch.String()
 	return nil
 }
@@ -257,121 +297,162 @@ func (s *Service) AvailableLanguages() []string {
 // T translates a message by its ID.
 // Optional template data can be passed for interpolation.
 //
-// Examples:
+// For plural messages, pass a map with "Count" to select the form:
 //
-//	svc.T("cli.success")
-//	svc.T("cli.items_found", map[string]int{"Count": 5})
-//	svc.T("cli.greeting", map[string]string{"Name": "Alice"})
-func (s *Service) T(messageID string, args ...interface{}) string {
+//	svc.T("cli.count.items", map[string]any{"Count": 5})
+func (s *Service) T(messageID string, args ...any) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.localizer == nil {
+	// Try current language, then fallback
+	msg, ok := s.getMessage(s.currentLang, messageID)
+	if !ok {
+		msg, ok = s.getMessage(s.fallbackLang, messageID)
+		if !ok {
+			return messageID
+		}
+	}
+
+	// Get template data
+	var data any
+	if len(args) > 0 {
+		data = args[0]
+	}
+
+	// Get the appropriate text
+	text := msg.Text
+	if msg.IsPlural() {
+		count := getCount(data)
+		if count == 1 {
+			text = msg.One
+		} else {
+			text = msg.Other
+		}
+		if text == "" {
+			text = msg.Other // Fallback to other
+		}
+	}
+
+	if text == "" {
 		return messageID
 	}
 
-	config := &i18n.LocalizeConfig{MessageID: messageID}
-	if len(args) > 0 {
-		config.TemplateData = args[0]
+	// Apply template if we have data
+	if data != nil {
+		text = applyTemplate(text, data)
 	}
 
-	translation, err := s.localizer.Localize(config)
+	return text
+}
+
+func (s *Service) getMessage(lang, key string) (Message, bool) {
+	msgs, ok := s.messages[lang]
+	if !ok {
+		return Message{}, false
+	}
+	msg, ok := msgs[key]
+	return msg, ok
+}
+
+func getCount(data any) int {
+	if data == nil {
+		return 0
+	}
+	switch d := data.(type) {
+	case map[string]any:
+		if c, ok := d["Count"]; ok {
+			return toInt(c)
+		}
+	case map[string]int:
+		if c, ok := d["Count"]; ok {
+			return c
+		}
+	}
+	return 0
+}
+
+func toInt(v any) int {
+	switch n := v.(type) {
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case float64:
+		return int(n)
+	}
+	return 0
+}
+
+func applyTemplate(text string, data any) string {
+	// Quick check for template syntax
+	if !strings.Contains(text, "{{") {
+		return text
+	}
+
+	tmpl, err := template.New("").Parse(text)
 	if err != nil {
-		// Return the message ID if translation not found
-		return messageID
-	}
-	return translation
-}
-
-// Translate is an alias for T.
-func (s *Service) Translate(messageID string, args ...interface{}) string {
-	return s.T(messageID, args...)
-}
-
-// MustT translates a message, panicking if not found.
-// Use sparingly, mainly for critical messages that must exist.
-func (s *Service) MustT(messageID string, args ...interface{}) string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if s.localizer == nil {
-		panic(fmt.Sprintf("i18n: localizer not initialized for message %q", messageID))
+		return text
 	}
 
-	config := &i18n.LocalizeConfig{MessageID: messageID}
-	if len(args) > 0 {
-		config.TemplateData = args[0]
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return text
 	}
-
-	translation, err := s.localizer.Localize(config)
-	if err != nil {
-		panic(fmt.Sprintf("i18n: translation not found for %q: %v", messageID, err))
-	}
-	return translation
+	return buf.String()
 }
 
-// Bundle returns the underlying i18n.Bundle.
-// Useful for extending with additional translations.
-func (s *Service) Bundle() *i18n.Bundle {
-	return s.bundle
-}
-
-// AddMessages adds additional messages to the bundle.
-// This allows runtime extension of translations.
-func (s *Service) AddMessages(lang string, messages map[string]string) error {
+// AddMessages adds messages for a language at runtime.
+func (s *Service) AddMessages(lang string, messages map[string]string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	tag := language.Make(lang)
-	var i18nMessages []*i18n.Message
-	for id, text := range messages {
-		i18nMessages = append(i18nMessages, &i18n.Message{
-			ID:    id,
-			Other: text,
-		})
+	if s.messages[lang] == nil {
+		s.messages[lang] = make(map[string]Message)
 	}
-
-	if err := s.bundle.AddMessages(tag, i18nMessages...); err != nil {
-		return fmt.Errorf("failed to add messages for %s: %w", lang, err)
+	for key, text := range messages {
+		s.messages[lang][key] = Message{Text: text}
 	}
-
-	// Check if this is a new language
-	found := false
-	for _, existing := range s.availableLangs {
-		if existing == tag {
-			found = true
-			break
-		}
-	}
-	if !found {
-		s.availableLangs = append(s.availableLangs, tag)
-	}
-
-	return nil
 }
 
 // LoadFS loads additional locale files from a filesystem.
-// Useful for GUI to add its translations on top of CLI translations.
 func (s *Service) LoadFS(fsys fs.FS, dir string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	newLangs, err := loadLocalesFromFS(s.bundle, fsys, dir)
+	entries, err := fs.ReadDir(fsys, dir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read locales directory: %w", err)
 	}
 
-	// Merge new languages
-	for _, newTag := range newLangs {
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+
+		filePath := filepath.Join(dir, entry.Name())
+		data, err := fs.ReadFile(fsys, filePath)
+		if err != nil {
+			return fmt.Errorf("failed to read locale %s: %w", entry.Name(), err)
+		}
+
+		lang := strings.TrimSuffix(entry.Name(), ".json")
+		lang = strings.ReplaceAll(lang, "_", "-")
+
+		if err := s.loadJSON(lang, data); err != nil {
+			return fmt.Errorf("failed to parse locale %s: %w", entry.Name(), err)
+		}
+
+		// Add to available languages if new
+		tag := language.Make(lang)
 		found := false
 		for _, existing := range s.availableLangs {
-			if existing == newTag {
+			if existing == tag {
 				found = true
 				break
 			}
 		}
 		if !found {
-			s.availableLangs = append(s.availableLangs, newTag)
+			s.availableLangs = append(s.availableLangs, tag)
 		}
 	}
 

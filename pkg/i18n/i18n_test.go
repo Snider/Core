@@ -15,7 +15,7 @@ func TestNew(t *testing.T) {
 
 	// Should have English available
 	langs := svc.AvailableLanguages()
-	assert.Contains(t, langs, "en")
+	assert.Contains(t, langs, "en-GB")
 }
 
 func TestTranslate(t *testing.T) {
@@ -47,15 +47,15 @@ func TestSetLanguage(t *testing.T) {
 	svc, err := New()
 	require.NoError(t, err)
 
-	// Default is English
-	assert.Equal(t, "en", svc.Language())
+	// Default is en-GB
+	assert.Equal(t, "en-GB", svc.Language())
 
 	// Setting invalid language should error
 	err = svc.SetLanguage("xx-invalid")
 	assert.Error(t, err)
 
-	// Language should still be English
-	assert.Equal(t, "en", svc.Language())
+	// Language should still be en-GB
+	assert.Equal(t, "en-GB", svc.Language())
 }
 
 func TestDefaultService(t *testing.T) {
@@ -80,10 +80,9 @@ func TestAddMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add custom messages
-	err = svc.AddMessages("en", map[string]string{
+	svc.AddMessages("en-GB", map[string]string{
 		"custom.greeting": "Hello, {{.Name}}!",
 	})
-	require.NoError(t, err)
 
 	result := svc.T("custom.greeting", map[string]string{"Name": "World"})
 	assert.Equal(t, "Hello, World!", result)
@@ -95,7 +94,7 @@ func TestAvailableLanguages(t *testing.T) {
 
 	langs := svc.AvailableLanguages()
 	assert.NotEmpty(t, langs)
-	assert.Contains(t, langs, "en")
+	assert.Contains(t, langs, "en-GB")
 }
 
 func TestDetectLanguage(t *testing.T) {
@@ -106,13 +105,13 @@ func TestDetectLanguage(t *testing.T) {
 	}{
 		{
 			name:     "English exact",
-			langEnv:  "en",
-			expected: "en",
+			langEnv:  "en-GB",
+			expected: "en-GB",
 		},
 		{
-			name:     "English with region and encoding",
+			name:     "English with encoding",
 			langEnv:  "en_GB.UTF-8",
-			expected: "en",
+			expected: "en-GB",
 		},
 		{
 			name:     "Empty LANG",
@@ -130,8 +129,38 @@ func TestDetectLanguage(t *testing.T) {
 			t.Setenv("LC_ALL", "")
 			t.Setenv("LC_MESSAGES", "")
 
-			result, _ := detectLanguage(svc.availableLangs)
+			result := detectLanguage(svc.availableLangs)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestPluralization(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	// Singular
+	result := svc.T("cli.count.items", map[string]any{"Count": 1})
+	assert.Equal(t, "1 item", result)
+
+	// Plural
+	result = svc.T("cli.count.items", map[string]any{"Count": 5})
+	assert.Equal(t, "5 items", result)
+
+	// Zero uses plural
+	result = svc.T("cli.count.items", map[string]any{"Count": 0})
+	assert.Equal(t, "0 items", result)
+}
+
+func TestNestedKeys(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	// Deeply nested key
+	result := svc.T("cmd.dev.work.short")
+	assert.Equal(t, "Multi-repo git operations", result)
+
+	// Nested with flag
+	result = svc.T("cmd.dev.work.flag.status")
+	assert.Equal(t, "Show status only, don't push", result)
 }
