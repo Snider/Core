@@ -1,62 +1,132 @@
 version: '3'
 
 tasks:
+  # --- CLI Management ---
   cli:build:
-    desc: "Build the core CLI executable"
+    desc: "Build core CLI to ./bin/core"
     cmds:
       - go build -o ./bin/core .
 
-  cli:run:
-    desc: "Build and run the core CLI"
+  cli:install:
+    desc: "Install core CLI to system PATH"
     cmds:
-      - task: cli:build
-      - ./bin/core {{.CLI_ARGS}}
+      - go install .
 
-
+  # --- Development ---
   test:
-    desc: "Run all Go tests recursively for the entire project."
+    desc: "Run all tests"
     cmds:
-      - cmd: clear
-        platforms: [linux, darwin]
-      - cmd: cls
-        platforms: [windows]
-      - cmd: go test ./...
+      - core test
 
+  test:verbose:
+    desc: "Run all tests with verbose output"
+    cmds:
+      - core test --verbose
+
+  test:run:
+    desc: "Run specific test (use: task test:run -- TestName)"
+    cmds:
+      - core test --run {{.CLI_ARGS}}
+
+  cov:
+    desc: "Run tests with coverage report"
+    cmds:
+      - core go cov
+
+  fmt:
+    desc: "Format Go code"
+    cmds:
+      - core go fmt
+
+  lint:
+    desc: "Run linter"
+    cmds:
+      - core go lint
+
+  mod:tidy:
+    desc: "Run go mod tidy"
+    cmds:
+      - core go mod tidy
+
+  # --- Quality Assurance ---
+  qa:
+    desc: "Run QA: fmt, vet, lint, test"
+    cmds:
+      - core go qa
+
+  qa:quick:
+    desc: "Quick QA: fmt, vet, lint only"
+    cmds:
+      - core go qa quick
+
+  qa:full:
+    desc: "Full QA: + race, vuln, security"
+    cmds:
+      - core go qa full
+
+  qa:fix:
+    desc: "QA with auto-fix"
+    cmds:
+      - core go qa --fix
+
+  # --- Build ---
+  build:
+    desc: "Build project with auto-detection"
+    cmds:
+      - core build
+
+  build:ci:
+    desc: "Build for CI (all targets, checksums)"
+    cmds:
+      - core build --ci
+
+  # --- Environment ---
+  doctor:
+    desc: "Check development environment"
+    cmds:
+      - core doctor
+
+  doctor:verbose:
+    desc: "Check environment with details"
+    cmds:
+      - core doctor --verbose
+
+  # --- Code Review ---
   review:
-    desc: "Run CodeRabbit review to get feedback on the current changes."
+    desc: "Run CodeRabbit review"
     cmds:
       - coderabbit review --prompt-only
 
   check:
-    desc: "Run a CodeRabbit review followed by the full test suite."
+    desc: "Tidy, test, and review"
     cmds:
-      - task: go:mod:tidy
-      - go test ./... # make sure the code compiles before asking coderabbit to review it
+      - task: mod:tidy
+      - task: test
       - task: review
 
-  go:mod:tidy:
-    summary: Runs `go mod tidy`
-    internal: true
-    cmds:
-      - go mod tidy
-
-  cov:
-    desc: "Generate coverage profile (coverage.txt)"
-    cmds:
-      - go test -coverprofile=coverage.txt ./...
-
-  cov-view:
-    desc: "Open the coverage report in your browser."
-    cmds:
-      - task: cov
-      - go tool cover -html=coverage.txt
-
+  # --- i18n ---
   i18n:generate:
-    desc: "Regenerate i18n key constants from locale files"
+    desc: "Regenerate i18n key constants"
     cmds:
       - go generate ./pkg/i18n/...
 
   i18n:validate:
-    desc: "Validate i18n key usage across the codebase"
+    desc: "Validate i18n key usage"
     cmds:
       - go run ./internal/tools/i18n-validate ./...
+
+  # --- Multi-repo (when in workspace) ---
+  dev:health:
+    desc: "Check health of all repos"
+    cmds:
+      - core dev health
+
+  dev:work:
+    desc: "Full workflow: status, commit, push"
+    cmds:
+      - core dev work
+
+  dev:status:
+    desc: "Show status of all repos"
+    cmds:
+      - core dev work --status

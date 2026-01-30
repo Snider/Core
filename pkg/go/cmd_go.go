@@ -25,6 +25,7 @@ func AddGoCommands(root *cobra.Command) {
 	}
 
 	root.AddCommand(goCmd)
+	addGoQACommand(goCmd)
 	addGoTestCommand(goCmd)
 	addGoCovCommand(goCmd)
 	addGoFmtCommand(goCmd)
