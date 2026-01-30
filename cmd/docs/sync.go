@@ -116,7 +116,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	// Confirm
 	fmt.Println()
 	if !confirm(i18n.T("cmd.docs.sync.confirm")) {
-		fmt.Println(i18n.T("cli.confirm.abort"))
+		fmt.Println(i18n.T("common.prompt.abort"))
 		return nil
 	}
 

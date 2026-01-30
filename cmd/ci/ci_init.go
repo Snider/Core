@@ -30,7 +30,7 @@ func runCIReleaseInit() error {
 		response, _ := reader.ReadString('\n')
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println(i18n.T("cli.confirm.abort"))
+			fmt.Println(i18n.T("common.prompt.abort"))
 			return nil
 		}
 	}

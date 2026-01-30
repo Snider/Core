@@ -1,5 +1,20 @@
 {
 	"common": {
+		"prompt": {
+			"yes": "y",
+			"no": "n",
+			"yes_full": "yes",
+			"no_full": "no",
+			"abort": "Operation aborted",
+			"cancel": "Cancelled",
+			"continue": "Continue?",
+			"proceed": "Proceed?",
+			"confirm": "Are you sure?",
+			"overwrite": "Overwrite?",
+			"delete": "Delete?",
+			"save": "Save?",
+			"discard": "Discard changes?"
+		},
 		"label": {
 			"error": "Error:",
 			"done": "Done:",
@@ -87,13 +102,6 @@
 		"aborted": "Aborted",
 		"cancelled": "Cancelled",
 		"completed": "Completed",
-		"confirm": {
-			"abort": "Operation aborted",
-			"continue": "Continue?",
-			"no": "No",
-			"proceed": "Proceed?",
-			"yes": "Yes"
-		},
 		"count": {
 			"commits": {
 				"one": "{{.Count}} commit",
@@ -116,15 +124,6 @@
 		"ok": "OK",
 		"pass": "PASS",
 		"pending": "Pending",
-		"progress": {
-			"building": "Building",
-			"checking": "Checking",
-			"deploying": "Deploying",
-			"fetching": "Fetching",
-			"loading": "Loading",
-			"processing": "Processing",
-			"testing": "Testing"
-		},
 		"skip": "Skipped",
 		"success": "Success",
 		"time": {

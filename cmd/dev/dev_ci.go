@@ -104,7 +104,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	repoList := reg.List()
 	for i, repo := range repoList {
 		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("cli.progress.checking")), i+1, len(repoList), repo.Name)
+		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.P("check")), i+1, len(repoList), repo.Name)
 
 		runs, err := fetchWorkflowRuns(repoFullName, repo.Name, branch)
 		if err != nil {

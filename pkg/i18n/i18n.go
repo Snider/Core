@@ -270,6 +270,35 @@ func C(intent string, subject *Subject) *Composed {
 	}
 }
 
+// --- Grammar convenience functions (package-level) ---
+// These provide direct access to grammar functions without needing a service instance.
+
+// P returns a progress message for a verb: "Building...", "Checking..."
+// Use this instead of T("cli.progress.building") for dynamic progress messages.
+//
+//	P("build")  // "Building..."
+//	P("fetch")  // "Fetching..."
+func P(verb string) string {
+	return Progress(verb)
+}
+
+// PS returns a progress message with a subject: "Building project...", "Checking config..."
+//
+//	PS("build", "project")     // "Building project..."
+//	PS("check", "config.yaml") // "Checking config.yaml..."
+func PS(verb, subject string) string {
+	return ProgressSubject(verb, subject)
+}
+
+// L returns a label with colon: "Status:", "Version:"
+// Use this instead of T("common.label.status") for simple labels.
+//
+//	L("status")  // "Status:"
+//	L("version") // "Version:"
+func L(word string) string {
+	return Label(word)
+}
+
 // _ is the standard gettext-style translation helper.
 // Alias for T() - use whichever you prefer.
 //

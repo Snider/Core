@@ -492,14 +492,82 @@ func Quote(s string) string {
 //	tmpl := template.New("").Funcs(i18n.TemplateFuncs())
 func TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"title":   Title,
-		"lower":   strings.ToLower,
-		"upper":   strings.ToUpper,
-		"past":    PastTense,
-		"gerund":  Gerund,
-		"plural":  Pluralize,
+		"title":      Title,
+		"lower":      strings.ToLower,
+		"upper":      strings.ToUpper,
+		"past":       PastTense,
+		"gerund":     Gerund,
+		"plural":     Pluralize,
 		"pluralForm": PluralForm,
-		"article": Article,
-		"quote":   Quote,
+		"article":    Article,
+		"quote":      Quote,
 	}
+}
+
+// Progress returns a progress message for a verb.
+// Generates "Verbing..." form.
+//
+//	Progress("build")  // "Building..."
+//	Progress("check")  // "Checking..."
+//	Progress("fetch")  // "Fetching..."
+func Progress(verb string) string {
+	g := Gerund(verb)
+	if g == "" {
+		return ""
+	}
+	return Title(g) + "..."
+}
+
+// ProgressSubject returns a progress message with a subject.
+// Generates "Verbing subject..." form.
+//
+//	ProgressSubject("build", "project")    // "Building project..."
+//	ProgressSubject("check", "config.yaml") // "Checking config.yaml..."
+func ProgressSubject(verb, subject string) string {
+	g := Gerund(verb)
+	if g == "" {
+		return ""
+	}
+	return Title(g) + " " + subject + "..."
+}
+
+// ActionResult returns a result message for a completed action.
+// Generates "Subject verbed" form.
+//
+//	ActionResult("delete", "file")  // "File deleted"
+//	ActionResult("commit", "changes") // "Changes committed"
+func ActionResult(verb, subject string) string {
+	p := PastTense(verb)
+	if p == "" || subject == "" {
+		return ""
+	}
+	return Title(subject) + " " + p
+}
+
+// ActionFailed returns a failure message for an action.
+// Generates "Failed to verb subject" form.
+//
+//	ActionFailed("delete", "file")  // "Failed to delete file"
+//	ActionFailed("push", "commits") // "Failed to push commits"
+func ActionFailed(verb, subject string) string {
+	if verb == "" {
+		return ""
+	}
+	if subject == "" {
+		return "Failed to " + verb
+	}
+	return "Failed to " + verb + " " + subject
+}
+
+// Label returns a label with a colon suffix.
+// Generates "Word:" form with title case.
+//
+//	Label("status")   // "Status:"
+//	Label("version")  // "Version:"
+//	Label("app url")  // "App Url:"
+func Label(word string) string {
+	if word == "" {
+		return ""
+	}
+	return Title(word) + ":"
 }

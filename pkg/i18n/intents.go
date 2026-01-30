@@ -429,6 +429,140 @@ var coreIntents = map[string]Intent{
 		Success:  "Confirmed",
 		Failure:  "Cancelled",
 	},
+
+	// --- Additional Actions ---
+
+	"core.sync": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "sync",
+			Default: "yes",
+		},
+		Question: "Sync {{.Subject}}?",
+		Confirm:  "Sync {{.Subject}}?",
+		Success:  "{{.Subject | title}} synced",
+		Failure:  "Failed to sync {{.Subject}}",
+	},
+
+	"core.boot": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "boot",
+			Default: "yes",
+		},
+		Question: "Boot {{.Subject}}?",
+		Confirm:  "Boot {{.Subject}}?",
+		Success:  "{{.Subject | title}} booted",
+		Failure:  "Failed to boot {{.Subject}}",
+	},
+
+	"core.format": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "format",
+			Default: "yes",
+		},
+		Question: "Format {{.Subject}}?",
+		Confirm:  "Format {{.Subject}}?",
+		Success:  "{{.Subject | title}} formatted",
+		Failure:  "Failed to format {{.Subject}}",
+	},
+
+	"core.analyse": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "analyse",
+			Default: "yes",
+		},
+		Question: "Analyse {{.Subject}}?",
+		Confirm:  "Analyse {{.Subject}}?",
+		Success:  "{{.Subject | title}} analysed",
+		Failure:  "Failed to analyse {{.Subject}}",
+	},
+
+	"core.link": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "link",
+			Default: "yes",
+		},
+		Question: "Link {{.Subject}}?",
+		Confirm:  "Link {{.Subject}}?",
+		Success:  "{{.Subject | title}} linked",
+		Failure:  "Failed to link {{.Subject}}",
+	},
+
+	"core.unlink": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "unlink",
+			Default: "yes",
+		},
+		Question: "Unlink {{.Subject}}?",
+		Confirm:  "Unlink {{.Subject}}?",
+		Success:  "{{.Subject | title}} unlinked",
+		Failure:  "Failed to unlink {{.Subject}}",
+	},
+
+	"core.fetch": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "fetch",
+			Default: "yes",
+		},
+		Question: "Fetch {{.Subject}}?",
+		Confirm:  "Fetch {{.Subject}}?",
+		Success:  "{{.Subject | title}} fetched",
+		Failure:  "Failed to fetch {{.Subject}}",
+	},
+
+	"core.generate": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "generate",
+			Default: "yes",
+		},
+		Question: "Generate {{.Subject}}?",
+		Confirm:  "Generate {{.Subject}}?",
+		Success:  "{{.Subject | title}} generated",
+		Failure:  "Failed to generate {{.Subject}}",
+	},
+
+	"core.validate": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "validate",
+			Default: "yes",
+		},
+		Question: "Validate {{.Subject}}?",
+		Confirm:  "Validate {{.Subject}}?",
+		Success:  "{{.Subject | title}} valid",
+		Failure:  "{{.Subject | title}} invalid",
+	},
+
+	"core.check": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "check",
+			Default: "yes",
+		},
+		Question: "Check {{.Subject}}?",
+		Confirm:  "Check {{.Subject}}?",
+		Success:  "{{.Subject | title}} OK",
+		Failure:  "{{.Subject | title}} failed",
+	},
+
+	"core.scan": {
+		Meta: IntentMeta{
+			Type:    "action",
+			Verb:    "scan",
+			Default: "yes",
+		},
+		Question: "Scan {{.Subject}}?",
+		Confirm:  "Scan {{.Subject}}?",
+		Success:  "{{.Subject | title}} scanned",
+		Failure:  "Failed to scan {{.Subject}}",
+	},
 }
 
 // getIntent retrieves an intent by its key from the core intents.

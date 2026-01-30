@@ -118,7 +118,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 	repoList := reg.List()
 	for i, repo := range repoList {
 		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("cli.progress.fetching")), i+1, len(repoList), repo.Name)
+		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.P("fetch")), i+1, len(repoList), repo.Name)
 
 		issues, err := fetchIssues(repoFullName, repo.Name, limit, assignee)
 		if err != nil {
