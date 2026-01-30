@@ -126,6 +126,14 @@ func (s *Subject) CountInt() int {
 	return s.count
 }
 
+// CountString returns the count as a string.
+func (s *Subject) CountString() string {
+	if s == nil {
+		return "1"
+	}
+	return fmt.Sprint(s.count)
+}
+
 // GenderString returns the grammatical gender.
 func (s *Subject) GenderString() string {
 	if s == nil {
@@ -150,13 +158,13 @@ func (s *Subject) NounString() string {
 	return s.Noun
 }
 
-// FormalityString returns the formality level.
-// Returns FormalityNeutral if not explicitly set.
-func (s *Subject) FormalityString() Formality {
+// FormalityString returns the formality level as a string.
+// Returns "neutral" if not explicitly set.
+func (s *Subject) FormalityString() string {
 	if s == nil {
-		return FormalityNeutral
+		return FormalityNeutral.String()
 	}
-	return s.formality
+	return s.formality.String()
 }
 
 // IsFormal returns true if formal address should be used.
