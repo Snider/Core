@@ -4,6 +4,8 @@ package git
 import (
 	"bytes"
 	"context"
+	"io"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -139,9 +141,32 @@ func getAheadBehind(ctx context.Context, path string) (ahead, behind int) {
 }
 
 // Push pushes commits for a single repository.
+// Uses interactive mode to support SSH passphrase prompts.
 func Push(ctx context.Context, path string) error {
-	_, err := gitCommand(ctx, path, "push")
-	return err
+	return gitInteractive(ctx, path, "push")
+}
+
+// gitInteractive runs a git command with terminal attached for user interaction.
+func gitInteractive(ctx context.Context, dir string, args ...string) error {
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Dir = dir
+
+	// Connect to terminal for SSH passphrase prompts
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+
+	// Capture stderr for error reporting while also showing it
+	var stderr bytes.Buffer
+	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
+
+	if err := cmd.Run(); err != nil {
+		if stderr.Len() > 0 {
+			return &GitError{Err: err, Stderr: stderr.String()}
+		}
+		return err
+	}
+
+	return nil
 }
 
 // PushResult represents the result of a push operation.
@@ -191,8 +216,31 @@ func gitCommand(ctx context.Context, dir string, args ...string) (string, error)
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
+		// Include stderr in error message for better diagnostics
+		if stderr.Len() > 0 {
+			return "", &GitError{Err: err, Stderr: stderr.String()}
+		}
 		return "", err
 	}
 
 	return stdout.String(), nil
+}
+
+// GitError wraps a git command error with stderr output.
+type GitError struct {
+	Err    error
+	Stderr string
+}
+
+func (e *GitError) Error() string {
+	// Return just the stderr message, trimmed
+	msg := strings.TrimSpace(e.Stderr)
+	if msg != "" {
+		return msg
+	}
+	return e.Err.Error()
+}
+
+func (e *GitError) Unwrap() error {
+	return e.Err
 }
