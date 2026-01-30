@@ -103,7 +103,7 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 	// Clone core-devops first
 	devopsPath := filepath.Join(targetDir, devopsRepo)
 	if _, err := os.Stat(filepath.Join(devopsPath, ".git")); os.IsNotExist(err) {
-		fmt.Printf("%s %s %s...\n", dimStyle.Render(">>"), i18n.T("cmd.setup.cloning"), devopsRepo)
+		fmt.Printf("%s %s %s...\n", dimStyle.Render(">>"), i18n.T("common.status.cloning"), devopsRepo)
 
 		if !dryRun {
 			if err := gitClone(ctx, defaultOrg, devopsRepo, devopsPath); err != nil {

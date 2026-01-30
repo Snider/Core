@@ -29,7 +29,7 @@ func addPullCommand(parent *cobra.Command) {
 		},
 	}
 
-	pullCmd.Flags().StringVar(&pullRegistryPath, "registry", "", i18n.T("cmd.dev.pull.flag.registry"))
+	pullCmd.Flags().StringVar(&pullRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	pullCmd.Flags().BoolVar(&pullAll, "all", false, i18n.T("cmd.dev.pull.flag.all"))
 
 	parent.AddCommand(pullCmd)
@@ -47,7 +47,7 @@ func runPull(registryPath string, all bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -55,7 +55,7 @@ func runPull(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
@@ -138,7 +138,7 @@ func runPull(registryPath string, all bool) error {
 	fmt.Println()
 	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.pull.done_pulled", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("cmd.dev.count_failed", map[string]interface{}{"Count": failed})))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
 	fmt.Println()
 

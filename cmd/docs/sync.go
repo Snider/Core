@@ -27,7 +27,7 @@ var docsSyncCmd = &cobra.Command{
 }
 
 func init() {
-	docsSyncCmd.Flags().StringVar(&docsSyncRegistryPath, "registry", "", i18n.T("cmd.docs.sync.flag.registry"))
+	docsSyncCmd.Flags().StringVar(&docsSyncRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	docsSyncCmd.Flags().BoolVar(&docsSyncDryRun, "dry-run", false, i18n.T("cmd.docs.sync.flag.dry_run"))
 	docsSyncCmd.Flags().StringVar(&docsSyncOutputDir, "output", "", i18n.T("cmd.docs.sync.flag.output"))
 }
@@ -105,7 +105,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	}
 
 	fmt.Printf("\n%s %s\n",
-		dimStyle.Render(i18n.T("cmd.docs.sync.total_label")),
+		dimStyle.Render(i18n.T("common.label.total")),
 		i18n.T("cmd.docs.sync.total_summary", map[string]interface{}{"Files": totalFiles, "Repos": len(docsInfo), "Output": outputDir}))
 
 	if dryRun {
@@ -150,7 +150,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		synced++
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.docs.sync.done_label")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
 
 	return nil
 }

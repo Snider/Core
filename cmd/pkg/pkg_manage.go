@@ -82,7 +82,7 @@ func runPkgList() error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.pkg.list.total_label")), i18n.T("cmd.pkg.list.summary", map[string]int{"Installed": installed, "Missing": missing}))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.total")), i18n.T("cmd.pkg.list.summary", map[string]int{"Installed": installed, "Missing": missing}))
 
 	if missing > 0 {
 		fmt.Printf("\n%s %s\n", i18n.T("cmd.pkg.list.install_missing"), dimStyle.Render("core setup"))
@@ -164,7 +164,7 @@ func runPkgUpdate(packages []string, all bool) error {
 		}
 
 		if strings.Contains(string(output), "Already up to date") {
-			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.pkg.update.up_to_date")))
+			fmt.Printf("%s\n", dimStyle.Render(i18n.T("common.status.up_to_date")))
 		} else {
 			fmt.Printf("%s\n", successStyle.Render("✓"))
 		}
@@ -173,7 +173,7 @@ func runPkgUpdate(packages []string, all bool) error {
 
 	fmt.Println()
 	fmt.Printf("%s %s\n",
-		dimStyle.Render(i18n.T("cmd.pkg.update.done_label")), i18n.T("cmd.pkg.update.summary", map[string]int{"Updated": updated, "Skipped": skipped, "Failed": failed}))
+		dimStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.pkg.update.summary", map[string]int{"Updated": updated, "Skipped": skipped, "Failed": failed}))
 
 	return nil
 }
@@ -211,7 +211,7 @@ func runPkgOutdated() error {
 		basePath = filepath.Join(filepath.Dir(regPath), basePath)
 	}
 
-	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.pkg.outdated.outdated_label")), i18n.T("cmd.pkg.outdated.checking"))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.pkg.outdated.outdated_label")), i18n.T("common.progress.checking_updates"))
 
 	var outdated, upToDate, notInstalled int
 
@@ -245,10 +245,10 @@ func runPkgOutdated() error {
 
 	fmt.Println()
 	if outdated == 0 {
-		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.pkg.outdated.done_label")), i18n.T("cmd.pkg.outdated.all_up_to_date"))
+		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.pkg.outdated.all_up_to_date"))
 	} else {
 		fmt.Printf("%s %s\n",
-			dimStyle.Render(i18n.T("cmd.pkg.outdated.summary_label")), i18n.T("cmd.pkg.outdated.summary", map[string]int{"Outdated": outdated, "UpToDate": upToDate}))
+			dimStyle.Render(i18n.T("common.label.summary")), i18n.T("cmd.pkg.outdated.summary", map[string]int{"Outdated": outdated, "UpToDate": upToDate}))
 		fmt.Printf("\n%s %s\n", i18n.T("cmd.pkg.outdated.update_with"), dimStyle.Render("core pkg update --all"))
 	}
 

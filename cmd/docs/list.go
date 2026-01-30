@@ -22,7 +22,7 @@ var docsListCmd = &cobra.Command{
 }
 
 func init() {
-	docsListCmd.Flags().StringVar(&docsListRegistryPath, "registry", "", i18n.T("cmd.docs.list.flag.registry"))
+	docsListCmd.Flags().StringVar(&docsListRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 }
 
 func runDocsList(registryPath string) error {
@@ -32,7 +32,7 @@ func runDocsList(registryPath string) error {
 	}
 
 	fmt.Printf("\n%-20s  %-8s  %-8s  %-10s  %s\n",
-		headerStyle.Render(i18n.T("cmd.docs.list.header.repo")),
+		headerStyle.Render(i18n.T("common.label.repo")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.readme")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.claude")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.changelog")),
@@ -50,7 +50,7 @@ func runDocsList(registryPath string) error {
 
 		docsDir := cli.CheckMark(false)
 		if len(info.DocsFiles) > 0 {
-			docsDir = docsFoundStyle.Render(i18n.T("cmd.docs.list.files_count", map[string]interface{}{"Count": len(info.DocsFiles)}))
+			docsDir = docsFoundStyle.Render(i18n.T("common.count.files", map[string]interface{}{"Count": len(info.DocsFiles)}))
 		}
 
 		fmt.Printf("%-20s  %-8s  %-8s  %-10s  %s\n",
@@ -70,7 +70,7 @@ func runDocsList(registryPath string) error {
 
 	fmt.Println()
 	fmt.Printf("%s %s\n",
-		cli.Label(i18n.T("cmd.docs.list.coverage_label")),
+		cli.Label(i18n.T("common.label.coverage")),
 		i18n.T("cmd.docs.list.coverage_summary", map[string]interface{}{"WithDocs": withDocs, "WithoutDocs": withoutDocs}),
 	)
 

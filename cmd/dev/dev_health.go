@@ -30,7 +30,7 @@ func addHealthCommand(parent *cobra.Command) {
 		},
 	}
 
-	healthCmd.Flags().StringVar(&healthRegistryPath, "registry", "", i18n.T("cmd.dev.health.flag.registry"))
+	healthCmd.Flags().StringVar(&healthRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	healthCmd.Flags().BoolVarP(&healthVerbose, "verbose", "v", false, i18n.T("cmd.dev.health.flag.verbose"))
 
 	parent.AddCommand(healthCmd)
@@ -149,7 +149,7 @@ func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
 
 	// Dirty status
 	if len(dirty) > 0 {
-		parts = append(parts, cli.StatusPart(len(dirty), i18n.T("cmd.dev.health.dirty"), cli.WarningStyle))
+		parts = append(parts, cli.StatusPart(len(dirty), i18n.T("common.status.dirty"), cli.WarningStyle))
 	} else {
 		parts = append(parts, cli.StatusText(i18n.T("cmd.dev.status.clean"), cli.SuccessStyle))
 	}
@@ -158,14 +158,14 @@ func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
 	if len(ahead) > 0 {
 		parts = append(parts, cli.StatusPart(len(ahead), i18n.T("cmd.dev.health.to_push"), cli.ValueStyle))
 	} else {
-		parts = append(parts, cli.StatusText(i18n.T("cmd.dev.health.synced"), cli.SuccessStyle))
+		parts = append(parts, cli.StatusText(i18n.T("common.status.synced"), cli.SuccessStyle))
 	}
 
 	// Pull status
 	if len(behind) > 0 {
 		parts = append(parts, cli.StatusPart(len(behind), i18n.T("cmd.dev.health.to_pull"), cli.WarningStyle))
 	} else {
-		parts = append(parts, cli.StatusText(i18n.T("cmd.dev.health.up_to_date"), cli.SuccessStyle))
+		parts = append(parts, cli.StatusText(i18n.T("common.status.up_to_date"), cli.SuccessStyle))
 	}
 
 	// Errors (only if any)

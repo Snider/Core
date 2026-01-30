@@ -43,7 +43,7 @@ var tasksCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -88,7 +88,7 @@ var taskCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -167,7 +167,7 @@ var taskCmd = &cobra.Command{
 			}
 
 			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task.claimed"))
-			fmt.Printf("   %s %s\n", i18n.T("cmd.ai.label.status"), formatTaskStatus(claimedTask.Status))
+			fmt.Printf("   %s %s\n", i18n.T("common.label.status"), formatTaskStatus(claimedTask.Status))
 		}
 
 		return nil
@@ -224,10 +224,10 @@ func printTaskDetails(task *agentic.Task) {
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.id")), taskIDStyle.Render(task.ID))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.title")), taskTitleStyle.Render(task.Title))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.priority")), formatTaskPriority(task.Priority))
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.status")), formatTaskStatus(task.Status))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.status")), formatTaskStatus(task.Status))
 
 	if task.Project != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.project")), task.Project)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.project")), task.Project)
 	}
 
 	if len(task.Labels) > 0 {

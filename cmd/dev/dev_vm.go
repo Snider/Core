@@ -52,7 +52,7 @@ func runVMInstall() error {
 		return nil
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.image_label")), devops.ImageName())
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.image")), devops.ImageName())
 	fmt.Println()
 	fmt.Println(i18n.T("cmd.dev.vm.downloading"))
 	fmt.Println()
@@ -185,7 +185,7 @@ func runVMStop() error {
 		return err
 	}
 
-	fmt.Println(successStyle.Render(i18n.T("cmd.dev.vm.stopped")))
+	fmt.Println(successStyle.Render(i18n.T("common.status.stopped")))
 	return nil
 }
 
@@ -222,7 +222,7 @@ func runVMStatus() error {
 	if status.Installed {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.installed_label")), successStyle.Render(i18n.T("cmd.dev.vm.installed_yes")))
 		if status.ImageVersion != "" {
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.version_label")), status.ImageVersion)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.version")), status.ImageVersion)
 		}
 	} else {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.installed_label")), errorStyle.Render(i18n.T("cmd.dev.vm.installed_no")))
@@ -235,14 +235,14 @@ func runVMStatus() error {
 
 	// Running status
 	if status.Running {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.status_label")), successStyle.Render(i18n.T("cmd.dev.vm.status_running")))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.status")), successStyle.Render(i18n.T("common.status.running")))
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.container_label")), status.ContainerID[:8])
 		fmt.Printf("%s %dMB\n", dimStyle.Render(i18n.T("cmd.dev.vm.memory_label")), status.Memory)
 		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.dev.vm.cpus_label")), status.CPUs)
 		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.dev.vm.ssh_port")), status.SSHPort)
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.uptime_label")), formatVMUptime(status.Uptime))
 	} else {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.status_label")), dimStyle.Render(i18n.T("cmd.dev.vm.status_stopped")))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.status")), dimStyle.Render(i18n.T("common.status.stopped")))
 		fmt.Println()
 		fmt.Println(i18n.T("cmd.dev.vm.start_with", map[string]interface{}{"Command": dimStyle.Render("core dev boot")}))
 	}
@@ -452,7 +452,7 @@ func runVMUpdate(apply bool) error {
 
 	ctx := context.Background()
 
-	fmt.Println(i18n.T("cmd.dev.vm.checking_updates"))
+	fmt.Println(i18n.T("common.progress.checking_updates"))
 	fmt.Println()
 
 	current, latest, hasUpdate, err := d.CheckUpdate(ctx)
@@ -460,7 +460,7 @@ func runVMUpdate(apply bool) error {
 		return fmt.Errorf("failed to check for updates: %w", err)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.current_label")), valueStyle.Render(current))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.current")), valueStyle.Render(current))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.latest_label")), valueStyle.Render(latest))
 	fmt.Println()
 

@@ -33,13 +33,13 @@ func addGoTestCommand(parent *cobra.Command) {
 		},
 	}
 
-	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("cmd.go.test.flag.coverage"))
-	testCmd.Flags().StringVar(&testPkg, "pkg", "", i18n.T("cmd.go.test.flag.pkg"))
+	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("common.flag.coverage"))
+	testCmd.Flags().StringVar(&testPkg, "pkg", "", i18n.T("common.flag.pkg"))
 	testCmd.Flags().StringVar(&testRun, "run", "", i18n.T("cmd.go.test.flag.run"))
 	testCmd.Flags().BoolVar(&testShort, "short", false, i18n.T("cmd.go.test.flag.short"))
 	testCmd.Flags().BoolVar(&testRace, "race", false, i18n.T("cmd.go.test.flag.race"))
 	testCmd.Flags().BoolVar(&testJSON, "json", false, i18n.T("cmd.go.test.flag.json"))
-	testCmd.Flags().BoolVarP(&testVerbose, "verbose", "v", false, i18n.T("cmd.go.test.flag.verbose"))
+	testCmd.Flags().BoolVarP(&testVerbose, "verbose", "v", false, i18n.T("common.flag.verbose"))
 
 	parent.AddCommand(testCmd)
 }
@@ -73,8 +73,8 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	args = append(args, pkg)
 
 	if !jsonOut {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.go.test.label")), i18n.T("cmd.go.test.running"))
-		fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.test.package_label")), pkg)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.test")), i18n.T("common.result.running_tests"))
+		fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("common.label.package")), pkg)
 		fmt.Println()
 	}
 
@@ -113,7 +113,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 
 	// Summary
 	if err == nil {
-		fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("cmd.go.test.passed", map[string]interface{}{"Count": passed}))
+		fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("common.count.passed", map[string]interface{}{"Count": passed}))
 	} else {
 		fmt.Printf("  %s %s\n", errorStyle.Render("✗"), i18n.T("cmd.go.test.passed_failed", map[string]interface{}{"Passed": passed, "Failed": failed}))
 	}
@@ -193,13 +193,13 @@ func addGoCovCommand(parent *cobra.Command) {
 			covFile.Close()
 			defer os.Remove(covPath)
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.go.cov.label")), i18n.T("cmd.go.cov.running"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.coverage")), i18n.T("cmd.go.cov.running"))
 			// Truncate package list if too long for display
 			displayPkg := pkg
 			if len(displayPkg) > 60 {
 				displayPkg = displayPkg[:57] + "..."
 			}
-			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.test.package_label")), displayPkg)
+			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("common.label.package")), displayPkg)
 			fmt.Println()
 
 			// Run tests with coverage
@@ -287,7 +287,7 @@ func addGoCovCommand(parent *cobra.Command) {
 		},
 	}
 
-	covCmd.Flags().StringVar(&covPkg, "pkg", "", i18n.T("cmd.go.cov.flag.pkg"))
+	covCmd.Flags().StringVar(&covPkg, "pkg", "", i18n.T("common.flag.pkg"))
 	covCmd.Flags().BoolVar(&covHTML, "html", false, i18n.T("cmd.go.cov.flag.html"))
 	covCmd.Flags().BoolVar(&covOpen, "open", false, i18n.T("cmd.go.cov.flag.open"))
 	covCmd.Flags().Float64Var(&covThreshold, "threshold", 0, i18n.T("cmd.go.cov.flag.threshold"))

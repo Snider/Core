@@ -36,7 +36,7 @@ func addWorkCommand(parent *cobra.Command) {
 
 	workCmd.Flags().BoolVar(&workStatusOnly, "status", false, i18n.T("cmd.dev.work.flag.status"))
 	workCmd.Flags().BoolVar(&workAutoCommit, "commit", false, i18n.T("cmd.dev.work.flag.commit"))
-	workCmd.Flags().StringVar(&workRegistryPath, "registry", "", i18n.T("cmd.dev.work.flag.registry"))
+	workCmd.Flags().StringVar(&workRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 
 	parent.AddCommand(workCmd)
 }
@@ -162,9 +162,9 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	}
 
 	fmt.Println()
-	fmt.Printf("%s\n", i18n.T("cmd.dev.work.repos_with_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
+	fmt.Printf("%s\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	for _, s := range aheadRepos {
-		fmt.Printf("  %s: %s\n", s.Name, i18n.T("cmd.dev.work.commits_count", map[string]interface{}{"Count": s.Ahead}))
+		fmt.Printf("  %s: %s\n", s.Name, i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead}))
 	}
 
 	fmt.Println()
@@ -244,7 +244,7 @@ func printStatusTable(statuses []git.RepoStatus) {
 	// Print header with fixed-width formatting
 	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth,
-		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_repo")),
+		cli.TitleStyle.Render(i18n.T("common.label.repo")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_modified")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_untracked")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_staged")),
@@ -341,7 +341,7 @@ func loadRegistry(registryPath string) ([]string, map[string]string, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -349,7 +349,7 @@ func loadRegistry(registryPath string) ([]string, map[string]string, error) {
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()

@@ -25,13 +25,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	// Load configuration from .core/build.yaml (or defaults)
 	buildCfg, err := buildpkg.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.load_config"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 	}
 
 	// Detect project type if not specified
@@ -120,13 +120,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	artifacts, err := builder.Build(ctx, cfg, buildTargets)
 	if err != nil {
 		if !ciMode {
-			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.build_failed"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("common.error.build_failed"), err)
 		}
 		return err
 	}
 
 	if !ciMode {
-		fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("cmd.build.label.success")), i18n.T("cmd.build.built_artifacts", map[string]interface{}{"Count": len(artifacts)}))
+		fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("common.label.success")), i18n.T("cmd.build.built_artifacts", map[string]interface{}{"Count": len(artifacts)}))
 		fmt.Println()
 		for _, artifact := range artifacts {
 			relPath, err := filepath.Rel(projectDir, artifact.Path)
@@ -164,7 +164,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 
 		if err := signing.SignBinaries(ctx, signCfg, signingArtifacts); err != nil {
 			if !ciMode {
-				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.signing_failed"), err)
+				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.signing_failed"), err)
 			}
 			return err
 		}
@@ -172,7 +172,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		if signCfg.MacOS.Notarize {
 			if err := signing.NotarizeBinaries(ctx, signCfg, signingArtifacts); err != nil {
 				if !ciMode {
-					fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.notarization_failed"), err)
+					fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.notarization_failed"), err)
 				}
 				return err
 			}
@@ -190,7 +190,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		archivedArtifacts, err = buildpkg.ArchiveAll(artifacts)
 		if err != nil {
 			if !ciMode {
-				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.archive_failed"), err)
+				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.archive_failed"), err)
 			}
 			return err
 		}
@@ -258,7 +258,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 	checksummedArtifacts, err := buildpkg.ChecksumAll(artifacts)
 	if err != nil {
 		if !ciMode {
-			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.checksum_failed"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.checksum_failed"), err)
 		}
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 	checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
 	if err := buildpkg.WriteChecksumFile(checksummedArtifacts, checksumPath); err != nil {
 		if !ciMode {
-			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.write_checksums"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.write_checksums"), err)
 		}
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 	if signCfg.Enabled {
 		if err := signing.SignChecksums(ctx, signCfg, checksumPath); err != nil {
 			if !ciMode {
-				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), i18n.T("cmd.build.error.gpg_signing_failed"), err)
+				fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.gpg_signing_failed"), err)
 			}
 			return nil, err
 		}

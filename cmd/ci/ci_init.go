@@ -15,13 +15,13 @@ import (
 func runCIReleaseInit() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	// Check if config already exists
 	if release.ConfigExists(projectDir) {
 		fmt.Printf("%s %s %s\n",
-			releaseDimStyle.Render(i18n.T("cmd.ci.label.note")),
+			releaseDimStyle.Render(i18n.T("common.label.note")),
 			i18n.T("cmd.ci.init.config_exists"),
 			release.ConfigPath(projectDir))
 
@@ -66,7 +66,7 @@ func runCIReleaseInit() error {
 
 	fmt.Println()
 	fmt.Printf("%s %s %s\n",
-		releaseSuccessStyle.Render(i18n.T("cmd.ci.label.success")),
+		releaseSuccessStyle.Render(i18n.T("common.label.success")),
 		i18n.T("cmd.ci.init.config_written"),
 		release.ConfigPath(projectDir))
 

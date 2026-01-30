@@ -97,7 +97,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		}
 
 		if os.Getenv("GH_TOKEN") != "" {
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.pkg.search.note_label")), i18n.T("cmd.pkg.search.gh_token_warning"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.note")), i18n.T("cmd.pkg.search.gh_token_warning"))
 			fmt.Printf("%s %s\n\n", dimStyle.Render(""), i18n.T("cmd.pkg.search.gh_token_unset"))
 		}
 
@@ -170,7 +170,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %s\n", i18n.T("cmd.pkg.search.install_with"), dimStyle.Render(fmt.Sprintf("core pkg install %s/<repo-name>", org)))
+	fmt.Printf("%s %s\n", i18n.T("common.hint.install_with"), dimStyle.Render(fmt.Sprintf("core pkg install %s/<repo-name>", org)))
 
 	return nil
 }

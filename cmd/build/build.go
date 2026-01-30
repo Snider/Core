@@ -119,7 +119,7 @@ func init() {
 	pwaCmd.Flags().StringVar(&pwaURL, "url", "", i18n.T("cmd.build.pwa.flag.url"))
 
 	// sdk subcommand flags
-	sdkBuildCmd.Flags().StringVar(&sdkSpec, "spec", "", i18n.T("cmd.build.sdk.flag.spec"))
+	sdkBuildCmd.Flags().StringVar(&sdkSpec, "spec", "", i18n.T("common.flag.spec"))
 	sdkBuildCmd.Flags().StringVar(&sdkLang, "lang", "", i18n.T("cmd.build.sdk.flag.lang"))
 	sdkBuildCmd.Flags().StringVar(&sdkVersion, "version", "", i18n.T("cmd.build.sdk.flag.version"))
 	sdkBuildCmd.Flags().BoolVar(&sdkDryRun, "dry-run", false, i18n.T("cmd.build.sdk.flag.dry_run"))

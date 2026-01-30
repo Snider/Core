@@ -12,13 +12,13 @@ import (
 func runChangelog(fromRef, toRef string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	// Load config for changelog settings
 	cfg, err := release.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.load_config"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 	}
 
 	// Generate changelog

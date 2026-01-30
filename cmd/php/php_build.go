@@ -31,7 +31,7 @@ func addPHPBuildCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 			}
 
 			ctx := context.Background()
@@ -57,7 +57,7 @@ func addPHPBuildCommand(parent *cobra.Command) {
 
 	buildCmd.Flags().StringVar(&buildType, "type", "", i18n.T("cmd.php.build.flag.type"))
 	buildCmd.Flags().StringVar(&buildImageName, "name", "", i18n.T("cmd.php.build.flag.name"))
-	buildCmd.Flags().StringVar(&buildTag, "tag", "", i18n.T("cmd.php.build.flag.tag"))
+	buildCmd.Flags().StringVar(&buildTag, "tag", "", i18n.T("common.flag.tag"))
 	buildCmd.Flags().StringVar(&buildPlatform, "platform", "", i18n.T("cmd.php.build.flag.platform"))
 	buildCmd.Flags().StringVar(&buildDockerfile, "dockerfile", "", i18n.T("cmd.php.build.flag.dockerfile"))
 	buildCmd.Flags().StringVar(&buildOutputPath, "output", "", i18n.T("cmd.php.build.flag.output"))
@@ -128,17 +128,17 @@ func runPHPBuildDocker(ctx context.Context, projectDir string, opts dockerBuildO
 		buildOpts.Tag = "latest"
 	}
 
-	fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.T("cmd.php.build.image")), buildOpts.ImageName, buildOpts.Tag)
+	fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.T("common.label.image")), buildOpts.ImageName, buildOpts.Tag)
 	if opts.Platform != "" {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.platform")), opts.Platform)
 	}
 	fmt.Println()
 
 	if err := phppkg.BuildDocker(ctx, buildOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.build_failed"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.build_failed"), err)
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.build.docker_success"))
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.build.docker_success"))
 	fmt.Printf("%s docker run -p 80:80 -p 443:443 %s:%s\n",
 		dimStyle.Render(i18n.T("cmd.php.build.docker_run_with")),
 		buildOpts.ImageName, buildOpts.Tag)
@@ -168,15 +168,15 @@ func runPHPBuildLinuxKit(ctx context.Context, projectDir string, opts linuxKitBu
 		buildOpts.Template = "server-php"
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.template")), buildOpts.Template)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.template")), buildOpts.Template)
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.format")), buildOpts.Format)
 	fmt.Println()
 
 	if err := phppkg.BuildLinuxKit(ctx, buildOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.build_failed"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.build_failed"), err)
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.build.linuxkit_success"))
+	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.build.linuxkit_success"))
 	return nil
 }
 
@@ -225,7 +225,7 @@ func addPHPServeCommand(parent *cobra.Command) {
 			}
 
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.serve.running"))
-			fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.T("cmd.php.build.image")), imageName, func() string {
+			fmt.Printf("%s %s:%s\n", dimStyle.Render(i18n.T("common.label.image")), imageName, func() string {
 				if serveTag == "" {
 					return "latest"
 				}
@@ -258,7 +258,7 @@ func addPHPServeCommand(parent *cobra.Command) {
 	}
 
 	serveCmd.Flags().StringVar(&serveImageName, "name", "", i18n.T("cmd.php.serve.flag.name"))
-	serveCmd.Flags().StringVar(&serveTag, "tag", "", i18n.T("cmd.php.serve.flag.tag"))
+	serveCmd.Flags().StringVar(&serveTag, "tag", "", i18n.T("common.flag.tag"))
 	serveCmd.Flags().StringVar(&serveContainerName, "container", "", i18n.T("cmd.php.serve.flag.container"))
 	serveCmd.Flags().IntVar(&servePort, "port", 0, i18n.T("cmd.php.serve.flag.port"))
 	serveCmd.Flags().IntVar(&serveHTTPSPort, "https-port", 0, i18n.T("cmd.php.serve.flag.https_port"))

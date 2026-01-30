@@ -66,7 +66,7 @@ func downloadPWA(baseURL, destDir string) error {
 	manifestURL, err := findManifestURL(string(body), baseURL)
 	if err != nil {
 		// If no manifest, it's not a PWA, but we can still try to package it as a simple site.
-		fmt.Printf("%s %s\n", i18n.T("cmd.build.pwa.warning"), i18n.T("cmd.build.pwa.no_manifest"))
+		fmt.Printf("%s %s\n", i18n.T("common.label.warning"), i18n.T("cmd.build.pwa.no_manifest"))
 		if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
 			return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.write_index"), err)
 		}
@@ -85,7 +85,7 @@ func downloadPWA(baseURL, destDir string) error {
 	assets := collectAssets(manifest, manifestURL)
 	for _, assetURL := range assets {
 		if err := downloadAsset(assetURL, destDir); err != nil {
-			fmt.Printf("%s %s %s: %v\n", i18n.T("cmd.build.pwa.warning"), i18n.T("cmd.build.pwa.asset_download_failed"), assetURL, err)
+			fmt.Printf("%s %s %s: %v\n", i18n.T("common.label.warning"), i18n.T("cmd.build.pwa.asset_download_failed"), assetURL, err)
 		}
 	}
 

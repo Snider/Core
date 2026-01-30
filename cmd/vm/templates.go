@@ -103,7 +103,7 @@ func showTemplate(name string) error {
 		return err
 	}
 
-	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.vm.label.template")), repoNameStyle.Render(name))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.template")), repoNameStyle.Render(name))
 	fmt.Println(content)
 
 	return nil
@@ -117,7 +117,7 @@ func showTemplateVars(name string) error {
 
 	required, optional := container.ExtractVariables(content)
 
-	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.vm.label.template")), repoNameStyle.Render(name))
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.template")), repoNameStyle.Render(name))
 
 	if len(required) > 0 {
 		fmt.Printf("%s\n", errorStyle.Render(i18n.T("cmd.vm.templates.vars.required")))
@@ -165,7 +165,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 		return fmt.Errorf(i18n.T("cmd.vm.error.write_template")+": %w", err)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.template")), repoNameStyle.Render(templateName))
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.template")), repoNameStyle.Render(templateName))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.building")), yamlPath)
 
 	// Build the image using linuxkit
@@ -180,7 +180,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 		return fmt.Errorf(i18n.T("cmd.vm.error.no_image_found"))
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.image")), imagePath)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.image")), imagePath)
 	fmt.Println()
 
 	// Run the image
@@ -199,7 +199,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	}
 
 	if runOpts.Detach {
-		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.vm.label.started")), c.ID)
+		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.started")), c.ID)
 		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.vm.label.pid")), c.PID)
 		fmt.Println()
 		fmt.Println(i18n.T("cmd.vm.hint.view_logs", map[string]interface{}{"ID": c.ID[:8]}))

@@ -38,8 +38,8 @@ func addGoInstallCommand(parent *cobra.Command) {
 				}
 			}
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.go.install.label")), i18n.T("cmd.go.install.installing"))
-			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.install.path_label")), installPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.install")), i18n.T("common.status.installing"))
+			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("common.label.path")), installPath)
 			if installNoCgo {
 				fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.install.cgo_label")), i18n.T("cmd.go.install.cgo_disabled"))
 			}
@@ -75,7 +75,7 @@ func addGoInstallCommand(parent *cobra.Command) {
 		},
 	}
 
-	installCmd.Flags().BoolVarP(&installVerbose, "verbose", "v", false, i18n.T("cmd.go.install.flag.verbose"))
+	installCmd.Flags().BoolVarP(&installVerbose, "verbose", "v", false, i18n.T("common.flag.verbose"))
 	installCmd.Flags().BoolVar(&installNoCgo, "no-cgo", false, i18n.T("cmd.go.install.flag.no_cgo"))
 
 	parent.AddCommand(installCmd)

@@ -21,7 +21,7 @@ func runBuildSDK(specPath, lang, version string, dryRun bool) error {
 
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	// Load config
@@ -44,10 +44,10 @@ func runBuildSDK(specPath, lang, version string, dryRun bool) error {
 	// Detect spec
 	detectedSpec, err := s.DetectSpec()
 	if err != nil {
-		fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), err)
+		fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), err)
 		return err
 	}
-	fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.spec_label"), buildTargetStyle.Render(detectedSpec))
+	fmt.Printf("  %s %s\n", i18n.T("common.label.spec"), buildTargetStyle.Render(detectedSpec))
 
 	if dryRun {
 		if lang != "" {
@@ -63,20 +63,20 @@ func runBuildSDK(specPath, lang, version string, dryRun bool) error {
 	if lang != "" {
 		// Generate single language
 		if err := s.GenerateLanguage(ctx, lang); err != nil {
-			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), err)
+			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), err)
 			return err
 		}
 		fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.generated_label"), buildTargetStyle.Render(lang))
 	} else {
 		// Generate all
 		if err := s.Generate(ctx); err != nil {
-			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("cmd.build.label.error")), err)
+			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), err)
 			return err
 		}
 		fmt.Printf("  %s %s\n", i18n.T("cmd.build.sdk.generated_label"), buildTargetStyle.Render(strings.Join(config.Languages, ", ")))
 	}
 
 	fmt.Println()
-	fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("cmd.build.label.success")), i18n.T("cmd.build.sdk.complete"))
+	fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("common.label.success")), i18n.T("cmd.build.sdk.complete"))
 	return nil
 }

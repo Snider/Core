@@ -30,7 +30,7 @@ func addCommitCommand(parent *cobra.Command) {
 		},
 	}
 
-	commitCmd.Flags().StringVar(&commitRegistryPath, "registry", "", i18n.T("cmd.dev.commit.flag.registry"))
+	commitCmd.Flags().StringVar(&commitRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	commitCmd.Flags().BoolVar(&commitAll, "all", false, i18n.T("cmd.dev.commit.flag.all"))
 
 	parent.AddCommand(commitCmd)
@@ -54,7 +54,7 @@ func runCommit(registryPath string, all bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -62,7 +62,7 @@ func runCommit(registryPath string, all bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 		} else {
 			// Fallback: scan current directory for repos
 			reg, err = repos.ScanDirectory(cwd)
@@ -154,7 +154,7 @@ func runCommit(registryPath string, all bool) error {
 	// Summary
 	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.done_succeeded", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("cmd.dev.count_failed", map[string]interface{}{"Count": failed})))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
 	fmt.Println()
 

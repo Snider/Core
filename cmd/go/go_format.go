@@ -47,7 +47,7 @@ func addGoFmtCommand(parent *cobra.Command) {
 	}
 
 	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, i18n.T("cmd.go.fmt.flag.fix"))
-	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("cmd.go.fmt.flag.diff"))
+	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("common.flag.diff"))
 	fmtCmd.Flags().BoolVar(&fmtCheck, "check", false, i18n.T("cmd.go.fmt.flag.check"))
 
 	parent.AddCommand(fmtCmd)

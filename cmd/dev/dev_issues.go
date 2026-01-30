@@ -72,7 +72,7 @@ func addIssuesCommand(parent *cobra.Command) {
 		},
 	}
 
-	issuesCmd.Flags().StringVar(&issuesRegistryPath, "registry", "", i18n.T("cmd.dev.issues.flag.registry"))
+	issuesCmd.Flags().StringVar(&issuesRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	issuesCmd.Flags().IntVarP(&issuesLimit, "limit", "l", 10, i18n.T("cmd.dev.issues.flag.limit"))
 	issuesCmd.Flags().StringVarP(&issuesAssignee, "assignee", "a", "", i18n.T("cmd.dev.issues.flag.assignee"))
 
@@ -150,7 +150,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.issues.error_label")), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.error")), err)
 		}
 	}
 

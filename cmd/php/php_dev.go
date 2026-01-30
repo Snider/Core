@@ -155,7 +155,7 @@ func runPHPDev(opts phpDevOptions) error {
 	// Stream unified logs
 	logsReader, err := server.Logs("", true)
 	if err != nil {
-		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.php.label.warning")), i18n.T("cmd.php.dev.logs_failed", map[string]interface{}{"Error": err}))
+		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.warning")), i18n.T("cmd.php.dev.logs_failed", map[string]interface{}{"Error": err}))
 	} else {
 		defer logsReader.Close()
 
@@ -174,10 +174,10 @@ func runPHPDev(opts phpDevOptions) error {
 shutdown:
 	// Stop services
 	if err := server.Stop(); err != nil {
-		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.php.label.error")), i18n.T("cmd.php.dev.stop_error", map[string]interface{}{"Error": err}))
+		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.php.dev.stop_error", map[string]interface{}{"Error": err}))
 	}
 
-	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.dev.all_stopped"))
+	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.dev.all_stopped"))
 	return nil
 }
 
@@ -196,7 +196,7 @@ func addPHPLogsCommand(parent *cobra.Command) {
 		},
 	}
 
-	logsCmd.Flags().BoolVar(&logsFollow, "follow", false, i18n.T("cmd.php.logs.flag.follow"))
+	logsCmd.Flags().BoolVar(&logsFollow, "follow", false, i18n.T("common.flag.follow"))
 	logsCmd.Flags().StringVar(&logsService, "service", "", i18n.T("cmd.php.logs.flag.service"))
 
 	parent.AddCommand(logsCmd)
@@ -217,7 +217,7 @@ func runPHPLogs(service string, follow bool) error {
 
 	logsReader, err := server.Logs(service, follow)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.get_logs"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.get_logs"), err)
 	}
 	defer logsReader.Close()
 
@@ -273,7 +273,7 @@ func runPHPStop() error {
 		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.stop_services"), err)
 	}
 
-	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.dev.all_stopped"))
+	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.dev.all_stopped"))
 	return nil
 }
 
@@ -304,7 +304,7 @@ func runPHPStatus() error {
 		appName = "Laravel"
 	}
 
-	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.status.project")), appName)
+	fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("common.label.project")), appName)
 
 	// Detect available services
 	services := phppkg.DetectServices(cwd)
@@ -373,8 +373,8 @@ func runPHPSSL(domain string) error {
 
 	// Check if mkcert is installed
 	if !phppkg.IsMkcertInstalled() {
-		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.php.label.error")), i18n.T("cmd.php.ssl.mkcert_not_installed"))
-		fmt.Printf("\n%s\n", i18n.T("cmd.php.ssl.install_with"))
+		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.php.ssl.mkcert_not_installed"))
+		fmt.Printf("\n%s\n", i18n.T("common.hint.install_with"))
 		fmt.Printf("  %s\n", i18n.T("cmd.php.ssl.install_macos"))
 		fmt.Printf("  %s\n", i18n.T("cmd.php.ssl.install_linux"))
 		return fmt.Errorf(i18n.T("cmd.php.error.mkcert_not_installed"))
@@ -384,7 +384,7 @@ func runPHPSSL(domain string) error {
 
 	// Check if certs already exist
 	if phppkg.CertsExist(domain, phppkg.SSLOptions{}) {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.skip")), i18n.T("cmd.php.ssl.certs_exist"))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.skip")), i18n.T("cmd.php.ssl.certs_exist"))
 
 		certFile, keyFile, _ := phppkg.CertPaths(domain, phppkg.SSLOptions{})
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.ssl.cert_label")), certFile)
@@ -399,7 +399,7 @@ func runPHPSSL(domain string) error {
 
 	certFile, keyFile, _ := phppkg.CertPaths(domain, phppkg.SSLOptions{})
 
-	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.ssl.certs_created"))
+	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.ssl.certs_created"))
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.ssl.cert_label")), certFile)
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.ssl.key_label")), keyFile)
 

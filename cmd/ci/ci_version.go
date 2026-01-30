@@ -12,7 +12,7 @@ import (
 func runCIReleaseVersion() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	version, err := release.DetermineVersion(projectDir)
@@ -20,6 +20,6 @@ func runCIReleaseVersion() error {
 		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.determine_version"), err)
 	}
 
-	fmt.Printf("%s %s\n", i18n.T("cmd.ci.label.version"), releaseValueStyle.Render(version))
+	fmt.Printf("%s %s\n", i18n.T("common.label.version"), releaseValueStyle.Render(version))
 	return nil
 }

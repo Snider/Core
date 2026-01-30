@@ -17,13 +17,13 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Get current directory
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	// Load configuration
 	cfg, err := release.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.load_config"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 	}
 
 	// Apply CLI overrides
@@ -60,14 +60,14 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Publish pre-built artifacts
 	rel, err := release.Publish(ctx, cfg, dryRun)
 	if err != nil {
-		fmt.Printf("%s %v\n", releaseErrorStyle.Render(i18n.T("cmd.ci.label.error")), err)
+		fmt.Printf("%s %v\n", releaseErrorStyle.Render(i18n.T("common.label.error")), err)
 		return err
 	}
 
 	// Print summary
 	fmt.Println()
-	fmt.Printf("%s %s\n", releaseSuccessStyle.Render(i18n.T("cmd.ci.label.success")), i18n.T("cmd.ci.publish_completed"))
-	fmt.Printf("  %s   %s\n", i18n.T("cmd.ci.label.version"), releaseValueStyle.Render(rel.Version))
+	fmt.Printf("%s %s\n", releaseSuccessStyle.Render(i18n.T("common.label.success")), i18n.T("cmd.ci.publish_completed"))
+	fmt.Printf("  %s   %s\n", i18n.T("common.label.version"), releaseValueStyle.Render(rel.Version))
 	fmt.Printf("  %s %d\n", i18n.T("cmd.ci.label.artifacts"), len(rel.Artifacts))
 
 	if !dryRun {

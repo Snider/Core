@@ -32,7 +32,7 @@ func addPHPPackagesLinkCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 			}
 
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.link.linking"))
@@ -41,7 +41,7 @@ func addPHPPackagesLinkCommand(parent *cobra.Command) {
 				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.link_packages"), err)
 			}
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.packages.link.done"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.packages.link.done"))
 			return nil
 		},
 	}
@@ -58,7 +58,7 @@ func addPHPPackagesUnlinkCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 			}
 
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.unlink.unlinking"))
@@ -67,7 +67,7 @@ func addPHPPackagesUnlinkCommand(parent *cobra.Command) {
 				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.unlink_packages"), err)
 			}
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.packages.unlink.done"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.packages.unlink.done"))
 			return nil
 		},
 	}
@@ -83,7 +83,7 @@ func addPHPPackagesUpdateCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 			}
 
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.update.updating"))
@@ -92,7 +92,7 @@ func addPHPPackagesUpdateCommand(parent *cobra.Command) {
 				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.update_packages"), err)
 			}
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("cmd.php.label.done")), i18n.T("cmd.php.packages.update.done"))
+			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.packages.update.done"))
 			return nil
 		},
 	}
@@ -108,7 +108,7 @@ func addPHPPackagesListCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 			}
 
 			packages, err := phppkg.ListLinkedPackages(cwd)
@@ -134,8 +134,8 @@ func addPHPPackagesListCommand(parent *cobra.Command) {
 				}
 
 				fmt.Printf("  %s %s\n", successStyle.Render("*"), name)
-				fmt.Printf("    %s %s\n", dimStyle.Render(i18n.T("cmd.php.packages.list.path")), pkg.Path)
-				fmt.Printf("    %s %s\n", dimStyle.Render(i18n.T("cmd.php.packages.list.version")), version)
+				fmt.Printf("    %s %s\n", dimStyle.Render(i18n.T("common.label.path")), pkg.Path)
+				fmt.Printf("    %s %s\n", dimStyle.Render(i18n.T("common.label.version")), version)
 				fmt.Println()
 			}
 

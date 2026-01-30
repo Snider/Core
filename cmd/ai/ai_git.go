@@ -45,7 +45,7 @@ var taskCommitCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -71,7 +71,7 @@ var taskCommitCmd = &cobra.Command{
 		// Get current directory
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.working_dir"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 		}
 
 		// Check for uncommitted changes
@@ -116,7 +116,7 @@ var taskPRCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -133,7 +133,7 @@ var taskPRCmd = &cobra.Command{
 		// Get current directory
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.working_dir"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 		}
 
 		// Check current branch
@@ -174,7 +174,7 @@ var taskPRCmd = &cobra.Command{
 		}
 
 		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_pr.created"))
-		fmt.Printf("   %s %s\n", i18n.T("cmd.ai.label.url"), prURL)
+		fmt.Printf("   %s %s\n", i18n.T("common.label.url"), prURL)
 
 		return nil
 	},

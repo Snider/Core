@@ -43,7 +43,7 @@ var testCmd = &cobra.Command{
 
 func init() {
 	testCmd.Flags().BoolVar(&testVerbose, "verbose", false, i18n.T("cmd.test.flag.verbose"))
-	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("cmd.test.flag.coverage"))
+	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("common.flag.coverage"))
 	testCmd.Flags().BoolVar(&testShort, "short", false, i18n.T("cmd.test.flag.short"))
 	testCmd.Flags().StringVar(&testPkg, "pkg", "", i18n.T("cmd.test.flag.pkg"))
 	testCmd.Flags().StringVar(&testRun, "run", "", i18n.T("cmd.test.flag.run"))

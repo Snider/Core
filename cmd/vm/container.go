@@ -80,7 +80,7 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 		SSHPort: sshPort,
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.image")), image)
+	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.image")), image)
 	if name != "" {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.name")), name)
 	}
@@ -94,7 +94,7 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 	}
 
 	if detach {
-		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.vm.label.started")), c.ID)
+		fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.started")), c.ID)
 		fmt.Printf("%s %d\n", dimStyle.Render(i18n.T("cmd.vm.label.pid")), c.PID)
 		fmt.Println()
 		fmt.Println(i18n.T("cmd.vm.hint.view_logs", map[string]interface{}{"ID": c.ID[:8]}))
@@ -238,7 +238,7 @@ func stopContainer(id string) error {
 		return fmt.Errorf(i18n.T("cmd.vm.error.stop_container")+": %w", err)
 	}
 
-	fmt.Printf("%s\n", successStyle.Render(i18n.T("cmd.vm.stop.stopped")))
+	fmt.Printf("%s\n", successStyle.Render(i18n.T("common.status.stopped")))
 	return nil
 }
 
@@ -283,7 +283,7 @@ func addVMLogsCommand(parent *cobra.Command) {
 		},
 	}
 
-	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, i18n.T("cmd.vm.logs.flag.follow"))
+	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, i18n.T("common.flag.follow"))
 
 	parent.AddCommand(logsCmd)
 }
@@ -302,7 +302,7 @@ func viewLogs(id string, follow bool) error {
 	ctx := context.Background()
 	reader, err := manager.Logs(ctx, fullID, follow)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.get_logs")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.get_logs")+": %w", err)
 	}
 	defer reader.Close()
 

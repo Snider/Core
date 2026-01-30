@@ -58,7 +58,7 @@ func addCICommand(parent *cobra.Command) {
 		},
 	}
 
-	ciCmd.Flags().StringVar(&ciRegistryPath, "registry", "", i18n.T("cmd.dev.ci.flag.registry"))
+	ciCmd.Flags().StringVar(&ciRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	ciCmd.Flags().StringVarP(&ciBranch, "branch", "b", "main", i18n.T("cmd.dev.ci.flag.branch"))
 	ciCmd.Flags().BoolVar(&ciFailedOnly, "failed", false, i18n.T("cmd.dev.ci.flag.failed"))
 
@@ -154,7 +154,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 		fmt.Printf(" * %s", ciFailureStyle.Render(i18n.T("cmd.dev.ci.failing", map[string]interface{}{"Count": failed})))
 	}
 	if pending > 0 {
-		fmt.Printf(" * %s", ciPendingStyle.Render(i18n.T("cmd.dev.ci.pending", map[string]interface{}{"Count": pending})))
+		fmt.Printf(" * %s", ciPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
 	}
 	if len(noCI) > 0 {
 		fmt.Printf(" * %s", ciSkippedStyle.Render(i18n.T("cmd.dev.ci.no_ci", map[string]interface{}{"Count": len(noCI)})))
@@ -182,7 +182,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.ci.error_label")), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.error")), err)
 		}
 	}
 

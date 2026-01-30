@@ -69,7 +69,7 @@ func addReviewsCommand(parent *cobra.Command) {
 		},
 	}
 
-	reviewsCmd.Flags().StringVar(&reviewsRegistryPath, "registry", "", i18n.T("cmd.dev.reviews.flag.registry"))
+	reviewsCmd.Flags().StringVar(&reviewsRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	reviewsCmd.Flags().StringVar(&reviewsAuthor, "author", "", i18n.T("cmd.dev.reviews.flag.author"))
 	reviewsCmd.Flags().BoolVar(&reviewsShowAll, "all", false, i18n.T("cmd.dev.reviews.flag.all"))
 
@@ -166,7 +166,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	fmt.Println()
 	fmt.Printf("%s", i18n.T("cmd.dev.reviews.open_prs", map[string]interface{}{"Count": len(allPRs)}))
 	if pending > 0 {
-		fmt.Printf(" * %s", prPendingStyle.Render(i18n.T("cmd.dev.reviews.pending", map[string]interface{}{"Count": pending})))
+		fmt.Printf(" * %s", prPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
 	}
 	if approved > 0 {
 		fmt.Printf(" * %s", prApprovedStyle.Render(i18n.T("cmd.dev.reviews.approved", map[string]interface{}{"Count": approved})))
@@ -185,7 +185,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	if len(fetchErrors) > 0 {
 		fmt.Println()
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.issues.error_label")), err)
+			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.error")), err)
 		}
 	}
 

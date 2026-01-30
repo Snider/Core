@@ -24,7 +24,7 @@ func addSyncCommand(parent *cobra.Command) {
 		Long:  i18n.T("cmd.dev.sync.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := runSync(); err != nil {
-				return fmt.Errorf("%s %w", i18n.T("cmd.dev.sync.error_prefix"), err)
+				return fmt.Errorf("%s %w", i18n.T("common.label.error"), err)
 			}
 			fmt.Println(i18n.T("cmd.dev.sync.success"))
 			return nil

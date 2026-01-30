@@ -54,7 +54,7 @@ func init() {
 	sdkDiffCmd.Flags().StringVar(&diffSpecPath, "spec", "", i18n.T("cmd.sdk.diff.flag.spec"))
 
 	// sdk validate flags
-	sdkValidateCmd.Flags().StringVar(&validateSpecPath, "spec", "", i18n.T("cmd.sdk.validate.flag.spec"))
+	sdkValidateCmd.Flags().StringVar(&validateSpecPath, "spec", "", i18n.T("common.flag.spec"))
 
 	// Add subcommands
 	sdkCmd.AddCommand(sdkDiffCmd)
@@ -64,7 +64,7 @@ func init() {
 func runSDKDiff(basePath, specPath string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.sdk.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	// Detect current spec if not provided
@@ -82,12 +82,12 @@ func runSDKDiff(basePath, specPath string) error {
 
 	fmt.Printf("%s %s\n", sdkHeaderStyle.Render(i18n.T("cmd.sdk.diff.label")), i18n.T("cmd.sdk.diff.checking"))
 	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.diff.base_label"), sdkDimStyle.Render(basePath))
-	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.diff.current_label"), sdkDimStyle.Render(specPath))
+	fmt.Printf("  %s %s\n", i18n.T("common.label.current"), sdkDimStyle.Render(specPath))
 	fmt.Println()
 
 	result, err := sdkpkg.Diff(basePath, specPath)
 	if err != nil {
-		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.T("cmd.sdk.label.error")), err)
+		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.T("common.label.error")), err)
 		os.Exit(2)
 	}
 
@@ -106,7 +106,7 @@ func runSDKDiff(basePath, specPath string) error {
 func runSDKValidate(specPath string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.sdk.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
 	}
 
 	s := sdkpkg.New(projectDir, &sdkpkg.Config{Spec: specPath})
@@ -115,11 +115,11 @@ func runSDKValidate(specPath string) error {
 
 	detectedPath, err := s.DetectSpec()
 	if err != nil {
-		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.T("cmd.sdk.label.error")), err)
+		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.T("common.label.error")), err)
 		return err
 	}
 
-	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.validate.spec_label"), sdkDimStyle.Render(detectedPath))
+	fmt.Printf("  %s %s\n", i18n.T("common.label.spec"), sdkDimStyle.Render(detectedPath))
 	fmt.Printf("%s %s\n", sdkSuccessStyle.Render(i18n.T("cmd.sdk.label.ok")), i18n.T("cmd.sdk.validate.valid"))
 	return nil
 }

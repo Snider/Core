@@ -30,7 +30,7 @@ func addPushCommand(parent *cobra.Command) {
 		},
 	}
 
-	pushCmd.Flags().StringVar(&pushRegistryPath, "registry", "", i18n.T("cmd.dev.push.flag.registry"))
+	pushCmd.Flags().StringVar(&pushRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	pushCmd.Flags().BoolVarP(&pushForce, "force", "f", false, i18n.T("cmd.dev.push.flag.force"))
 
 	parent.AddCommand(pushCmd)
@@ -54,7 +54,7 @@ func runPush(registryPath string, force bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to load registry: %w", err)
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -62,7 +62,7 @@ func runPush(registryPath string, force bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to load registry: %w", err)
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.registry")), registryPath)
 		} else {
 			// Fallback: scan current directory for repos
 			reg, err = repos.ScanDirectory(cwd)
@@ -109,12 +109,12 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	// Show repos to push
-	fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.push.repos_with_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
+	fmt.Printf("\n%s\n\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	totalCommits := 0
 	for _, s := range aheadRepos {
 		fmt.Printf("  %s: %s\n",
 			repoNameStyle.Render(s.Name),
-			aheadStyle.Render(i18n.T("cmd.dev.push.commits_count", map[string]interface{}{"Count": s.Ahead})),
+			aheadStyle.Render(i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead})),
 		)
 		totalCommits += s.Ahead
 	}
@@ -185,7 +185,7 @@ func runPush(registryPath string, force bool) error {
 	fmt.Println()
 	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.push.done_pushed", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("cmd.dev.count_failed", map[string]interface{}{"Count": failed})))
+		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
 	fmt.Println()
 
@@ -255,7 +255,7 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 
 	// Show commits to push
 	fmt.Printf("%s: %s\n", repoNameStyle.Render(s.Name),
-		aheadStyle.Render(i18n.T("cmd.dev.push.commits_count", map[string]interface{}{"Count": s.Ahead})))
+		aheadStyle.Render(i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead})))
 
 	// Confirm unless --force
 	if !force {

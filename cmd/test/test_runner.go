@@ -54,10 +54,10 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 	cmd.Env = append(os.Environ(), getMacOSDeploymentTarget())
 
 	if !jsonOutput {
-		fmt.Printf("%s %s\n", testHeaderStyle.Render(i18n.T("cmd.test.label.test")), i18n.T("cmd.test.running"))
-		fmt.Printf("  %s %s\n", i18n.T("cmd.test.label.package"), testDimStyle.Render(pkg))
+		fmt.Printf("%s %s\n", testHeaderStyle.Render(i18n.T("common.label.test")), i18n.T("common.result.running_tests"))
+		fmt.Printf("  %s %s\n", i18n.T("common.label.package"), testDimStyle.Render(pkg))
 		if run != "" {
-			fmt.Printf("  %s  %s\n", i18n.T("cmd.test.label.filter"), testDimStyle.Render(run))
+			fmt.Printf("  %s  %s\n", i18n.T("common.label.filter"), testDimStyle.Render(run))
 		}
 		fmt.Println()
 	}
@@ -93,7 +93,7 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 		// JSON output for CI/agents
 		printJSONResults(results, exitCode)
 		if exitCode != 0 {
-			return fmt.Errorf(i18n.T("cmd.test.error.tests_failed"))
+			return fmt.Errorf(i18n.T("common.error.tests_failed"))
 		}
 		return nil
 	}
@@ -109,10 +109,10 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 
 	if exitCode != 0 {
 		fmt.Printf("\n%s %s\n", testFailStyle.Render(i18n.T("cli.fail")), i18n.T("cmd.test.tests_failed"))
-		return fmt.Errorf(i18n.T("cmd.test.error.tests_failed"))
+		return fmt.Errorf(i18n.T("common.error.tests_failed"))
 	}
 
-	fmt.Printf("\n%s %s\n", testPassStyle.Render(i18n.T("cli.pass")), i18n.T("cmd.test.all_passed"))
+	fmt.Printf("\n%s %s\n", testPassStyle.Render(i18n.T("cli.pass")), i18n.T("common.result.all_passed"))
 	return nil
 }
 
