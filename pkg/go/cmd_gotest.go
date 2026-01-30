@@ -27,20 +27,20 @@ var (
 func addGoTestCommand(parent *cobra.Command) {
 	testCmd := &cobra.Command{
 		Use:   "test",
-		Short: i18n.T("cmd.go.test.short"),
-		Long:  i18n.T("cmd.go.test.long"),
+		Short: "Run Go tests",
+		Long:  "Run Go tests with optional coverage, filtering, and race detection",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGoTest(testCoverage, testPkg, testRun, testShort, testRace, testJSON, testVerbose)
 		},
 	}
 
-	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("common.flag.coverage"))
-	testCmd.Flags().StringVar(&testPkg, "pkg", "", i18n.T("common.flag.pkg"))
-	testCmd.Flags().StringVar(&testRun, "run", "", i18n.T("cmd.go.test.flag.run"))
-	testCmd.Flags().BoolVar(&testShort, "short", false, i18n.T("cmd.go.test.flag.short"))
-	testCmd.Flags().BoolVar(&testRace, "race", false, i18n.T("cmd.go.test.flag.race"))
-	testCmd.Flags().BoolVar(&testJSON, "json", false, i18n.T("cmd.go.test.flag.json"))
-	testCmd.Flags().BoolVarP(&testVerbose, "verbose", "v", false, i18n.T("common.flag.verbose"))
+	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, "Generate coverage report")
+	testCmd.Flags().StringVar(&testPkg, "pkg", "", "Package to test")
+	testCmd.Flags().StringVar(&testRun, "run", "", "Run only tests matching pattern")
+	testCmd.Flags().BoolVar(&testShort, "short", false, "Run only short tests")
+	testCmd.Flags().BoolVar(&testRace, "race", false, "Enable race detector")
+	testCmd.Flags().BoolVar(&testJSON, "json", false, "Output as JSON")
+	testCmd.Flags().BoolVarP(&testVerbose, "verbose", "v", false, "Verbose output")
 
 	parent.AddCommand(testCmd)
 }
@@ -74,8 +74,8 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	args = append(args, pkg)
 
 	if !jsonOut {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.test")), i18n.T("common.progress.running", map[string]any{"Task": "tests"}))
-		fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("common.label.package")), pkg)
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("test")), i18n.ProgressSubject("run", "tests"))
+		fmt.Printf("  %s %s\n", dimStyle.Render(i18n.Label("package")), pkg)
 		fmt.Println()
 	}
 
@@ -114,19 +114,21 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 
 	// Summary
 	if err == nil {
-		fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("common.count.passed", map[string]interface{}{"Count": passed}))
+		fmt.Printf("  %s %s\n", successStyle.Render(cli.SymbolCheck), i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"))
 	} else {
-		fmt.Printf("  %s %s\n", errorStyle.Render("✗"), i18n.T("cmd.go.test.passed_failed", map[string]interface{}{"Passed": passed, "Failed": failed}))
+		fmt.Printf("  %s %s, %s\n", errorStyle.Render(cli.SymbolCross),
+			i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"),
+			i18n.T("i18n.count.test", failed)+" "+i18n.T("i18n.done.fail"))
 	}
 
 	if cov > 0 {
-		fmt.Printf("\n  %s %s\n", cli.ProgressLabel(i18n.T("cmd.go.test.coverage")), cli.FormatCoverage(cov))
+		fmt.Printf("\n  %s %s\n", cli.ProgressLabel(i18n.Label("coverage")), cli.FormatCoverage(cov))
 	}
 
 	if err == nil {
-		fmt.Printf("\n%s\n", successStyle.Render(i18n.T("cmd.go.test.all_passed")))
+		fmt.Printf("\n%s\n", successStyle.Render(i18n.T("i18n.done.pass")))
 	} else {
-		fmt.Printf("\n%s\n", errorStyle.Render(i18n.T("cmd.go.test.some_failed")))
+		fmt.Printf("\n%s\n", errorStyle.Render(i18n.T("i18n.done.fail")))
 	}
 
 	return err
@@ -169,18 +171,18 @@ var (
 func addGoCovCommand(parent *cobra.Command) {
 	covCmd := &cobra.Command{
 		Use:   "cov",
-		Short: i18n.T("cmd.go.cov.short"),
-		Long:  i18n.T("cmd.go.cov.long"),
+		Short: "Run tests with coverage report",
+		Long:  "Run tests with detailed coverage reports, HTML output, and threshold checking",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pkg := covPkg
 			if pkg == "" {
 				// Auto-discover packages with tests
 				pkgs, err := findTestPackages(".")
 				if err != nil {
-					return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "discover test packages"}), err)
+					return fmt.Errorf("%s: %w", i18n.T("i18n.fail.find", "test packages"), err)
 				}
 				if len(pkgs) == 0 {
-					return errors.New(i18n.T("cmd.go.cov.error.no_packages"))
+					return errors.New("no test packages found")
 				}
 				pkg = strings.Join(pkgs, " ")
 			}
@@ -188,19 +190,19 @@ func addGoCovCommand(parent *cobra.Command) {
 			// Create temp file for coverage data
 			covFile, err := os.CreateTemp("", "coverage-*.out")
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create coverage file"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.create", "coverage file"), err)
 			}
 			covPath := covFile.Name()
 			covFile.Close()
 			defer os.Remove(covPath)
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.coverage")), i18n.T("common.progress.running", map[string]any{"Task": "tests with coverage"}))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("coverage")), i18n.ProgressSubject("run", "tests"))
 			// Truncate package list if too long for display
 			displayPkg := pkg
 			if len(displayPkg) > 60 {
 				displayPkg = displayPkg[:57] + "..."
 			}
-			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("common.label.package")), displayPkg)
+			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.Label("package")), displayPkg)
 			fmt.Println()
 
 			// Run tests with coverage
@@ -222,7 +224,7 @@ func addGoCovCommand(parent *cobra.Command) {
 				if testErr != nil {
 					return testErr
 				}
-				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get coverage"}), err)
+				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "coverage"), err)
 			}
 
 			// Parse total coverage from last line
@@ -242,16 +244,16 @@ func addGoCovCommand(parent *cobra.Command) {
 
 			// Print coverage summary
 			fmt.Println()
-			fmt.Printf("  %s %s\n", cli.ProgressLabel(i18n.T("label.total")), cli.FormatCoverage(totalCov))
+			fmt.Printf("  %s %s\n", cli.ProgressLabel(i18n.Label("total")), cli.FormatCoverage(totalCov))
 
 			// Generate HTML if requested
 			if covHTML || covOpen {
 				htmlPath := "coverage.html"
 				htmlCmd := exec.Command("go", "tool", "cover", "-html="+covPath, "-o="+htmlPath)
 				if err := htmlCmd.Run(); err != nil {
-					return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "generate HTML"}), err)
+					return fmt.Errorf("%s: %w", i18n.T("i18n.fail.generate", "HTML"), err)
 				}
-				fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.cov.html_label")), htmlPath)
+				fmt.Printf("  %s %s\n", dimStyle.Render(i18n.Label("html")), htmlPath)
 
 				if covOpen {
 					// Open in browser
@@ -262,7 +264,7 @@ func addGoCovCommand(parent *cobra.Command) {
 					case exec.Command("which", "xdg-open").Run() == nil:
 						openCmd = exec.Command("xdg-open", htmlPath)
 					default:
-						fmt.Printf("  %s\n", dimStyle.Render(i18n.T("cmd.go.cov.open_manually")))
+						fmt.Printf("  %s\n", dimStyle.Render("Open coverage.html in your browser"))
 					}
 					if openCmd != nil {
 						openCmd.Run()
@@ -272,26 +274,23 @@ func addGoCovCommand(parent *cobra.Command) {
 
 			// Check threshold
 			if covThreshold > 0 && totalCov < covThreshold {
-				fmt.Printf("\n%s\n", errorStyle.Render(i18n.T("cmd.go.cov.below_threshold", map[string]interface{}{
-					"Actual":    fmt.Sprintf("%.1f", totalCov),
-					"Threshold": fmt.Sprintf("%.1f", covThreshold),
-				})))
-				return errors.New(i18n.T("cmd.go.cov.error.below_threshold"))
+				fmt.Printf("\n%s %.1f%% < %.1f%%\n", errorStyle.Render(i18n.T("i18n.fail.meet", "threshold")), totalCov, covThreshold)
+				return errors.New("coverage below threshold")
 			}
 
 			if testErr != nil {
 				return testErr
 			}
 
-			fmt.Printf("\n%s\n", successStyle.Render(i18n.T("cli.ok")))
+			fmt.Printf("\n%s\n", successStyle.Render(i18n.T("i18n.done.pass")))
 			return nil
 		},
 	}
 
-	covCmd.Flags().StringVar(&covPkg, "pkg", "", i18n.T("common.flag.pkg"))
-	covCmd.Flags().BoolVar(&covHTML, "html", false, i18n.T("cmd.go.cov.flag.html"))
-	covCmd.Flags().BoolVar(&covOpen, "open", false, i18n.T("cmd.go.cov.flag.open"))
-	covCmd.Flags().Float64Var(&covThreshold, "threshold", 0, i18n.T("cmd.go.cov.flag.threshold"))
+	covCmd.Flags().StringVar(&covPkg, "pkg", "", "Package to test")
+	covCmd.Flags().BoolVar(&covHTML, "html", false, "Generate HTML report")
+	covCmd.Flags().BoolVar(&covOpen, "open", false, "Open HTML report in browser")
+	covCmd.Flags().Float64Var(&covThreshold, "threshold", 0, "Minimum coverage percentage")
 
 	parent.AddCommand(covCmd)
 }

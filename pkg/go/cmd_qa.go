@@ -17,12 +17,12 @@ var qaFix bool
 func addGoQACommand(parent *cobra.Command) {
 	qaCmd := &cobra.Command{
 		Use:   "qa",
-		Short: i18n.T("cmd.go.qa.short"),
-		Long:  i18n.T("cmd.go.qa.long"),
+		Short: "Run QA checks",
+		Long:  "Run code quality checks: formatting, vetting, linting, and testing",
 		RunE:  runGoQADefault,
 	}
 
-	qaCmd.PersistentFlags().BoolVar(&qaFix, "fix", false, i18n.T("cmd.go.qa.flag.fix"))
+	qaCmd.PersistentFlags().BoolVar(&qaFix, "fix", false, i18n.T("common.flag.fix"))
 
 	// Subcommands for individual checks
 	qaCmd.AddCommand(&cobra.Command{
@@ -97,16 +97,15 @@ type QACheck struct {
 func runQAChecks(checkNames []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 	}
 
 	// Detect if this is a Go project
 	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
-		return fmt.Errorf("not a Go project (no go.mod found)")
+		return fmt.Errorf("not a Go project (no %s found)", i18n.T("gram.word.go_mod"))
 	}
 
-	fmt.Println(cli.TitleStyle.Render("Go QA"))
-	fmt.Println()
+	fmt.Printf("%s %s\n\n", cli.DimStyle.Render(i18n.Label("qa")), i18n.ProgressSubject("run", "Go QA"))
 
 	checks := buildChecksForNames(checkNames)
 
@@ -116,13 +115,13 @@ func runQAChecks(checkNames []string) error {
 	failed := 0
 
 	for _, check := range checks {
-		fmt.Printf("%s %s\n", cli.DimStyle.Render("→"), check.Name)
+		fmt.Printf("%s %s\n", cli.DimStyle.Render("→"), i18n.Progress(check.Name))
 
 		if err := runCheck(ctx, cwd, check); err != nil {
 			fmt.Printf("  %s %s\n", cli.ErrorStyle.Render(cli.SymbolCross), err.Error())
 			failed++
 		} else {
-			fmt.Printf("  %s\n", cli.SuccessStyle.Render(cli.SymbolCheck))
+			fmt.Printf("  %s %s\n", cli.SuccessStyle.Render(cli.SymbolCheck), i18n.T("i18n.done.pass"))
 			passed++
 		}
 	}
@@ -132,15 +131,18 @@ func runQAChecks(checkNames []string) error {
 	duration := time.Since(startTime).Round(time.Millisecond)
 
 	if failed > 0 {
-		fmt.Printf("%s %d passed, %d failed (%s)\n",
+		fmt.Printf("%s %s, %s (%s)\n",
 			cli.ErrorStyle.Render(cli.SymbolCross),
-			passed, failed, duration)
+			i18n.T("i18n.count.check", passed)+" "+i18n.T("i18n.done.pass"),
+			i18n.T("i18n.count.check", failed)+" "+i18n.T("i18n.done.fail"),
+			duration)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s %d checks passed (%s)\n",
+	fmt.Printf("%s %s (%s)\n",
 		cli.SuccessStyle.Render(cli.SymbolCheck),
-		passed, duration)
+		i18n.T("i18n.count.check", passed)+" "+i18n.T("i18n.done.pass"),
+		duration)
 
 	return nil
 }
@@ -148,7 +150,7 @@ func runQAChecks(checkNames []string) error {
 func buildChecksForNames(names []string) []QACheck {
 	allChecks := map[string]QACheck{
 		"fmt": {
-			Name:    "fmt",
+			Name:    "format",
 			Command: "gofmt",
 			Args:    fmtArgs(qaFix),
 		},
@@ -168,17 +170,17 @@ func buildChecksForNames(names []string) []QACheck {
 			Args:    []string{"test", "./..."},
 		},
 		"race": {
-			Name:    "race",
+			Name:    "test",
 			Command: "go",
 			Args:    []string{"test", "-race", "./..."},
 		},
 		"vuln": {
-			Name:    "vuln",
+			Name:    "scan",
 			Command: "govulncheck",
 			Args:    []string{"./..."},
 		},
 		"sec": {
-			Name:    "sec",
+			Name:    "scan",
 			Command: "gosec",
 			Args:    []string{"-quiet", "./..."},
 		},
@@ -212,14 +214,14 @@ func lintArgs(fix bool) []string {
 func runCheck(ctx context.Context, dir string, check QACheck) error {
 	// Check if command exists
 	if _, err := exec.LookPath(check.Command); err != nil {
-		return fmt.Errorf("%s not installed", check.Command)
+		return fmt.Errorf("%s: %s", check.Command, i18n.T("i18n.done.miss"))
 	}
 
 	cmd := exec.CommandContext(ctx, check.Command, check.Args...)
 	cmd.Dir = dir
 
 	// For gofmt -l, capture output to check if files need formatting
-	if check.Name == "fmt" && len(check.Args) > 0 && check.Args[0] == "-l" {
+	if check.Name == "format" && len(check.Args) > 0 && check.Args[0] == "-l" {
 		output, err := cmd.Output()
 		if err != nil {
 			return err
@@ -227,7 +229,7 @@ func runCheck(ctx context.Context, dir string, check QACheck) error {
 		if len(output) > 0 {
 			// Show files that need formatting
 			fmt.Print(string(output))
-			return fmt.Errorf("files need formatting (use --fix)")
+			return fmt.Errorf("%s (use --fix)", i18n.T("i18n.fail.format", i18n.T("i18n.count.file", len(output))))
 		}
 		return nil
 	}
