@@ -19,7 +19,7 @@ func TestServiceImplementsTranslator(t *testing.T) {
 	translator = svc
 
 	// Test interface methods
-	assert.Equal(t, "Success", translator.T("cli.success"))
+	assert.Equal(t, "Multi-repo development workflow", translator.T("cmd.dev.short"))
 	assert.NotEmpty(t, translator.Language())
 	assert.NotNil(t, translator.Direction())
 	assert.NotNil(t, translator.Formality())

@@ -28,1487 +28,229 @@
 			"leave": { "base": "leave", "past": "left", "gerund": "leaving" },
 			"spend": { "base": "spend", "past": "spent", "gerund": "spending" },
 			"pay": { "base": "pay", "past": "paid", "gerund": "paying" },
-			"sell": { "base": "sell", "past": "sold", "gerund": "selling" }
+			"sell": { "base": "sell", "past": "sold", "gerund": "selling" },
+			"commit": { "base": "commit", "past": "committed", "gerund": "committing" },
+			"stop": { "base": "stop", "past": "stopped", "gerund": "stopping" },
+			"scan": { "base": "scan", "past": "scanned", "gerund": "scanning" },
+			"format": { "base": "format", "past": "formatted", "gerund": "formatting" },
+			"set": { "base": "set", "past": "set", "gerund": "setting" },
+			"put": { "base": "put", "past": "put", "gerund": "putting" },
+			"cut": { "base": "cut", "past": "cut", "gerund": "cutting" },
+			"hit": { "base": "hit", "past": "hit", "gerund": "hitting" },
+			"sit": { "base": "sit", "past": "sat", "gerund": "sitting" },
+			"split": { "base": "split", "past": "split", "gerund": "splitting" },
+			"shut": { "base": "shut", "past": "shut", "gerund": "shutting" }
 		},
 		"noun": {
-			"file": { "one": "file", "other": "files", "gender": "neuter" },
-			"repo": { "one": "repo", "other": "repos", "gender": "neuter" },
-			"repository": { "one": "repository", "other": "repositories", "gender": "neuter" },
-			"commit": { "one": "commit", "other": "commits", "gender": "neuter" },
-			"branch": { "one": "branch", "other": "branches", "gender": "neuter" },
-			"change": { "one": "change", "other": "changes", "gender": "neuter" },
-			"item": { "one": "item", "other": "items", "gender": "neuter" },
-			"issue": { "one": "issue", "other": "issues", "gender": "neuter" },
-			"task": { "one": "task", "other": "tasks", "gender": "neuter" },
-			"user": { "one": "user", "other": "users", "gender": "neuter" },
-			"person": { "one": "person", "other": "people", "gender": "neuter" },
-			"child": { "one": "child", "other": "children", "gender": "neuter" }
+			"file": { "one": "file", "other": "files" },
+			"repo": { "one": "repo", "other": "repos" },
+			"repository": { "one": "repository", "other": "repositories" },
+			"commit": { "one": "commit", "other": "commits" },
+			"branch": { "one": "branch", "other": "branches" },
+			"change": { "one": "change", "other": "changes" },
+			"item": { "one": "item", "other": "items" },
+			"issue": { "one": "issue", "other": "issues" },
+			"task": { "one": "task", "other": "tasks" },
+			"person": { "one": "person", "other": "people" },
+			"child": { "one": "child", "other": "children" },
+			"package": { "one": "package", "other": "packages" },
+			"artifact": { "one": "artifact", "other": "artifacts" },
+			"vulnerability": { "one": "vulnerability", "other": "vulnerabilities" },
+			"dependency": { "one": "dependency", "other": "dependencies" },
+			"directory": { "one": "directory", "other": "directories" },
+			"category": { "one": "category", "other": "categories" },
+			"query": { "one": "query", "other": "queries" }
 		},
 		"article": {
 			"indefinite": { "default": "a", "vowel": "an" },
 			"definite": "the"
-		}
-	},
-	"common": {
-		"prompt": {
-			"yes": "y",
-			"no": "n",
-			"yes_full": "yes",
-			"no_full": "no",
-			"abort": "Operation aborted",
-			"cancel": "Cancelled",
-			"continue": "Continue?",
-			"proceed": "Proceed?",
-			"confirm": "Are you sure?",
-			"overwrite": "Overwrite?",
-			"delete": "Delete?",
-			"save": "Save?",
-			"discard": "Discard changes?"
 		},
-		"label": {
-			"error": "Error:",
-			"done": "Done:",
-			"status": "Status:",
-			"version": "Version:",
-			"summary": "Summary:",
-			"image": "Image:",
-			"success": "Success:",
-			"warning": "Warning:",
-			"note": "Note:",
-			"registry": "Registry:",
-			"current": "Current:",
-			"total": "Total:",
-			"coverage": "Coverage:",
-			"install": "Install:",
-			"path": "Path:",
-			"test": "Test:",
-			"package": "Package:",
-			"spec": "Spec:",
-			"template": "Template:",
-			"fix": "Fix:",
-			"skip": "Skip:",
-			"started": "Started:",
-			"target": "Target:",
-			"filter": "Filter:",
-			"project": "Project:",
-			"url": "URL:",
-			"repo": "Repo"
-		},
-		"status": {
-			"running": "Running",
-			"stopped": "Stopped",
-			"dirty": "dirty",
-			"synced": "synced",
+		"word": {
+			"url": "URL",
+			"id": "ID",
+			"ok": "OK",
+			"ci": "CI",
+			"qa": "QA",
+			"php": "PHP",
+			"sdk": "SDK",
+			"html": "HTML",
+			"cgo": "CGO",
+			"pid": "PID",
+			"cpus": "CPUs",
+			"ssh": "SSH",
+			"ssl": "SSL",
+			"api": "API",
+			"pr": "PR",
+			"vite": "Vite",
+			"pnpm": "pnpm",
+			"app_url": "app URL",
+			"blocked_by": "blocked by",
+			"claimed_by": "claimed by",
+			"related_files": "related files",
 			"up_to_date": "up to date",
-			"installing": "Installing",
-			"cloning": "Cloning"
+			"dry_run": "dry run",
+			"go_mod": "go.mod"
 		},
-		"error": {
-			"failed": "Failed to {{.Action}}",
-			"not_found": "{{.Item}} not found",
-			"no_items": "No {{.Items}} found"
-		},
-		"success": {
-			"completed": "{{.Action}} completed successfully",
-			"passed": "{{.Action}} passed"
-		},
-		"progress": {
-			"running": "Running {{.Task}}",
-			"checking": "Checking {{.Item}}",
-			"checking_updates": "Checking for updates..."
-		},
-		"flag": {
-			"registry": "Path to repos.yaml (auto-detected if not specified)",
-			"spec": "Path to OpenAPI spec file",
-			"diff": "Show diff of changes",
-			"verbose": "Verbose output",
-			"coverage": "Show detailed per-package coverage",
-			"json": "Output in JSON format",
-			"tag": "Image tag (default: latest)",
-			"follow": "Follow log output",
-			"fix": "Auto-fix issues where possible",
-			"pkg": "Package to test (default: ./...)"
-		},
-		"count": {
-			"failed": "{{.Count}} failed",
-			"passed": "{{.Count}} passed",
-			"skipped": "{{.Count}} skipped",
-			"pending": "{{.Count}} pending",
-			"files": "{{.Count}} files",
-			"commits": "{{.Count}} commit(s)",
-			"repos_unpushed": "{{.Count}} repo(s) with unpushed commits:"
-		},
-		"result": {
-			"all_passed": "All tests passed",
-			"no_issues": "No issues found",
-			"run_with_coverage": "Run tests with coverage"
-		},
-		"hint": {
-			"install_with": "Install with:",
-			"fix_deps": "composer update && npm update"
+		"punct": {
+			"label": ":",
+			"progress": "..."
 		}
 	},
-	"cli": {
-		"aborted": "Aborted",
-		"cancelled": "Cancelled",
-		"completed": "Completed",
-		"count": {
-			"commits": {
-				"one": "{{.Count}} commit",
-				"other": "{{.Count}} commits"
-			},
-			"items": {
-				"one": "{{.Count}} item",
-				"other": "{{.Count}} items"
-			},
-			"repos": {
-				"one": "{{.Count}} repo",
-				"other": "{{.Count}} repos"
-			}
-		},
-		"done": "Done",
-		"error": "Error",
-		"fail": "FAIL",
-		"failed": "Failed",
-		"info": "Info",
-		"ok": "OK",
-		"pass": "PASS",
-		"pending": "Pending",
-		"skip": "Skipped",
-		"success": "Success",
-		"time": {
-			"day_ago": "1 day ago",
-			"days_ago": "{{.Count}} days ago",
-			"hour_ago": "1 hour ago",
-			"hours_ago": "{{.Count}} hours ago",
-			"just_now": "just now",
-			"minute_ago": "1 minute ago",
-			"minutes_ago": "{{.Count}} minutes ago",
-			"seconds_ago": "{{.Count}} seconds ago",
-			"week_ago": "1 week ago",
-			"weeks_ago": "{{.Count}} weeks ago"
-		},
-		"warning": "Warning"
+	"prompt": {
+		"yes": "y",
+		"no": "n",
+		"continue": "Continue?",
+		"proceed": "Proceed?",
+		"confirm": "Are you sure?",
+		"overwrite": "Overwrite?",
+		"discard": "Discard changes?"
+	},
+	"time": {
+		"just_now": "just now",
+		"ago": {
+			"second": { "one": "{{.Count}} second ago", "other": "{{.Count}} seconds ago" },
+			"minute": { "one": "{{.Count}} minute ago", "other": "{{.Count}} minutes ago" },
+			"hour": { "one": "{{.Count}} hour ago", "other": "{{.Count}} hours ago" },
+			"day": { "one": "{{.Count}} day ago", "other": "{{.Count}} days ago" },
+			"week": { "one": "{{.Count}} week ago", "other": "{{.Count}} weeks ago" }
+		}
 	},
 	"cmd": {
 		"ai": {
-			"claude": {
-				"config": {
-					"short": "Manage Claude configuration"
-				},
-				"long": "Tools for working with Claude Code.\n\nCommands:\n  run       Run Claude in the current directory\n  config    Manage Claude configuration",
-				"run": {
-					"short": "Run Claude Code in the current directory"
-				},
-				"short": "Claude Code integration"
-			},
-			"label": {
-				"blocked_by": "Blocked by:",
-				"claimed_by": "Claimed by:",
-				"created": "Created:",
-				"description": "Description:",
-				"id": "ID:",
-				"labels": "Labels:",
-				"priority": "Priority:",
-				"related_files": "Related files:",
-				"title": "Title:"
-			},
-			"long": "Manage tasks from the core-agentic service for AI-assisted development.\n\nCommands:\n  tasks          List tasks (filterable by status, priority, labels)\n  task           View task details or auto-select highest priority\n  task:update    Update task status or progress\n  task:complete  Mark task as completed or failed\n  task:commit    Create git commit with task reference\n  task:pr        Create GitHub PR linked to task\n  claude         Claude Code integration\n\nWorkflow:\n  core ai tasks                      # List pending tasks\n  core ai task --auto --claim        # Auto-select and claim a task\n  core ai task:commit <id> -m 'msg'  # Commit with task reference\n  core ai task:complete <id>         # Mark task done",
-			"priority": {
-				"critical": "CRITICAL",
-				"high": "HIGH",
-				"low": "LOW",
-				"medium": "MEDIUM"
-			},
 			"short": "AI agent task management",
-			"status": {
-				"blocked": "blocked",
-				"completed": "completed",
-				"in_progress": "in_progress",
-				"pending": "pending"
-			},
-			"task": {
-				"claiming": "Claiming task...",
-				"flag": {
-					"auto": "Auto-select highest priority pending task",
-					"claim": "Claim the task after showing details",
-					"context": "Show gathered context for AI collaboration"
-				},
-				"id_required": "task ID required (or use --auto)",
-				"long": "Shows details of a specific task or auto-selects the highest priority task.\n\nExamples:\n  core ai task abc123           # Show task details\n  core ai task abc123 --claim   # Show and claim the task\n  core ai task abc123 --context # Show task with gathered context\n  core ai task --auto           # Auto-select highest priority pending task",
-				"no_pending": "No pending tasks available.",
-				"short": "Show task details or auto-select a task"
-			},
-			"task_commit": {
-				"committed": "Committed:",
-				"creating": "Creating commit for task {{.ID}}...",
-				"flag": {
-					"message": "Commit message (without task reference)",
-					"push": "Push changes after committing",
-					"scope": "Scope for the commit type (e.g., auth, api, ui)"
-				},
-				"long": "Creates a git commit with a task reference and co-author attribution.\n\nCommit message format:\n  feat(scope): description\n\n  Task: #123\n  Co-Authored-By: Claude <noreply@anthropic.com>\n\nExamples:\n  core ai task:commit abc123 --message 'add user authentication'\n  core ai task:commit abc123 -m 'fix login bug' --scope auth\n  core ai task:commit abc123 -m 'update docs' --push",
-				"message_required": "commit message required (--message or -m)",
-				"no_changes": "No uncommitted changes to commit.",
-				"pushing": "Pushing changes...",
-				"short": "Auto-commit changes with task reference"
-			},
-			"task_complete": {
-				"failed": "Task {{.ID}} marked as failed",
-				"flag": {
-					"error": "Error message if failed",
-					"failed": "Mark the task as failed",
-					"output": "Summary of the completed work"
-				},
-				"long": "Marks a task as completed with optional output and artifacts.\n\nExamples:\n  core ai task:complete abc123 --output 'Feature implemented'\n  core ai task:complete abc123 --failed --error 'Build failed'",
-				"short": "Mark a task as completed"
-			},
-			"task_pr": {
-				"branch_error": "cannot create PR from {{.Branch}} branch; create a feature branch first",
-				"created": "Pull request created!",
-				"creating": "Creating pull request...",
-				"flag": {
-					"base": "Base branch (defaults to main)",
-					"draft": "Create as draft PR",
-					"labels": "Labels to add (comma-separated)",
-					"title": "PR title (defaults to task title)"
-				},
-				"long": "Creates a GitHub pull request linked to a task.\n\nRequires the GitHub CLI (gh) to be installed and authenticated.\n\nExamples:\n  core ai task:pr abc123\n  core ai task:pr abc123 --title 'Add authentication feature'\n  core ai task:pr abc123 --draft --labels 'enhancement,needs-review'\n  core ai task:pr abc123 --base develop",
-				"pushing_branch": "Pushing branch {{.Branch}}...",
-				"short": "Create a pull request for a task"
-			},
-			"task_update": {
-				"flag": {
-					"notes": "Notes about the update",
-					"progress": "Progress percentage (0-100)",
-					"status": "New status (pending, in_progress, completed, blocked)"
-				},
-				"flag_required": "at least one of --status, --progress, or --notes required",
-				"long": "Updates a task's status, progress, or adds notes.\n\nExamples:\n  core ai task:update abc123 --status in_progress\n  core ai task:update abc123 --progress 50 --notes 'Halfway done'",
-				"short": "Update task status or progress"
-			},
-			"tasks": {
-				"flag": {
-					"labels": "Filter by labels (comma-separated)",
-					"limit": "Max number of tasks to return",
-					"priority": "Filter by priority (critical, high, medium, low)",
-					"project": "Filter by project",
-					"status": "Filter by status (pending, in_progress, completed, blocked)"
-				},
-				"found": "{{.Count}} task(s) found:",
-				"hint": "Use 'core ai task <id>' to view details",
-				"long": "Lists tasks from the core-agentic service.\n\nConfiguration is loaded from:\n  1. Environment variables (AGENTIC_TOKEN, AGENTIC_BASE_URL)\n  2. .env file in current directory\n  3. ~/.core/agentic.yaml\n\nExamples:\n  core ai tasks\n  core ai tasks --status pending --priority high\n  core ai tasks --labels bug,urgent",
-				"none_found": "No tasks found.",
-				"short": "List available tasks from core-agentic"
-			}
+			"claude.short": "Claude Code integration",
+			"task.short": "Show task details or auto-select a task",
+			"task.id_required": "task ID required (or use --auto)",
+			"task.no_pending": "No pending tasks available.",
+			"tasks.short": "List available tasks from core-agentic",
+			"task_commit.short": "Auto-commit changes with task reference",
+			"task_commit.no_changes": "No uncommitted changes to commit.",
+			"task_complete.short": "Mark a task as completed",
+			"task_pr.short": "Create a pull request for a task",
+			"task_pr.branch_error": "cannot create PR from {{.Branch}} branch; create a feature branch first",
+			"task_update.short": "Update task status or progress"
 		},
 		"build": {
-			"building_project": "Building project",
-			"built_artifacts": "Built {{.Count}} artifact(s)",
-			"computing_checksums": "Computing checksums...",
-			"creating_archives": "Creating archives...",
-			"error": {
-				"archive_failed": "archive failed",
-				"checksum_failed": "checksum failed",
-				"gpg_signing_failed": "GPG signing failed",
-				"invalid_target": "invalid target format \"{{.Target}}\", expected OS/arch (e.g., linux/amd64)",
-				"no_project_type": "no supported project type detected in {{.Dir}}\nSupported types: go (go.mod), wails (wails.json), node (package.json), php (composer.json)",
-				"no_targets": "no valid targets specified",
-				"node_not_implemented": "Node.js builder not yet implemented",
-				"notarization_failed": "notarization failed",
-				"php_not_implemented": "PHP builder not yet implemented",
-				"signing_failed": "signing failed",
-				"unsupported_type": "unsupported project type"
-			},
-			"flag": {
-				"archive": "Create archives (tar.gz for linux/darwin, zip for windows)",
-				"checksum": "Generate SHA256 checksums and CHECKSUMS.txt",
-				"ci": "CI mode - minimal output with JSON artifact list at the end",
-				"config": "Config file path (for linuxkit: YAML config, for docker: Dockerfile)",
-				"format": "Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk)",
-				"image": "Docker image name (e.g., host-uk/core-devops)",
-				"no_sign": "Skip all code signing",
-				"notarize": "Enable macOS notarization (requires Apple credentials)",
-				"output": "Output directory for artifacts (default: dist)",
-				"push": "Push Docker image after build",
-				"targets": "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)",
-				"type": "Builder type (go, wails, docker, linuxkit, taskfile) - auto-detected if not specified"
-			},
-			"from_path": {
-				"compiling": "Compiling application...",
-				"copying_files": "Copying application files...",
-				"error": {
-					"go_build": "go build failed",
-					"go_mod_tidy": "go mod tidy failed",
-					"invalid_path": "invalid path specified",
-					"must_be_directory": "path specified must be a directory"
-				},
-				"flag": {
-					"path": "The path to the static web application files"
-				},
-				"generating_template": "Generating application from template...",
-				"short": "Build from a local directory",
-				"starting": "Starting build from path:",
-				"success": "Build successful! Executable created at:"
-			},
-			"label": {
-				"archive": "Archive:",
-				"binary": "Binary:",
-				"build": "Build:",
-				"checksum": "Checksum:",
-				"ok": "OK:",
-				"output": "Output:",
-				"sign": "Sign:",
-				"targets": "Targets:",
-				"type": "Type:"
-			},
-			"long": "Builds the current project with automatic type detection.\nSupports Go, Wails, Docker, LinuxKit, and Taskfile projects.\nConfiguration can be provided via .core/build.yaml or command-line flags.\n\nExamples:\n  core build                              # Auto-detect and build\n  core build --type docker                # Build Docker image\n  core build --type linuxkit              # Build LinuxKit image\n  core build --type linuxkit --config linuxkit.yml --format qcow2-bios",
-			"pwa": {
-				"download_complete": "PWA download complete.",
-				"downloading_to": "Downloading PWA to temporary directory:",
-				"error": {
-					"no_manifest_tag": "no <link rel=\"manifest\"> tag found"
-				},
-				"flag": {
-					"url": "The URL of the PWA to build"
-				},
-				"found_manifest": "Found manifest:",
-				"no_manifest": "no manifest file found. Proceeding with basic site download.",
-				"short": "Build from a live PWA URL",
-				"starting": "Starting PWA build from URL:"
-			},
-			"sdk": {
-				"complete": "SDK generation complete",
-				"dry_run_mode": "(dry-run mode)",
-				"flag": {
-					"dry_run": "Show what would be generated without writing files",
-					"lang": "Generate only this language (typescript, python, go, php)",
-					"version": "Version to embed in generated SDKs"
-				},
-				"generated_label": "Generated:",
-				"generating": "Generating SDKs",
-				"label": "Build SDK:",
-				"language_label": "Language:",
-				"languages_label": "Languages:",
-				"long": "Generates typed API clients from OpenAPI specifications.\nSupports TypeScript, Python, Go, and PHP.\n\nExamples:\n  core build sdk                    # Generate all configured SDKs\n  core build sdk --lang typescript  # Generate only TypeScript SDK\n  core build sdk --spec api.yaml    # Use specific OpenAPI spec",
-				"short": "Generate API SDKs from OpenAPI spec",
-				"would_generate": "Would generate SDKs (dry-run)"
-			},
 			"short": "Build projects with auto-detection and cross-compilation",
-			"signing_binaries": "Signing binaries..."
+			"error.invalid_target": "invalid target format \"{{.Target}}\", expected OS/arch (e.g., linux/amd64)",
+			"error.no_project_type": "no supported project type detected in {{.Dir}}\nSupported types: go (go.mod), wails (wails.json), node (package.json), php (composer.json)",
+			"from_path.short": "Build from a local directory",
+			"pwa.short": "Build from a live PWA URL",
+			"sdk.short": "Generate API SDKs from OpenAPI spec"
 		},
 		"ci": {
-			"changelog": {
-				"flag": {
-					"from": "Starting ref (default: previous tag)",
-					"to": "Ending ref (default: HEAD)"
-				},
-				"long": "Generates a changelog from conventional commits.",
-				"short": "Generate changelog"
-			},
-			"dry_run_hint": "(dry-run) use --we-are-go-for-launch to publish",
-			"error": {
-				"no_publishers": "no publishers configured in .core/release.yaml"
-			},
-			"flag": {
-				"draft": "Create release as a draft",
-				"go_for_launch": "Actually publish (default is dry-run for safety)",
-				"prerelease": "Mark release as a prerelease",
-				"version": "Version to release (e.g., v1.2.3)"
-			},
-			"go_for_launch": "GO FOR LAUNCH",
-			"init": {
-				"config_exists": "Configuration already exists at",
-				"config_written": "Configuration written to",
-				"creating": "Creating release configuration",
-				"github_repo": "GitHub repository (owner/repo):",
-				"long": "Creates a .core/release.yaml configuration file interactively.",
-				"overwrite_prompt": "Overwrite? [y/N]: ",
-				"project_name": "Project name",
-				"short": "Initialize release configuration"
-			},
-			"label": {
-				"artifacts": "Artifacts:",
-				"ci": "CI:",
-				"init": "Init:",
-				"published": "Published:"
-			},
-			"long": "Publishes pre-built artifacts from dist/ to configured targets.\nRun 'core build' first to create artifacts.\n\nSAFE BY DEFAULT: Runs in dry-run mode unless --we-are-go-for-launch is specified.\n\nConfiguration: .core/release.yaml",
-			"publish_completed": "Publish completed!",
-			"publishing": "Publishing release",
-			"release": {
-				"short": "Create a release"
-			},
 			"short": "Publish releases (dry-run by default)",
-			"version": {
-				"long": "Shows the determined version or validates a version string.",
-				"short": "Show or set version"
-			}
+			"dry_run_hint": "(dry-run) use --we-are-go-for-launch to publish",
+			"go_for_launch": "GO FOR LAUNCH",
+			"init.short": "Initialize release configuration",
+			"changelog.short": "Generate changelog",
+			"version.short": "Show or set version"
 		},
 		"dev": {
-			"api": {
-				"short": "Tools for managing service APIs"
-			},
-			"ci": {
-				"failing": "{{.Count}} failing",
-				"flag": {
-					"branch": "Filter by branch",
-					"failed": "Show only failed runs"
-				},
-				"long": "Fetches GitHub Actions workflow status for all repos.\nShows latest run status for each repo.\nRequires the 'gh' CLI to be installed and authenticated.",
-				"no_ci": "{{.Count}} no CI",
-				"passing": "{{.Count}} passing",
-				"repos_checked": "{{.Count}} repos checked",
-				"short": "Check CI status across all repos"
-			},
-			"commit": {
-				"committing": "Committing dirty repos with Claude...",
-				"failed": "Commit failed",
-				"flag": {
-					"all": "Commit all dirty repos without prompting"
-				},
-				"long": "Uses Claude to create commits for dirty repos.\nShows uncommitted changes and invokes Claude to generate commit messages.",
-				"short": "Claude-assisted commits across repos"
-			},
-			"committed": "committed",
-			"committing": "Committing",
-			"confirm_claude_commit": "Have Claude commit these repos?",
-			"done_succeeded": "Done: {{.Count}} succeeded",
-			"health": {
-				"ahead_label": "Ahead:",
-				"behind_label": "Behind:",
-				"dirty_label": "Dirty:",
-				"errors": "errors",
-				"errors_label": "Errors:",
-				"flag": {
-					"verbose": "Show detailed breakdown"
-				},
-				"long": "Shows a summary of repository health:\ntotal repos, dirty repos, unpushed commits, etc.",
-				"more": "+{{.Count}} more",
-				"repos": "repos",
-				"short": "Quick health check across all repos",
-				"to_pull": "to pull",
-				"to_push": "to push"
-			},
-			"impact": {
-				"analysis_for": "Impact analysis for",
-				"changes_affect": "Changes to {{.Repo}} affect {{.Affected}}/{{.Total}} repos",
-				"direct_dependents": "{{.Count}} direct dependent(s):",
-				"long": "Analyzes the dependency graph to show which repos\nwould be affected by changes to the specified repo.",
-				"no_dependents": "No repos depend on {{.Name}}",
-				"requires_registry": "impact analysis requires repos.yaml with dependency information",
-				"short": "Show impact of changing a repo",
-				"transitive_dependents": "{{.Count}} transitive dependent(s):"
-			},
-			"issues": {
-				"flag": {
-					"assignee": "Filter by assignee (use @me for yourself)",
-					"limit": "Max issues per repo"
-				},
-				"long": "Fetches open issues from GitHub for all repos in the registry.\nRequires the 'gh' CLI to be installed and authenticated.",
-				"no_issues": "No open issues found.",
-				"open_issues": "{{.Count}} open issue(s):",
-				"short": "List open issues across all repos"
-			},
-			"long": "Manage multiple git repositories and GitHub integration.\n\nUses repos.yaml to discover repositories. Falls back to scanning\nthe current directory if no registry is found.\n\nGit Operations:\n  work      Combined status -> commit -> push workflow\n  health    Quick repo health summary\n  commit    Claude-assisted commit messages\n  push      Push repos with unpushed commits\n  pull      Pull repos behind remote\n\nGitHub Integration (requires gh CLI):\n  issues    List open issues across repos\n  reviews   List PRs awaiting review\n  ci        Check GitHub Actions status\n  impact    Analyse dependency impact\n\nDev Environment:\n  install   Download dev environment image\n  boot      Start dev environment VM\n  stop      Stop dev environment VM\n  shell     Open shell in dev VM\n  status    Check dev VM status",
-			"modified": "{{.Count}} modified",
+			"short": "Multi-repo development workflow",
 			"no_changes": "No uncommitted changes found.",
 			"no_git_repos": "No git repositories found.",
-			"pull": {
-				"all_up_to_date": "All repos up to date. Nothing to pull.",
-				"commits_behind": "{{.Count}} commit(s) behind",
-				"done_pulled": "Done: {{.Count}} pulled",
-				"flag": {
-					"all": "Pull all repos, not just those behind"
-				},
-				"long": "Pulls updates for all repos.\nBy default only pulls repos that are behind. Use --all to pull all repos.",
-				"pulling": "Pulling",
-				"pulling_repos": "Pulling {{.Count}} repo(s):",
-				"repos_behind": "{{.Count}} repo(s) behind upstream:",
-				"short": "Pull updates across all repos"
-			},
-			"push": {
-				"all_up_to_date": "All repos up to date. Nothing to push.",
-				"confirm": "Push all?",
-				"confirm_push": "Push {{.Commits}} commit(s) to {{.Repos}} repo(s)?",
-				"diverged": "branch has diverged from remote",
-				"diverged_help": "Some repos have diverged (local and remote have different commits).",
-				"done_pushed": "Done: {{.Count}} pushed",
-				"failed": "Push failed",
-				"flag": {
-					"force": "Skip confirmation prompt"
-				},
-				"long": "Pushes unpushed commits for all repos.\nShows repos with commits to push and confirms before pushing.",
-				"nothing": "Nothing to push",
-				"pull_and_retry": "Pull changes and retry push?",
-				"short": "Push commits across all repos",
-				"uncommitted_changes_commit": "You have uncommitted changes. Commit with Claude first?"
-			},
-			"repos_with_changes": "{{.Count}} repo(s) with uncommitted changes:",
-			"reviews": {
-				"approved": "{{.Count}} approved",
-				"changes_requested": "{{.Count}} changes requested",
-				"draft": "[draft]",
-				"flag": {
-					"all": "Show all PRs including drafts",
-					"author": "Filter by PR author"
-				},
-				"long": "Fetches open PRs from GitHub for all repos in the registry.\nShows review status (approved, changes requested, pending).\nRequires the 'gh' CLI to be installed and authenticated.",
-				"no_prs": "No open PRs found.",
-				"open_prs": "{{.Count}} open PR(s)",
-				"short": "List PRs needing review across all repos",
-				"status_approved": "v approved",
-				"status_changes": "* changes requested",
-				"status_pending": "o pending review"
-			},
-			"scanning_label": "Scanning:",
-			"short": "Multi-repo development workflow",
-			"staged": "{{.Count}} staged",
-			"status": {
-				"ahead": "ahead",
-				"behind": "behind",
-				"clean": "clean",
-				"conflict": "conflict",
-				"diverged": "diverged"
-			},
-			"sync": {
-				"long": "This command scans the 'pkg' directory for services and ensures that the\ntop-level public API for each service is in sync with its internal implementation.\nIt automatically generates the necessary Go files with type aliases.",
-				"short": "Synchronizes public service APIs with internal implementations"
-			},
-			"untracked": "{{.Count}} untracked",
-			"vm": {
-				"already_installed": "Dev environment already installed",
-				"boot": {
-					"flag": {
-						"cpus": "Number of CPUs (default: 2)",
-						"fresh": "Stop existing and start fresh",
-						"memory": "Memory in MB (default: 4096)"
-					},
-					"long": "Boots the dev environment VM.\n\nExamples:\n  core dev boot\n  core dev boot --memory 8192 --cpus 4\n  core dev boot --fresh",
-					"short": "Start the dev environment"
-				},
-				"booting": "Booting dev environment...",
-				"check_updates": "Use {{.Command}} to check for updates",
-				"claude": {
-					"flag": {
-						"auth": "Selective auth forwarding (gh,anthropic,ssh,git)",
-						"model": "Model to use (opus, sonnet)",
-						"no_auth": "Don't forward any auth credentials"
-					},
-					"long": "Starts a Claude Code session inside the dev environment sandbox.\n\nProvides isolation while forwarding selected credentials.\nAuto-boots the dev environment if not running.\n\nAuth options (default: all):\n  gh        - GitHub CLI auth\n  anthropic - Anthropic API key\n  ssh       - SSH agent forwarding\n  git       - Git config (name, email)\n\nExamples:\n  core dev claude\n  core dev claude --model opus\n  core dev claude --auth gh,anthropic\n  core dev claude --no-auth",
-					"short": "Start sandboxed Claude session"
-				},
-				"config_label": "Config:",
-				"config_value": "{{.Memory}}MB, {{.CPUs}} CPUs",
-				"connect_with": "Connect with: {{.Command}}",
-				"container_label": "Container:",
-				"cpus_label": "CPUs:",
-				"downloading": "Downloading dev environment...",
-				"downloading_update": "Downloading update...",
-				"install": {
-					"long": "Downloads the platform-specific dev environment image.\n\nThe image includes Go, PHP, Node.js, Python, Docker, and Claude CLI.\nDownloads are cached at ~/.core/images/\n\nExamples:\n  core dev install",
-					"short": "Download and install the dev environment image"
-				},
-				"install_with": "Install with: {{.Command}}",
-				"installed_in": "Installed in {{.Duration}}",
-				"installed_label": "Installed:",
-				"installed_no": "No",
-				"installed_yes": "Yes",
-				"latest_label": "Latest:",
-				"memory_label": "Memory:",
-				"not_installed": "dev environment not installed (run 'core dev install' first)",
-				"not_running": "Dev environment is not running",
-				"progress_label": "Progress:",
-				"run_to_update": "Run {{.Command}} to update",
-				"running": "Dev environment running",
-				"serve": {
-					"flag": {
-						"path": "Subdirectory to serve",
-						"port": "Port to serve on (default: 8000)"
-					},
-					"long": "Mounts the current project into the dev environment and starts a dev server.\n\nAuto-detects the appropriate serve command based on project files.\n\nExamples:\n  core dev serve\n  core dev serve --port 3000\n  core dev serve --path public",
-					"short": "Mount project and start dev server"
-				},
-				"shell": {
-					"flag": {
-						"console": "Use serial console instead of SSH"
-					},
-					"long": "Opens an interactive shell in the dev environment.\n\nUses SSH by default, or serial console with --console.\n\nExamples:\n  core dev shell\n  core dev shell --console\n  core dev shell -- ls -la",
-					"short": "Connect to the dev environment"
-				},
-				"ssh_port": "SSH port:",
-				"start_with": "Start with: {{.Command}}",
-				"status": {
-					"long": "Shows the current status of the dev environment.\n\nExamples:\n  core dev vm-status",
-					"short": "Show dev environment status"
-				},
-				"status_title": "Dev Environment Status",
-				"stop": {
-					"long": "Stops the running dev environment VM.\n\nExamples:\n  core dev stop",
-					"short": "Stop the dev environment"
-				},
-				"stopping": "Stopping dev environment...",
-				"stopping_current": "Stopping current instance...",
-				"test": {
-					"flag": {
-						"name": "Run named test command from .core/test.yaml"
-					},
-					"long": "Runs tests in the dev environment.\n\nAuto-detects the test command based on project files, or uses .core/test.yaml.\n\nExamples:\n  core dev test\n  core dev test --name integration\n  core dev test -- go test -v ./...",
-					"short": "Run tests in the dev environment"
-				},
-				"up_to_date": "Already up to date",
-				"update": {
-					"flag": {
-						"apply": "Download and apply the update"
-					},
-					"long": "Checks for dev environment updates and optionally applies them.\n\nExamples:\n  core dev update\n  core dev update --apply",
-					"short": "Check for and apply updates"
-				},
-				"update_available": "Update available",
-				"updated_in": "Updated in {{.Duration}}",
-				"uptime_label": "Uptime:"
-			},
-			"work": {
-				"all_up_to_date": "All repos up to date.",
-				"error_prefix": "error:",
-				"flag": {
-					"commit": "Use Claude to commit dirty repos before pushing",
-					"status": "Show status only, don't push"
-				},
-				"long": "Manage git status, commits, and pushes across multiple repositories.\n\nReads repos.yaml to discover repositories and their relationships.\nShows status, optionally commits with Claude, and pushes changes.",
-				"short": "Multi-repo git operations",
-				"table_ahead": "Ahead",
-				"table_modified": "Modified",
-				"table_staged": "Staged",
-				"table_untracked": "Untracked",
-				"use_commit_flag": "Use --commit to have Claude create commits"
-			}
+			"confirm_claude_commit": "Have Claude commit these repos?",
+			"health.short": "Quick health check across all repos",
+			"commit.short": "Claude-assisted commits across repos",
+			"push.short": "Push commits across all repos",
+			"push.diverged": "branch has diverged from remote",
+			"push.diverged_help": "Some repos have diverged (local and remote have different commits).",
+			"push.uncommitted_changes_commit": "You have uncommitted changes. Commit with Claude first?",
+			"pull.short": "Pull updates across all repos",
+			"work.short": "Multi-repo git operations",
+			"work.use_commit_flag": "Use --commit to have Claude create commits",
+			"issues.short": "List open issues across all repos",
+			"reviews.short": "List PRs needing review across all repos",
+			"ci.short": "Check CI status across all repos",
+			"impact.short": "Show impact of changing a repo",
+			"impact.requires_registry": "impact analysis requires repos.yaml with dependency information",
+			"sync.short": "Synchronizes public service APIs with internal implementations",
+			"vm.short": "Dev environment commands",
+			"vm.not_installed": "dev environment not installed (run 'core dev install' first)",
+			"vm.not_running": "Dev environment is not running"
 		},
 		"docs": {
-			"list": {
-				"coverage_summary": "{{.WithDocs}} with docs, {{.WithoutDocs}} without",
-				"header": {
-					"changelog": "CHANGELOG",
-					"claude": "CLAUDE",
-					"docs": "docs/",
-					"readme": "README"
-				},
-				"long": "List documentation files for all repos in the workspace.\n\nShows README.md, CLAUDE.md, CHANGELOG.md, and docs/ directory status\nfor each repository.",
-				"short": "List documentation across repos"
-			},
-			"long": "Manage documentation across all repos.\nScan for docs, check coverage, and sync to core-php/docs/packages/.",
 			"short": "Documentation management",
-			"sync": {
-				"confirm": "Sync?",
-				"dry_run_notice": "Dry run - no files copied",
-				"files_count": "({{.Count}} files)",
-				"flag": {
-					"dry_run": "Show what would be synced without copying",
-					"output": "Output directory (default: core-php/docs/packages)"
-				},
-				"found_label": "Found",
-				"long": "Sync documentation from all repos to a central location.\n\nCopies docs/ directories from each package to core-php/docs/packages/\nfor unified documentation builds.",
-				"no_docs_found": "No documentation found in any repos.",
-				"repos_with_docs": "{{.Count}} repo(s) with docs/ directories",
-				"short": "Sync documentation to core-php/docs/packages/",
-				"synced_packages": "Synced {{.Count}} packages",
-				"total_summary": "{{.Files}} files from {{.Repos}} repos → {{.Output}}"
-			}
+			"list.short": "List documentation across repos",
+			"sync.short": "Sync documentation to core-php/docs/packages/"
 		},
 		"doctor": {
-			"check": {
-				"claude": {
-					"description": "AI-assisted development",
-					"name": "Claude Code"
-				},
-				"composer": {
-					"description": "PHP dependencies",
-					"name": "Composer"
-				},
-				"docker": {
-					"description": "Container runtime",
-					"name": "Docker"
-				},
-				"gh": {
-					"description": "GitHub integration (issues, PRs, CI)",
-					"name": "GitHub CLI"
-				},
-				"git": {
-					"description": "Version control",
-					"name": "Git"
-				},
-				"node": {
-					"description": "Frontend builds",
-					"name": "Node.js"
-				},
-				"php": {
-					"description": "Laravel packages",
-					"name": "PHP"
-				},
-				"pnpm": {
-					"description": "Fast package manager",
-					"name": "pnpm"
-				}
-			},
-			"cli_auth": "CLI authenticated",
-			"cli_auth_missing": "CLI authentication - run: gh auth login",
-			"github": "GitHub Access:",
-			"install_linux_gh": "# GitHub CLI: https://cli.github.com/",
-			"install_linux_git": "# Git: apt install git",
-			"install_linux_header": "# Install via your package manager or:",
-			"install_linux_node": "# Node: https://nodejs.org/",
-			"install_linux_php": "# PHP: apt install php8.3-cli",
-			"install_linux_pnpm": "# pnpm: npm install -g pnpm",
-			"install_macos": "brew install git gh php composer node pnpm docker",
-			"install_macos_cask": "brew install --cask claude",
-			"install_missing": "Install missing tools:",
-			"install_other": "See documentation for your OS",
-			"issues": "Doctor: {{.Count}} issues found",
-			"issues_error": "{{.Count}} required tools missing",
-			"long": "Checks that all required tools are installed and configured.\nRun this before 'core setup' to ensure your environment is ready.",
-			"no_repos_yaml": "No repos.yaml found (run from workspace directory)",
-			"optional": "Optional:",
-			"ready": "Doctor: Environment ready",
-			"repos_cloned": "{{.Cloned}}/{{.Total}} repos cloned",
-			"repos_yaml_found": "Found repos.yaml at {{.Path}}",
-			"required": "Required:",
 			"short": "Check development environment",
-			"ssh_found": "SSH key found",
-			"ssh_missing": "SSH key missing - run: ssh-keygen && gh ssh-key add",
-			"verbose_flag": "Show detailed version information",
-			"workspace": "Workspace:"
+			"ready": "Doctor: Environment ready",
+			"no_repos_yaml": "No repos.yaml found (run from workspace directory)",
+			"install_missing": "Install missing tools:",
+			"install_macos": "brew install git gh php composer node pnpm docker",
+			"ssh_missing": "SSH key missing - run: ssh-keygen && gh ssh-key add"
 		},
 		"go": {
-			"build": {
-				"short": "Build Go binaries"
-			},
-			"cov": {
-				"below_threshold": "FAIL Coverage {{.Actual}}% is below threshold {{.Threshold}}%",
-				"error": {
-					"below_threshold": "coverage below threshold",
-					"no_packages": "no test packages found"
-				},
-				"flag": {
-					"html": "Generate HTML coverage report",
-					"open": "Generate and open HTML report in browser",
-					"threshold": "Minimum coverage percentage (exit 1 if below)"
-				},
-				"html_label": "HTML:",
-				"long": "Run tests and generate coverage report.\n\nExamples:\n  core go cov                  # Run with coverage summary\n  core go cov --html           # Generate HTML report\n  core go cov --open           # Generate and open HTML report\n  core go cov --threshold 80   # Fail if coverage < 80%",
-				"open_manually": "(open manually)",
-				"short": "Run tests with coverage report"
-			},
-			"fmt": {
-				"flag": {
-					"check": "Check only, exit 1 if not formatted",
-					"fix": "Fix formatting in place"
-				},
-				"long": "Format Go code using gofmt or goimports.\n\nExamples:\n  core go fmt              # Check formatting\n  core go fmt --fix        # Fix formatting\n  core go fmt --diff       # Show diff",
-				"short": "Format Go code"
-			},
-			"install": {
-				"cgo_disabled": "disabled",
-				"cgo_label": "CGO:",
-				"failed": "FAIL Install failed",
-				"flag": {
-					"no_cgo": "Disable CGO (CGO_ENABLED=0)"
-				},
-				"installed_to": "Installed to {{.Path}}",
-				"long": "Install Go binary to $GOPATH/bin.\n\nExamples:\n  core go install              # Install current module\n  core go install ./cmd/core   # Install specific path\n  core go install --no-cgo     # Pure Go (no C dependencies)\n  core go install -v           # Verbose output",
-				"short": "Install Go binary",
-				"success": "OK"
-			},
-			"lint": {
-				"flag": {
-					"fix": "Fix issues automatically"
-				},
-				"long": "Run golangci-lint on the codebase.\n\nExamples:\n  core go lint\n  core go lint --fix",
-				"short": "Run golangci-lint"
-			},
-			"long": "Go development tools with enhanced output and environment setup.\n\nCommands:\n  test     Run tests\n  cov      Run tests with coverage report\n  fmt      Format Go code\n  lint     Run golangci-lint\n  install  Install Go binary\n  mod      Module management (tidy, download, verify)\n  work     Workspace management",
-			"mod": {
-				"download": {
-					"short": "Download modules"
-				},
-				"graph": {
-					"short": "Print dependency graph"
-				},
-				"long": "Go module management commands.\n\nCommands:\n  tidy      Add missing and remove unused modules\n  download  Download modules to local cache\n  verify    Verify dependencies\n  graph     Print module dependency graph",
-				"short": "Module management",
-				"tidy": {
-					"short": "Tidy go.mod"
-				},
-				"verify": {
-					"short": "Verify dependencies"
-				}
-			},
 			"short": "Go development tools",
-			"test": {
-				"all_passed": "PASS All tests passed",
-				"coverage": "Coverage",
-				"flag": {
-					"json": "Output JSON results",
-					"race": "Enable race detector",
-					"run": "Run only tests matching regexp",
-					"short": "Run only short tests"
-				},
-				"long": "Run Go tests with coverage reporting.\n\nSets MACOSX_DEPLOYMENT_TARGET=26.0 to suppress linker warnings.\nFilters noisy output and provides colour-coded coverage.\n\nExamples:\n  core go test\n  core go test --coverage\n  core go test --pkg ./pkg/crypt\n  core go test --run TestHash",
-				"passed_failed": "{{.Passed}} passed, {{.Failed}} failed",
-				"some_failed": "FAIL Some tests failed"
-			},
-			"work": {
-				"added": "Added {{.Module}}",
-				"error": {
-					"no_modules": "no go.mod files found"
-				},
-				"init": {
-					"short": "Initialize workspace"
-				},
-				"long": "Go workspace management commands.\n\nCommands:\n  sync    Sync go.work with modules\n  init    Initialize go.work\n  use     Add module to workspace",
-				"short": "Workspace management",
-				"sync": {
-					"short": "Sync workspace"
-				},
-				"use": {
-					"short": "Add module to workspace"
-				}
-			}
+			"test.short": "Run Go tests",
+			"cov.short": "Run tests with coverage report",
+			"fmt.short": "Format Go code",
+			"lint.short": "Run golangci-lint",
+			"install.short": "Install Go binary",
+			"mod.short": "Module management",
+			"work.short": "Workspace management"
 		},
 		"php": {
-			"analyse": {
-				"flag": {
-					"level": "PHPStan analysis level (0-9)",
-					"memory": "Memory limit (e.g., 2G)"
-				},
-				"long": "Run PHPStan or Larastan static analysis.\n\nAuto-detects Larastan if installed, otherwise uses PHPStan.",
-				"no_analyser": "no static analyser found (install PHPStan: composer require phpstan/phpstan --dev)",
-				"short": "Run PHPStan static analysis"
-			},
-			"audit": {
-				"all_secure": "All dependencies are secure",
-				"completed_errors": "audit completed with errors",
-				"error": "error",
-				"flag": {
-					"fix": "Auto-fix vulnerabilities (npm only)"
-				},
-				"found_vulns": "Found {{.Count}} vulnerabilities across dependencies",
-				"long": "Check PHP and JavaScript dependencies for known vulnerabilities.\n\nRuns composer audit and npm audit (if package.json exists).",
-				"scanning": "Scanning dependencies for vulnerabilities",
-				"secure": "secure",
-				"short": "Security audit for dependencies",
-				"vulnerabilities": "{{.Count}} vulnerabilities"
-			},
-			"build": {
-				"building_docker": "Building Docker image...",
-				"building_linuxkit": "Building LinuxKit image...",
-				"docker_run_with": "Run with:",
-				"extensions": "Extensions:",
-				"flag": {
-					"dockerfile": "Path to custom Dockerfile",
-					"format": "LinuxKit output format: qcow2 (default), iso, raw, vmdk",
-					"name": "Image name (default: project directory name)",
-					"no_cache": "Build without cache",
-					"output": "Output path for LinuxKit image",
-					"platform": "Target platform (e.g., linux/amd64, linux/arm64)",
-					"template": "LinuxKit template name (default: server-php)",
-					"type": "Build type: docker (default) or linuxkit"
-				},
-				"format": "Format:",
-				"frontend": "Frontend:",
-				"laravel": "Laravel:",
-				"long": "Build a production-ready container image for the PHP project.\n\nBy default, builds a Docker image using FrankenPHP.\nUse --type linuxkit to build a LinuxKit VM image instead.",
-				"octane": "Octane:",
-				"php_version": "PHP Version:",
-				"platform": "Platform:",
-				"short": "Build Docker or LinuxKit image"
-			},
-			"deploy": {
-				"deploying": "Deploying to {{.Environment}}...",
-				"flag": {
-					"force": "Force deployment even if no changes detected",
-					"staging": "Deploy to staging environment",
-					"wait": "Wait for deployment to complete"
-				},
-				"long": "Deploy the PHP application to Coolify.\n\nRequires configuration in .env:\n  COOLIFY_URL=https://coolify.example.com\n  COOLIFY_TOKEN=your-api-token\n  COOLIFY_APP_ID=production-app-id\n  COOLIFY_STAGING_APP_ID=staging-app-id (optional)",
-				"short": "Deploy to Coolify",
-				"triggered": "Deployment triggered. Use 'core php deploy:status' to check progress.",
-				"warning_status": "Deployment ended with status: {{.Status}}"
-			},
-			"deploy_list": {
-				"flag": {
-					"limit": "Number of deployments to list (default: 10)",
-					"staging": "List staging deployments"
-				},
-				"long": "List recent deployments.",
-				"none_found": "No deployments found",
-				"recent": "Recent {{.Environment}} deployments:",
-				"short": "List recent deployments"
-			},
-			"deploy_rollback": {
-				"flag": {
-					"id": "Specific deployment ID to rollback to",
-					"staging": "Rollback staging environment",
-					"wait": "Wait for rollback to complete"
-				},
-				"long": "Rollback to a previous deployment.\n\nIf no deployment ID is specified, rolls back to the most recent\nsuccessful deployment.",
-				"rolling_back": "Rolling back {{.Environment}}...",
-				"short": "Rollback to previous deployment",
-				"triggered": "Rollback triggered. Use 'core php deploy:status' to check progress.",
-				"warning_status": "Rollback ended with status: {{.Status}}"
-			},
-			"deploy_status": {
-				"flag": {
-					"id": "Specific deployment ID",
-					"staging": "Check staging environment"
-				},
-				"long": "Show the status of a deployment.",
-				"short": "Show deployment status"
-			},
-			"dev": {
-				"all_stopped": "All services stopped",
-				"detected_services": "Detected services:",
-				"flag": {
-					"domain": "Domain for SSL certificate (default: from APP_URL or localhost)",
-					"https": "Enable HTTPS with mkcert",
-					"no_horizon": "Skip Laravel Horizon",
-					"no_redis": "Skip Redis server",
-					"no_reverb": "Skip Laravel Reverb",
-					"no_vite": "Skip Vite dev server",
-					"port": "FrankenPHP port (default: 8000)"
-				},
-				"long": "Starts all detected Laravel services.\n\nAuto-detects:\n  - Vite (vite.config.js/ts)\n  - Horizon (config/horizon.php)\n  - Reverb (config/reverb.php)\n  - Redis (from .env)",
-				"press_ctrl_c": "Press Ctrl+C to stop all services",
-				"services_started": "Services started:",
-				"short": "Start Laravel development environment",
-				"shutting_down": "Shutting down...",
-				"starting": "Starting {{.AppName}} development environment",
-				"stop_error": "Error stopping services: {{.Error}}"
-			},
-			"error": {
-				"analysis_issues": "analysis found issues",
-				"audit_failed": "audit failed",
-				"critical_high_issues": "critical or high severity issues found",
-				"deploy_failed": "deployment failed",
-				"fmt_failed": "formatting failed",
-				"fmt_issues": "formatting issues found",
-				"infection_failed": "mutation testing failed",
-				"infection_not_installed": "infection not installed",
-				"mkcert_not_installed": "mkcert not installed",
-				"not_laravel": "not a Laravel project (missing artisan or laravel/framework)",
-				"not_laravel_short": "not a Laravel project",
-				"not_php": "not a PHP project (missing composer.json)",
-				"psalm_issues": "psalm found issues",
-				"psalm_not_installed": "psalm not installed",
-				"rector_failed": "rector failed",
-				"rector_not_installed": "rector not installed",
-				"rollback_failed": "rollback failed",
-				"security_failed": "security check failed",
-				"update_packages": "composer update failed",
-				"vulns_found": "vulnerabilities found"
-			},
-			"fmt": {
-				"flag": {
-					"fix": "Auto-fix formatting issues"
-				},
-				"formatting": "Formatting code with {{.Formatter}}",
-				"long": "Format PHP code using Laravel Pint.",
-				"no_formatter": "no formatter found (install Laravel Pint: composer require laravel/pint --dev)",
-				"no_issues": "No formatting issues found",
-				"short": "Format PHP code with Laravel Pint"
-			},
-			"infection": {
-				"complete": "Mutation testing complete",
-				"flag": {
-					"filter": "Filter files by pattern",
-					"min_covered_msi": "Minimum covered mutation score (0-100, default: 70)",
-					"min_msi": "Minimum mutation score indicator (0-100, default: 50)",
-					"only_covered": "Only mutate covered code",
-					"threads": "Number of parallel threads (default: 4)"
-				},
-				"install": "composer require --dev infection/infection",
-				"long": "Run Infection mutation testing to measure test suite quality.\n\nMutation testing modifies your code and checks if tests catch\nthe changes. High mutation score = high quality tests.\n\nWarning: This can be slow on large codebases.",
-				"not_found": "Infection not found",
-				"note": "This may take a while...",
-				"short": "Mutation testing for test quality"
-			},
-			"label": {
-				"app_url": "App URL:",
-				"audit": "Audit:",
-				"branch": "Branch:",
-				"commit": "Commit:",
-				"completed": "Completed:",
-				"deploy": "Deploy:",
-				"duration": "Duration:",
-				"id": "ID:",
-				"infection": "Infection:",
-				"info": "Info:",
-				"message": "Message:",
-				"php": "PHP:",
-				"psalm": "Psalm:",
-				"qa": "QA:",
-				"rector": "Rector:",
-				"running": "Running:",
-				"security": "Security:",
-				"services": "Services:",
-				"setup": "Setup:",
-				"vite": "Vite:"
-			},
-			"logs": {
-				"flag": {
-					"service": "Specific service (default: all)"
-				},
-				"long": "Stream logs from Laravel services.\n\nServices: frankenphp, vite, horizon, reverb, redis",
-				"short": "View service logs"
-			},
-			"long": "Manage Laravel development environment with FrankenPHP.\n\nServices orchestrated:\n  - FrankenPHP/Octane (port 8000, HTTPS on 443)\n  - Vite dev server (port 5173)\n  - Laravel Horizon (queue workers)\n  - Laravel Reverb (WebSocket, port 8080)\n  - Redis (port 6379)",
-			"packages": {
-				"link": {
-					"done": "Packages linked. Run 'composer update' to install.",
-					"linking": "Linking packages...",
-					"long": "Link local PHP packages for development.\n\nAdds path repositories to composer.json with symlink enabled.\nThe package name is auto-detected from each path's composer.json.",
-					"short": "Link local packages"
-				},
-				"list": {
-					"linked": "Linked packages:",
-					"long": "List all locally linked packages.\n\nShows package name, path, and version for each linked package.",
-					"none_found": "No linked packages found",
-					"short": "List linked packages",
-					"unknown": "(unknown)"
-				},
-				"long": "Link and manage local PHP packages for development.\n\nSimilar to npm link, this adds path repositories to composer.json\nfor developing packages alongside your project.",
-				"short": "Manage local PHP packages",
-				"unlink": {
-					"done": "Packages unlinked. Run 'composer update' to remove.",
-					"long": "Remove linked packages from composer.json.\n\nRemoves path repositories by package name.",
-					"short": "Unlink packages",
-					"unlinking": "Unlinking packages..."
-				},
-				"update": {
-					"done": "Packages updated",
-					"long": "Run composer update for linked packages.\n\nIf no packages specified, updates all packages.",
-					"short": "Update linked packages",
-					"updating": "Updating packages..."
-				}
-			},
-			"psalm": {
-				"analysing": "Analysing code with Psalm",
-				"analysing_fixing": "Analysing and fixing code with Psalm",
-				"flag": {
-					"baseline": "Generate/update baseline file",
-					"level": "Error level (1=strictest, 8=most lenient)",
-					"show_info": "Show info-level issues"
-				},
-				"install": "composer require --dev vimeo/psalm",
-				"long": "Run Psalm deep static analysis with Laravel plugin support.\n\nPsalm provides deeper type inference than PHPStan and catches\ndifferent classes of bugs. Both should be run for best coverage.",
-				"not_found": "Psalm not found",
-				"setup": "./vendor/bin/psalm --init",
-				"short": "Run Psalm static analysis"
-			},
-			"qa": {
-				"all_passed": "All checks passed ({{.Passed}}/{{.Total}})",
-				"failed": "failed",
-				"fix_infection": "Improve test coverage for mutated code",
-				"fix_phpstan": "Fix PHPStan errors shown above",
-				"fix_psalm": "Fix Psalm errors shown above",
-				"fix_tests": "Fix failing tests shown above",
-				"flag": {
-					"full": "Run all stages including slow checks",
-					"quick": "Only run quick checks"
-				},
-				"issue_analysis": "Static analysis errors",
-				"issue_mutation": "Mutation score below threshold",
-				"issue_rector": "Code improvements available",
-				"issue_style": "Code style issues found",
-				"issue_tests": "Test failures",
-				"issue_types": "Type errors found",
-				"issue_vulns": "vulnerabilities",
-				"long": "Run the complete quality assurance pipeline.\n\nStages:\n  quick:    Security audit, code style, PHPStan\n  standard: Psalm, tests\n  full:     Rector dry-run, mutation testing (slow)",
-				"no_checks": "No checks available",
-				"passed": "passed",
-				"pipeline_failed": "QA pipeline failed",
-				"short": "Run full QA pipeline",
-				"some_failed": "Some checks failed ({{.Passed}}/{{.Total}} passed)",
-				"stage_prefix": "═══ ",
-				"stage_suffix": " STAGE ═══",
-				"to_fix": "To fix:"
-			},
-			"rector": {
-				"analysing": "Analysing code with Rector",
-				"changes_suggested": "Changes suggested (use --fix to apply)",
-				"flag": {
-					"clear_cache": "Clear Rector cache before running",
-					"diff": "Show detailed diff of changes",
-					"fix": "Apply changes (default is dry-run)"
-				},
-				"install": "composer require --dev rector/rector",
-				"long": "Run Rector for automated code improvements and PHP upgrades.\n\nRector can automatically upgrade PHP syntax, improve code quality,\nand apply framework-specific refactorings.",
-				"no_changes": "No changes needed",
-				"not_found": "Rector not found",
-				"refactoring": "Refactoring code with Rector",
-				"setup": "./vendor/bin/rector init",
-				"short": "Automated code refactoring"
-			},
-			"security": {
-				"checks_suffix": " CHECKS:",
-				"critical": "Critical:",
-				"flag": {
-					"sarif": "Output in SARIF format (for GitHub Security)",
-					"severity": "Minimum severity (critical, high, medium, low)",
-					"url": "URL to check HTTP headers (optional)"
-				},
-				"high": "High:",
-				"long": "Scan for security vulnerabilities in configuration and code.\n\nChecks environment config, file permissions, code patterns,\nand runs security-focused static analysis.",
-				"low": "Low:",
-				"medium": "Medium:",
-				"passed": "Passed:",
-				"short": "Security vulnerability scanning",
-				"summary": "Security scan complete"
-			},
-			"serve": {
-				"flag": {
-					"container": "Container name",
-					"detach": "Run in detached mode",
-					"env_file": "Path to environment file",
-					"https_port": "HTTPS port (default: 443)",
-					"name": "Docker image name (required)",
-					"port": "HTTP port (default: 80)"
-				},
-				"long": "Run a production PHP container.\n\nThis starts the built Docker image in production mode.",
-				"name_required": "--name is required: specify the Docker image name",
-				"ports": "Ports:",
-				"short": "Run production container",
-				"stopped": "Container stopped"
-			},
-			"shell": {
-				"long": "Open an interactive shell in a running PHP container.",
-				"opening": "Opening shell in container {{.Container}}...",
-				"short": "Open shell in running container"
-			},
 			"short": "Laravel/PHP development tools",
-			"ssl": {
-				"cert_label": "Cert:",
-				"certs_created": "SSL certificates created",
-				"certs_exist": "Certificates already exist",
-				"flag": {
-					"domain": "Domain for certificate (default: from APP_URL)"
-				},
-				"install_linux": "Linux:  see https://github.com/FiloSottile/mkcert",
-				"install_macos": "macOS:  brew install mkcert",
-				"key_label": "Key:",
-				"mkcert_not_installed": "mkcert is not installed",
-				"setting_up": "Setting up SSL for {{.Domain}}",
-				"short": "Setup SSL certificates with mkcert"
-			},
-			"status": {
-				"detected_services": "Detected services:",
-				"error": "error: {{.Error}}",
-				"octane_server": "Octane server:",
-				"package_manager": "Package manager:",
-				"pid": "pid {{.PID}}",
-				"port": "port {{.Port}}",
-				"running": "running",
-				"short": "Show service status",
-				"ssl_certs": "SSL certificates:",
-				"ssl_installed": "installed",
-				"ssl_not_setup": "not setup",
-				"stopped": "stopped"
-			},
-			"stop": {
-				"short": "Stop all Laravel services",
-				"stopping": "Stopping services..."
-			},
-			"test": {
-				"failed": "Some tests failed",
-				"flag": {
-					"coverage": "Generate code coverage",
-					"filter": "Filter tests by name pattern",
-					"group": "Run only tests in specified group",
-					"parallel": "Run tests in parallel"
-				},
-				"long": "Run PHP tests using PHPUnit or Pest.\n\nAuto-detects Pest if tests/Pest.php exists, otherwise uses PHPUnit.",
-				"short": "Run PHP tests (PHPUnit/Pest)"
-			}
+			"dev.short": "Start Laravel development environment",
+			"dev.press_ctrl_c": "Press Ctrl+C to stop all services",
+			"test.short": "Run PHP tests (PHPUnit/Pest)",
+			"fmt.short": "Format PHP code with Laravel Pint",
+			"analyse.short": "Run PHPStan static analysis",
+			"audit.short": "Security audit for dependencies",
+			"psalm.short": "Run Psalm static analysis",
+			"rector.short": "Automated code refactoring",
+			"infection.short": "Mutation testing for test quality",
+			"security.short": "Security vulnerability scanning",
+			"qa.short": "Run full QA pipeline",
+			"build.short": "Build Docker or LinuxKit image",
+			"deploy.short": "Deploy to Coolify",
+			"serve.short": "Run production container",
+			"ssl.short": "Setup SSL certificates with mkcert",
+			"packages.short": "Manage local PHP packages"
 		},
 		"pkg": {
-			"error": {
-				"auth_failed": "authentication failed - try: unset GH_TOKEN && gh auth login",
-				"gh_not_authenticated": "gh CLI not authenticated. Run: gh auth login",
-				"invalid_repo_format": "invalid repo format: use org/repo (e.g., host-uk/core-php)",
-				"no_repos_yaml": "no repos.yaml found",
-				"no_repos_yaml_workspace": "no repos.yaml found - run from workspace directory",
-				"repo_required": "repository is required (e.g., core pkg install host-uk/core-php)",
-				"search_failed": "search failed: %s",
-				"specify_package": "specify package name or use --all"
-			},
-			"install": {
-				"add_to_registry": "add to registry",
-				"added_to_registry": "added to repos.yaml",
-				"already_exists": "{{.Name}} already exists at {{.Path}}",
-				"flag": {
-					"add": "Add to repos.yaml registry",
-					"dir": "Target directory (default: ./packages or current dir)"
-				},
-				"installed": "Installed {{.Name}}",
-				"installing_label": "Installing:",
-				"long": "Clones a repository from GitHub.\n\nExamples:\n  core pkg install host-uk/core-php\n  core pkg install host-uk/core-tenant --dir ./packages\n  core pkg install host-uk/core-admin --add",
-				"short": "Clone a package from GitHub"
-			},
-			"list": {
-				"install_missing": "Install missing:",
-				"long": "Lists all packages in the current workspace.\n\nReads from repos.yaml or scans for git repositories.\n\nExamples:\n  core pkg list",
-				"no_packages": "No packages in registry.",
-				"short": "List installed packages",
-				"summary": "{{.Installed}} installed, {{.Missing}} missing",
-				"title": "Installed Packages"
-			},
-			"long": "Manage host-uk/core-* packages and repositories.\n\nCommands:\n  search    Search GitHub for packages\n  install   Clone a package from GitHub\n  list      List installed packages\n  update    Update installed packages\n  outdated  Check for outdated packages",
-			"no_description": "(no description)",
-			"outdated": {
-				"all_up_to_date": "All packages up to date",
-				"commits_behind": "{{.Count}} commits behind",
-				"long": "Checks which packages have unpulled commits.\n\nExamples:\n  core pkg outdated",
-				"outdated_label": "Outdated:",
-				"short": "Check for outdated packages",
-				"summary": "{{.Outdated}} outdated, {{.UpToDate}} up to date",
-				"update_with": "Update with:"
-			},
-			"search": {
-				"cache_label": "Cache:",
-				"fetching_label": "Fetching:",
-				"flag": {
-					"limit": "Max results (default 50)",
-					"org": "GitHub organization (default: host-uk)",
-					"pattern": "Repo name pattern (* for wildcard)",
-					"refresh": "Bypass cache and fetch fresh data",
-					"type": "Filter by type in name (mod, services, plug, website)"
-				},
-				"found_repos": "Found {{.Count}} repositories:",
-				"gh_token_unset": "Unset it with: unset GH_TOKEN",
-				"gh_token_warning": "GH_TOKEN env var is set - this may cause auth issues",
-				"long": "Searches GitHub for repositories matching a pattern.\nUses gh CLI for authenticated search. Results are cached for 1 hour.\n\nExamples:\n  core pkg search                           # List all host-uk repos\n  core pkg search --pattern 'core-*'        # Search for core-* repos\n  core pkg search --org mycompany           # Search different org\n  core pkg search --refresh                 # Bypass cache",
-				"no_repos_found": "No repositories found matching pattern.",
-				"private_label": "[private]",
-				"short": "Search GitHub for packages"
-			},
 			"short": "Package management for core-* repos",
-			"update": {
-				"flag": {
-					"all": "Update all packages"
-				},
-				"long": "Pulls latest changes for installed packages.\n\nExamples:\n  core pkg update core-php       # Update specific package\n  core pkg update --all          # Update all packages",
-				"not_installed": "not installed",
-				"short": "Update installed packages",
-				"summary": "{{.Updated}} updated, {{.Skipped}} skipped, {{.Failed}} failed",
-				"update_label": "Update:",
-				"updating": "Updating {{.Count}} package(s)"
-			}
+			"install.short": "Clone a package from GitHub",
+			"list.short": "List installed packages",
+			"update.short": "Update installed packages",
+			"outdated.short": "Check for outdated packages",
+			"search.short": "Search GitHub for packages",
+			"error.invalid_repo_format": "invalid repo format: use org/repo (e.g., host-uk/core-php)"
 		},
 		"sdk": {
-			"diff": {
-				"base_label": "Base:",
-				"breaking": "Breaking:",
-				"error": {
-					"base_required": "--base is required (version tag or file path)"
-				},
-				"flag": {
-					"base": "Base spec (version tag or file)",
-					"spec": "Current spec file"
-				},
-				"label": "SDK Diff:",
-				"long": "Check for breaking API changes between spec versions.\n\nCompares a base spec (version tag or file) against the current spec\nand reports any breaking changes that would affect API consumers.",
-				"short": "Check for breaking API changes"
-			},
-			"label": {
-				"ok": "OK:",
-				"sdk": "SDK:"
-			},
-			"long": "Tools for validating OpenAPI specs and checking API compatibility.\nTo generate SDKs, use: core build sdk\n\nCommands:\n  diff      Check for breaking API changes\n  validate  Validate OpenAPI spec syntax",
 			"short": "SDK validation and API compatibility tools",
-			"validate": {
-				"long": "Validate OpenAPI spec syntax.\n\nChecks that the OpenAPI specification file is valid and well-formed.",
-				"short": "Validate OpenAPI spec",
-				"valid": "Spec is valid",
-				"validating": "Validating OpenAPI spec"
-			}
+			"diff.short": "Check for breaking API changes",
+			"validate.short": "Validate OpenAPI spec"
 		},
 		"setup": {
-			"already_exist_count": "{{.Count}} already exist",
-			"already_exists": "already exists",
-			"bootstrap_mode": "Bootstrap mode (no repos.yaml found)",
-			"cancelled": "Cancelled.",
-			"cloned": "cloned",
-			"cloned_count": "{{.Count}} cloned",
-			"cloning_current_dir": "Cloning into current directory",
-			"complete": "Setup complete",
-			"creating_project_dir": "Creating project directory",
-			"done": "done",
-			"exist": "{{.Count}} exist",
-			"flag": {
-				"all": "Skip wizard, clone all packages (non-interactive)",
-				"build": "Run build after cloning",
-				"dry_run": "Show what would be cloned without cloning",
-				"name": "Project directory name for bootstrap mode",
-				"only": "Only clone repos of these types (comma-separated: foundation,module,product)",
-				"registry": "Path to repos.yaml (auto-detected if not specified)"
-			},
-			"long": "Sets up a development workspace.\n\nREGISTRY MODE (repos.yaml exists):\n  Clones all repositories defined in repos.yaml into packages/.\n  Skips repos that already exist. Use --only to filter by type.\n\nBOOTSTRAP MODE (no repos.yaml):\n  1. Clones core-devops to set up the workspace\n  2. Presents an interactive wizard to select packages\n  3. Clones selected packages\n\nUse --all to skip the wizard and clone everything.",
-			"nothing_to_clone": "Nothing to clone.",
-			"org_label": "Org:",
-			"repo": {
-				"created": "Created",
-				"detected_type": "Detected project type",
-				"setting_up": "Setting up repository",
-				"would_create": "Would create"
-			},
 			"short": "Bootstrap workspace or clone packages from registry",
-			"to_clone": "{{.Count}} to clone",
-			"wizard": {
-				"confirm_cancel": "Cancel",
-				"confirm_clone": "Clone {{.Count}} packages to {{.Target}}?",
-				"confirm_yes": "Yes, clone",
-				"git_repo_title": "This directory is a git repository",
-				"option_package": "Create Package (clone repos into subdirectory)",
-				"option_setup": "Setup Working Directory",
-				"package_selection": "Package Selection",
-				"project_name_desc": "Enter the name for your new workspace directory",
-				"project_name_title": "Project directory name",
-				"select_packages": "Select packages to clone",
-				"selection_hint": "Use space to select/deselect, enter to confirm",
-				"what_to_do": "What would you like to do?"
-			},
-			"would_clone": "Would clone",
-			"would_clone_list": "Would clone:",
-			"would_load_registry": "Would load registry from"
+			"complete": "Setup complete",
+			"bootstrap_mode": "Bootstrap mode (no repos.yaml found)",
+			"nothing_to_clone": "Nothing to clone.",
+			"wizard.select_packages": "Select packages to clone",
+			"wizard.what_to_do": "What would you like to do?"
 		},
 		"test": {
-			"coverage_by_package": "Coverage by package:",
-			"error": {
-				"no_go_mod": "no go.mod found - run from a Go project directory"
-			},
-			"failed_packages": "Failed packages:",
-			"flag": {
-				"json": "Output JSON for CI/agents",
-				"pkg": "Package pattern to test (default: ./...)",
-				"race": "Enable race detector (-race)",
-				"run": "Run only tests matching this regex (-run)",
-				"short": "Skip long-running tests (-short)",
-				"verbose": "Show test output as it runs (-v)"
-			},
-			"label": {
-				"average": "Average"
-			},
-			"long": "Runs Go tests with coverage reporting.\n\nSets MACOSX_DEPLOYMENT_TARGET=26.0 to suppress linker warnings on macOS.\n\nExamples:\n  core test                     # Run all tests with coverage summary\n  core test --verbose           # Show test output as it runs\n  core test --coverage          # Show detailed per-package coverage\n  core test --pkg ./pkg/...     # Test specific packages\n  core test --run TestName      # Run specific test by name\n  core test --short             # Skip long-running tests\n  core test --race              # Enable race detector\n  core test --json              # Output JSON for CI/agents",
-			"tests_failed": "Tests failed"
+			"short": "Run Go tests with coverage"
 		},
 		"vm": {
-			"error": {
-				"id_and_cmd_required": "container ID and command are required",
-				"id_required": "container ID is required",
-				"linuxkit_not_found": "linuxkit not found. Install with: brew install linuxkit (macOS) or see https://github.com/linuxkit/linuxkit",
-				"multiple_match": "multiple containers match '{{.ID}}', be more specific",
-				"no_image_found": "no image found after build",
-				"no_match": "no container found matching: {{.ID}}",
-				"template_required": "template name is required"
-			},
-			"exec": {
-				"long": "Execute a command inside a running VM via SSH.\n\nExamples:\n  core vm exec abc12345 ls -la\n  core vm exec abc1 /bin/sh",
-				"short": "Execute a command in a VM"
-			},
-			"hint": {
-				"stop": "Use 'core vm stop {{.ID}}' to stop",
-				"view_logs": "Use 'core vm logs {{.ID}}' to view output"
-			},
-			"label": {
-				"building": "Building:",
-				"container_stopped": "Container stopped:",
-				"hypervisor": "Hypervisor:",
-				"name": "Name:",
-				"pid": "PID:"
-			},
-			"logs": {
-				"long": "View logs from a VM.\n\nExamples:\n  core vm logs abc12345\n  core vm logs -f abc1",
-				"short": "View VM logs"
-			},
-			"long": "Manage LinuxKit virtual machines.\n\nLinuxKit VMs are lightweight, immutable VMs built from YAML templates.\nThey run using qemu or hyperkit depending on your system.\n\nCommands:\n  run        Run a VM from image or template\n  ps         List running VMs\n  stop       Stop a running VM\n  logs       View VM logs\n  exec       Execute command in VM\n  templates  Manage LinuxKit templates",
-			"ps": {
-				"flag": {
-					"all": "Show all containers (including stopped)"
-				},
-				"header": "ID\tNAME\tIMAGE\tSTATUS\tSTARTED\tPID",
-				"long": "Lists all VMs. By default, only shows running VMs.\n\nExamples:\n  core vm ps\n  core vm ps -a",
-				"no_containers": "No containers",
-				"no_running": "No running containers",
-				"short": "List running VMs"
-			},
-			"run": {
-				"error": {
-					"image_required": "image path is required (or use --template)"
-				},
-				"flag": {
-					"cpus": "Number of CPUs (default: 1)",
-					"detach": "Run in detached mode (background)",
-					"memory": "Memory in MB (default: 1024)",
-					"name": "Name for the container",
-					"ssh_port": "SSH port for exec commands (default: 2222)",
-					"template": "Run from a LinuxKit template (build + run)",
-					"var": "Template variable in KEY=VALUE format (can be repeated)"
-				},
-				"long": "Runs a LinuxKit image as a VM using the available hypervisor.\n\nSupported image formats: .iso, .qcow2, .vmdk, .raw\n\nYou can also run from a template using --template, which will build and run\nthe image automatically. Use --var to set template variables.\n\nExamples:\n  core vm run image.iso\n  core vm run -d image.qcow2\n  core vm run --name myvm --memory 2048 --cpus 4 image.iso\n  core vm run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n  core vm run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com",
-				"short": "Run a LinuxKit image or template"
-			},
 			"short": "LinuxKit VM management",
-			"stop": {
-				"long": "Stops a running VM by ID.\n\nExamples:\n  core vm stop abc12345\n  core vm stop abc1",
-				"short": "Stop a running VM",
-				"stopping": "Stopping:"
-			},
-			"templates": {
-				"header": "NAME\tDESCRIPTION",
-				"hint": {
-					"run": "Run from template:",
-					"show": "Show template:",
-					"vars": "Show variables:"
-				},
-				"long": "Manage LinuxKit YAML templates for building VMs.\n\nTemplates provide pre-configured LinuxKit configurations for common use cases.\nThey support variable substitution with ${VAR} and ${VAR:-default} syntax.\n\nExamples:\n  core vm templates                    # List available templates\n  core vm templates show core-dev      # Show template content\n  core vm templates vars server-php    # Show template variables",
-				"no_templates": "No templates available.",
-				"short": "Manage LinuxKit templates",
-				"show": {
-					"long": "Display the content of a LinuxKit template.\n\nExamples:\n  core templates show core-dev\n  core templates show server-php",
-					"short": "Display template content"
-				},
-				"title": "Available LinuxKit Templates",
-				"vars": {
-					"long": "Display all variables used in a template.\n\nShows required variables (no default) and optional variables (with defaults).\n\nExamples:\n  core templates vars core-dev\n  core templates vars server-php",
-					"none": "No variables in this template.",
-					"optional": "Optional Variables (with defaults):",
-					"required": "Required Variables (no default):",
-					"short": "Show template variables"
-				}
-			}
+			"run.short": "Run a LinuxKit image or template",
+			"ps.short": "List running VMs",
+			"stop.short": "Stop a running VM",
+			"logs.short": "View VM logs",
+			"exec.short": "Execute a command in a VM",
+			"templates.short": "Manage LinuxKit templates"
 		}
 	},
 	"error": {
 		"gh_not_found": "'gh' CLI not found. Install from https://cli.github.com/",
-		"invalid": "Invalid: {{.Item}}",
-		"network": "Network error: {{.Message}}",
-		"not_found": "Not found: {{.Item}}",
-		"permission": "Permission denied: {{.Item}}",
 		"registry_not_found": "No repos.yaml found",
-		"repo_not_found": "Repository '{{.Name}}' not found",
-		"timeout": "Operation timed out"
-	},
-	"label": {
-		"author": "Author",
-		"branch": "Branch",
-		"commit": "Commit",
-		"date": "Date",
-		"duration": "Duration",
-		"message": "Message",
-		"package": "Package",
-		"registry": "Registry",
-		"scanning": "Scanning",
-		"status": "Status",
-		"total": "Total"
+		"repo_not_found": "Repository '{{.Name}}' not found"
 	},
 	"lang": {
 		"de": "German",

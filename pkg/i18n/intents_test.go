@@ -270,8 +270,8 @@ func TestIntentT_Integration(t *testing.T) {
 	assert.Equal(t, "Delete config.yaml?", result)
 
 	// Using T with regular key should work normally
-	result = svc.T("cli.success")
-	assert.Equal(t, "Success", result)
+	result = svc.T("cmd.dev.short")
+	assert.Equal(t, "Multi-repo development workflow", result)
 }
 
 func TestIntent_EmptyTemplates(t *testing.T) {

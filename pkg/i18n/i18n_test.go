@@ -23,8 +23,8 @@ func TestTranslate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Basic translation
-	result := svc.T("cli.success")
-	assert.Equal(t, "Success", result)
+	result := svc.T("cmd.dev.short")
+	assert.Equal(t, "Multi-repo development workflow", result)
 
 	// Missing key returns the key
 	result = svc.T("nonexistent.key")
@@ -36,11 +36,11 @@ func TestTranslateWithArgs(t *testing.T) {
 	require.NoError(t, err)
 
 	// Translation with template data
-	result := svc.T("error.not_found", map[string]string{"Item": "config.yaml"})
-	assert.Equal(t, "Not found: config.yaml", result)
+	result := svc.T("error.repo_not_found", map[string]string{"Name": "config.yaml"})
+	assert.Equal(t, "Repository 'config.yaml' not found", result)
 
-	result = svc.T("cli.time.minutes_ago", map[string]int{"Count": 5})
-	assert.Equal(t, "5 minutes ago", result)
+	result = svc.T("cmd.ai.task_pr.branch_error", map[string]string{"Branch": "main"})
+	assert.Equal(t, "cannot create PR from main branch; create a feature branch first", result)
 }
 
 func TestSetLanguage(t *testing.T) {
@@ -71,8 +71,8 @@ func TestDefaultService(t *testing.T) {
 	require.NotNil(t, svc)
 
 	// Global T function should work
-	result := T("cli.success")
-	assert.Equal(t, "Success", result)
+	result := T("cmd.dev.short")
+	assert.Equal(t, "Multi-repo development workflow", result)
 }
 
 func TestAddMessages(t *testing.T) {
@@ -138,17 +138,18 @@ func TestDetectLanguage(t *testing.T) {
 func TestPluralization(t *testing.T) {
 	svc, err := New()
 	require.NoError(t, err)
+	SetDefault(svc)
 
-	// Singular
-	result := svc.T("cli.count.items", map[string]any{"Count": 1})
+	// Singular - uses core.count.* magic
+	result := svc.T("core.count.item", 1)
 	assert.Equal(t, "1 item", result)
 
 	// Plural
-	result = svc.T("cli.count.items", map[string]any{"Count": 5})
+	result = svc.T("core.count.item", 5)
 	assert.Equal(t, "5 items", result)
 
 	// Zero uses plural
-	result = svc.T("cli.count.items", map[string]any{"Count": 0})
+	result = svc.T("core.count.item", 0)
 	assert.Equal(t, "0 items", result)
 }
 
@@ -156,13 +157,13 @@ func TestNestedKeys(t *testing.T) {
 	svc, err := New()
 	require.NoError(t, err)
 
-	// Deeply nested key
-	result := svc.T("cmd.dev.work.short")
-	assert.Equal(t, "Multi-repo git operations", result)
+	// Nested key
+	result := svc.T("cmd.dev.short")
+	assert.Equal(t, "Multi-repo development workflow", result)
 
-	// Nested with flag
-	result = svc.T("cmd.dev.work.flag.status")
-	assert.Equal(t, "Show status only, don't push", result)
+	// Deeper nested key (flat key with dots)
+	result = svc.T("cmd.dev.push.short")
+	assert.Equal(t, "Push commits across all repos", result)
 }
 
 func TestMessage_ForCategory(t *testing.T) {
@@ -260,21 +261,21 @@ func TestDebugMode(t *testing.T) {
 		require.NoError(t, err)
 
 		// Without debug
-		result := svc.T("cli.success")
-		assert.Equal(t, "Success", result)
+		result := svc.T("cmd.dev.short")
+		assert.Equal(t, "Multi-repo development workflow", result)
 
 		// Enable debug
 		svc.SetDebug(true)
 		assert.True(t, svc.Debug())
 
 		// With debug - shows key prefix
-		result = svc.T("cli.success")
-		assert.Equal(t, "[cli.success] Success", result)
+		result = svc.T("cmd.dev.short")
+		assert.Equal(t, "[cmd.dev.short] Multi-repo development workflow", result)
 
 		// Disable debug
 		svc.SetDebug(false)
-		result = svc.T("cli.success")
-		assert.Equal(t, "Success", result)
+		result = svc.T("cmd.dev.short")
+		assert.Equal(t, "Multi-repo development workflow", result)
 	})
 
 	t.Run("C with debug mode", func(t *testing.T) {
@@ -311,8 +312,8 @@ func TestDebugMode(t *testing.T) {
 		assert.True(t, Default().Debug())
 
 		// Translate
-		result := T("cli.success")
-		assert.Equal(t, "[cli.success] Success", result)
+		result := T("cmd.dev.short")
+		assert.Equal(t, "[cmd.dev.short] Multi-repo development workflow", result)
 
 		// Cleanup
 		SetDebug(false)

@@ -1,120 +1,64 @@
 {
-	"gram.verb.delete": { "base": "löschen", "past": "gelöscht", "gerund": "löschend" },
-	"gram.verb.save": { "base": "speichern", "past": "gespeichert", "gerund": "speichernd" },
-	"gram.verb.create": { "base": "erstellen", "past": "erstellt", "gerund": "erstellend" },
-	"gram.verb.update": { "base": "aktualisieren", "past": "aktualisiert", "gerund": "aktualisierend" },
-	"gram.verb.build": { "base": "bauen", "past": "gebaut", "gerund": "bauend" },
-	"gram.verb.run": { "base": "laufen", "past": "gelaufen", "gerund": "laufend" },
-	"gram.verb.check": { "base": "prüfen", "past": "geprüft", "gerund": "prüfend" },
-	"gram.verb.install": { "base": "installieren", "past": "installiert", "gerund": "installierend" },
-	"gram.verb.push": { "base": "pushen", "past": "gepusht", "gerund": "pushend" },
-	"gram.verb.pull": { "base": "pullen", "past": "gepullt", "gerund": "pullend" },
-	"gram.verb.commit": { "base": "committen", "past": "committet", "gerund": "committend" },
-
-	"gram.noun.file": { "one": "Datei", "other": "Dateien", "gender": "feminine" },
-	"gram.noun.repo": { "one": "Repository", "other": "Repositories", "gender": "neuter" },
-	"gram.noun.commit": { "one": "Commit", "other": "Commits", "gender": "masculine" },
-	"gram.noun.branch": { "one": "Branch", "other": "Branches", "gender": "masculine" },
-	"gram.noun.change": { "one": "Änderung", "other": "Änderungen", "gender": "feminine" },
-	"gram.noun.item": { "one": "Element", "other": "Elemente", "gender": "neuter" },
-
-	"gram.article.indefinite.masculine": "ein",
-	"gram.article.indefinite.feminine": "eine",
-	"gram.article.indefinite.neuter": "ein",
-	"gram.article.definite.masculine": "der",
-	"gram.article.definite.feminine": "die",
-	"gram.article.definite.neuter": "das",
-
-	"cli.success": "Erfolg",
-	"cli.error": "Fehler",
-	"cli.warning": "Warnung",
-	"cli.info": "Info",
-	"cli.done": "Fertig",
-	"cli.failed": "Fehlgeschlagen",
-	"cli.pass": "BESTANDEN",
-	"cli.fail": "FEHLGESCHLAGEN",
-	"cli.ok": "OK",
-	"cli.skip": "Übersprungen",
-	"cli.pending": "Ausstehend",
-	"cli.running": "Läuft",
-	"cli.completed": "Abgeschlossen",
-	"cli.cancelled": "Abgebrochen",
-	"cli.aborted": "Abgebrochen",
-
-	"cli.confirm.yes": "Ja",
-	"cli.confirm.no": "Nein",
-	"cli.confirm.proceed": "Fortfahren?",
-	"cli.confirm.continue": "Weiter?",
-	"cli.confirm.abort": "Vorgang abgebrochen",
-
-	"cli.progress.checking": "Prüfe",
-	"cli.progress.fetching": "Lade",
-	"cli.progress.loading": "Lade",
-	"cli.progress.processing": "Verarbeite",
-	"cli.progress.installing": "Installiere",
-	"cli.progress.building": "Baue",
-	"cli.progress.deploying": "Deploye",
-	"cli.progress.testing": "Teste",
-
-	"cli.time.just_now": "gerade eben",
-	"cli.time.seconds_ago": "vor {{.Count}} Sekunden",
-	"cli.time.minute_ago": "vor 1 Minute",
-	"cli.time.minutes_ago": "vor {{.Count}} Minuten",
-	"cli.time.hour_ago": "vor 1 Stunde",
-	"cli.time.hours_ago": "vor {{.Count}} Stunden",
-	"cli.time.day_ago": "vor 1 Tag",
-	"cli.time.days_ago": "vor {{.Count}} Tagen",
-	"cli.time.week_ago": "vor 1 Woche",
-	"cli.time.weeks_ago": "vor {{.Count}} Wochen",
-
-	"cli.count.items": {
-		"one": "{{.Count}} Element",
-		"other": "{{.Count}} Elemente"
+	"gram": {
+		"verb": {
+			"delete": { "base": "löschen", "past": "gelöscht", "gerund": "löschend" },
+			"save": { "base": "speichern", "past": "gespeichert", "gerund": "speichernd" },
+			"create": { "base": "erstellen", "past": "erstellt", "gerund": "erstellend" },
+			"update": { "base": "aktualisieren", "past": "aktualisiert", "gerund": "aktualisierend" },
+			"build": { "base": "bauen", "past": "gebaut", "gerund": "bauend" },
+			"run": { "base": "laufen", "past": "gelaufen", "gerund": "laufend" },
+			"check": { "base": "prüfen", "past": "geprüft", "gerund": "prüfend" },
+			"install": { "base": "installieren", "past": "installiert", "gerund": "installierend" },
+			"push": { "base": "pushen", "past": "gepusht", "gerund": "pushend" },
+			"pull": { "base": "pullen", "past": "gepullt", "gerund": "pullend" },
+			"commit": { "base": "committen", "past": "committet", "gerund": "committend" }
+		},
+		"noun": {
+			"file": { "one": "Datei", "other": "Dateien", "gender": "feminine" },
+			"repo": { "one": "Repository", "other": "Repositories", "gender": "neuter" },
+			"commit": { "one": "Commit", "other": "Commits", "gender": "masculine" },
+			"branch": { "one": "Branch", "other": "Branches", "gender": "masculine" },
+			"change": { "one": "Änderung", "other": "Änderungen", "gender": "feminine" },
+			"item": { "one": "Element", "other": "Elemente", "gender": "neuter" }
+		},
+		"article": {
+			"indefinite": { "masculine": "ein", "feminine": "eine", "neuter": "ein" },
+			"definite": { "masculine": "der", "feminine": "die", "neuter": "das" }
+		},
+		"punct": {
+			"label": ":",
+			"progress": "..."
+		}
 	},
-	"cli.count.files": {
-		"one": "{{.Count}} Datei",
-		"other": "{{.Count}} Dateien"
+	"prompt": {
+		"yes": "j",
+		"no": "n",
+		"continue": "Weiter?",
+		"proceed": "Fortfahren?",
+		"confirm": "Sind Sie sicher?"
 	},
-	"cli.count.repos": {
-		"one": "{{.Count}} Repository",
-		"other": "{{.Count}} Repositories"
+	"time": {
+		"just_now": "gerade eben",
+		"ago": {
+			"second": { "one": "vor {{.Count}} Sekunde", "other": "vor {{.Count}} Sekunden" },
+			"minute": { "one": "vor {{.Count}} Minute", "other": "vor {{.Count}} Minuten" },
+			"hour": { "one": "vor {{.Count}} Stunde", "other": "vor {{.Count}} Stunden" },
+			"day": { "one": "vor {{.Count}} Tag", "other": "vor {{.Count}} Tagen" },
+			"week": { "one": "vor {{.Count}} Woche", "other": "vor {{.Count}} Wochen" }
+		}
 	},
-	"cli.count.commits": {
-		"one": "{{.Count}} Commit",
-		"other": "{{.Count}} Commits"
+	"cmd": {
+		"dev.short": "Multi-Repository-Entwicklung",
+		"doctor.short": "Entwicklungsumgebung prüfen"
 	},
-
-	"cmd.dev.short": "Multi-Repository-Entwicklung",
-	"cmd.dev.status.dirty": "geändert",
-	"cmd.dev.status.clean": "sauber",
-	"cmd.dev.status.ahead": "voraus",
-	"cmd.dev.status.behind": "zurück",
-	"cmd.dev.status.synced": "synchronisiert",
-
-	"cmd.dev.push.confirm": "Alle pushen?",
-	"cmd.dev.commit.committing": "Committe geänderte Repos mit Claude...",
-
-	"cmd.doctor.short": "Entwicklungsumgebung prüfen",
-	"cmd.doctor.checking": "Prüfe Entwicklungsumgebung...",
-	"cmd.doctor.required": "Erforderlich",
-	"cmd.doctor.optional": "Optional",
-	"cmd.doctor.ready": "Umgebung bereit",
-
-	"error.not_found": "Nicht gefunden: {{.Item}}",
-	"error.invalid": "Ungültig: {{.Item}}",
-	"error.permission": "Zugriff verweigert: {{.Item}}",
-	"error.timeout": "Zeitüberschreitung",
-	"error.gh_not_found": "'gh' CLI nicht gefunden. Installieren von https://cli.github.com/",
-
-	"label.status": "Status",
-	"label.branch": "Branch",
-	"label.commit": "Commit",
-	"label.coverage": "Abdeckung",
-	"label.total": "Gesamt",
-
-	"lang.en": "Englisch",
-	"lang.de": "Deutsch",
-	"lang.es": "Spanisch",
-	"lang.fr": "Französisch",
-	"lang.zh": "Chinesisch"
+	"error": {
+		"gh_not_found": "'gh' CLI nicht gefunden. Installieren von https://cli.github.com/"
+	},
+	"lang": {
+		"de": "Deutsch",
+		"en": "Englisch",
+		"es": "Spanisch",
+		"fr": "Französisch",
+		"zh": "Chinesisch"
+	}
 }
