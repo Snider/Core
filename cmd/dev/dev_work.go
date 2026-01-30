@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
@@ -125,8 +124,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// Auto-commit dirty repos if requested
 	if autoCommit && len(dirtyRepos) > 0 {
 		fmt.Println()
-		hdrStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#3b82f6"))
-		fmt.Printf("%s\n", hdrStyle.Render("Committing dirty repos with Claude..."))
+		fmt.Printf("%s\n", shared.TitleStyle.Render("Committing dirty repos with Claude..."))
 		fmt.Println()
 
 		for _, s := range dirtyRepos {
@@ -211,14 +209,13 @@ func printStatusTable(statuses []git.RepoStatus) {
 	}
 
 	// Print header with fixed-width formatting
-	hdrStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#3b82f6"))
 	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth,
-		hdrStyle.Render("Repo"),
-		hdrStyle.Render("Modified"),
-		hdrStyle.Render("Untracked"),
-		hdrStyle.Render("Staged"),
-		hdrStyle.Render("Ahead"),
+		shared.TitleStyle.Render("Repo"),
+		shared.TitleStyle.Render("Modified"),
+		shared.TitleStyle.Render("Untracked"),
+		shared.TitleStyle.Render("Staged"),
+		shared.TitleStyle.Render("Ahead"),
 	)
 
 	// Print separator

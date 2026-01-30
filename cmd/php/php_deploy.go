@@ -6,21 +6,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	phppkg "github.com/host-uk/core/pkg/php"
 	"github.com/spf13/cobra"
 )
 
-// Deploy command styles
+// Deploy command styles (aliases to shared)
 var (
-	phpDeployStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#10b981")) // emerald-500
-
-	phpDeployPendingStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	phpDeployFailedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#ef4444")) // red-500
+	phpDeployStyle        = shared.DeploySuccessStyle
+	phpDeployPendingStyle = shared.StatusWarningStyle
+	phpDeployFailedStyle  = shared.StatusErrorStyle
 )
 
 func addPHPDeployCommands(parent *cobra.Command) {

@@ -9,32 +9,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
 
-// Issue-specific styles
+// Issue-specific styles (aliases to shared)
 var (
-	issueRepoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	issueNumberStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#3b82f6")) // blue-500
-
-	issueTitleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#e2e8f0")) // gray-200
-
-	issueLabelStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	issueAssigneeStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	issueAgeStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
+	issueRepoStyle     = shared.DimStyle
+	issueNumberStyle   = shared.TitleStyle
+	issueTitleStyle    = shared.ValueStyle
+	issueLabelStyle    = shared.WarningStyle
+	issueAssigneeStyle = shared.StatusSuccessStyle
+	issueAgeStyle      = shared.DimStyle
 )
 
 // GitHubIssue represents a GitHub issue from the API.

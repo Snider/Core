@@ -5,26 +5,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	sdkpkg "github.com/host-uk/core/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 
+// SDK styles (aliases to shared)
 var (
-	sdkHeaderStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#3b82f6"))
-
-	sdkSuccessStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#22c55e"))
-
-	sdkErrorStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#ef4444"))
-
-	sdkDimStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#6b7280"))
+	sdkHeaderStyle  = shared.TitleStyle
+	sdkSuccessStyle = shared.SuccessStyle
+	sdkErrorStyle   = shared.ErrorStyle
+	sdkDimStyle     = shared.DimStyle
 )
 
 var sdkCmd = &cobra.Command{

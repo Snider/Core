@@ -4,23 +4,16 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
 
-// Impact-specific styles
+// Impact-specific styles (aliases to shared)
 var (
-	impactDirectStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#ef4444")) // red-500
-
-	impactIndirectStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	impactSafeStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#22c55e")) // green-500
+	impactDirectStyle   = shared.ErrorStyle
+	impactIndirectStyle = shared.StatusWarningStyle
+	impactSafeStyle     = shared.StatusSuccessStyle
 )
 
 // Impact command flags

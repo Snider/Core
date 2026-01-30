@@ -18,7 +18,7 @@ var (
 // Service colors for log output (domain-specific, keep local)
 var (
 	phpFrankenPHPStyle = lipgloss.NewStyle().Foreground(shared.ColourIndigo500)
-	phpViteStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#eab308")) // yellow-500
+	phpViteStyle       = lipgloss.NewStyle().Foreground(shared.ColourYellow500)
 	phpHorizonStyle    = lipgloss.NewStyle().Foreground(shared.ColourOrange500)
 	phpReverbStyle     = lipgloss.NewStyle().Foreground(shared.ColourViolet500)
 	phpRedisStyle      = lipgloss.NewStyle().Foreground(shared.ColourRed500)

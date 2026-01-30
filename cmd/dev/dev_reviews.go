@@ -9,37 +9,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
 
-// PR-specific styles
+// PR-specific styles (aliases to shared)
 var (
-	prNumberStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#a855f7")) // purple-500
-
-	prTitleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#e2e8f0")) // gray-200
-
-	prAuthorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#3b82f6")) // blue-500
-
-	prApprovedStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	prChangesStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	prPendingStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	prDraftStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
+	prNumberStyle   = shared.PrNumberStyle
+	prTitleStyle    = shared.ValueStyle
+	prAuthorStyle   = shared.InfoStyle
+	prApprovedStyle = shared.SuccessStyle
+	prChangesStyle  = shared.WarningStyle
+	prPendingStyle  = shared.DimStyle
+	prDraftStyle    = shared.DimStyle
 )
 
 // GitHubPR represents a GitHub pull request.

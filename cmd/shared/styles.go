@@ -37,11 +37,14 @@ const (
 	ColourAmber400  = lipgloss.Color("#fbbf24")
 	ColourAmber500  = lipgloss.Color("#f59e0b")
 	ColourAmber600  = lipgloss.Color("#d97706")
-	ColourOrange500 = lipgloss.Color("#f97316")
-	ColourViolet400 = lipgloss.Color("#a78bfa")
-	ColourViolet500 = lipgloss.Color("#8b5cf6")
-	ColourIndigo500 = lipgloss.Color("#6366f1")
-	ColourCyan500   = lipgloss.Color("#06b6d4")
+	ColourOrange500  = lipgloss.Color("#f97316")
+	ColourYellow500  = lipgloss.Color("#eab308")
+	ColourEmerald500 = lipgloss.Color("#10b981")
+	ColourPurple500  = lipgloss.Color("#a855f7")
+	ColourViolet400  = lipgloss.Color("#a78bfa")
+	ColourViolet500  = lipgloss.Color("#8b5cf6")
+	ColourIndigo500  = lipgloss.Color("#6366f1")
+	ColourCyan500    = lipgloss.Color("#06b6d4")
 	ColourGray50    = lipgloss.Color("#f9fafb")
 	ColourGray100   = lipgloss.Color("#f3f4f6")
 	ColourGray200   = lipgloss.Color("#e5e7eb")
@@ -169,6 +172,11 @@ var (
 	// NumberStyle for numeric values.
 	NumberStyle = lipgloss.NewStyle().
 			Foreground(ColourBlue300)
+
+	// PrNumberStyle for pull request numbers (purple, bold).
+	PrNumberStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(ColourPurple500)
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -259,6 +267,21 @@ var (
 
 	// GitConflictStyle for merge conflicts (red, bold).
 	GitConflictStyle = lipgloss.NewStyle().Bold(true).Foreground(ColourRed500)
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deploy Styles (for deployment status display)
+// ─────────────────────────────────────────────────────────────────────────────
+
+var (
+	// DeploySuccessStyle for successful deployments (emerald).
+	DeploySuccessStyle = lipgloss.NewStyle().Foreground(ColourEmerald500)
+
+	// DeployPendingStyle for pending deployments (amber).
+	DeployPendingStyle = lipgloss.NewStyle().Foreground(ColourAmber500)
+
+	// DeployFailedStyle for failed deployments (red).
+	DeployFailedStyle = lipgloss.NewStyle().Foreground(ColourRed500)
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

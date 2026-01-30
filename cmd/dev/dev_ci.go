@@ -8,27 +8,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
 
-// CI-specific styles
+// CI-specific styles (aliases to shared)
 var (
-	ciSuccessStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	ciFailureStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#ef4444")) // red-500
-
-	ciPendingStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	ciSkippedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")) // gray-500
+	ciSuccessStyle = shared.SuccessStyle
+	ciFailureStyle = shared.ErrorStyle
+	ciPendingStyle = shared.StatusWarningStyle
+	ciSkippedStyle = shared.DimStyle
 )
 
 // WorkflowRun represents a GitHub Actions workflow run
