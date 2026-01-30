@@ -8,22 +8,6 @@ import (
 	"strings"
 )
 
-// NumberFormat defines locale-specific number formatting rules.
-type NumberFormat struct {
-	ThousandsSep string // "," for en, "." for de
-	DecimalSep   string // "." for en, "," for de
-	PercentFmt   string // "%s%%" for en, "%s %%" for de (space before %)
-}
-
-// Default number formats by language.
-var numberFormats = map[string]NumberFormat{
-	"en": {ThousandsSep: ",", DecimalSep: ".", PercentFmt: "%s%%"},
-	"de": {ThousandsSep: ".", DecimalSep: ",", PercentFmt: "%s %%"},
-	"fr": {ThousandsSep: " ", DecimalSep: ",", PercentFmt: "%s %%"},
-	"es": {ThousandsSep: ".", DecimalSep: ",", PercentFmt: "%s%%"},
-	"zh": {ThousandsSep: ",", DecimalSep: ".", PercentFmt: "%s%%"},
-}
-
 // getNumberFormat returns the number format for the current language.
 func getNumberFormat() NumberFormat {
 	lang := currentLangForGrammar()

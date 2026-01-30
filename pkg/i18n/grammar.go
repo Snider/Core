@@ -3,46 +3,8 @@ package i18n
 
 import (
 	"strings"
-	"sync"
 	"text/template"
 	"unicode"
-)
-
-// GrammarData holds language-specific grammar forms loaded from JSON.
-type GrammarData struct {
-	Verbs    map[string]VerbForms  // verb -> forms
-	Nouns    map[string]NounForms  // noun -> forms
-	Articles ArticleForms          // article configuration
-	Words    map[string]string     // base word translations
-	Punct    PunctuationRules      // language-specific punctuation
-}
-
-// PunctuationRules holds language-specific punctuation patterns.
-// French uses " :" (space before colon), English uses ":"
-type PunctuationRules struct {
-	LabelSuffix    string // Suffix for labels (default ":")
-	ProgressSuffix string // Suffix for progress (default "...")
-}
-
-// NounForms holds plural and gender information for a noun.
-type NounForms struct {
-	One    string // Singular form
-	Other  string // Plural form
-	Gender string // Grammatical gender (masculine, feminine, neuter, common)
-}
-
-// ArticleForms holds article configuration for a language.
-type ArticleForms struct {
-	IndefiniteDefault string            // Default indefinite article (e.g., "a")
-	IndefiniteVowel   string            // Indefinite article before vowel sounds (e.g., "an")
-	Definite          string            // Definite article (e.g., "the")
-	ByGender          map[string]string // Gender-specific articles for gendered languages
-}
-
-// grammarCache holds loaded grammar data per language.
-var (
-	grammarCache   = make(map[string]*GrammarData)
-	grammarCacheMu sync.RWMutex
 )
 
 // getGrammarData returns the grammar data for the current language.
@@ -140,132 +102,6 @@ func currentLangForGrammar() string {
 	return "en-GB"
 }
 
-// VerbForms holds irregular verb conjugations.
-type VerbForms struct {
-	Past   string // Past tense (e.g., "deleted")
-	Gerund string // Present participle (e.g., "deleting")
-}
-
-// irregularVerbs maps base verbs to their irregular forms.
-var irregularVerbs = map[string]VerbForms{
-	"be":     {Past: "was", Gerund: "being"},
-	"have":   {Past: "had", Gerund: "having"},
-	"do":     {Past: "did", Gerund: "doing"},
-	"go":     {Past: "went", Gerund: "going"},
-	"make":   {Past: "made", Gerund: "making"},
-	"get":    {Past: "got", Gerund: "getting"},
-	"run":    {Past: "ran", Gerund: "running"},
-	"set":    {Past: "set", Gerund: "setting"},
-	"put":    {Past: "put", Gerund: "putting"},
-	"cut":    {Past: "cut", Gerund: "cutting"},
-	"let":    {Past: "let", Gerund: "letting"},
-	"hit":    {Past: "hit", Gerund: "hitting"},
-	"shut":   {Past: "shut", Gerund: "shutting"},
-	"split":  {Past: "split", Gerund: "splitting"},
-	"spread": {Past: "spread", Gerund: "spreading"},
-	"read":   {Past: "read", Gerund: "reading"},
-	"write":  {Past: "wrote", Gerund: "writing"},
-	"send":   {Past: "sent", Gerund: "sending"},
-	"build":  {Past: "built", Gerund: "building"},
-	"begin":  {Past: "began", Gerund: "beginning"},
-	"find":   {Past: "found", Gerund: "finding"},
-	"take":   {Past: "took", Gerund: "taking"},
-	"see":    {Past: "saw", Gerund: "seeing"},
-	"keep":   {Past: "kept", Gerund: "keeping"},
-	"hold":   {Past: "held", Gerund: "holding"},
-	"tell":   {Past: "told", Gerund: "telling"},
-	"bring":  {Past: "brought", Gerund: "bringing"},
-	"think":  {Past: "thought", Gerund: "thinking"},
-	"buy":    {Past: "bought", Gerund: "buying"},
-	"catch":  {Past: "caught", Gerund: "catching"},
-	"teach":  {Past: "taught", Gerund: "teaching"},
-	"throw":  {Past: "threw", Gerund: "throwing"},
-	"grow":   {Past: "grew", Gerund: "growing"},
-	"know":   {Past: "knew", Gerund: "knowing"},
-	"show":   {Past: "showed", Gerund: "showing"},
-	"draw":   {Past: "drew", Gerund: "drawing"},
-	"break":  {Past: "broke", Gerund: "breaking"},
-	"speak":  {Past: "spoke", Gerund: "speaking"},
-	"choose": {Past: "chose", Gerund: "choosing"},
-	"forget": {Past: "forgot", Gerund: "forgetting"},
-	"lose":   {Past: "lost", Gerund: "losing"},
-	"win":    {Past: "won", Gerund: "winning"},
-	"swim":   {Past: "swam", Gerund: "swimming"},
-	"drive":  {Past: "drove", Gerund: "driving"},
-	"rise":   {Past: "rose", Gerund: "rising"},
-	"shine":  {Past: "shone", Gerund: "shining"},
-	"sing":   {Past: "sang", Gerund: "singing"},
-	"ring":   {Past: "rang", Gerund: "ringing"},
-	"drink":  {Past: "drank", Gerund: "drinking"},
-	"sink":   {Past: "sank", Gerund: "sinking"},
-	"sit":    {Past: "sat", Gerund: "sitting"},
-	"stand":  {Past: "stood", Gerund: "standing"},
-	"hang":   {Past: "hung", Gerund: "hanging"},
-	"dig":    {Past: "dug", Gerund: "digging"},
-	"stick":  {Past: "stuck", Gerund: "sticking"},
-	"bite":   {Past: "bit", Gerund: "biting"},
-	"hide":   {Past: "hid", Gerund: "hiding"},
-	"feed":   {Past: "fed", Gerund: "feeding"},
-	"meet":   {Past: "met", Gerund: "meeting"},
-	"lead":   {Past: "led", Gerund: "leading"},
-	"sleep":  {Past: "slept", Gerund: "sleeping"},
-	"feel":   {Past: "felt", Gerund: "feeling"},
-	"leave":  {Past: "left", Gerund: "leaving"},
-	"mean":   {Past: "meant", Gerund: "meaning"},
-	"lend":   {Past: "lent", Gerund: "lending"},
-	"spend":  {Past: "spent", Gerund: "spending"},
-	"bend":   {Past: "bent", Gerund: "bending"},
-	"deal":   {Past: "dealt", Gerund: "dealing"},
-	"lay":    {Past: "laid", Gerund: "laying"},
-	"pay":    {Past: "paid", Gerund: "paying"},
-	"say":    {Past: "said", Gerund: "saying"},
-	"sell":   {Past: "sold", Gerund: "selling"},
-	"seek":   {Past: "sought", Gerund: "seeking"},
-	"fight":  {Past: "fought", Gerund: "fighting"},
-	"fly":    {Past: "flew", Gerund: "flying"},
-	"wear":   {Past: "wore", Gerund: "wearing"},
-	"tear":   {Past: "tore", Gerund: "tearing"},
-	"bear":   {Past: "bore", Gerund: "bearing"},
-	"swear":  {Past: "swore", Gerund: "swearing"},
-	"wake":   {Past: "woke", Gerund: "waking"},
-	"freeze":    {Past: "froze", Gerund: "freezing"},
-	"steal":     {Past: "stole", Gerund: "stealing"},
-	"overwrite": {Past: "overwritten", Gerund: "overwriting"},
-	"reset":     {Past: "reset", Gerund: "resetting"},
-	"reboot":    {Past: "rebooted", Gerund: "rebooting"},
-
-	// Multi-syllable verbs with stressed final syllables (double consonant)
-	"submit":   {Past: "submitted", Gerund: "submitting"},
-	"permit":   {Past: "permitted", Gerund: "permitting"},
-	"admit":    {Past: "admitted", Gerund: "admitting"},
-	"omit":     {Past: "omitted", Gerund: "omitting"},
-	"commit":   {Past: "committed", Gerund: "committing"},
-	"transmit": {Past: "transmitted", Gerund: "transmitting"},
-	"prefer":   {Past: "preferred", Gerund: "preferring"},
-	"refer":    {Past: "referred", Gerund: "referring"},
-	"transfer": {Past: "transferred", Gerund: "transferring"},
-	"defer":    {Past: "deferred", Gerund: "deferring"},
-	"confer":   {Past: "conferred", Gerund: "conferring"},
-	"infer":    {Past: "inferred", Gerund: "inferring"},
-	"occur":    {Past: "occurred", Gerund: "occurring"},
-	"recur":    {Past: "recurred", Gerund: "recurring"},
-	"incur":    {Past: "incurred", Gerund: "incurring"},
-	"deter":    {Past: "deterred", Gerund: "deterring"},
-	"control":  {Past: "controlled", Gerund: "controlling"},
-	"patrol":   {Past: "patrolled", Gerund: "patrolling"},
-	"compel":   {Past: "compelled", Gerund: "compelling"},
-	"expel":    {Past: "expelled", Gerund: "expelling"},
-	"propel":   {Past: "propelled", Gerund: "propelling"},
-	"repel":    {Past: "repelled", Gerund: "repelling"},
-	"rebel":    {Past: "rebelled", Gerund: "rebelling"},
-	"excel":    {Past: "excelled", Gerund: "excelling"},
-	"cancel":   {Past: "cancelled", Gerund: "cancelling"}, // UK spelling
-	"travel":   {Past: "travelled", Gerund: "travelling"}, // UK spelling
-	"label":    {Past: "labelled", Gerund: "labelling"},   // UK spelling
-	"model":    {Past: "modelled", Gerund: "modelling"},   // UK spelling
-	"level":    {Past: "levelled", Gerund: "levelling"},   // UK spelling
-}
-
 // PastTense returns the past tense of a verb.
 // Checks JSON locale data first, then irregular verbs, then applies regular rules.
 //
@@ -326,32 +162,6 @@ func applyRegularPastTense(verb string) string {
 
 	// Default: add -ed
 	return verb + "ed"
-}
-
-// noDoubleConsonant contains multi-syllable verbs that don't double the final consonant.
-// Note: UK English doubles -l (travelled, cancelled) - those are in irregularVerbs.
-var noDoubleConsonant = map[string]bool{
-	"open":    true,
-	"listen":  true,
-	"happen":  true,
-	"enter":   true,
-	"offer":   true,
-	"suffer":  true,
-	"differ":  true,
-	"cover":   true,
-	"deliver": true,
-	"develop": true,
-	"visit":   true,
-	"limit":   true,
-	"edit":    true,
-	"credit":  true,
-	"orbit":   true,
-	"total":   true,
-	"target":  true,
-	"budget":  true,
-	"market":  true,
-	"benefit": true,
-	"focus":   true,
 }
 
 // shouldDoubleConsonant checks if the final consonant should be doubled.
@@ -442,60 +252,6 @@ func applyRegularGerund(verb string) string {
 
 	// Default: add -ing
 	return verb + "ing"
-}
-
-// irregularNouns maps singular nouns to their irregular plural forms.
-var irregularNouns = map[string]string{
-	"child":      "children",
-	"person":     "people",
-	"man":        "men",
-	"woman":      "women",
-	"foot":       "feet",
-	"tooth":      "teeth",
-	"mouse":      "mice",
-	"goose":      "geese",
-	"ox":         "oxen",
-	"index":      "indices",
-	"appendix":   "appendices",
-	"matrix":     "matrices",
-	"vertex":     "vertices",
-	"crisis":     "crises",
-	"analysis":   "analyses",
-	"diagnosis":  "diagnoses",
-	"thesis":     "theses",
-	"hypothesis": "hypotheses",
-	"parenthesis":"parentheses",
-	"datum":      "data",
-	"medium":     "media",
-	"bacterium":  "bacteria",
-	"criterion":  "criteria",
-	"phenomenon": "phenomena",
-	"curriculum": "curricula",
-	"alumnus":    "alumni",
-	"cactus":     "cacti",
-	"focus":      "foci",
-	"fungus":     "fungi",
-	"nucleus":    "nuclei",
-	"radius":     "radii",
-	"stimulus":   "stimuli",
-	"syllabus":   "syllabi",
-	"fish":       "fish",
-	"sheep":      "sheep",
-	"deer":       "deer",
-	"species":    "species",
-	"series":     "series",
-	"aircraft":   "aircraft",
-	"life":       "lives",
-	"wife":       "wives",
-	"knife":      "knives",
-	"leaf":       "leaves",
-	"half":       "halves",
-	"self":       "selves",
-	"shelf":      "shelves",
-	"wolf":       "wolves",
-	"calf":       "calves",
-	"loaf":       "loaves",
-	"thief":      "thieves",
 }
 
 // Pluralize returns the plural form of a noun based on count.
@@ -590,38 +346,6 @@ func applyRegularPlural(noun string) string {
 
 	// Default: add -s
 	return noun + "s"
-}
-
-// vowelSounds contains words that start with consonants but have vowel sounds.
-// These take "an" instead of "a".
-var vowelSounds = map[string]bool{
-	"hour":    true,
-	"honest":  true,
-	"honour":  true,
-	"honor":   true,
-	"heir":    true,
-	"herb":    true, // US pronunciation
-}
-
-// consonantSounds contains words that start with vowels but have consonant sounds.
-// These take "a" instead of "an".
-var consonantSounds = map[string]bool{
-	"user":       true, // "yoo-zer"
-	"union":      true, // "yoon-yon"
-	"unique":     true,
-	"unit":       true,
-	"universe":   true,
-	"university": true,
-	"uniform":    true,
-	"usage":      true,
-	"usual":      true,
-	"utility":    true,
-	"utensil":    true,
-	"one":        true, // "wun"
-	"once":       true,
-	"euro":       true, // "yoo-ro"
-	"eulogy":     true,
-	"euphemism":  true,
 }
 
 // Article returns the appropriate indefinite article ("a" or "an") for a word.

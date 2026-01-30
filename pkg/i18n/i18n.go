@@ -25,14 +25,9 @@ package i18n
 
 import (
 	"bytes"
-	"embed"
 	"strings"
-	"sync"
 	"text/template"
 )
-
-//go:embed locales/*.json
-var localeFS embed.FS
 
 // --- Global convenience functions ---
 
@@ -62,10 +57,6 @@ func _(messageID string, args ...any) string {
 }
 
 // --- Template helpers ---
-
-// templateCache stores compiled templates for reuse.
-// Key is the template string, value is the compiled template.
-var templateCache sync.Map
 
 // executeIntentTemplate executes an intent template with the given data.
 // Templates are cached for performance - repeated calls with the same template

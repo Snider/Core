@@ -7,28 +7,8 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"golang.org/x/text/language"
-)
-
-// Service provides internationalization and localization.
-type Service struct {
-	messages       map[string]map[string]Message // lang -> key -> message
-	currentLang    string
-	fallbackLang   string
-	availableLangs []language.Tag
-	mode           Mode      // Translation mode (Normal, Strict, Collect)
-	debug          bool      // Debug mode shows key prefixes
-	formality      Formality // Default formality level for translations
-	mu             sync.RWMutex
-}
-
-// Default is the global i18n service instance.
-var (
-	defaultService *Service
-	defaultOnce    sync.Once
-	defaultErr     error
 )
 
 // New creates a new i18n service with embedded locales.

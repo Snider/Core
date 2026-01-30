@@ -5,22 +5,6 @@ import (
 	"fmt"
 )
 
-// Subject represents a typed subject with metadata for semantic translations.
-// Use S() to create a Subject and chain methods for additional context.
-//
-//	S("file", "config.yaml")
-//	S("repo", "core-php").Count(3)
-//	S("user", user).Gender("feminine")
-//	S("colleague", name).Formal()
-type Subject struct {
-	Noun      string    // The noun type (e.g., "file", "repo", "user")
-	Value     any       // The actual value (e.g., filename, struct, etc.)
-	count     int       // Count for pluralization (default 1)
-	gender    string    // Grammatical gender for languages that need it
-	location  string    // Location context (e.g., "in workspace")
-	formality Formality // Formality level override (-1 = use service default)
-}
-
 // S creates a new Subject with the given noun and value.
 // The noun is used for grammar rules, the value for display.
 //
@@ -161,48 +145,6 @@ func (s *Subject) IsInformal() bool {
 	return s != nil && s.formality == FormalityInformal
 }
 
-// IntentMeta defines the behaviour and characteristics of an intent.
-type IntentMeta struct {
-	Type      string   // "action", "question", "info"
-	Verb      string   // Reference to verb key (e.g., "delete", "save")
-	Dangerous bool     // If true, requires extra confirmation
-	Default   string   // Default response: "yes" or "no"
-	Supports  []string // Extra options supported by this intent
-}
-
-// Composed holds all output forms for an intent after template resolution.
-// Each field is ready to display to the user.
-type Composed struct {
-	Question string     // Question form: "Delete config.yaml?"
-	Confirm  string     // Confirmation form: "Really delete config.yaml?"
-	Success  string     // Success message: "config.yaml deleted"
-	Failure  string     // Failure message: "Failed to delete config.yaml"
-	Meta     IntentMeta // Intent metadata for UI decisions
-}
-
-// Intent defines a semantic intent with templates for all output forms.
-// Templates use Go text/template syntax with Subject data available.
-type Intent struct {
-	Meta     IntentMeta // Intent behaviour and characteristics
-	Question string     // Template for question form
-	Confirm  string     // Template for confirmation form
-	Success  string     // Template for success message
-	Failure  string     // Template for failure message
-}
-
-// templateData is passed to intent templates during execution.
-type templateData struct {
-	Subject   string    // Display value of subject
-	Noun      string    // Noun type
-	Count     int       // Count for pluralization
-	Gender    string    // Grammatical gender
-	Location  string    // Location context
-	Formality Formality // Formality level
-	IsFormal  bool      // Convenience: formality == FormalityFormal
-	IsPlural  bool      // Convenience: count != 1
-	Value     any       // Raw value (for complex templates)
-}
-
 // newTemplateData creates templateData from a Subject.
 func newTemplateData(s *Subject) templateData {
 	if s == nil {
@@ -220,4 +162,3 @@ func newTemplateData(s *Subject) templateData {
 		Value:     s.Value,
 	}
 }
-
