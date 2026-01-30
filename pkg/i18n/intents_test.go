@@ -44,7 +44,80 @@ func TestRegisterIntent(t *testing.T) {
 	assert.Equal(t, "Custom {{.Subject}}?", intent.Question)
 
 	// Clean up
-	delete(coreIntents, "test.custom")
+	UnregisterIntent("test.custom")
+}
+
+func TestRegisterIntents_Batch(t *testing.T) {
+	// Register multiple intents at once
+	RegisterIntents(map[string]Intent{
+		"test.batch1": {
+			Meta:     IntentMeta{Type: "action", Verb: "batch1", Default: "yes"},
+			Question: "Batch 1?",
+		},
+		"test.batch2": {
+			Meta:     IntentMeta{Type: "action", Verb: "batch2", Default: "no"},
+			Question: "Batch 2?",
+		},
+	})
+
+	// Verify both were registered
+	assert.True(t, HasIntent("test.batch1"))
+	assert.True(t, HasIntent("test.batch2"))
+
+	intent1 := GetIntent("test.batch1")
+	require.NotNil(t, intent1)
+	assert.Equal(t, "batch1", intent1.Meta.Verb)
+
+	intent2 := GetIntent("test.batch2")
+	require.NotNil(t, intent2)
+	assert.Equal(t, "batch2", intent2.Meta.Verb)
+
+	// Clean up
+	UnregisterIntent("test.batch1")
+	UnregisterIntent("test.batch2")
+
+	// Verify cleanup
+	assert.False(t, HasIntent("test.batch1"))
+	assert.False(t, HasIntent("test.batch2"))
+}
+
+func TestCustomIntentOverridesCoreIntent(t *testing.T) {
+	// Custom intents should be checked before core intents
+	RegisterIntent("core.delete", Intent{
+		Meta:     IntentMeta{Type: "action", Verb: "delete", Default: "yes"},
+		Question: "Custom delete {{.Subject}}?",
+	})
+
+	// Should get custom intent
+	intent := getIntent("core.delete")
+	require.NotNil(t, intent)
+	assert.Equal(t, "Custom delete {{.Subject}}?", intent.Question)
+	assert.Equal(t, "yes", intent.Meta.Default) // Changed from core's "no"
+
+	// Clean up
+	UnregisterIntent("core.delete")
+
+	// Now should get core intent again
+	intent = getIntent("core.delete")
+	require.NotNil(t, intent)
+	assert.Equal(t, "Delete {{.Subject}}?", intent.Question)
+	assert.Equal(t, "no", intent.Meta.Default) // Back to core default
+}
+
+func TestHasIntent(t *testing.T) {
+	assert.True(t, HasIntent("core.delete"))
+	assert.True(t, HasIntent("core.create"))
+	assert.False(t, HasIntent("nonexistent.intent"))
+}
+
+func TestGetIntent_Public(t *testing.T) {
+	intent := GetIntent("core.delete")
+	require.NotNil(t, intent)
+	assert.Equal(t, "delete", intent.Meta.Verb)
+
+	// Non-existent intent
+	intent = GetIntent("nonexistent.intent")
+	assert.Nil(t, intent)
 }
 
 func TestIntentKeys(t *testing.T) {

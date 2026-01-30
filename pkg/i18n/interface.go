@@ -1,0 +1,80 @@
+// Package i18n provides internationalization for the CLI.
+package i18n
+
+// Translator defines the interface for translation services.
+// Implement this interface to provide custom translation backends
+// or mock implementations for testing.
+//
+// Example usage in tests:
+//
+//	type mockTranslator struct {
+//	    translations map[string]string
+//	}
+//
+//	func (m *mockTranslator) T(key string, args ...any) string {
+//	    if v, ok := m.translations[key]; ok {
+//	        return v
+//	    }
+//	    return key
+//	}
+//
+//	func TestSomething(t *testing.T) {
+//	    mock := &mockTranslator{translations: map[string]string{
+//	        "cli.success": "Test Success",
+//	    }}
+//	    // Use mock in your tests
+//	}
+type Translator interface {
+	// T translates a message by its ID.
+	// Optional template data can be passed for interpolation.
+	//
+	//	svc.T("cli.success")
+	//	svc.T("cli.count.items", map[string]any{"Count": 5})
+	T(messageID string, args ...any) string
+
+	// C composes a semantic intent with a subject.
+	// Returns all output forms (Question, Confirm, Success, Failure).
+	//
+	//	result := svc.C("core.delete", S("file", "config.yaml"))
+	C(intent string, subject *Subject) *Composed
+
+	// SetLanguage sets the language for translations.
+	// Returns an error if the language is not supported.
+	SetLanguage(lang string) error
+
+	// Language returns the current language code.
+	Language() string
+
+	// SetMode sets the translation mode for missing key handling.
+	SetMode(m Mode)
+
+	// Mode returns the current translation mode.
+	Mode() Mode
+
+	// SetDebug enables or disables debug mode.
+	SetDebug(enabled bool)
+
+	// Debug returns whether debug mode is enabled.
+	Debug() bool
+
+	// SetFormality sets the default formality level for translations.
+	SetFormality(f Formality)
+
+	// Formality returns the current formality level.
+	Formality() Formality
+
+	// Direction returns the text direction for the current language.
+	Direction() TextDirection
+
+	// IsRTL returns true if the current language uses RTL text.
+	IsRTL() bool
+
+	// PluralCategory returns the plural category for a count.
+	PluralCategory(n int) PluralCategory
+
+	// AvailableLanguages returns the list of available language codes.
+	AvailableLanguages() []string
+}
+
+// Ensure Service implements Translator at compile time.
+var _ Translator = (*Service)(nil)

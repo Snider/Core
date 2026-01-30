@@ -1,5 +1,53 @@
 {
 	"common": {
+		"verb": {
+			"be": { "base": "be", "past": "was", "gerund": "being" },
+			"go": { "base": "go", "past": "went", "gerund": "going" },
+			"do": { "base": "do", "past": "did", "gerund": "doing" },
+			"have": { "base": "have", "past": "had", "gerund": "having" },
+			"make": { "base": "make", "past": "made", "gerund": "making" },
+			"get": { "base": "get", "past": "got", "gerund": "getting" },
+			"run": { "base": "run", "past": "ran", "gerund": "running" },
+			"write": { "base": "write", "past": "wrote", "gerund": "writing" },
+			"build": { "base": "build", "past": "built", "gerund": "building" },
+			"send": { "base": "send", "past": "sent", "gerund": "sending" },
+			"find": { "base": "find", "past": "found", "gerund": "finding" },
+			"take": { "base": "take", "past": "took", "gerund": "taking" },
+			"begin": { "base": "begin", "past": "began", "gerund": "beginning" },
+			"keep": { "base": "keep", "past": "kept", "gerund": "keeping" },
+			"hold": { "base": "hold", "past": "held", "gerund": "holding" },
+			"bring": { "base": "bring", "past": "brought", "gerund": "bringing" },
+			"think": { "base": "think", "past": "thought", "gerund": "thinking" },
+			"buy": { "base": "buy", "past": "bought", "gerund": "buying" },
+			"catch": { "base": "catch", "past": "caught", "gerund": "catching" },
+			"choose": { "base": "choose", "past": "chose", "gerund": "choosing" },
+			"lose": { "base": "lose", "past": "lost", "gerund": "losing" },
+			"win": { "base": "win", "past": "won", "gerund": "winning" },
+			"meet": { "base": "meet", "past": "met", "gerund": "meeting" },
+			"lead": { "base": "lead", "past": "led", "gerund": "leading" },
+			"leave": { "base": "leave", "past": "left", "gerund": "leaving" },
+			"spend": { "base": "spend", "past": "spent", "gerund": "spending" },
+			"pay": { "base": "pay", "past": "paid", "gerund": "paying" },
+			"sell": { "base": "sell", "past": "sold", "gerund": "selling" }
+		},
+		"noun": {
+			"file": { "one": "file", "other": "files", "gender": "neuter" },
+			"repo": { "one": "repo", "other": "repos", "gender": "neuter" },
+			"repository": { "one": "repository", "other": "repositories", "gender": "neuter" },
+			"commit": { "one": "commit", "other": "commits", "gender": "neuter" },
+			"branch": { "one": "branch", "other": "branches", "gender": "neuter" },
+			"change": { "one": "change", "other": "changes", "gender": "neuter" },
+			"item": { "one": "item", "other": "items", "gender": "neuter" },
+			"issue": { "one": "issue", "other": "issues", "gender": "neuter" },
+			"task": { "one": "task", "other": "tasks", "gender": "neuter" },
+			"user": { "one": "user", "other": "users", "gender": "neuter" },
+			"person": { "one": "person", "other": "people", "gender": "neuter" },
+			"child": { "one": "child", "other": "children", "gender": "neuter" }
+		},
+		"article": {
+			"indefinite": { "default": "a", "vowel": "an" },
+			"definite": "the"
+		},
 		"prompt": {
 			"yes": "y",
 			"no": "n",

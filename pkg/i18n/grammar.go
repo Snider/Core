@@ -3,9 +3,103 @@ package i18n
 
 import (
 	"strings"
+	"sync"
 	"text/template"
 	"unicode"
 )
+
+// GrammarData holds language-specific grammar forms loaded from JSON.
+type GrammarData struct {
+	Verbs    map[string]VerbForms // verb -> forms
+	Nouns    map[string]NounForms // noun -> forms
+	Articles ArticleForms         // article configuration
+}
+
+// NounForms holds plural and gender information for a noun.
+type NounForms struct {
+	One    string // Singular form
+	Other  string // Plural form
+	Gender string // Grammatical gender (masculine, feminine, neuter, common)
+}
+
+// ArticleForms holds article configuration for a language.
+type ArticleForms struct {
+	IndefiniteDefault string            // Default indefinite article (e.g., "a")
+	IndefiniteVowel   string            // Indefinite article before vowel sounds (e.g., "an")
+	Definite          string            // Definite article (e.g., "the")
+	ByGender          map[string]string // Gender-specific articles for gendered languages
+}
+
+// grammarCache holds loaded grammar data per language.
+var (
+	grammarCache   = make(map[string]*GrammarData)
+	grammarCacheMu sync.RWMutex
+)
+
+// getGrammarData returns the grammar data for the current language.
+// Returns nil if no grammar data is loaded for the language.
+func getGrammarData(lang string) *GrammarData {
+	grammarCacheMu.RLock()
+	defer grammarCacheMu.RUnlock()
+	return grammarCache[lang]
+}
+
+// SetGrammarData sets the grammar data for a language.
+// Called by the Service when loading locale files.
+func SetGrammarData(lang string, data *GrammarData) {
+	grammarCacheMu.Lock()
+	defer grammarCacheMu.Unlock()
+	grammarCache[lang] = data
+}
+
+// getVerbForm retrieves a verb form from JSON data.
+// Returns empty string if not found, allowing fallback to computed form.
+func getVerbForm(lang, verb, form string) string {
+	data := getGrammarData(lang)
+	if data == nil || data.Verbs == nil {
+		return ""
+	}
+	verb = strings.ToLower(verb)
+	if forms, ok := data.Verbs[verb]; ok {
+		switch form {
+		case "past":
+			return forms.Past
+		case "gerund":
+			return forms.Gerund
+		}
+	}
+	return ""
+}
+
+// getNounForm retrieves a noun form from JSON data.
+// Returns empty string if not found, allowing fallback to computed form.
+func getNounForm(lang, noun, form string) string {
+	data := getGrammarData(lang)
+	if data == nil || data.Nouns == nil {
+		return ""
+	}
+	noun = strings.ToLower(noun)
+	if forms, ok := data.Nouns[noun]; ok {
+		switch form {
+		case "one":
+			return forms.One
+		case "other":
+			return forms.Other
+		case "gender":
+			return forms.Gender
+		}
+	}
+	return ""
+}
+
+// currentLangForGrammar returns the current language for grammar lookups.
+// Uses the default service's language if available.
+func currentLangForGrammar() string {
+	if svc := Default(); svc != nil {
+		return svc.Language()
+	}
+	return "en-GB"
+}
 
 // VerbForms holds irregular verb conjugations.
 type VerbForms struct {
@@ -100,7 +194,7 @@ var irregularVerbs = map[string]VerbForms{
 }
 
 // PastTense returns the past tense of a verb.
-// Handles irregular verbs and applies regular rules for others.
+// Checks JSON locale data first, then irregular verbs, then applies regular rules.
 //
 //	PastTense("delete") // "deleted"
 //	PastTense("run")    // "ran"
@@ -111,7 +205,12 @@ func PastTense(verb string) string {
 		return ""
 	}
 
-	// Check irregular verbs first
+	// Check JSON data first (for current language)
+	if form := getVerbForm(currentLangForGrammar(), verb, "past"); form != "" {
+		return form
+	}
+
+	// Check irregular verbs
 	if forms, ok := irregularVerbs[verb]; ok {
 		return forms.Past
 	}
@@ -220,6 +319,7 @@ func shouldDoubleConsonant(verb string) bool {
 }
 
 // Gerund returns the present participle (-ing form) of a verb.
+// Checks JSON locale data first, then irregular verbs, then applies regular rules.
 //
 //	Gerund("delete")  // "deleting"
 //	Gerund("run")     // "running"
@@ -230,7 +330,12 @@ func Gerund(verb string) string {
 		return ""
 	}
 
-	// Check irregular verbs first
+	// Check JSON data first (for current language)
+	if form := getVerbForm(currentLangForGrammar(), verb, "gerund"); form != "" {
+		return form
+	}
+
+	// Check irregular verbs
 	if forms, ok := irregularVerbs[verb]; ok {
 		return forms.Gerund
 	}
@@ -331,6 +436,7 @@ func Pluralize(noun string, count int) string {
 }
 
 // PluralForm returns the plural form of a noun.
+// Checks JSON locale data first, then irregular nouns, then applies regular rules.
 //
 //	PluralForm("file")   // "files"
 //	PluralForm("child")  // "children"
@@ -342,6 +448,15 @@ func PluralForm(noun string) string {
 	}
 
 	lower := strings.ToLower(noun)
+
+	// Check JSON data first (for current language)
+	if form := getNounForm(currentLangForGrammar(), lower, "other"); form != "" {
+		// Preserve original casing if title case
+		if unicode.IsUpper(rune(noun[0])) && len(form) > 0 {
+			return strings.ToUpper(string(form[0])) + form[1:]
+		}
+		return form
+	}
 
 	// Check irregular nouns
 	if plural, ok := irregularNouns[lower]; ok {

@@ -1,6 +1,10 @@
 // Package i18n provides internationalization for the CLI.
 package i18n
 
+import (
+	"sync"
+)
+
 // coreIntents defines the built-in semantic intents for common operations.
 // These are accessed via the "core.*" namespace in T() and C() calls.
 //
@@ -565,17 +569,35 @@ var coreIntents = map[string]Intent{
 	},
 }
 
-// getIntent retrieves an intent by its key from the core intents.
+// customIntents holds user-registered intents.
+// Separated from coreIntents to allow thread-safe registration.
+var (
+	customIntents   = make(map[string]Intent)
+	customIntentsMu sync.RWMutex
+)
+
+// getIntent retrieves an intent by its key.
+// Checks custom intents first, then falls back to core intents.
 // Returns nil if the intent is not found.
 func getIntent(key string) *Intent {
+	// Check custom intents first (thread-safe)
+	customIntentsMu.RLock()
+	if intent, ok := customIntents[key]; ok {
+		customIntentsMu.RUnlock()
+		return &intent
+	}
+	customIntentsMu.RUnlock()
+
+	// Fall back to core intents
 	if intent, ok := coreIntents[key]; ok {
 		return &intent
 	}
 	return nil
 }
 
-// RegisterIntent adds a custom intent to the core intents.
+// RegisterIntent adds a custom intent at runtime.
 // Use this to extend the built-in intents with application-specific ones.
+// This function is thread-safe.
 //
 //	i18n.RegisterIntent("myapp.archive", i18n.Intent{
 //	    Meta: i18n.IntentMeta{Type: "action", Verb: "archive", Default: "yes"},
@@ -584,14 +606,74 @@ func getIntent(key string) *Intent {
 //	    Failure: "Failed to archive {{.Subject}}",
 //	})
 func RegisterIntent(key string, intent Intent) {
-	coreIntents[key] = intent
+	customIntentsMu.Lock()
+	defer customIntentsMu.Unlock()
+	customIntents[key] = intent
 }
 
-// IntentKeys returns all registered intent keys.
+// RegisterIntents adds multiple custom intents at runtime.
+// This is more efficient than calling RegisterIntent multiple times.
+// This function is thread-safe.
+//
+//	i18n.RegisterIntents(map[string]i18n.Intent{
+//	    "myapp.archive": {
+//	        Meta: i18n.IntentMeta{Type: "action", Verb: "archive"},
+//	        Question: "Archive {{.Subject}}?",
+//	    },
+//	    "myapp.export": {
+//	        Meta: i18n.IntentMeta{Type: "action", Verb: "export"},
+//	        Question: "Export {{.Subject}}?",
+//	    },
+//	})
+func RegisterIntents(intents map[string]Intent) {
+	customIntentsMu.Lock()
+	defer customIntentsMu.Unlock()
+	for k, v := range intents {
+		customIntents[k] = v
+	}
+}
+
+// UnregisterIntent removes a custom intent by key.
+// This only affects custom intents, not core intents.
+// This function is thread-safe.
+func UnregisterIntent(key string) {
+	customIntentsMu.Lock()
+	defer customIntentsMu.Unlock()
+	delete(customIntents, key)
+}
+
+// IntentKeys returns all registered intent keys (both core and custom).
 func IntentKeys() []string {
-	keys := make([]string, 0, len(coreIntents))
+	customIntentsMu.RLock()
+	defer customIntentsMu.RUnlock()
+
+	keys := make([]string, 0, len(coreIntents)+len(customIntents))
 	for key := range coreIntents {
 		keys = append(keys, key)
 	}
+	for key := range customIntents {
+		// Avoid duplicates if custom overrides core
+		found := false
+		for _, k := range keys {
+			if k == key {
+				found = true
+				break
+			}
+		}
+		if !found {
+			keys = append(keys, key)
+		}
+	}
 	return keys
+}
+
+// HasIntent returns true if an intent with the given key exists.
+func HasIntent(key string) bool {
+	return getIntent(key) != nil
+}
+
+// GetIntent returns the intent for a key, or nil if not found.
+// This is the public API for retrieving intents.
+func GetIntent(key string) *Intent {
+	return getIntent(key)
 }

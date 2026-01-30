@@ -168,6 +168,7 @@ func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
 }
 
 // loadJSON parses nested JSON and flattens to dot-notation keys.
+// Also extracts grammar data (verbs, nouns, articles) for the language.
 func (s *Service) loadJSON(lang string, data []byte) error {
 	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -175,13 +176,29 @@ func (s *Service) loadJSON(lang string, data []byte) error {
 	}
 
 	messages := make(map[string]Message)
-	flatten("", raw, messages)
+	grammarData := &GrammarData{
+		Verbs: make(map[string]VerbForms),
+		Nouns: make(map[string]NounForms),
+	}
+
+	flattenWithGrammar("", raw, messages, grammarData)
 	s.messages[lang] = messages
+
+	// Store grammar data if any was found
+	if len(grammarData.Verbs) > 0 || len(grammarData.Nouns) > 0 {
+		SetGrammarData(lang, grammarData)
+	}
+
 	return nil
 }
 
 // flatten recursively flattens nested maps into dot-notation keys.
 func flatten(prefix string, data map[string]any, out map[string]Message) {
+	flattenWithGrammar(prefix, data, out, nil)
+}
+
+// flattenWithGrammar recursively flattens nested maps and extracts grammar data.
+func flattenWithGrammar(prefix string, data map[string]any, out map[string]Message, grammar *GrammarData) {
 	for key, value := range data {
 		fullKey := key
 		if prefix != "" {
@@ -193,6 +210,62 @@ func flatten(prefix string, data map[string]any, out map[string]Message) {
 			out[fullKey] = Message{Text: v}
 
 		case map[string]any:
+			// Check if this is a verb form object
+			if grammar != nil && isVerbFormObject(v) {
+				verbName := key
+				if strings.HasPrefix(fullKey, "common.verb.") {
+					verbName = strings.TrimPrefix(fullKey, "common.verb.")
+				}
+				forms := VerbForms{}
+				if base, ok := v["base"].(string); ok {
+					_ = base // base form stored but not used in VerbForms
+				}
+				if past, ok := v["past"].(string); ok {
+					forms.Past = past
+				}
+				if gerund, ok := v["gerund"].(string); ok {
+					forms.Gerund = gerund
+				}
+				grammar.Verbs[strings.ToLower(verbName)] = forms
+				continue
+			}
+
+			// Check if this is a noun form object
+			if grammar != nil && isNounFormObject(v) {
+				nounName := key
+				if strings.HasPrefix(fullKey, "common.noun.") {
+					nounName = strings.TrimPrefix(fullKey, "common.noun.")
+				}
+				forms := NounForms{}
+				if one, ok := v["one"].(string); ok {
+					forms.One = one
+				}
+				if other, ok := v["other"].(string); ok {
+					forms.Other = other
+				}
+				if gender, ok := v["gender"].(string); ok {
+					forms.Gender = gender
+				}
+				grammar.Nouns[strings.ToLower(nounName)] = forms
+				continue
+			}
+
+			// Check if this is an article object
+			if grammar != nil && fullKey == "common.article" {
+				if indef, ok := v["indefinite"].(map[string]any); ok {
+					if def, ok := indef["default"].(string); ok {
+						grammar.Articles.IndefiniteDefault = def
+					}
+					if vowel, ok := indef["vowel"].(string); ok {
+						grammar.Articles.IndefiniteVowel = vowel
+					}
+				}
+				if def, ok := v["definite"].(string); ok {
+					grammar.Articles.Definite = def
+				}
+				continue
+			}
+
 			// Check if this is a plural object (has CLDR plural category keys)
 			if isPluralObject(v) {
 				msg := Message{}
@@ -217,10 +290,36 @@ func flatten(prefix string, data map[string]any, out map[string]Message) {
 				out[fullKey] = msg
 			} else {
 				// Recurse into nested object
-				flatten(fullKey, v, out)
+				flattenWithGrammar(fullKey, v, out, grammar)
 			}
 		}
 	}
+}
+
+// isVerbFormObject checks if a map represents verb conjugation forms.
+func isVerbFormObject(m map[string]any) bool {
+	_, hasBase := m["base"]
+	_, hasPast := m["past"]
+	_, hasGerund := m["gerund"]
+	return (hasBase || hasPast || hasGerund) && !isPluralObject(m)
+}
+
+// isNounFormObject checks if a map represents noun forms (with gender).
+// Noun form objects have "gender" field, distinguishing them from CLDR plural objects.
+func isNounFormObject(m map[string]any) bool {
+	_, hasGender := m["gender"]
+	// Only consider it a noun form if it has a gender field
+	// This distinguishes noun forms from CLDR plural objects which use one/other
+	return hasGender
+}
+
+// hasPluralCategories checks if a map has CLDR plural categories beyond one/other.
+func hasPluralCategories(m map[string]any) bool {
+	_, hasZero := m["zero"]
+	_, hasTwo := m["two"]
+	_, hasFew := m["few"]
+	_, hasMany := m["many"]
+	return hasZero || hasTwo || hasFew || hasMany
 }
 
 // isPluralObject checks if a map represents plural forms.
@@ -530,6 +629,14 @@ func (s *Service) PluralCategory(n int) PluralCategory {
 // For semantic intents (core.* namespace), pass a Subject to get the Question form:
 //
 //	svc.T("core.delete", S("file", "config.yaml")) // "Delete config.yaml?"
+//
+// # Fallback Chain
+//
+// When a key is not found, T() tries a fallback chain:
+//  1. Try the exact key in current language
+//  2. Try the exact key in fallback language
+//  3. If key looks like an intent (contains "."), try common.action.{verb}
+//  4. Return the key as-is (or handle according to mode)
 func (s *Service) T(messageID string, args ...any) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -545,42 +652,89 @@ func (s *Service) T(messageID string, args ...any) string {
 		}
 	}
 
-	// Try current language, then fallback
-	msg, ok := s.getMessage(s.currentLang, messageID)
-	if !ok {
-		msg, ok = s.getMessage(s.fallbackLang, messageID)
-		if !ok {
-			return s.handleMissingKey(messageID, args)
-		}
-	}
-
 	// Get template data
 	var data any
 	if len(args) > 0 {
 		data = args[0]
 	}
 
-	// Get the appropriate text
-	text := msg.Text
-	if msg.IsPlural() {
-		count := getCount(data)
-		// Use CLDR plural category for current language
-		category := GetPluralCategory(s.currentLang, count)
-		text = msg.ForCategory(category)
-	}
-
+	// Try fallback chain
+	text := s.resolveWithFallback(messageID, data)
 	if text == "" {
 		return s.handleMissingKey(messageID, args)
-	}
-
-	// Apply template if we have data
-	if data != nil {
-		text = applyTemplate(text, data)
 	}
 
 	// Debug mode: prefix with key
 	if s.debug {
 		return "[" + messageID + "] " + text
+	}
+
+	return text
+}
+
+// resolveWithFallback implements the fallback chain for message resolution.
+// Must be called with s.mu.RLock held.
+func (s *Service) resolveWithFallback(messageID string, data any) string {
+	// 1. Try exact key in current language
+	if text := s.tryResolve(s.currentLang, messageID, data); text != "" {
+		return text
+	}
+
+	// 2. Try exact key in fallback language
+	if text := s.tryResolve(s.fallbackLang, messageID, data); text != "" {
+		return text
+	}
+
+	// 3. Try fallback patterns for intent-like keys
+	if strings.Contains(messageID, ".") {
+		parts := strings.Split(messageID, ".")
+		verb := parts[len(parts)-1]
+
+		// Try common.action.{verb}
+		commonKey := "common.action." + verb
+		if text := s.tryResolve(s.currentLang, commonKey, data); text != "" {
+			return text
+		}
+		if text := s.tryResolve(s.fallbackLang, commonKey, data); text != "" {
+			return text
+		}
+
+		// Try common.{verb}
+		commonKey = "common." + verb
+		if text := s.tryResolve(s.currentLang, commonKey, data); text != "" {
+			return text
+		}
+		if text := s.tryResolve(s.fallbackLang, commonKey, data); text != "" {
+			return text
+		}
+	}
+
+	return ""
+}
+
+// tryResolve attempts to resolve a single key in a single language.
+// Returns empty string if not found.
+// Must be called with s.mu.RLock held.
+func (s *Service) tryResolve(lang, key string, data any) string {
+	msg, ok := s.getMessage(lang, key)
+	if !ok {
+		return ""
+	}
+
+	text := msg.Text
+	if msg.IsPlural() {
+		count := getCount(data)
+		category := GetPluralCategory(lang, count)
+		text = msg.ForCategory(category)
+	}
+
+	if text == "" {
+		return ""
+	}
+
+	// Apply template if we have data
+	if data != nil {
+		text = applyTemplate(text, data)
 	}
 
 	return text
@@ -669,16 +823,35 @@ func (s *Service) C(intent string, subject *Subject) *Composed {
 	return result
 }
 
+// templateCache stores compiled templates for reuse.
+// Key is the template string, value is the compiled template.
+var templateCache sync.Map
+
 // executeIntentTemplate executes an intent template with the given data.
+// Templates are cached for performance - repeated calls with the same template
+// string will reuse the compiled template.
 func executeIntentTemplate(tmplStr string, data templateData) string {
 	if tmplStr == "" {
 		return ""
 	}
 
+	// Check cache first
+	if cached, ok := templateCache.Load(tmplStr); ok {
+		var buf bytes.Buffer
+		if err := cached.(*template.Template).Execute(&buf, data); err != nil {
+			return tmplStr
+		}
+		return buf.String()
+	}
+
+	// Parse and cache
 	tmpl, err := template.New("").Funcs(TemplateFuncs()).Parse(tmplStr)
 	if err != nil {
 		return tmplStr
 	}
+
+	// Store in cache (safe even if another goroutine stored it first)
+	templateCache.Store(tmplStr, tmpl)
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {

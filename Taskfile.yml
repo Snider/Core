@@ -44,3 +44,8 @@ tasks:
     cmds:
       - task: cov
       - go tool cover -html=coverage.txt
+
+  i18n:generate:
+    desc: "Regenerate i18n key constants from locale files"
+    cmds:
+      - go generate ./pkg/i18n/...
