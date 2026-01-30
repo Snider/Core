@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"sync"
 
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/i18n"
@@ -11,12 +12,18 @@ import (
 type I18nService struct {
 	*framework.ServiceRuntime[I18nOptions]
 	svc *i18n.Service
+
+	// Collect mode state
+	missingKeys   []i18n.MissingKeyAction
+	missingKeysMu sync.Mutex
 }
 
 // I18nOptions configures the i18n service.
 type I18nOptions struct {
 	// Language overrides auto-detection (e.g., "en-GB", "de")
 	Language string
+	// Mode sets the translation mode (Normal, Strict, Collect)
+	Mode i18n.Mode
 }
 
 // NewI18nService creates an i18n service factory.
@@ -31,9 +38,13 @@ func NewI18nService(opts I18nOptions) func(*framework.Core) (any, error) {
 			svc.SetLanguage(opts.Language)
 		}
 
+		// Set mode if specified
+		svc.SetMode(opts.Mode)
+
 		return &I18nService{
 			ServiceRuntime: framework.NewServiceRuntime(c, opts),
 			svc:            svc,
+			missingKeys:    make([]i18n.MissingKeyAction, 0),
 		}, nil
 	}
 }
@@ -41,7 +52,54 @@ func NewI18nService(opts I18nOptions) func(*framework.Core) (any, error) {
 // OnStartup initialises the i18n service.
 func (s *I18nService) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
+
+	// Register action handler for collect mode
+	if s.svc.Mode() == i18n.ModeCollect {
+		i18n.SetActionHandler(s.handleMissingKey)
+	}
+
 	return nil
+}
+
+// handleMissingKey accumulates missing keys in collect mode.
+func (s *I18nService) handleMissingKey(action i18n.MissingKeyAction) {
+	s.missingKeysMu.Lock()
+	defer s.missingKeysMu.Unlock()
+	s.missingKeys = append(s.missingKeys, action)
+}
+
+// MissingKeys returns all missing keys collected in collect mode.
+// Call this at the end of a QA session to report missing translations.
+func (s *I18nService) MissingKeys() []i18n.MissingKeyAction {
+	s.missingKeysMu.Lock()
+	defer s.missingKeysMu.Unlock()
+	result := make([]i18n.MissingKeyAction, len(s.missingKeys))
+	copy(result, s.missingKeys)
+	return result
+}
+
+// ClearMissingKeys resets the collected missing keys.
+func (s *I18nService) ClearMissingKeys() {
+	s.missingKeysMu.Lock()
+	defer s.missingKeysMu.Unlock()
+	s.missingKeys = s.missingKeys[:0]
+}
+
+// SetMode changes the translation mode.
+func (s *I18nService) SetMode(mode i18n.Mode) {
+	s.svc.SetMode(mode)
+
+	// Update action handler registration
+	if mode == i18n.ModeCollect {
+		i18n.SetActionHandler(s.handleMissingKey)
+	} else {
+		i18n.SetActionHandler(nil)
+	}
+}
+
+// Mode returns the current translation mode.
+func (s *I18nService) Mode() i18n.Mode {
+	return s.svc.Mode()
 }
 
 // Queries for i18n service

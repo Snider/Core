@@ -59,6 +59,7 @@ type Service struct {
 	currentLang    string
 	fallbackLang   string
 	availableLangs []language.Tag
+	mode           Mode // Translation mode (Normal, Strict, Collect)
 	mu             sync.RWMutex
 }
 
@@ -241,11 +242,41 @@ func SetDefault(s *Service) {
 }
 
 // T translates a message using the default service.
+// For semantic intents (core.* namespace), pass a Subject as the first argument.
+//
+//	T("cli.success")                           // Simple translation
+//	T("core.delete", S("file", "config.yaml")) // Semantic intent
 func T(messageID string, args ...any) string {
 	if svc := Default(); svc != nil {
 		return svc.T(messageID, args...)
 	}
 	return messageID
+}
+
+// C composes a semantic intent using the default service.
+// Returns all output forms (Question, Confirm, Success, Failure) for the intent.
+//
+//	result := C("core.delete", S("file", "config.yaml"))
+//	fmt.Println(result.Question) // "Delete config.yaml?"
+func C(intent string, subject *Subject) *Composed {
+	if svc := Default(); svc != nil {
+		return svc.C(intent, subject)
+	}
+	return &Composed{
+		Question: intent,
+		Confirm:  intent,
+		Success:  intent,
+		Failure:  intent,
+	}
+}
+
+// _ is the standard gettext-style translation helper.
+// Alias for T() - use whichever you prefer.
+//
+//	i18n._("cli.success")
+//	i18n._("cli.greeting", map[string]any{"Name": "World"})
+func _(messageID string, args ...any) string {
+	return T(messageID, args...)
 }
 
 // --- Service methods ---
@@ -294,22 +325,51 @@ func (s *Service) AvailableLanguages() []string {
 	return langs
 }
 
+// SetMode sets the translation mode for missing key handling.
+func (s *Service) SetMode(m Mode) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.mode = m
+}
+
+// Mode returns the current translation mode.
+func (s *Service) Mode() Mode {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.mode
+}
+
 // T translates a message by its ID.
 // Optional template data can be passed for interpolation.
 //
 // For plural messages, pass a map with "Count" to select the form:
 //
 //	svc.T("cli.count.items", map[string]any{"Count": 5})
+//
+// For semantic intents (core.* namespace), pass a Subject to get the Question form:
+//
+//	svc.T("core.delete", S("file", "config.yaml")) // "Delete config.yaml?"
 func (s *Service) T(messageID string, args ...any) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
+	// Check for semantic intent with Subject
+	if strings.HasPrefix(messageID, "core.") && len(args) > 0 {
+		if subject, ok := args[0].(*Subject); ok {
+			// Use C() to resolve the intent, return Question form
+			s.mu.RUnlock()
+			result := s.C(messageID, subject)
+			s.mu.RLock()
+			return result.Question
+		}
+	}
 
 	// Try current language, then fallback
 	msg, ok := s.getMessage(s.currentLang, messageID)
 	if !ok {
 		msg, ok = s.getMessage(s.fallbackLang, messageID)
 		if !ok {
-			return messageID
+			return s.handleMissingKey(messageID, args)
 		}
 	}
 
@@ -334,7 +394,7 @@ func (s *Service) T(messageID string, args ...any) string {
 	}
 
 	if text == "" {
-		return messageID
+		return s.handleMissingKey(messageID, args)
 	}
 
 	// Apply template if we have data
@@ -343,6 +403,98 @@ func (s *Service) T(messageID string, args ...any) string {
 	}
 
 	return text
+}
+
+// handleMissingKey handles a missing translation key based on the current mode.
+// Must be called with s.mu.RLock held.
+func (s *Service) handleMissingKey(key string, args []any) string {
+	switch s.mode {
+	case ModeStrict:
+		panic(fmt.Sprintf("i18n: missing translation key %q", key))
+	case ModeCollect:
+		// Convert args to map for the action
+		var argsMap map[string]any
+		if len(args) > 0 {
+			if m, ok := args[0].(map[string]any); ok {
+				argsMap = m
+			}
+		}
+		dispatchMissingKey(key, argsMap)
+		return "[" + key + "]"
+	default:
+		return key
+	}
+}
+
+// C composes a semantic intent with a subject.
+// Returns all output forms (Question, Confirm, Success, Failure) for the intent.
+//
+//	result := svc.C("core.delete", S("file", "config.yaml"))
+//	fmt.Println(result.Question) // "Delete config.yaml?"
+//	fmt.Println(result.Success)  // "Config.yaml deleted"
+func (s *Service) C(intent string, subject *Subject) *Composed {
+	// Look up the intent definition
+	intentDef := getIntent(intent)
+	if intentDef == nil {
+		// Intent not found, handle as missing key
+		s.mu.RLock()
+		mode := s.mode
+		s.mu.RUnlock()
+
+		switch mode {
+		case ModeStrict:
+			panic(fmt.Sprintf("i18n: missing intent %q", intent))
+		case ModeCollect:
+			dispatchMissingKey(intent, nil)
+			return &Composed{
+				Question: "[" + intent + "]",
+				Confirm:  "[" + intent + "]",
+				Success:  "[" + intent + "]",
+				Failure:  "[" + intent + "]",
+			}
+		default:
+			return &Composed{
+				Question: intent,
+				Confirm:  intent,
+				Success:  intent,
+				Failure:  intent,
+			}
+		}
+	}
+
+	// Create template data from subject
+	data := newTemplateData(subject)
+
+	return &Composed{
+		Question: executeIntentTemplate(intentDef.Question, data),
+		Confirm:  executeIntentTemplate(intentDef.Confirm, data),
+		Success:  executeIntentTemplate(intentDef.Success, data),
+		Failure:  executeIntentTemplate(intentDef.Failure, data),
+		Meta:     intentDef.Meta,
+	}
+}
+
+// executeIntentTemplate executes an intent template with the given data.
+func executeIntentTemplate(tmplStr string, data templateData) string {
+	if tmplStr == "" {
+		return ""
+	}
+
+	tmpl, err := template.New("").Funcs(TemplateFuncs()).Parse(tmplStr)
+	if err != nil {
+		return tmplStr
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return tmplStr
+	}
+	return buf.String()
+}
+
+// _ is the standard gettext-style translation helper. Alias for T().
+func (s *Service) _(messageID string, args ...any) string {
+	return s.T(messageID, args...)
 }
 
 func (s *Service) getMessage(lang, key string) (Message, bool) {
