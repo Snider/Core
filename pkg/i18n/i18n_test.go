@@ -318,3 +318,47 @@ func TestDebugMode(t *testing.T) {
 		SetDebug(false)
 	})
 }
+
+func TestCoreNamespaceMagic(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+	SetDefault(svc)
+
+	tests := []struct {
+		name     string
+		key      string
+		args     []any
+		expected string
+	}{
+		{"label", "core.label.status", nil, "Status:"},
+		{"label version", "core.label.version", nil, "Version:"},
+		{"progress", "core.progress.build", nil, "Building..."},
+		{"progress check", "core.progress.check", nil, "Checking..."},
+		{"progress with subject", "core.progress.check", []any{"config"}, "Checking config..."},
+		{"count singular", "core.count.file", []any{1}, "1 file"},
+		{"count plural", "core.count.file", []any{5}, "5 files"},
+		{"done", "core.done.delete", []any{"file"}, "File deleted"},
+		{"done build", "core.done.build", []any{"project"}, "Project built"},
+		{"fail", "core.fail.delete", []any{"file"}, "Failed to delete file"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := svc.T(tt.key, tt.args...)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestRawBypassesCoreNamespace(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	// Raw() should return key as-is since core.label.status isn't in JSON
+	result := svc.Raw("core.label.status")
+	assert.Equal(t, "core.label.status", result)
+
+	// T() should compose it
+	result = svc.T("core.label.status")
+	assert.Equal(t, "Status:", result)
+}
