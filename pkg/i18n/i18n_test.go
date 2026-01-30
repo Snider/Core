@@ -278,26 +278,6 @@ func TestDebugMode(t *testing.T) {
 		assert.Equal(t, "Multi-repo development workflow", result)
 	})
 
-	t.Run("C with debug mode", func(t *testing.T) {
-		svc, err := New()
-		require.NoError(t, err)
-
-		subject := S("file", "config.yaml")
-
-		// Without debug
-		result := svc.C("core.delete", subject)
-		assert.NotContains(t, result.Question, "[core.delete]")
-
-		// Enable debug
-		svc.SetDebug(true)
-
-		// With debug - shows key prefix on all forms
-		result = svc.C("core.delete", subject)
-		assert.Contains(t, result.Question, "[core.delete]")
-		assert.Contains(t, result.Success, "[core.delete]")
-		assert.Contains(t, result.Failure, "[core.delete]")
-	})
-
 	t.Run("package-level SetDebug", func(t *testing.T) {
 		// Reset default
 		defaultService = nil

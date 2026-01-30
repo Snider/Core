@@ -32,12 +32,6 @@ type Translator interface {
 	//	svc.T("cli.count.items", map[string]any{"Count": 5})
 	T(messageID string, args ...any) string
 
-	// C composes a semantic intent with a subject.
-	// Returns all output forms (Question, Confirm, Success, Failure).
-	//
-	//	result := svc.C("core.delete", S("file", "config.yaml"))
-	C(intent string, subject *Subject) *Composed
-
 	// SetLanguage sets the language for translations.
 	// Returns an error if the language is not supported.
 	SetLanguage(lang string) error
@@ -94,8 +88,8 @@ type MissingKeyHandler func(missing MissingKey)
 type MissingKey struct {
 	Key        string         // The missing translation key
 	Args       map[string]any // Arguments passed to the translation
-	CallerFile string         // Source file where T()/C() was called
-	CallerLine int            // Line number where T()/C() was called
+	CallerFile string         // Source file where T() was called
+	CallerLine int            // Line number where T() was called
 }
 
 // MissingKeyAction is an alias for backwards compatibility.

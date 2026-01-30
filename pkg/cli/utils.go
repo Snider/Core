@@ -149,42 +149,27 @@ func Confirm(prompt string, opts ...ConfirmOption) bool {
 	}
 }
 
-// ConfirmIntent prompts for confirmation using a semantic intent.
-// The intent determines the question text, danger level, and default response.
+// ConfirmAction prompts for confirmation of an action using grammar composition.
 //
-//	if ConfirmIntent("core.delete", i18n.S("file", "config.yaml")) { ... }
-func ConfirmIntent(intent string, subject *i18n.Subject, opts ...ConfirmOption) bool {
-	result := i18n.C(intent, subject)
-
-	// Apply intent metadata to options
-	if result.Meta.Dangerous {
-		opts = append([]ConfirmOption{Required()}, opts...)
-	}
-	if result.Meta.Default == "yes" {
-		opts = append([]ConfirmOption{DefaultYes()}, opts...)
-	}
-
-	return Confirm(result.Question, opts...)
+//	if ConfirmAction("delete", "config.yaml") { ... }
+//	if ConfirmAction("save", "changes", DefaultYes()) { ... }
+func ConfirmAction(verb, subject string, opts ...ConfirmOption) bool {
+	question := i18n.Title(verb) + " " + subject + "?"
+	return Confirm(question, opts...)
 }
 
-// ConfirmDangerous prompts for confirmation of a dangerous action.
-// Shows both the question and a confirmation prompt, requiring explicit "yes".
+// ConfirmDangerousAction prompts for double confirmation of a dangerous action.
+// Shows initial question, then a "Really verb subject?" confirmation.
 //
-//	if ConfirmDangerous("core.delete", i18n.S("file", "config.yaml")) { ... }
-func ConfirmDangerous(intent string, subject *i18n.Subject) bool {
-	result := i18n.C(intent, subject)
-
-	// Show initial question
-	if !Confirm(result.Question, Required()) {
+//	if ConfirmDangerousAction("delete", "config.yaml") { ... }
+func ConfirmDangerousAction(verb, subject string) bool {
+	question := i18n.Title(verb) + " " + subject + "?"
+	if !Confirm(question, Required()) {
 		return false
 	}
 
-	// For dangerous actions, show confirmation prompt
-	if result.Meta.Dangerous && result.Confirm != "" {
-		return Confirm(result.Confirm, Required())
-	}
-
-	return true
+	confirm := "Really " + verb + " " + subject + "?"
+	return Confirm(confirm, Required())
 }
 
 // QuestionOption configures Question behaviour.
@@ -262,12 +247,12 @@ func Question(prompt string, opts ...QuestionOption) string {
 	}
 }
 
-// QuestionIntent prompts for text input using a semantic intent.
+// QuestionAction prompts for text input using grammar composition.
 //
-//	name := QuestionIntent("core.rename", i18n.S("file", "old.txt"))
-func QuestionIntent(intent string, subject *i18n.Subject, opts ...QuestionOption) string {
-	result := i18n.C(intent, subject)
-	return Question(result.Question, opts...)
+//	name := QuestionAction("rename", "old.txt")
+func QuestionAction(verb, subject string, opts ...QuestionOption) string {
+	question := i18n.Title(verb) + " " + subject + "?"
+	return Question(question, opts...)
 }
 
 // ChooseOption configures Choose behaviour.
@@ -372,12 +357,12 @@ func Choose[T any](prompt string, items []T, opts ...ChooseOption[T]) T {
 	}
 }
 
-// ChooseIntent prompts for selection using a semantic intent.
+// ChooseAction prompts for selection using grammar composition.
 //
-//	file := ChooseIntent("core.select", i18n.S("file", ""), files)
-func ChooseIntent[T any](intent string, subject *i18n.Subject, items []T, opts ...ChooseOption[T]) T {
-	result := i18n.C(intent, subject)
-	return Choose(result.Question, items, opts...)
+//	file := ChooseAction("select", "file", files)
+func ChooseAction[T any](verb, subject string, items []T, opts ...ChooseOption[T]) T {
+	question := i18n.Title(verb) + " " + subject + ":"
+	return Choose(question, items, opts...)
 }
 
 // ChooseMulti prompts the user to select multiple items from a list.
@@ -486,12 +471,12 @@ func parseMultiSelection(input string, maxItems int) ([]int, error) {
 	return result, nil
 }
 
-// ChooseMultiIntent prompts for multiple selections using a semantic intent.
+// ChooseMultiAction prompts for multiple selections using grammar composition.
 //
-//	files := ChooseMultiIntent("core.select", i18n.S("files", ""), files)
-func ChooseMultiIntent[T any](intent string, subject *i18n.Subject, items []T, opts ...ChooseOption[T]) []T {
-	result := i18n.C(intent, subject)
-	return ChooseMulti(result.Question, items, opts...)
+//	files := ChooseMultiAction("select", "files", files)
+func ChooseMultiAction[T any](verb, subject string, items []T, opts ...ChooseOption[T]) []T {
+	question := i18n.Title(verb) + " " + subject + ":"
+	return ChooseMulti(question, items, opts...)
 }
 
 // FormatAge formats a time as a human-readable age string.

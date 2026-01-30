@@ -459,67 +459,6 @@ func (s *Service) handleMissingKey(key string, args []any) string {
 	}
 }
 
-// C composes a semantic intent with a subject.
-// Returns all output forms (Question, Confirm, Success, Failure) for the intent.
-//
-//	result := svc.C("core.delete", S("file", "config.yaml"))
-//	fmt.Println(result.Question) // "Delete config.yaml?"
-//	fmt.Println(result.Success)  // "Config.yaml deleted"
-func (s *Service) C(intent string, subject *Subject) *Composed {
-	// Look up the intent definition
-	intentDef := getIntent(intent)
-	if intentDef == nil {
-		// Intent not found, handle as missing key
-		s.mu.RLock()
-		mode := s.mode
-		s.mu.RUnlock()
-
-		switch mode {
-		case ModeStrict:
-			panic(fmt.Sprintf("i18n: missing intent %q", intent))
-		case ModeCollect:
-			dispatchMissingKey(intent, nil)
-			return &Composed{
-				Question: "[" + intent + "]",
-				Confirm:  "[" + intent + "]",
-				Success:  "[" + intent + "]",
-				Failure:  "[" + intent + "]",
-			}
-		default:
-			return &Composed{
-				Question: intent,
-				Confirm:  intent,
-				Success:  intent,
-				Failure:  intent,
-			}
-		}
-	}
-
-	// Create template data from subject
-	data := newTemplateData(subject)
-
-	result := &Composed{
-		Question: executeIntentTemplate(intentDef.Question, data),
-		Confirm:  executeIntentTemplate(intentDef.Confirm, data),
-		Success:  executeIntentTemplate(intentDef.Success, data),
-		Failure:  executeIntentTemplate(intentDef.Failure, data),
-		Meta:     intentDef.Meta,
-	}
-
-	// Debug mode: prefix each form with the intent key
-	s.mu.RLock()
-	debug := s.debug
-	s.mu.RUnlock()
-	if debug {
-		result.Question = debugFormat(intent, result.Question)
-		result.Confirm = debugFormat(intent, result.Confirm)
-		result.Success = debugFormat(intent, result.Success)
-		result.Failure = debugFormat(intent, result.Failure)
-	}
-
-	return result
-}
-
 // Raw is the raw translation helper without i18n.* namespace magic.
 // Use T() for smart i18n.* handling, Raw() for direct key lookup.
 func (s *Service) Raw(messageID string, args ...any) string {

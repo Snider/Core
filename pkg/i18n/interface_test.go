@@ -38,15 +38,6 @@ func (m *MockTranslator) T(key string, args ...any) string {
 	return key
 }
 
-func (m *MockTranslator) C(intent string, subject *Subject) *Composed {
-	return &Composed{
-		Question: "Mock: " + intent,
-		Confirm:  "Mock confirm",
-		Success:  "Mock success",
-		Failure:  "Mock failure",
-	}
-}
-
 func (m *MockTranslator) SetLanguage(lang string) error {
 	m.language = lang
 	return nil
@@ -56,15 +47,17 @@ func (m *MockTranslator) Language() string {
 	return m.language
 }
 
-func (m *MockTranslator) SetMode(mode Mode)     {}
-func (m *MockTranslator) Mode() Mode            { return ModeNormal }
-func (m *MockTranslator) SetDebug(enabled bool) {}
-func (m *MockTranslator) Debug() bool           { return false }
+func (m *MockTranslator) SetMode(mode Mode)        {}
+func (m *MockTranslator) Mode() Mode               { return ModeNormal }
+func (m *MockTranslator) SetDebug(enabled bool)    {}
+func (m *MockTranslator) Debug() bool              { return false }
 func (m *MockTranslator) SetFormality(f Formality) {}
-func (m *MockTranslator) Formality() Formality { return FormalityNeutral }
+func (m *MockTranslator) Formality() Formality     { return FormalityNeutral }
 func (m *MockTranslator) Direction() TextDirection { return DirLTR }
-func (m *MockTranslator) IsRTL() bool             { return false }
-func (m *MockTranslator) PluralCategory(n int) PluralCategory { return PluralOther }
+func (m *MockTranslator) IsRTL() bool              { return false }
+func (m *MockTranslator) PluralCategory(n int) PluralCategory {
+	return PluralOther
+}
 func (m *MockTranslator) AvailableLanguages() []string { return []string{"en-GB"} }
 
 func TestMockTranslator(t *testing.T) {
@@ -78,7 +71,4 @@ func TestMockTranslator(t *testing.T) {
 	assert.Equal(t, "Hello from mock", translator.T("test.hello"))
 	assert.Equal(t, "test.missing", translator.T("test.missing"))
 	assert.Equal(t, "en-GB", translator.Language())
-
-	result := translator.C("core.delete", S("file", "test.txt"))
-	assert.Equal(t, "Mock: core.delete", result.Question)
 }

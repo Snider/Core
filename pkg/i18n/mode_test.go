@@ -160,37 +160,3 @@ func TestModeCollect_MissingKey(t *testing.T) {
 	assert.Greater(t, received.CallerLine, 0)
 }
 
-func TestModeCollect_MissingIntent(t *testing.T) {
-	// Reset handler after test
-	defer SetActionHandler(nil)
-
-	svc, err := New()
-	require.NoError(t, err)
-
-	svc.SetMode(ModeCollect)
-
-	var received MissingKeyAction
-	SetActionHandler(func(action MissingKeyAction) {
-		received = action
-	})
-
-	// Missing intent should dispatch action and return [key]
-	result := svc.C("nonexistent.intent", S("file", "test.txt"))
-
-	assert.Equal(t, "[nonexistent.intent]", result.Question)
-	assert.Equal(t, "[nonexistent.intent]", result.Success)
-	assert.Equal(t, "[nonexistent.intent]", result.Failure)
-	assert.Equal(t, "nonexistent.intent", received.Key)
-}
-
-func TestModeStrict_MissingIntent(t *testing.T) {
-	svc, err := New()
-	require.NoError(t, err)
-
-	svc.SetMode(ModeStrict)
-
-	// Missing intent should panic
-	assert.Panics(t, func() {
-		svc.C("nonexistent.intent", S("file", "test.txt"))
-	})
-}

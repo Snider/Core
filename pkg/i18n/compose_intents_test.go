@@ -4,16 +4,25 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+// composeIntent executes intent templates with a subject for testing.
+// This is a test helper that replicates what C() used to do.
+func composeIntent(intent Intent, subject *Subject) *Composed {
+	data := newTemplateData(subject)
+	return &Composed{
+		Question: executeIntentTemplate(intent.Question, data),
+		Confirm:  executeIntentTemplate(intent.Confirm, data),
+		Success:  executeIntentTemplate(intent.Success, data),
+		Failure:  executeIntentTemplate(intent.Failure, data),
+		Meta:     intent.Meta,
+	}
+}
 
 // TestGrammarComposition_MatchesIntents verifies that the grammar engine
 // can compose the same strings as the intent templates.
-// This turns the intents.go file into a comprehensive test suite.
+// This turns the intents definitions into a comprehensive test suite.
 func TestGrammarComposition_MatchesIntents(t *testing.T) {
-	svc, err := New()
-	require.NoError(t, err)
-
 	// Test subjects for validation
 	subjects := []struct {
 		noun  string
@@ -34,8 +43,8 @@ func TestGrammarComposition_MatchesIntents(t *testing.T) {
 			for _, subj := range subjects {
 				subject := S(subj.noun, subj.value)
 
-				// Compose using C()
-				composed := svc.C(key, subject)
+				// Compose using intent templates directly
+				composed := composeIntent(intent, subject)
 
 				// Verify Success output matches ActionResult
 				if intent.Success != "" && intent.Meta.Verb != "" {
@@ -415,11 +424,8 @@ func TestIntentConsistency(t *testing.T) {
 	}
 }
 
-// TestComposedVsManual compares C() output with manual grammar composition.
+// TestComposedVsManual compares template output with manual grammar composition.
 func TestComposedVsManual(t *testing.T) {
-	svc, err := New()
-	require.NoError(t, err)
-
 	tests := []struct {
 		intentKey string
 		noun      string
@@ -436,18 +442,19 @@ func TestComposedVsManual(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.intentKey, func(t *testing.T) {
 			subject := S(tt.noun, tt.value)
-			composed := svc.C(tt.intentKey, subject)
-			intent := getIntent(tt.intentKey)
-			require.NotNil(t, intent)
+			intent := coreIntents[tt.intentKey]
+
+			// Compose using intent templates
+			composed := composeIntent(intent, subject)
 
 			// Manual composition using grammar functions
 			manualSuccess := ActionResult(intent.Meta.Verb, tt.value)
 			manualFailure := ActionFailed(intent.Meta.Verb, tt.value)
 
 			assert.Equal(t, manualSuccess, composed.Success,
-				"C() Success should match ActionResult()")
+				"Template Success should match ActionResult()")
 			assert.Equal(t, manualFailure, composed.Failure,
-				"C() Failure should match ActionFailed()")
+				"Template Failure should match ActionFailed()")
 		})
 	}
 }

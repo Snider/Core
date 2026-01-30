@@ -89,23 +89,6 @@ func T(messageID string, args ...any) string {
 	return messageID
 }
 
-// C composes a semantic intent using the default service.
-// Returns all output forms (Question, Confirm, Success, Failure) for the intent.
-//
-//	result := C("core.delete", S("file", "config.yaml"))
-//	fmt.Println(result.Question) // "Delete config.yaml?"
-func C(intent string, subject *Subject) *Composed {
-	if svc := Default(); svc != nil {
-		return svc.C(intent, subject)
-	}
-	return &Composed{
-		Question: intent,
-		Confirm:  intent,
-		Success:  intent,
-		Failure:  intent,
-	}
-}
-
 // _ is the raw gettext-style translation helper.
 // Unlike T(), this does NOT handle core.* namespace magic.
 // Use this for direct key lookups without auto-composition.
