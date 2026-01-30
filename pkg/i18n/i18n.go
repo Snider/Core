@@ -725,6 +725,31 @@ func (s *Service) handleI18nNamespace(key string, args []any) string {
 		return ActionFailed(verb, "")
 	}
 
+	// i18n.number → FormatNumber(n)
+	if key == "i18n.number" && len(args) > 0 {
+		return FormatNumber(toInt64(args[0]))
+	}
+
+	// i18n.decimal → FormatDecimal(f)
+	if key == "i18n.decimal" && len(args) > 0 {
+		return FormatDecimal(toFloat64(args[0]))
+	}
+
+	// i18n.percent → FormatPercent(f)
+	if key == "i18n.percent" && len(args) > 0 {
+		return FormatPercent(toFloat64(args[0]))
+	}
+
+	// i18n.bytes → FormatBytes(n)
+	if key == "i18n.bytes" && len(args) > 0 {
+		return FormatBytes(toInt64(args[0]))
+	}
+
+	// i18n.ordinal → FormatOrdinal(n)
+	if key == "i18n.ordinal" && len(args) > 0 {
+		return FormatOrdinal(toInt(args[0]))
+	}
+
 	return ""
 }
 
@@ -971,6 +996,38 @@ func toInt(v any) int {
 		return int(n)
 	case float64:
 		return int(n)
+	}
+	return 0
+}
+
+func toInt64(v any) int64 {
+	switch n := v.(type) {
+	case int:
+		return int64(n)
+	case int64:
+		return n
+	case int32:
+		return int64(n)
+	case float64:
+		return int64(n)
+	case float32:
+		return int64(n)
+	}
+	return 0
+}
+
+func toFloat64(v any) float64 {
+	switch n := v.(type) {
+	case float64:
+		return n
+	case float32:
+		return float64(n)
+	case int:
+		return float64(n)
+	case int64:
+		return float64(n)
+	case int32:
+		return float64(n)
 	}
 	return 0
 }

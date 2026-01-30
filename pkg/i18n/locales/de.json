@@ -28,6 +28,11 @@
 		"punct": {
 			"label": ":",
 			"progress": "..."
+		},
+		"number": {
+			"thousands": ".",
+			"decimal": ",",
+			"percent": "%s %%"
 		}
 	},
 	"prompt": {
