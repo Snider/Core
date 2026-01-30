@@ -18,35 +18,122 @@ Extend the i18n system beyond simple key-value translation to support **semantic
 
 ## API Design
 
-### Translation Functions
+### Function Reference (Stable API)
+
+These function names are **permanent** - choose carefully, they cannot change.
+
+| Function | Alias | Purpose |
+|----------|-------|---------|
+| `_()` | - | Simple gettext-style lookup |
+| `T()` | `C()` | Compose - semantic intent resolution |
+| `S()` | `Subject()` | Create typed subject with metadata |
+
+### Simple Translation: `_()`
+
+Standard gettext-style lookup. No magic, just key → value.
 
 ```go
-// Simple lookup (gettext-style) - unchanged
-i18n._("cli.success")
-i18n._("common.label.error")
-
-// Opinionated lookup with namespace awareness
-i18n.T("core.edit.question", i18n.Subject("file", path))
-
-// Transform with semantic intent
-i18n.Transmute("core.edit", map[string]any{
-    "Subject": path,
-    "Count":   1,
-})
+i18n._("cli.success")                    // "Success"
+i18n._("common.label.error")             // "Error:"
+i18n._("common.error.failed", map[string]any{"Action": "load"})  // "Failed to load"
 ```
 
-### CLI Integration
+### Compose: `T()` / `C()`
+
+Semantic intent resolution. Takes an intent key from `core.*` namespace and returns a `Composed` result with multiple output forms.
 
 ```go
-// Simple yes/no with localized options
-confirmed := cli.Confirm("core.delete", i18n.Subject("file", path))
-// Displays: "Delete /path/to/file.txt? [y/N]"
+// Full form
+result := i18n.T("core.delete", i18n.S("file", path))
+result := i18n.C("core.delete", i18n.S("file", path))  // Alias
+
+// Result contains all forms
+result.Question  // "Delete /path/to/file.txt?"
+result.Confirm   // "Really delete /path/to/file.txt?"
+result.Success   // "File deleted"
+result.Failure   // "Failed to delete file"
+result.Meta      // IntentMeta{Dangerous: true, Default: "no", ...}
+```
+
+### Subject: `S()` / `Subject()`
+
+Creates a typed subject with optional metadata for grammar rules.
+
+```go
+// Simple
+i18n.S("file", "/path/to/file.txt")
+
+// With count (plurality)
+i18n.S("commit", commits).Count(len(commits))
+
+// With gender (for gendered languages)
+i18n.S("user", name).Gender("female")
+
+// Chained
+i18n.S("file", path).Count(3).In("/project")
+```
+
+### Type Signatures
+
+```go
+// Simple lookup
+func _(key string, args ...any) string
+
+// Compose (T and C are aliases)
+func T(intent string, subject *Subject) *Composed
+func C(intent string, subject *Subject) *Composed
+
+// Subject builder
+func S(noun string, value any) *Subject
+func Subject(noun string, value any) *Subject
+
+// Composed result
+type Composed struct {
+    Question string
+    Confirm  string
+    Success  string
+    Failure  string
+    Meta     IntentMeta
+}
+
+// Subject with metadata
+type Subject struct {
+    Noun   string
+    Value  any
+    count  int
+    gender string
+    // ... other metadata
+}
+
+func (s *Subject) Count(n int) *Subject
+func (s *Subject) Gender(g string) *Subject
+func (s *Subject) In(location string) *Subject
+
+// Intent metadata
+type IntentMeta struct {
+    Type      string   // "action", "question", "info"
+    Verb      string   // Reference to common.verb.*
+    Dangerous bool     // Requires confirmation
+    Default   string   // "yes" or "no"
+    Supports  []string // Extra options like "all", "skip"
+}
+```
+
+## CLI Integration
+
+The CLI package uses `T()` internally for prompts:
+
+```go
+// Confirm uses T() internally
+confirmed := cli.Confirm("core.delete", i18n.S("file", path))
+// Internally: result := i18n.T("core.delete", subject)
+// Displays: result.Question + localized [y/N]
 // Returns: bool
 
-// Question with custom options
-choice := cli.Question("core.save", i18n.Subject("changes", 3), cli.Options{
+// Question with options
+choice := cli.Question("core.save", i18n.S("changes", 3).Count(3), cli.Options{
     Default: "yes",
-    Extra:   []string{"all"},  // Adds [a] option
+    Extra:   []string{"all"},
 })
 // Displays: "Save 3 changes? [a/y/N]"
 // Returns: "yes" | "no" | "all"
@@ -54,6 +141,40 @@ choice := cli.Question("core.save", i18n.Subject("changes", 3), cli.Options{
 // Choice from list
 selected := cli.Choose("core.select.branch", branches)
 // Displays localized prompt with arrow selection
+```
+
+### cli.Confirm()
+
+```go
+func Confirm(intent string, subject *i18n.Subject, opts ...ConfirmOption) bool
+
+// Options
+cli.DefaultYes()     // Default to yes instead of no
+cli.DefaultNo()      // Explicit default no
+cli.Required()       // No default, must choose
+cli.Timeout(30*time.Second)  // Auto-select default after timeout
+```
+
+### cli.Question()
+
+```go
+func Question(intent string, subject *i18n.Subject, opts ...QuestionOption) string
+
+// Options
+cli.Extra("all", "skip")    // Extra options beyond y/n
+cli.Default("yes")          // Which option is default
+cli.Validate(func(s string) bool)  // Custom validation
+```
+
+### cli.Choose()
+
+```go
+func Choose[T any](intent string, items []T, opts ...ChooseOption) T
+
+// Options
+cli.Display(func(T) string)  // How to display each item
+cli.Filter()                 // Enable fuzzy filtering
+cli.Multi()                  // Allow multiple selection
 ```
 
 ## Reserved Namespaces
@@ -70,7 +191,8 @@ Atomic translation units that can be composed:
       "delete": "delete",
       "create": "create",
       "save": "save",
-      "update": "update"
+      "update": "update",
+      "commit": "commit"
     },
     "noun": {
       "file": { "one": "file", "other": "files" },
@@ -130,37 +252,19 @@ Intents encode meaning and behavior:
       },
       "question": "Save {{.Subject}}?",
       "success": "{{.Subject | title}} saved"
+    },
+    "commit": {
+      "_meta": {
+        "type": "action",
+        "verb": "common.verb.commit",
+        "dangerous": false
+      },
+      "question": "Commit {{.Subject}}?",
+      "success": "{{.Subject | title}} committed",
+      "failure": "Failed to commit {{.Subject}}"
     }
   }
 }
-```
-
-## Transmute Function
-
-`Transmute()` combines intent metadata with input to produce contextually correct output:
-
-```go
-// Signature
-func Transmute(intent string, data map[string]any) TransmuteResult
-
-// TransmuteResult provides multiple output forms
-type TransmuteResult struct {
-    Question string          // "Delete the file?"
-    Confirm  string          // "Really delete the file?"
-    Success  string          // "File deleted"
-    Failure  string          // "Failed to delete the file"
-    Meta     IntentMeta      // Dangerous, default, supports, etc.
-}
-
-// Usage
-result := i18n.Transmute("core.delete", map[string]any{
-    "Subject": "/path/to/file.txt",
-})
-
-if result.Meta.Dangerous {
-    // Show warning styling
-}
-fmt.Println(result.Question)  // "Delete /path/to/file.txt? This cannot be undone."
 ```
 
 ## Template Functions
@@ -177,70 +281,20 @@ Available in translation templates:
 | `article` | Add article | `{{.Noun \| article}}` → "a file" |
 | `quote` | Wrap in quotes | `{{.Path \| quote}}` → `"/path/to/file"` |
 
-## Subject Helper
-
-`Subject()` creates a typed subject with metadata:
-
-```go
-// Simple subject
-i18n.Subject("file", "/path/to/file.txt")
-
-// With count (for plurality)
-i18n.Subject("commit", commits, i18n.Count(len(commits)))
-
-// With gender (for languages that need it)
-i18n.Subject("user", userName, i18n.Gender("female"))
-```
-
-## CLI Integration Details
-
-### cli.Confirm()
-
-```go
-func Confirm(intent string, subject Subject, opts ...ConfirmOption) bool
-
-// Options
-cli.DefaultYes()     // Default to yes instead of no
-cli.DefaultNo()      // Explicit default no
-cli.Required()       // No default, must choose
-cli.Timeout(30*time.Second)  // Auto-select default after timeout
-```
-
-### cli.Question()
-
-```go
-func Question(intent string, subject Subject, opts ...QuestionOption) string
-
-// Options
-cli.Options{"all", "skip"}  // Extra options beyond y/n
-cli.Default("yes")          // Which option is default
-cli.Validate(func(s string) bool)  // Custom validation
-```
-
-### cli.Choose()
-
-```go
-func Choose[T any](intent string, items []T, opts ...ChooseOption) T
-
-// Options
-cli.Display(func(T) string)  // How to display each item
-cli.Filter()                 // Enable fuzzy filtering
-cli.Multi()                  // Allow multiple selection
-```
-
 ## Implementation Plan
 
 ### Phase 1: Foundation
-1. Add `_meta` parsing to JSON loader
-2. Implement `Transmute()` with basic templates
-3. Add template functions (title, lower, past, etc.)
-4. Add `Subject()` helper
+1. Define `Composed` and `Subject` types
+2. Add `S()` / `Subject()` builder
+3. Add `T()` / `C()` with intent resolution
+4. Parse `_meta` from JSON
+5. Add template functions (title, lower, past, etc.)
 
 ### Phase 2: CLI Integration
 1. Implement `cli.Confirm()` using intents
 2. Implement `cli.Question()` with options
 3. Implement `cli.Choose()` for lists
-4. Localize prompt characters [y/N]
+4. Localize prompt characters [y/N] → [j/N] etc.
 
 ### Phase 3: Grammar Engine
 1. Verb conjugation (past tense, etc.)
@@ -270,8 +324,7 @@ if response != "y" && response != "Y" {
 }
 
 // New way (semantic, localized, integrated)
-subject := i18n.Subject("file", path, i18n.Count(len(files)))
-if !cli.Confirm("core.commit", subject) {
+if !cli.Confirm("core.commit", i18n.S("file", path).Count(len(files))) {
     return
 }
 
