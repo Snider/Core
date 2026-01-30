@@ -33,26 +33,26 @@ func TestSubject_Good(t *testing.T) {
 
 	t.Run("with count", func(t *testing.T) {
 		s := S("file", "*.go").Count(5)
-		assert.Equal(t, 5, s.GetCount())
+		assert.Equal(t, 5, s.CountValue())
 		assert.True(t, s.IsPlural())
 	})
 
 	t.Run("with gender", func(t *testing.T) {
 		s := S("user", "alice").Gender("female")
-		assert.Equal(t, "female", s.GetGender())
+		assert.Equal(t, "female", s.GenderValue())
 	})
 
 	t.Run("with location", func(t *testing.T) {
 		s := S("file", "config.yaml").In("workspace")
-		assert.Equal(t, "workspace", s.GetLocation())
+		assert.Equal(t, "workspace", s.Location())
 	})
 
 	t.Run("chained methods", func(t *testing.T) {
 		s := S("repo", "core-php").Count(3).Gender("neuter").In("organisation")
-		assert.Equal(t, "repo", s.GetNoun())
-		assert.Equal(t, 3, s.GetCount())
-		assert.Equal(t, "neuter", s.GetGender())
-		assert.Equal(t, "organisation", s.GetLocation())
+		assert.Equal(t, "repo", s.NounValue())
+		assert.Equal(t, 3, s.CountValue())
+		assert.Equal(t, "neuter", s.GenderValue())
+		assert.Equal(t, "organisation", s.Location())
 	})
 }
 
@@ -104,10 +104,10 @@ func TestSubject_IsPlural(t *testing.T) {
 func TestSubject_Getters(t *testing.T) {
 	t.Run("nil safety", func(t *testing.T) {
 		var s *Subject
-		assert.Equal(t, "", s.GetNoun())
-		assert.Equal(t, 1, s.GetCount())
-		assert.Equal(t, "", s.GetGender())
-		assert.Equal(t, "", s.GetLocation())
+		assert.Equal(t, "", s.NounValue())
+		assert.Equal(t, 1, s.CountValue())
+		assert.Equal(t, "", s.GenderValue())
+		assert.Equal(t, "", s.Location())
 	})
 }
 
@@ -193,31 +193,31 @@ func TestNewTemplateData(t *testing.T) {
 func TestSubject_Formality(t *testing.T) {
 	t.Run("default is neutral", func(t *testing.T) {
 		s := S("user", "name")
-		assert.Equal(t, FormalityNeutral, s.GetFormality())
+		assert.Equal(t, FormalityNeutral, s.FormalityValue())
 		assert.False(t, s.IsFormal())
 		assert.False(t, s.IsInformal())
 	})
 
 	t.Run("Formal()", func(t *testing.T) {
 		s := S("user", "name").Formal()
-		assert.Equal(t, FormalityFormal, s.GetFormality())
+		assert.Equal(t, FormalityFormal, s.FormalityValue())
 		assert.True(t, s.IsFormal())
 	})
 
 	t.Run("Informal()", func(t *testing.T) {
 		s := S("user", "name").Informal()
-		assert.Equal(t, FormalityInformal, s.GetFormality())
+		assert.Equal(t, FormalityInformal, s.FormalityValue())
 		assert.True(t, s.IsInformal())
 	})
 
 	t.Run("Formality() explicit", func(t *testing.T) {
 		s := S("user", "name").Formality(FormalityFormal)
-		assert.Equal(t, FormalityFormal, s.GetFormality())
+		assert.Equal(t, FormalityFormal, s.FormalityValue())
 	})
 
 	t.Run("nil safety", func(t *testing.T) {
 		var s *Subject
-		assert.Equal(t, FormalityNeutral, s.GetFormality())
+		assert.Equal(t, FormalityNeutral, s.FormalityValue())
 		assert.False(t, s.IsFormal())
 		assert.False(t, s.IsInformal())
 	})

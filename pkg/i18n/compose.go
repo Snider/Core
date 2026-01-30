@@ -94,41 +94,41 @@ func (s *Subject) IsPlural() bool {
 	return s != nil && s.count != 1
 }
 
-// GetCount returns the count value.
-func (s *Subject) GetCount() int {
+// CountValue returns the count value.
+func (s *Subject) CountValue() int {
 	if s == nil {
 		return 1
 	}
 	return s.count
 }
 
-// GetGender returns the grammatical gender.
-func (s *Subject) GetGender() string {
+// GenderValue returns the grammatical gender.
+func (s *Subject) GenderValue() string {
 	if s == nil {
 		return ""
 	}
 	return s.gender
 }
 
-// GetLocation returns the location context.
-func (s *Subject) GetLocation() string {
+// Location returns the location context.
+func (s *Subject) Location() string {
 	if s == nil {
 		return ""
 	}
 	return s.location
 }
 
-// GetNoun returns the noun type.
-func (s *Subject) GetNoun() string {
+// NounValue returns the noun type.
+func (s *Subject) NounValue() string {
 	if s == nil {
 		return ""
 	}
 	return s.Noun
 }
 
-// GetFormality returns the formality level.
+// FormalityValue returns the formality level.
 // Returns FormalityNeutral if not explicitly set.
-func (s *Subject) GetFormality() Formality {
+func (s *Subject) FormalityValue() Formality {
 	if s == nil {
 		return FormalityNeutral
 	}
