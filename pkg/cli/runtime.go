@@ -22,6 +22,7 @@ import (
 	"syscall"
 
 	"github.com/host-uk/core/pkg/framework"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -32,6 +33,7 @@ var (
 // runtime is the CLI's internal Core runtime.
 type runtime struct {
 	core   *framework.Core
+	root   *cobra.Command
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -54,14 +56,24 @@ func Init(opts Options) error {
 	once.Do(func() {
 		ctx, cancel := context.WithCancel(context.Background())
 
+		// Create root command
+		rootCmd := &cobra.Command{
+			Use:     opts.AppName,
+			Version: opts.Version,
+		}
+
+		// Attach all registered commands
+		attachRegisteredCommands(rootCmd)
+
 		// Build signal service options
 		var signalOpts []SignalOption
 		if opts.OnReload != nil {
 			signalOpts = append(signalOpts, WithReloadHandler(opts.OnReload))
 		}
 
-		// Build options: signal service + any additional services
+		// Build options: app, signal service + any additional services
 		coreOpts := []framework.Option{
+			framework.WithApp(rootCmd),
 			framework.WithName("signal", newSignalService(cancel, signalOpts...)),
 		}
 		coreOpts = append(coreOpts, opts.Services...)
@@ -76,6 +88,7 @@ func Init(opts Options) error {
 
 		instance = &runtime{
 			core:   c,
+			root:   rootCmd,
 			ctx:    ctx,
 			cancel: cancel,
 		}
@@ -100,6 +113,19 @@ func mustInit() {
 func Core() *framework.Core {
 	mustInit()
 	return instance.core
+}
+
+// RootCmd returns the CLI's root cobra command.
+func RootCmd() *cobra.Command {
+	mustInit()
+	return instance.root
+}
+
+// Execute runs the CLI root command.
+// Returns an error if the command fails.
+func Execute() error {
+	mustInit()
+	return instance.root.Execute()
 }
 
 // Context returns the CLI's root context.
