@@ -228,8 +228,11 @@ var irregularVerbs = map[string]VerbForms{
 	"bear":   {Past: "bore", Gerund: "bearing"},
 	"swear":  {Past: "swore", Gerund: "swearing"},
 	"wake":   {Past: "woke", Gerund: "waking"},
-	"freeze": {Past: "froze", Gerund: "freezing"},
-	"steal":  {Past: "stole", Gerund: "stealing"},
+	"freeze":    {Past: "froze", Gerund: "freezing"},
+	"steal":     {Past: "stole", Gerund: "stealing"},
+	"overwrite": {Past: "overwritten", Gerund: "overwriting"},
+	"reset":     {Past: "reset", Gerund: "resetting"},
+	"reboot":    {Past: "rebooted", Gerund: "rebooting"},
 }
 
 // PastTense returns the past tense of a verb.
@@ -259,9 +262,17 @@ func PastTense(verb string) string {
 
 // applyRegularPastTense applies regular past tense rules.
 func applyRegularPastTense(verb string) string {
-	// Already ends in -ed
-	if strings.HasSuffix(verb, "ed") {
-		return verb
+	// Already ends in -ed (but not -eed, -ied which need different handling)
+	// Words like "proceed", "succeed", "exceed" end in -eed and are NOT past tense
+	if strings.HasSuffix(verb, "ed") && len(verb) > 2 {
+		// Check if it's actually a past tense suffix (consonant + ed)
+		// vs a word root ending (e.g., "proceed" = proc + eed, "feed" = feed)
+		thirdFromEnd := verb[len(verb)-3]
+		if !isVowel(rune(thirdFromEnd)) && thirdFromEnd != 'e' {
+			// Consonant before -ed means it's likely already past tense
+			return verb
+		}
+		// Words ending in vowel + ed (like "proceed") need -ed added
 	}
 
 	// Ends in -e: just add -d
