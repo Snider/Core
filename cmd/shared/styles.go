@@ -177,6 +177,15 @@ var (
 	PrNumberStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(ColourPurple500)
+
+	// AccentLabelStyle for highlighted labels (violet).
+	AccentLabelStyle = lipgloss.NewStyle().
+				Foreground(ColourViolet400)
+
+	// StageStyle for pipeline/QA stage headers (indigo, bold).
+	StageStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(ColourIndigo500)
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

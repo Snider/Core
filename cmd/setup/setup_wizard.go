@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
 	"golang.org/x/term"
 )
@@ -156,10 +156,7 @@ func runPackageWizard(reg *repos.Registry, preselectedTypes []string) ([]string,
 	var selected []string
 
 	// Header styling
-	headerStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#3b82f6")).
-		MarginBottom(1)
+	headerStyle := shared.TitleStyle.MarginBottom(1)
 
 	fmt.Println(headerStyle.Render("Package Selection"))
 	fmt.Println("Use space to select/deselect, enter to confirm")

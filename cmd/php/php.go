@@ -36,7 +36,7 @@ var (
 	phpQAPassedStyle  = shared.SuccessStyle
 	phpQAFailedStyle  = shared.ErrorStyle
 	phpQAWarningStyle = shared.WarningStyle
-	phpQAStageStyle   = lipgloss.NewStyle().Bold(true).Foreground(shared.ColourIndigo500)
+	phpQAStageStyle   = shared.StageStyle
 )
 
 // Security severity styles (from shared)

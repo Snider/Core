@@ -3,7 +3,6 @@
 package ai
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
@@ -28,17 +27,11 @@ var (
 	taskStatusBlockedStyle    = shared.StatusErrorStyle
 )
 
-// Task-specific styles (unique to task display)
+// Task-specific styles (aliases to shared where possible)
 var (
-	taskIDStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(shared.ColourBlue500)
-
-	taskTitleStyle = lipgloss.NewStyle().
-			Foreground(shared.ColourGray200)
-
-	taskLabelStyle = lipgloss.NewStyle().
-			Foreground(shared.ColourViolet400)
+	taskIDStyle    = shared.TitleStyle  // Bold + blue
+	taskTitleStyle = shared.ValueStyle  // Light gray
+	taskLabelStyle = shared.AccentLabelStyle // Violet for labels
 )
 
 // AddAgenticCommands adds the agentic task management commands to the ai command.
