@@ -705,7 +705,7 @@ func GetQAStages(opts QAOptions) []QAStage {
 func GetQAChecks(dir string, stage QAStage) []string {
 	switch stage {
 	case QAStageQuick:
-		checks := []string{"audit", "fmt", "analyse"}
+		checks := []string{"audit", "fmt", "stan"}
 		return checks
 	case QAStageStandard:
 		checks := []string{}

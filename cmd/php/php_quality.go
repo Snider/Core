@@ -138,15 +138,16 @@ func addPHPFmtCommand(parent *cobra.Command) {
 }
 
 var (
-	analyseLevel  int
-	analyseMemory string
+	stanLevel  int
+	stanMemory string
 )
 
-func addPHPAnalyseCommand(parent *cobra.Command) {
-	analyseCmd := &cobra.Command{
-		Use:   "analyse [paths...]",
-		Short: i18n.T("cmd.php.analyse.short"),
-		Long:  i18n.T("cmd.php.analyse.long"),
+func addPHPStanCommand(parent *cobra.Command) {
+	stanCmd := &cobra.Command{
+		Use:     "stan [paths...]",
+		Aliases: []string{"analyse"},
+		Short:   i18n.T("cmd.php.analyse.short"),
+		Long:    i18n.T("cmd.php.analyse.long"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
@@ -169,8 +170,8 @@ func addPHPAnalyseCommand(parent *cobra.Command) {
 
 			opts := phppkg.AnalyseOptions{
 				Dir:    cwd,
-				Level:  analyseLevel,
-				Memory: analyseMemory,
+				Level:  stanLevel,
+				Memory: stanMemory,
 				Output: os.Stdout,
 			}
 
@@ -188,10 +189,10 @@ func addPHPAnalyseCommand(parent *cobra.Command) {
 		},
 	}
 
-	analyseCmd.Flags().IntVar(&analyseLevel, "level", 0, i18n.T("cmd.php.analyse.flag.level"))
-	analyseCmd.Flags().StringVar(&analyseMemory, "memory", "", i18n.T("cmd.php.analyse.flag.memory"))
+	stanCmd.Flags().IntVar(&stanLevel, "level", 0, i18n.T("cmd.php.analyse.flag.level"))
+	stanCmd.Flags().StringVar(&stanMemory, "memory", "", i18n.T("cmd.php.analyse.flag.memory"))
 
-	parent.AddCommand(analyseCmd)
+	parent.AddCommand(stanCmd)
 }
 
 // =============================================================================
@@ -588,7 +589,7 @@ func getQAFixCommand(checkName string, fixEnabled bool) string {
 			return ""
 		}
 		return "core php fmt --fix"
-	case "analyse":
+	case "stan":
 		return i18n.T("cmd.php.qa.fix_phpstan")
 	case "psalm":
 		return i18n.T("cmd.php.qa.fix_psalm")

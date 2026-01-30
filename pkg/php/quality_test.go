@@ -345,7 +345,7 @@ func TestGetQAChecks_Good(t *testing.T) {
 		checks := GetQAChecks(dir, QAStageQuick)
 		assert.Contains(t, checks, "audit")
 		assert.Contains(t, checks, "fmt")
-		assert.Contains(t, checks, "analyse")
+		assert.Contains(t, checks, "stan")
 	})
 
 	t.Run("standard stage includes test", func(t *testing.T) {

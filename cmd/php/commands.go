@@ -15,7 +15,7 @@
 // Code Quality:
 //   - test: Run PHPUnit/Pest tests
 //   - fmt: Format code with Laravel Pint
-//   - analyse: Run PHPStan/Larastan static analysis
+//   - stan: Run PHPStan/Larastan static analysis
 //   - psalm: Run Psalm static analysis
 //   - audit: Security audit for dependencies
 //   - security: Security vulnerability scanning

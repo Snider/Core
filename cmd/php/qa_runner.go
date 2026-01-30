@@ -102,7 +102,7 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		}
 		return nil
 
-	case "analyse":
+	case "stan":
 		_, found := phppkg.DetectAnalyser(r.dir)
 		if !found {
 			return nil
@@ -113,7 +113,7 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 			cmd = vendorBin
 		}
 		return &process.RunSpec{
-			Name:    "analyse",
+			Name:    "stan",
 			Command: cmd,
 			Args:    []string{"analyse", "--no-progress"},
 			Dir:     r.dir,
@@ -139,7 +139,7 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 			Command: cmd,
 			Args:    args,
 			Dir:     r.dir,
-			After:   []string{"analyse"},
+			After:   []string{"stan"},
 		}
 
 	case "test":
@@ -156,8 +156,8 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 			return nil
 		}
 
-		// Tests depend on analyse (or psalm if available)
-		after := []string{"analyse"}
+		// Tests depend on stan (or psalm if available)
+		after := []string{"stan"}
 		if _, found := phppkg.DetectPsalm(r.dir); found {
 			after = []string{"psalm"}
 		}
@@ -323,7 +323,7 @@ func (r QACheckRunResult) GetIssueMessage() string {
 		return i18n.T("cmd.php.qa.issue_audit")
 	case "fmt":
 		return i18n.T("cmd.php.qa.issue_style")
-	case "analyse":
+	case "stan":
 		return i18n.T("cmd.php.qa.issue_analysis")
 	case "psalm":
 		return i18n.T("cmd.php.qa.issue_types")

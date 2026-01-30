@@ -72,7 +72,7 @@ func AddPHPCommands(root *cobra.Command) {
 	// Quality (existing)
 	addPHPTestCommand(phpCmd)
 	addPHPFmtCommand(phpCmd)
-	addPHPAnalyseCommand(phpCmd)
+	addPHPStanCommand(phpCmd)
 
 	// Quality (new)
 	addPHPPsalmCommand(phpCmd)
