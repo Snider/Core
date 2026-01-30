@@ -395,6 +395,26 @@ func TestFormalityMessageSelection(t *testing.T) {
 		result := svc.T("greeting", S("user", "test").Informal())
 		assert.Equal(t, "Hey there", result)
 	})
+
+	t.Run("context formality overrides service formality", func(t *testing.T) {
+		svc.SetFormality(FormalityNeutral)
+
+		// TranslationContext with formal overrides neutral service
+		result := svc.T("greeting", C("user greeting").Formal())
+		assert.Equal(t, "Good morning, sir", result)
+
+		// TranslationContext with informal overrides neutral service
+		result = svc.T("greeting", C("user greeting").Informal())
+		assert.Equal(t, "Hey there", result)
+	})
+
+	t.Run("context formality overrides service formal", func(t *testing.T) {
+		svc.SetFormality(FormalityFormal)
+
+		// TranslationContext with informal overrides formal service
+		result := svc.T("greeting", C("user greeting").Informal())
+		assert.Equal(t, "Hey there", result)
+	})
 }
 
 func TestNewWithOptions(t *testing.T) {

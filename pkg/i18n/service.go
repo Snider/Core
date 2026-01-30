@@ -453,9 +453,16 @@ func (s *Service) resolveMessage(lang, key string, data any) string {
 }
 
 // getEffectiveFormality returns the formality to use for translation.
-// Priority: Subject.formality > Service.formality > FormalityNeutral
+// Priority: TranslationContext > Subject > map["Formality"] > Service.formality
 // Must be called with s.mu.RLock held.
 func (s *Service) getEffectiveFormality(data any) Formality {
+	// Check if data is a TranslationContext with explicit formality
+	if ctx, ok := data.(*TranslationContext); ok && ctx != nil {
+		if ctx.Formality != FormalityNeutral {
+			return ctx.Formality
+		}
+	}
+
 	// Check if data is a Subject with explicit formality
 	if subj, ok := data.(*Subject); ok && subj != nil {
 		if subj.formality != FormalityNeutral {
