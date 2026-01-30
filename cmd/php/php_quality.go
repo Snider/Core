@@ -1,13 +1,10 @@
 package php
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/pkg/i18n"
@@ -489,70 +486,70 @@ func addPHPQACommand(parent *cobra.Command) {
 			stages := phppkg.GetQAStages(opts)
 
 			// Print header
-			stageNames := make([]string, len(stages))
-			for i, s := range stages {
-				stageNames[i] = string(s)
-			}
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.qa")), i18n.T("common.progress.running", map[string]any{"Task": "QA pipeline"}))
 
 			ctx := context.Background()
-			var allPassed = true
-			var results []phppkg.QACheckResult
 
-			for _, stage := range stages {
-				fmt.Printf("%s\n", phpQAStageStyle.Render(i18n.T("cmd.php.qa.stage_prefix")+strings.ToUpper(string(stage))+i18n.T("cmd.php.qa.stage_suffix")))
-
-				checks := phppkg.GetQAChecks(cwd, stage)
-				if len(checks) == 0 {
-					fmt.Printf("  %s\n\n", dimStyle.Render(i18n.T("cmd.php.qa.no_checks")))
-					continue
-				}
-
-				for _, checkName := range checks {
-					result := runQACheck(ctx, cwd, checkName, qaFix)
-					result.Stage = stage
-					results = append(results, result)
-
-					icon := phpQAPassedStyle.Render("✓")
-					status := phpQAPassedStyle.Render(i18n.T("cmd.php.qa.passed"))
-					if !result.Passed {
-						icon = phpQAFailedStyle.Render("✗")
-						status = phpQAFailedStyle.Render(i18n.T("cmd.php.qa.failed"))
-						allPassed = false
-					}
-
-					fmt.Printf("  %s %s %s %s\n", icon, result.Name, status, dimStyle.Render(result.Duration))
-				}
-				fmt.Println()
+			// Create QA runner using pkg/process
+			runner, err := NewQARunner(cwd, qaFix)
+			if err != nil {
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create QA runner"}), err)
 			}
+
+			// Run all checks with dependency ordering
+			result, err := runner.Run(ctx, stages)
+			if err != nil {
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "run QA checks"}), err)
+			}
+
+			// Display results by stage
+			currentStage := ""
+			for _, checkResult := range result.Results {
+				// Determine stage for this check
+				stage := getCheckStage(checkResult.Name, stages, cwd)
+				if stage != currentStage {
+					if currentStage != "" {
+						fmt.Println()
+					}
+					currentStage = stage
+					fmt.Printf("%s\n", phpQAStageStyle.Render(i18n.T("cmd.php.qa.stage_prefix")+strings.ToUpper(stage)+i18n.T("cmd.php.qa.stage_suffix")))
+				}
+
+				icon := phpQAPassedStyle.Render("✓")
+				status := phpQAPassedStyle.Render(i18n.T("cmd.php.qa.passed"))
+				if checkResult.Skipped {
+					icon = dimStyle.Render("-")
+					status = dimStyle.Render(i18n.T("cmd.php.qa.skipped"))
+				} else if !checkResult.Passed {
+					icon = phpQAFailedStyle.Render("✗")
+					status = phpQAFailedStyle.Render(i18n.T("cmd.php.qa.failed"))
+				}
+
+				fmt.Printf("  %s %s %s %s\n", icon, checkResult.Name, status, dimStyle.Render(checkResult.Duration))
+			}
+			fmt.Println()
 
 			// Print summary
-			passedCount := 0
-			var failedChecks []phppkg.QACheckResult
-			for _, r := range results {
-				if r.Passed {
-					passedCount++
-				} else {
-					failedChecks = append(failedChecks, r)
-				}
-			}
-
-			if allPassed {
-				fmt.Printf("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("cmd.php.qa.all_passed", map[string]interface{}{"Passed": passedCount, "Total": len(results)}))
+			if result.Passed {
+				fmt.Printf("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("cmd.php.qa.all_passed", map[string]interface{}{"Passed": result.PassedCount, "Total": len(result.Results)}))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.duration")), result.Duration)
 				return nil
 			}
 
-			fmt.Printf("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("cmd.php.qa.some_failed", map[string]interface{}{"Passed": passedCount, "Total": len(results)}))
+			fmt.Printf("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("cmd.php.qa.some_failed", map[string]interface{}{"Passed": result.PassedCount, "Total": len(result.Results)}))
 
 			// Show what needs fixing
 			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.php.qa.to_fix")))
-			for _, check := range failedChecks {
-				fixCmd := getQAFixCommand(check.Name, qaFix)
-				issue := check.Output
+			for _, checkResult := range result.Results {
+				if checkResult.Passed || checkResult.Skipped {
+					continue
+				}
+				fixCmd := getQAFixCommand(checkResult.Name, qaFix)
+				issue := checkResult.GetIssueMessage()
 				if issue == "" {
 					issue = "issues found"
 				}
-				fmt.Printf("  %s %s\n", phpQAFailedStyle.Render("*"), check.Name+": "+issue)
+				fmt.Printf("  %s %s\n", phpQAFailedStyle.Render("*"), checkResult.Name+": "+issue)
 				if fixCmd != "" {
 					fmt.Printf("    %s %s\n", dimStyle.Render("->"), fixCmd)
 				}
@@ -567,6 +564,19 @@ func addPHPQACommand(parent *cobra.Command) {
 	qaCmd.Flags().BoolVar(&qaFix, "fix", false, i18n.T("common.flag.fix"))
 
 	parent.AddCommand(qaCmd)
+}
+
+// getCheckStage determines which stage a check belongs to.
+func getCheckStage(checkName string, stages []phppkg.QAStage, dir string) string {
+	for _, stage := range stages {
+		checks := phppkg.GetQAChecks(dir, stage)
+		for _, c := range checks {
+			if c == checkName {
+				return string(stage)
+			}
+		}
+	}
+	return "unknown"
 }
 
 func getQAFixCommand(checkName string, fixEnabled bool) string {
@@ -593,77 +603,6 @@ func getQAFixCommand(checkName string, fixEnabled bool) string {
 		return i18n.T("cmd.php.qa.fix_infection")
 	}
 	return ""
-}
-
-func runQACheck(ctx context.Context, dir string, checkName string, fix bool) phppkg.QACheckResult {
-	start := time.Now()
-	result := phppkg.QACheckResult{Name: checkName, Passed: true}
-
-	// Capture output to prevent noise in QA pipeline
-	var buf bytes.Buffer
-
-	switch checkName {
-	case "audit":
-		auditResults, _ := phppkg.RunAudit(ctx, phppkg.AuditOptions{Dir: dir, Output: io.Discard})
-		var issues []string
-		for _, r := range auditResults {
-			if r.Vulnerabilities > 0 {
-				issues = append(issues, fmt.Sprintf("%s: %d vulnerabilities", r.Tool, r.Vulnerabilities))
-				result.Passed = false
-			} else if r.Error != nil {
-				issues = append(issues, fmt.Sprintf("%s: %v", r.Tool, r.Error))
-				result.Passed = false
-			}
-		}
-		if len(issues) > 0 {
-			result.Output = strings.Join(issues, ", ")
-		}
-
-	case "fmt":
-		err := phppkg.Format(ctx, phppkg.FormatOptions{Dir: dir, Fix: fix, Output: io.Discard})
-		result.Passed = err == nil
-		if err != nil {
-			result.Output = i18n.T("cmd.php.qa.issue_style")
-		}
-
-	case "analyse":
-		err := phppkg.Analyse(ctx, phppkg.AnalyseOptions{Dir: dir, Output: &buf})
-		result.Passed = err == nil
-		if err != nil {
-			result.Output = i18n.T("cmd.php.qa.issue_analysis")
-		}
-
-	case "psalm":
-		err := phppkg.RunPsalm(ctx, phppkg.PsalmOptions{Dir: dir, Fix: fix, Output: io.Discard})
-		result.Passed = err == nil
-		if err != nil {
-			result.Output = i18n.T("cmd.php.qa.issue_types")
-		}
-
-	case "test":
-		err := phppkg.RunTests(ctx, phppkg.TestOptions{Dir: dir, Output: io.Discard})
-		result.Passed = err == nil
-		if err != nil {
-			result.Output = i18n.T("cmd.php.qa.issue_tests")
-		}
-
-	case "rector":
-		err := phppkg.RunRector(ctx, phppkg.RectorOptions{Dir: dir, Fix: fix, Output: io.Discard})
-		result.Passed = err == nil
-		if err != nil {
-			result.Output = i18n.T("cmd.php.qa.issue_rector")
-		}
-
-	case "infection":
-		err := phppkg.RunInfection(ctx, phppkg.InfectionOptions{Dir: dir, Output: io.Discard})
-		result.Passed = err == nil
-		if err != nil {
-			result.Output = i18n.T("cmd.php.qa.issue_mutation")
-		}
-	}
-
-	result.Duration = time.Since(start).Round(time.Millisecond).String()
-	return result
 }
 
 var (
