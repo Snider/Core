@@ -146,6 +146,23 @@ func Push(ctx context.Context, path string) error {
 	return gitInteractive(ctx, path, "push")
 }
 
+// Pull pulls changes for a single repository.
+// Uses interactive mode to support SSH passphrase prompts.
+func Pull(ctx context.Context, path string) error {
+	return gitInteractive(ctx, path, "pull", "--rebase")
+}
+
+// IsNonFastForward checks if an error is a non-fast-forward rejection.
+func IsNonFastForward(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "non-fast-forward") ||
+		strings.Contains(msg, "fetch first") ||
+		strings.Contains(msg, "tip of your current branch is behind")
+}
+
 // gitInteractive runs a git command with terminal attached for user interaction.
 func gitInteractive(ctx context.Context, dir string, args ...string) error {
 	cmd := exec.CommandContext(ctx, "git", args...)

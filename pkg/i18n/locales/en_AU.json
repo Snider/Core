@@ -187,6 +187,9 @@
 	"cmd.dev.push.commits_count": "{{.Count}} commit(s)",
 	"cmd.dev.push.confirm_push": "Push {{.Commits}} commit(s) to {{.Repos}} repo(s)?",
 	"cmd.dev.push.done_pushed": "Done: {{.Count}} pushed",
+	"cmd.dev.push.diverged": "branch has diverged from remote",
+	"cmd.dev.push.diverged_help": "Some repos have diverged (local and remote have different commits).",
+	"cmd.dev.push.pull_and_retry": "Pull changes and retry push?",
 
 	"cmd.dev.pull.all_up_to_date": "All repos up to date. Nothing to pull.",
 	"cmd.dev.pull.pulling_repos": "Pulling {{.Count}} repo(s):",

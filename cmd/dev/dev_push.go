@@ -133,13 +133,45 @@ func runPush(registryPath string, force bool) error {
 	results := git.PushMultiple(ctx, pushPaths, names)
 
 	var succeeded, failed int
+	var divergedRepos []git.PushResult
+
 	for _, r := range results {
 		if r.Success {
 			fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
 			succeeded++
 		} else {
-			fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
+			// Check if this is a non-fast-forward error (diverged branch)
+			if git.IsNonFastForward(r.Error) {
+				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), r.Name, i18n.T("cmd.dev.push.diverged"))
+				divergedRepos = append(divergedRepos, r)
+			} else {
+				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
+			}
 			failed++
+		}
+	}
+
+	// Handle diverged repos - offer to pull and retry
+	if len(divergedRepos) > 0 {
+		fmt.Println()
+		fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
+		if shared.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
+			fmt.Println()
+			for _, r := range divergedRepos {
+				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), r.Name)
+				if err := git.Pull(ctx, r.Path); err != nil {
+					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
+					continue
+				}
+				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), r.Name)
+				if err := git.Push(ctx, r.Path); err != nil {
+					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
+					continue
+				}
+				fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
+				succeeded++
+				failed--
+			}
 		}
 	}
 
