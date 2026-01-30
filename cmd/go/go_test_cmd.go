@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
 
@@ -125,13 +125,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	}
 
 	if cov > 0 {
-		covStyle := successStyle
-		if cov < 50 {
-			covStyle = errorStyle
-		} else if cov < 80 {
-			covStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#f59e0b"))
-		}
-		fmt.Printf("\n  %s %s\n", dimStyle.Render("Coverage:"), covStyle.Render(fmt.Sprintf("%.1f%%", cov)))
+		fmt.Printf("\n  %s %s\n", shared.ProgressLabel("Coverage"), shared.FormatCoverage(cov))
 	}
 
 	if err == nil {
@@ -258,13 +252,7 @@ func addGoCovCommand(parent *cobra.Command) {
 
 			// Print coverage summary
 			fmt.Println()
-			covStyle := successStyle
-			if totalCov < 50 {
-				covStyle = errorStyle
-			} else if totalCov < 80 {
-				covStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#f59e0b"))
-			}
-			fmt.Printf("  %s %s\n", dimStyle.Render("Total:"), covStyle.Render(fmt.Sprintf("%.1f%%", totalCov)))
+			fmt.Printf("  %s %s\n", shared.ProgressLabel("Total"), shared.FormatCoverage(totalCov))
 
 			// Generate HTML if requested
 			if covHTML || covOpen {

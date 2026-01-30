@@ -17,39 +17,28 @@ var (
 	formatAge    = shared.FormatAge
 )
 
-// Task-specific styles
+// Task priority/status styles from shared
+var (
+	taskPriorityHighStyle     = shared.PriorityHighStyle
+	taskPriorityMediumStyle   = shared.PriorityMediumStyle
+	taskPriorityLowStyle      = shared.PriorityLowStyle
+	taskStatusPendingStyle    = shared.StatusPendingStyle
+	taskStatusInProgressStyle = shared.StatusRunningStyle
+	taskStatusCompletedStyle  = shared.StatusSuccessStyle
+	taskStatusBlockedStyle    = shared.StatusErrorStyle
+)
+
+// Task-specific styles (unique to task display)
 var (
 	taskIDStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#3b82f6")) // blue-500
+			Foreground(shared.ColourBlue500)
 
 	taskTitleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#e2e8f0")) // gray-200
-
-	taskPriorityHighStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#ef4444")) // red-500
-
-	taskPriorityMediumStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	taskPriorityLowStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	taskStatusPendingStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	taskStatusInProgressStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#3b82f6")) // blue-500
-
-	taskStatusCompletedStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	taskStatusBlockedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#ef4444")) // red-500
+			Foreground(shared.ColourGray200)
 
 	taskLabelStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#a78bfa")) // violet-400
+			Foreground(shared.ColourViolet400)
 )
 
 // AddAgenticCommands adds the agentic task management commands to the ai command.

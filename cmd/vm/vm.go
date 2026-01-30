@@ -17,8 +17,8 @@ var (
 
 // VM-specific styles
 var (
-	varStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#f59e0b"))
-	defaultStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6b7280")).Italic(true)
+	varStyle     = lipgloss.NewStyle().Foreground(shared.ColourAmber500)
+	defaultStyle = lipgloss.NewStyle().Foreground(shared.ColourGray500).Italic(true)
 )
 
 // AddVMCommands adds container-related commands under 'vm' to the CLI.

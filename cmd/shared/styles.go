@@ -522,6 +522,32 @@ func FormatPriority(level string) string {
 	}
 }
 
+// FormatTaskStatus returns styled text for a task status.
+// Supports: pending, in_progress, completed, blocked, failed.
+func FormatTaskStatus(status string) string {
+	switch strings.ToLower(status) {
+	case "in_progress", "in-progress", "running", "active":
+		return StatusRunningStyle.Render(status)
+	case "completed", "done", "finished", "success":
+		return StatusSuccessStyle.Render(status)
+	case "blocked", "failed", "error":
+		return StatusErrorStyle.Render(status)
+	default: // pending, waiting, queued
+		return StatusPendingStyle.Render(status)
+	}
+}
+
+// StatusPrefix returns a styled ">>" prefix for status messages.
+func StatusPrefix(style lipgloss.Style) string {
+	return style.Render(">>")
+}
+
+// ProgressLabel returns a dimmed label with colon for progress output.
+// Example: ProgressLabel("Installing") -> "Installing:" in dim gray
+func ProgressLabel(label string) string {
+	return DimStyle.Render(label + ":")
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Table Helpers
 // ─────────────────────────────────────────────────────────────────────────────
