@@ -179,13 +179,14 @@ func (s *Service) loadJSON(lang string, data []byte) error {
 	grammarData := &GrammarData{
 		Verbs: make(map[string]VerbForms),
 		Nouns: make(map[string]NounForms),
+		Words: make(map[string]string),
 	}
 
 	flattenWithGrammar("", raw, messages, grammarData)
 	s.messages[lang] = messages
 
 	// Store grammar data if any was found
-	if len(grammarData.Verbs) > 0 || len(grammarData.Nouns) > 0 {
+	if len(grammarData.Verbs) > 0 || len(grammarData.Nouns) > 0 || len(grammarData.Words) > 0 {
 		SetGrammarData(lang, grammarData)
 	}
 
@@ -263,6 +264,30 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 				}
 				if def, ok := v["definite"].(string); ok {
 					grammar.Articles.Definite = def
+				}
+				continue
+			}
+
+			// Check if this is a punctuation rules object
+			if grammar != nil && fullKey == "gram.punct" {
+				if label, ok := v["label"].(string); ok {
+					grammar.Punct.LabelSuffix = label
+				}
+				if progress, ok := v["progress"].(string); ok {
+					grammar.Punct.ProgressSuffix = progress
+				}
+				continue
+			}
+
+			// Check if this is a base word in gram.word.*
+			if grammar != nil && strings.HasPrefix(fullKey, "gram.word.") {
+				wordKey := strings.TrimPrefix(fullKey, "gram.word.")
+				// v could be a string or a nested object
+				if str, ok := value.(string); ok {
+					if grammar.Words == nil {
+						grammar.Words = make(map[string]string)
+					}
+					grammar.Words[strings.ToLower(wordKey)] = str
 				}
 				continue
 			}

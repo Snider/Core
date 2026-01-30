@@ -10,9 +10,18 @@ import (
 
 // GrammarData holds language-specific grammar forms loaded from JSON.
 type GrammarData struct {
-	Verbs    map[string]VerbForms // verb -> forms
-	Nouns    map[string]NounForms // noun -> forms
-	Articles ArticleForms         // article configuration
+	Verbs    map[string]VerbForms  // verb -> forms
+	Nouns    map[string]NounForms  // noun -> forms
+	Articles ArticleForms          // article configuration
+	Words    map[string]string     // base word translations
+	Punct    PunctuationRules      // language-specific punctuation
+}
+
+// PunctuationRules holds language-specific punctuation patterns.
+// French uses " :" (space before colon), English uses ":"
+type PunctuationRules struct {
+	LabelSuffix    string // Suffix for labels (default ":")
+	ProgressSuffix string // Suffix for progress (default "...")
 }
 
 // NounForms holds plural and gender information for a noun.
@@ -69,6 +78,36 @@ func getVerbForm(lang, verb, form string) string {
 		}
 	}
 	return ""
+}
+
+// getWord retrieves a base word translation from JSON data.
+// Returns empty string if not found, allowing fallback to the key itself.
+func getWord(lang, word string) string {
+	data := getGrammarData(lang)
+	if data == nil || data.Words == nil {
+		return ""
+	}
+	return data.Words[strings.ToLower(word)]
+}
+
+// getPunct retrieves a punctuation rule for the language.
+// Returns the default if not found.
+func getPunct(lang, rule, defaultVal string) string {
+	data := getGrammarData(lang)
+	if data == nil {
+		return defaultVal
+	}
+	switch rule {
+	case "label":
+		if data.Punct.LabelSuffix != "" {
+			return data.Punct.LabelSuffix
+		}
+	case "progress":
+		if data.Punct.ProgressSuffix != "" {
+			return data.Punct.ProgressSuffix
+		}
+	}
+	return defaultVal
 }
 
 // getNounForm retrieves a noun form from JSON data.
@@ -620,30 +659,50 @@ func TemplateFuncs() template.FuncMap {
 }
 
 // Progress returns a progress message for a verb.
-// Generates "Verbing..." form.
+// Generates "Verbing..." form using language-specific punctuation.
 //
 //	Progress("build")  // "Building..."
 //	Progress("check")  // "Checking..."
 //	Progress("fetch")  // "Fetching..."
 func Progress(verb string) string {
-	g := Gerund(verb)
+	lang := currentLangForGrammar()
+
+	// Try translated word first
+	word := getWord(lang, verb)
+	if word == "" {
+		word = verb
+	}
+
+	g := Gerund(word)
 	if g == "" {
 		return ""
 	}
-	return Title(g) + "..."
+
+	suffix := getPunct(lang, "progress", "...")
+	return Title(g) + suffix
 }
 
 // ProgressSubject returns a progress message with a subject.
-// Generates "Verbing subject..." form.
+// Generates "Verbing subject..." form using language-specific punctuation.
 //
 //	ProgressSubject("build", "project")    // "Building project..."
 //	ProgressSubject("check", "config.yaml") // "Checking config.yaml..."
 func ProgressSubject(verb, subject string) string {
-	g := Gerund(verb)
+	lang := currentLangForGrammar()
+
+	// Try translated word first
+	word := getWord(lang, verb)
+	if word == "" {
+		word = verb
+	}
+
+	g := Gerund(word)
 	if g == "" {
 		return ""
 	}
-	return Title(g) + " " + subject + "..."
+
+	suffix := getPunct(lang, "progress", "...")
+	return Title(g) + " " + subject + suffix
 }
 
 // ActionResult returns a result message for a completed action.
@@ -675,14 +734,24 @@ func ActionFailed(verb, subject string) string {
 }
 
 // Label returns a label with a colon suffix.
-// Generates "Word:" form with title case.
+// Generates "Word:" form using language-specific punctuation.
+// French uses " :" (space before colon), English uses ":".
 //
-//	Label("status")   // "Status:"
-//	Label("version")  // "Version:"
-//	Label("app url")  // "App Url:"
+//	Label("status")   // EN: "Status:"  FR: "Statut :"
+//	Label("version")  // EN: "Version:" FR: "Version :"
 func Label(word string) string {
 	if word == "" {
 		return ""
 	}
-	return Title(word) + ":"
+
+	lang := currentLangForGrammar()
+
+	// Try translated word first
+	translated := getWord(lang, word)
+	if translated == "" {
+		translated = word
+	}
+
+	suffix := getPunct(lang, "label", ":")
+	return Title(translated) + suffix
 }
