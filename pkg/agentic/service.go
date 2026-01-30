@@ -4,21 +4,22 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/host-uk/core/pkg/framework"
 )
 
-// Actions for AI service IPC
+// Tasks for AI service
 
-// ActionCommit requests Claude to create a commit.
-type ActionCommit struct {
+// TaskCommit requests Claude to create a commit.
+type TaskCommit struct {
 	Path    string
 	Name    string
 	CanEdit bool // allow Write/Edit tools
 }
 
-// ActionPrompt sends a custom prompt to Claude.
-type ActionPrompt struct {
+// TaskPrompt sends a custom prompt to Claude.
+type TaskPrompt struct {
 	Prompt       string
 	WorkDir      string
 	AllowedTools []string
@@ -27,12 +28,14 @@ type ActionPrompt struct {
 // ServiceOptions for configuring the AI service.
 type ServiceOptions struct {
 	DefaultTools []string
+	AllowEdit    bool // global permission for Write/Edit tools
 }
 
 // DefaultServiceOptions returns sensible defaults.
 func DefaultServiceOptions() ServiceOptions {
 	return ServiceOptions{
 		DefaultTools: []string{"Bash", "Read", "Glob", "Grep"},
+		AllowEdit:    false,
 	}
 }
 
@@ -50,32 +53,35 @@ func NewService(opts ServiceOptions) func(*framework.Core) (any, error) {
 	}
 }
 
-// OnStartup registers action handlers.
+// OnStartup registers task handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterAction(s.handle)
+	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) handle(c *framework.Core, msg framework.Message) error {
-	switch m := msg.(type) {
-	case ActionCommit:
-		return s.handleCommit(m)
-	case ActionPrompt:
-		return s.handlePrompt(m)
+func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, error) {
+	switch m := t.(type) {
+	case TaskCommit:
+		err := s.doCommit(m)
+		return nil, true, err
+
+	case TaskPrompt:
+		err := s.doPrompt(m)
+		return nil, true, err
 	}
-	return nil
+	return nil, false, nil
 }
 
-func (s *Service) handleCommit(action ActionCommit) error {
+func (s *Service) doCommit(task TaskCommit) error {
 	prompt := Prompt("commit")
 
-	tools := "Bash,Read,Glob,Grep"
-	if action.CanEdit {
-		tools = "Bash,Read,Write,Edit,Glob,Grep"
+	tools := []string{"Bash", "Read", "Glob", "Grep"}
+	if task.CanEdit {
+		tools = []string{"Bash", "Read", "Write", "Edit", "Glob", "Grep"}
 	}
 
-	cmd := exec.CommandContext(context.Background(), "claude", "-p", prompt, "--allowedTools", tools)
-	cmd.Dir = action.Path
+	cmd := exec.CommandContext(context.Background(), "claude", "-p", prompt, "--allowedTools", strings.Join(tools, ","))
+	cmd.Dir = task.Path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -83,21 +89,20 @@ func (s *Service) handleCommit(action ActionCommit) error {
 	return cmd.Run()
 }
 
-func (s *Service) handlePrompt(action ActionPrompt) error {
-	tools := "Bash,Read,Glob,Grep"
-	if len(action.AllowedTools) > 0 {
-		tools = ""
-		for i, t := range action.AllowedTools {
-			if i > 0 {
-				tools += ","
-			}
-			tools += t
-		}
+func (s *Service) doPrompt(task TaskPrompt) error {
+	opts := s.Opts()
+	tools := opts.DefaultTools
+	if len(tools) == 0 {
+		tools = []string{"Bash", "Read", "Glob", "Grep"}
 	}
 
-	cmd := exec.CommandContext(context.Background(), "claude", "-p", action.Prompt, "--allowedTools", tools)
-	if action.WorkDir != "" {
-		cmd.Dir = action.WorkDir
+	if len(task.AllowedTools) > 0 {
+		tools = task.AllowedTools
+	}
+
+	cmd := exec.CommandContext(context.Background(), "claude", "-p", task.Prompt, "--allowedTools", strings.Join(tools, ","))
+	if task.WorkDir != "" {
+		cmd.Dir = task.WorkDir
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

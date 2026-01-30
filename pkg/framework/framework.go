@@ -19,6 +19,10 @@ type (
 	Core           = core.Core
 	Option         = core.Option
 	Message        = core.Message
+	Query          = core.Query
+	Task           = core.Task
+	QueryHandler   = core.QueryHandler
+	TaskHandler    = core.TaskHandler
 	Startable      = core.Startable
 	Stoppable      = core.Stoppable
 	Config         = core.Config

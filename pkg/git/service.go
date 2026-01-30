@@ -6,19 +6,39 @@ import (
 	"github.com/host-uk/core/pkg/framework"
 )
 
-// Actions for git service IPC
+// Queries for git service
 
-// ActionStatus requests git status for paths.
-type ActionStatus struct {
+// QueryStatus requests git status for paths.
+type QueryStatus struct {
 	Paths []string
 	Names map[string]string
 }
 
-// ActionPush requests git push for a path.
-type ActionPush struct{ Path, Name string }
+// QueryDirtyRepos requests repos with uncommitted changes.
+type QueryDirtyRepos struct{}
 
-// ActionPull requests git pull for a path.
-type ActionPull struct{ Path, Name string }
+// QueryAheadRepos requests repos with unpushed commits.
+type QueryAheadRepos struct{}
+
+// Tasks for git service
+
+// TaskPush requests git push for a path.
+type TaskPush struct {
+	Path string
+	Name string
+}
+
+// TaskPull requests git pull for a path.
+type TaskPull struct {
+	Path string
+	Name string
+}
+
+// TaskPushMultiple requests git push for multiple paths.
+type TaskPushMultiple struct {
+	Paths []string
+	Names map[string]string
+}
 
 // ServiceOptions for configuring the git service.
 type ServiceOptions struct {
@@ -40,40 +60,47 @@ func NewService(opts ServiceOptions) func(*framework.Core) (any, error) {
 	}
 }
 
-// OnStartup registers action handlers.
+// OnStartup registers query and task handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterAction(s.handle)
+	s.Core().RegisterQuery(s.handleQuery)
+	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) handle(c *framework.Core, msg framework.Message) error {
-	switch m := msg.(type) {
-	case ActionStatus:
-		return s.handleStatus(m)
-	case ActionPush:
-		return s.handlePush(m)
-	case ActionPull:
-		return s.handlePull(m)
+func (s *Service) handleQuery(c *framework.Core, q framework.Query) (any, bool, error) {
+	switch m := q.(type) {
+	case QueryStatus:
+		statuses := Status(context.Background(), StatusOptions{
+			Paths: m.Paths,
+			Names: m.Names,
+		})
+		s.lastStatus = statuses
+		return statuses, true, nil
+
+	case QueryDirtyRepos:
+		return s.DirtyRepos(), true, nil
+
+	case QueryAheadRepos:
+		return s.AheadRepos(), true, nil
 	}
-	return nil
+	return nil, false, nil
 }
 
-func (s *Service) handleStatus(action ActionStatus) error {
-	ctx := context.Background()
-	statuses := Status(ctx, StatusOptions{
-		Paths: action.Paths,
-		Names: action.Names,
-	})
-	s.lastStatus = statuses
-	return nil
-}
+func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, error) {
+	switch m := t.(type) {
+	case TaskPush:
+		err := Push(context.Background(), m.Path)
+		return nil, true, err
 
-func (s *Service) handlePush(action ActionPush) error {
-	return Push(context.Background(), action.Path)
-}
+	case TaskPull:
+		err := Pull(context.Background(), m.Path)
+		return nil, true, err
 
-func (s *Service) handlePull(action ActionPull) error {
-	return Pull(context.Background(), action.Path)
+	case TaskPushMultiple:
+		results := PushMultiple(context.Background(), m.Paths, m.Names)
+		return results, true, nil
+	}
+	return nil, false, nil
 }
 
 // Status returns last status result.

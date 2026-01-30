@@ -44,44 +44,24 @@ func addWorkCommand(parent *cobra.Command) {
 func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	ctx := context.Background()
 
-	// Find or use provided registry, fall back to directory scan
-	var reg *repos.Registry
-	var err error
-
-	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
-		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
-		}
-		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
-	} else {
-		registryPath, err = repos.FindRegistry()
-		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
-			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
-			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
-		} else {
-			// Fallback: scan current directory
-			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
-			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
-			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
-		}
+	// Build worker bundle with required services
+	bundle, err := NewWorkBundle(WorkBundleOptions{
+		RegistryPath: registryPath,
+	})
+	if err != nil {
+		return err
 	}
 
-	// Build paths and names for git operations
-	var paths []string
-	names := make(map[string]string)
+	// Start services (registers handlers)
+	if err := bundle.Start(ctx); err != nil {
+		return err
+	}
+	defer bundle.Stop(ctx)
 
-	for _, repo := range reg.List() {
-		if repo.IsGitRepo() {
-			paths = append(paths, repo.Path)
-			names[repo.Path] = repo.Name
-		}
+	// Load registry and get paths
+	paths, names, err := loadRegistry(registryPath)
+	if err != nil {
+		return err
 	}
 
 	if len(paths) == 0 {
@@ -89,11 +69,18 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 		return nil
 	}
 
-	// Get status for all repos
-	statuses := git.Status(ctx, git.StatusOptions{
+	// QUERY git status
+	result, handled, err := bundle.Core.QUERY(git.QueryStatus{
 		Paths: paths,
 		Names: names,
 	})
+	if !handled {
+		return fmt.Errorf("git service not available")
+	}
+	if err != nil {
+		return err
+	}
+	statuses := result.([]git.RepoStatus)
 
 	// Sort by repo name for consistent output
 	sort.Slice(statuses, func(i, j int) bool {
@@ -126,18 +113,28 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 		fmt.Println()
 
 		for _, s := range dirtyRepos {
-			if err := claudeCommit(ctx, s.Path, s.Name, registryPath); err != nil {
+			// PERFORM commit via agentic service
+			_, handled, err := bundle.Core.PERFORM(agentic.TaskCommit{
+				Path: s.Path,
+				Name: s.Name,
+			})
+			if !handled {
+				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), s.Name, "agentic service not available")
+				continue
+			}
+			if err != nil {
 				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 			} else {
 				fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
 			}
 		}
 
-		// Re-check status after commits
-		statuses = git.Status(ctx, git.StatusOptions{
+		// Re-QUERY status after commits
+		result, _, _ = bundle.Core.QUERY(git.QueryStatus{
 			Paths: paths,
 			Names: names,
 		})
+		statuses = result.([]git.RepoStatus)
 
 		// Rebuild ahead repos list
 		aheadRepos = nil
@@ -178,27 +175,27 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 	fmt.Println()
 
-	// Push sequentially (SSH passphrase needs interaction)
-	var pushPaths []string
+	// PERFORM push for each repo
+	var divergedRepos []git.RepoStatus
+
 	for _, s := range aheadRepos {
-		pushPaths = append(pushPaths, s.Path)
-	}
-
-	results := git.PushMultiple(ctx, pushPaths, names)
-
-	var divergedRepos []git.PushResult
-
-	for _, r := range results {
-		if r.Success {
-			fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
-		} else {
-			// Check if this is a non-fast-forward error (diverged branch)
-			if git.IsNonFastForward(r.Error) {
-				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), r.Name, i18n.T("cmd.dev.push.diverged"))
-				divergedRepos = append(divergedRepos, r)
+		_, handled, err := bundle.Core.PERFORM(git.TaskPush{
+			Path: s.Path,
+			Name: s.Name,
+		})
+		if !handled {
+			fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, "git service not available")
+			continue
+		}
+		if err != nil {
+			if git.IsNonFastForward(err) {
+				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), s.Name, i18n.T("cmd.dev.push.diverged"))
+				divergedRepos = append(divergedRepos, s)
 			} else {
-				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
+				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 			}
+		} else {
+			fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
 		}
 	}
 
@@ -208,18 +205,26 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 		fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 		if shared.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
 			fmt.Println()
-			for _, r := range divergedRepos {
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), r.Name)
-				if err := git.Pull(ctx, r.Path); err != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
+			for _, s := range divergedRepos {
+				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), s.Name)
+
+				// PERFORM pull
+				_, _, err := bundle.Core.PERFORM(git.TaskPull{Path: s.Path, Name: s.Name})
+				if err != nil {
+					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 					continue
 				}
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), r.Name)
-				if err := git.Push(ctx, r.Path); err != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
+
+				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), s.Name)
+
+				// PERFORM push
+				_, _, err = bundle.Core.PERFORM(git.TaskPush{Path: s.Path, Name: s.Name})
+				if err != nil {
+					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 					continue
 				}
-				fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
+
+				fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
 			}
 		}
 	}
@@ -301,6 +306,7 @@ func printStatusTable(statuses []git.RepoStatus) {
 	}
 }
 
+// claudeCommit shells out to claude for committing (legacy helper for other commands)
 func claudeCommit(ctx context.Context, repoPath, repoName, registryPath string) error {
 	prompt := agentic.Prompt("commit")
 
@@ -313,6 +319,7 @@ func claudeCommit(ctx context.Context, repoPath, repoName, registryPath string) 
 	return cmd.Run()
 }
 
+// claudeEditCommit shells out to claude with edit permissions (legacy helper)
 func claudeEditCommit(ctx context.Context, repoPath, repoName, registryPath string) error {
 	prompt := agentic.Prompt("commit")
 
@@ -323,4 +330,46 @@ func claudeEditCommit(ctx context.Context, repoPath, repoName, registryPath stri
 	cmd.Stdin = os.Stdin
 
 	return cmd.Run()
+}
+
+func loadRegistry(registryPath string) ([]string, map[string]string, error) {
+	var reg *repos.Registry
+	var err error
+
+	if registryPath != "" {
+		reg, err = repos.LoadRegistry(registryPath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to load registry: %w", err)
+		}
+		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+	} else {
+		registryPath, err = repos.FindRegistry()
+		if err == nil {
+			reg, err = repos.LoadRegistry(registryPath)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to load registry: %w", err)
+			}
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
+		} else {
+			// Fallback: scan current directory
+			cwd, _ := os.Getwd()
+			reg, err = repos.ScanDirectory(cwd)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to scan directory: %w", err)
+			}
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
+		}
+	}
+
+	var paths []string
+	names := make(map[string]string)
+
+	for _, repo := range reg.List() {
+		if repo.IsGitRepo() {
+			paths = append(paths, repo.Path)
+			names[repo.Path] = repo.Name
+		}
+	}
+
+	return paths, names, nil
 }

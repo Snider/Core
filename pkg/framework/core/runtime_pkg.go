@@ -27,6 +27,11 @@ func (r *ServiceRuntime[T]) Core() *Core {
 	return r.core
 }
 
+// Opts returns the service-specific options.
+func (r *ServiceRuntime[T]) Opts() T {
+	return r.opts
+}
+
 // Config returns the registered Config service from the core application.
 // This is a convenience method for accessing the application's configuration.
 func (r *ServiceRuntime[T]) Config() Config {

@@ -42,7 +42,24 @@ type Option func(*Core) error
 
 // Message is the interface for all messages that can be sent through the Core's IPC system.
 // Any struct can be a message, allowing for structured data to be passed between services.
+// Used with ACTION for fire-and-forget broadcasts.
 type Message interface{}
+
+// Query is the interface for read-only requests that return data.
+// Used with QUERY (first responder) or QUERYALL (all responders).
+type Query interface{}
+
+// Task is the interface for requests that perform side effects.
+// Used with PERFORM (first responder executes).
+type Task interface{}
+
+// QueryHandler handles Query requests. Returns (result, handled, error).
+// If handled is false, the query will be passed to the next handler.
+type QueryHandler func(*Core, Query) (any, bool, error)
+
+// TaskHandler handles Task requests. Returns (result, handled, error).
+// If handled is false, the task will be passed to the next handler.
+type TaskHandler func(*Core, Task) (any, bool, error)
 
 // Startable is an interface for services that need to perform initialization.
 type Startable interface {
@@ -64,6 +81,10 @@ type Core struct {
 	serviceLock    bool
 	ipcMu          sync.RWMutex
 	ipcHandlers    []func(*Core, Message) error
+	queryMu        sync.RWMutex
+	queryHandlers  []QueryHandler
+	taskMu         sync.RWMutex
+	taskHandlers   []TaskHandler
 	serviceMu      sync.RWMutex
 	services       map[string]any
 	servicesLocked bool

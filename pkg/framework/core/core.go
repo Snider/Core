@@ -200,6 +200,73 @@ func (c *Core) RegisterActions(handlers ...func(*Core, Message) error) {
 	c.ipcMu.Unlock()
 }
 
+// QUERY dispatches a query to handlers until one responds.
+// Returns (result, handled, error). If no handler responds, handled is false.
+func (c *Core) QUERY(q Query) (any, bool, error) {
+	c.queryMu.RLock()
+	handlers := append([]QueryHandler(nil), c.queryHandlers...)
+	c.queryMu.RUnlock()
+
+	for _, h := range handlers {
+		result, handled, err := h(c, q)
+		if handled {
+			return result, true, err
+		}
+	}
+	return nil, false, nil
+}
+
+// QUERYALL dispatches a query to all handlers and collects all responses.
+// Returns all results from handlers that responded.
+func (c *Core) QUERYALL(q Query) ([]any, error) {
+	c.queryMu.RLock()
+	handlers := append([]QueryHandler(nil), c.queryHandlers...)
+	c.queryMu.RUnlock()
+
+	var results []any
+	var agg error
+	for _, h := range handlers {
+		result, handled, err := h(c, q)
+		if err != nil {
+			agg = errors.Join(agg, err)
+		}
+		if handled && result != nil {
+			results = append(results, result)
+		}
+	}
+	return results, agg
+}
+
+// PERFORM dispatches a task to handlers until one executes it.
+// Returns (result, handled, error). If no handler responds, handled is false.
+func (c *Core) PERFORM(t Task) (any, bool, error) {
+	c.taskMu.RLock()
+	handlers := append([]TaskHandler(nil), c.taskHandlers...)
+	c.taskMu.RUnlock()
+
+	for _, h := range handlers {
+		result, handled, err := h(c, t)
+		if handled {
+			return result, true, err
+		}
+	}
+	return nil, false, nil
+}
+
+// RegisterQuery adds a query handler to the Core.
+func (c *Core) RegisterQuery(handler QueryHandler) {
+	c.queryMu.Lock()
+	c.queryHandlers = append(c.queryHandlers, handler)
+	c.queryMu.Unlock()
+}
+
+// RegisterTask adds a task handler to the Core.
+func (c *Core) RegisterTask(handler TaskHandler) {
+	c.taskMu.Lock()
+	c.taskHandlers = append(c.taskHandlers, handler)
+	c.taskMu.Unlock()
+}
+
 // RegisterService adds a new service to the Core.
 func (c *Core) RegisterService(name string, api any) error {
 	if c.servicesLocked {
