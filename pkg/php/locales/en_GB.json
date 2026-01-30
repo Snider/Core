@@ -1,0 +1,147 @@
+{
+	"cmd": {
+		"php": {
+			"short": "Laravel/PHP development tools",
+			"long": "Laravel and PHP development tools including testing, formatting, static analysis, and deployment",
+			"label": {
+				"php": "PHP:",
+				"audit": "Audit:",
+				"psalm": "Psalm:",
+				"rector": "Rector:",
+				"security": "Security:",
+				"infection": "Infection:",
+				"info": "Info:",
+				"setup": "Setup:"
+			},
+			"error": {
+				"not_php": "Not a PHP project (no composer.json found)",
+				"fmt_failed": "Formatting failed",
+				"fmt_issues": "Style issues found",
+				"analysis_issues": "Analysis errors found",
+				"audit_failed": "Audit failed",
+				"vulns_found": "Vulnerabilities found",
+				"psalm_not_installed": "Psalm not installed",
+				"psalm_issues": "Psalm found type errors",
+				"rector_not_installed": "Rector not installed",
+				"rector_failed": "Rector failed",
+				"infection_not_installed": "Infection not installed",
+				"infection_failed": "Mutation testing failed",
+				"security_failed": "Security check failed",
+				"critical_high_issues": "Critical or high severity issues found"
+			},
+			"test": {
+				"short": "Run PHPUnit/Pest tests",
+				"long": "Run PHPUnit or Pest tests with optional filtering, parallel execution, and coverage",
+				"flag": {
+					"parallel": "Run tests in parallel",
+					"coverage": "Generate code coverage report",
+					"filter": "Filter tests by name",
+					"group": "Run only tests in this group"
+				}
+			},
+			"fmt": {
+				"short": "Format PHP code with Laravel Pint",
+				"long": "Format PHP code using Laravel Pint code style fixer",
+				"no_formatter": "No code formatter found (install laravel/pint)",
+				"no_issues": "No style issues found",
+				"formatting": "Formatting with {{.Formatter}}...",
+				"flag": {
+					"fix": "Fix style issues (default: check only)"
+				}
+			},
+			"analyse": {
+				"short": "Run PHPStan static analysis",
+				"long": "Run PHPStan/Larastan for static code analysis",
+				"no_analyser": "No static analyser found (install phpstan/phpstan or nunomaduro/larastan)",
+				"flag": {
+					"level": "Analysis level (0-9, default: from config)",
+					"memory": "Memory limit (e.g., 2G)"
+				}
+			},
+			"audit": {
+				"short": "Security audit for dependencies",
+				"long": "Audit Composer and NPM dependencies for known vulnerabilities",
+				"scanning": "Scanning dependencies for vulnerabilities...",
+				"secure": "No vulnerabilities",
+				"error": "Audit error",
+				"vulnerabilities": "{{.Count}} vulnerabilities found",
+				"found_vulns": "Found {{.Count}} vulnerabilities",
+				"all_secure": "All dependencies secure",
+				"completed_errors": "Audit completed with errors",
+				"flag": {
+					"fix": "Attempt to fix vulnerabilities"
+				}
+			},
+			"psalm": {
+				"short": "Run Psalm static analysis",
+				"long": "Run Psalm for deep static analysis and type checking",
+				"not_found": "Psalm not found",
+				"install": "composer require --dev vimeo/psalm",
+				"setup": "vendor/bin/psalm --init",
+				"analysing": "Analysing with Psalm...",
+				"analysing_fixing": "Analysing and fixing with Psalm...",
+				"flag": {
+					"level": "Analysis level (1-8)",
+					"baseline": "Generate or update baseline",
+					"show_info": "Show informational issues"
+				}
+			},
+			"rector": {
+				"short": "Automated code refactoring",
+				"long": "Run Rector for automated code upgrades and refactoring",
+				"not_found": "Rector not found",
+				"install": "composer require --dev rector/rector",
+				"setup": "vendor/bin/rector init",
+				"analysing": "Analysing code for refactoring opportunities...",
+				"refactoring": "Refactoring code...",
+				"no_changes": "No refactoring changes needed",
+				"changes_suggested": "Rector suggests changes (run with --fix to apply)",
+				"flag": {
+					"fix": "Apply refactoring changes",
+					"diff": "Show diff of changes",
+					"clear_cache": "Clear Rector cache before running"
+				}
+			},
+			"infection": {
+				"short": "Mutation testing for test quality",
+				"long": "Run Infection mutation testing to measure test suite quality",
+				"not_found": "Infection not found",
+				"install": "composer require --dev infection/infection",
+				"note": "This may take a while depending on test suite size",
+				"complete": "Mutation testing complete",
+				"flag": {
+					"min_msi": "Minimum Mutation Score Indicator (0-100)",
+					"min_covered_msi": "Minimum covered code MSI (0-100)",
+					"threads": "Number of parallel threads",
+					"filter": "Filter mutants by file path",
+					"only_covered": "Only mutate covered code"
+				}
+			},
+			"security": {
+				"short": "Security vulnerability scanning",
+				"long": "Run comprehensive security checks on PHP codebase",
+				"checks_suffix": " CHECKS",
+				"summary": "Security scan complete",
+				"passed": "Passed:",
+				"critical": "Critical:",
+				"high": "High:",
+				"medium": "Medium:",
+				"low": "Low:",
+				"flag": {
+					"severity": "Minimum severity to report (low, medium, high, critical)",
+					"sarif": "Output in SARIF format",
+					"url": "Application URL for runtime checks"
+				}
+			},
+			"qa": {
+				"short": "Run full QA pipeline",
+				"long": "Run comprehensive quality assurance: audit, format, analyse, test, and more",
+				"flag": {
+					"quick": "Run quick checks only (audit, fmt, stan)",
+					"full": "Run all stages including slow checks",
+					"fix": "Auto-fix issues where possible"
+				}
+			}
+		}
+	}
+}

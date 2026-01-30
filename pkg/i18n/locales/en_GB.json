@@ -252,6 +252,39 @@
 			"templates.short": "Manage LinuxKit templates"
 		}
 	},
+	"common": {
+		"label": {
+			"done": "Done",
+			"error": "Error",
+			"warning": "Warning",
+			"info": "Info",
+			"fix": "Fix:",
+			"install": "Install:",
+			"summary": "Summary:",
+			"setup": "Setup:"
+		},
+		"flag": {
+			"fix": "Auto-fix issues where possible",
+			"diff": "Show diff of changes",
+			"json": "Output as JSON"
+		},
+		"progress": {
+			"running": "Running {{.Task}}...",
+			"checking": "Checking {{.Item}}..."
+		},
+		"result": {
+			"no_issues": "No issues found"
+		},
+		"success": {
+			"completed": "{{.Action}} successfully"
+		},
+		"error": {
+			"failed": "Failed to {{.Action}}"
+		},
+		"hint": {
+			"fix_deps": "Update dependencies to fix vulnerabilities"
+		}
+	},
 	"error": {
 		"gh_not_found": "'gh' CLI not found. Install from https://cli.github.com/",
 		"registry_not_found": "No repos.yaml found",

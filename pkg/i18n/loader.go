@@ -120,6 +120,12 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 
 		switch v := value.(type) {
 		case string:
+			// Check if this is a word in gram.word.*
+			if grammar != nil && strings.HasPrefix(fullKey, "gram.word.") {
+				wordKey := strings.TrimPrefix(fullKey, "gram.word.")
+				grammar.Words[strings.ToLower(wordKey)] = v
+				continue
+			}
 			out[fullKey] = Message{Text: v}
 
 		case map[string]any:
@@ -184,19 +190,6 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 				}
 				if progress, ok := v["progress"].(string); ok {
 					grammar.Punct.ProgressSuffix = progress
-				}
-				continue
-			}
-
-			// Check if this is a base word in gram.word.*
-			if grammar != nil && strings.HasPrefix(fullKey, "gram.word.") {
-				wordKey := strings.TrimPrefix(fullKey, "gram.word.")
-				// v could be a string or a nested object
-				if str, ok := value.(string); ok {
-					if grammar.Words == nil {
-						grammar.Words = make(map[string]string)
-					}
-					grammar.Words[strings.ToLower(wordKey)] = str
 				}
 				continue
 			}

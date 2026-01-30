@@ -152,6 +152,8 @@ func Init() error {
 		svc, err := New()
 		if err == nil {
 			defaultService.Store(svc)
+			// Load any locales registered by packages before Init was called
+			loadRegisteredLocales(svc)
 		}
 		defaultErr = err
 	})
@@ -177,6 +179,7 @@ func SetDefault(s *Service) {
 
 // loadJSON parses nested JSON and flattens to dot-notation keys.
 // Also extracts grammar data (verbs, nouns, articles) for the language.
+// If messages already exist for the language, new messages are merged in.
 func (s *Service) loadJSON(lang string, data []byte) error {
 	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -191,7 +194,15 @@ func (s *Service) loadJSON(lang string, data []byte) error {
 	}
 
 	flattenWithGrammar("", raw, messages, grammarData)
-	s.messages[lang] = messages
+
+	// Merge new messages into existing (or create new map)
+	if existing, ok := s.messages[lang]; ok {
+		for key, msg := range messages {
+			existing[key] = msg
+		}
+	} else {
+		s.messages[lang] = messages
+	}
 
 	// Store grammar data if any was found
 	if len(grammarData.Verbs) > 0 || len(grammarData.Nouns) > 0 || len(grammarData.Words) > 0 {
