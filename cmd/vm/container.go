@@ -69,7 +69,7 @@ func addVMRunCommand(parent *cobra.Command) {
 func runContainer(image, name string, detach bool, memory, cpus, sshPort int) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
 
 	opts := container.RunOptions{
@@ -90,7 +90,7 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 	ctx := context.Background()
 	c, err := manager.Run(ctx, image, opts)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.run_container")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "run container"})+": %w", err)
 	}
 
 	if detach {
@@ -127,13 +127,13 @@ func addVMPsCommand(parent *cobra.Command) {
 func listContainers(all bool) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
 
 	ctx := context.Background()
 	containers, err := manager.List(ctx)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.list_containers")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "list containers"})+": %w", err)
 	}
 
 	// Filter if not showing all
@@ -222,7 +222,7 @@ func addVMStopCommand(parent *cobra.Command) {
 func stopContainer(id string) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
 
 	// Support partial ID matching
@@ -235,7 +235,7 @@ func stopContainer(id string) error {
 
 	ctx := context.Background()
 	if err := manager.Stop(ctx, fullID); err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.stop_container")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "stop container"})+": %w", err)
 	}
 
 	fmt.Printf("%s\n", successStyle.Render(i18n.T("common.status.stopped")))
@@ -291,7 +291,7 @@ func addVMLogsCommand(parent *cobra.Command) {
 func viewLogs(id string, follow bool) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
 
 	fullID, err := resolveContainerID(manager, id)
@@ -330,7 +330,7 @@ func addVMExecCommand(parent *cobra.Command) {
 func execInContainer(id string, cmd []string) error {
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
 
 	fullID, err := resolveContainerID(manager, id)

@@ -26,7 +26,7 @@ func addSyncCommand(parent *cobra.Command) {
 			if err := runSync(); err != nil {
 				return fmt.Errorf("%s %w", i18n.T("common.label.error"), err)
 			}
-			fmt.Println(i18n.T("cmd.dev.sync.success"))
+			fmt.Println(i18n.T("common.success.completed", map[string]any{"Action": "Public APIs synchronized"}))
 			return nil
 		},
 	}

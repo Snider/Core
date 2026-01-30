@@ -24,7 +24,7 @@ func runChangelog(fromRef, toRef string) error {
 	// Generate changelog
 	changelog, err := release.GenerateWithConfig(projectDir, fromRef, toRef, &cfg.Changelog)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.generate_changelog"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "generate changelog"}), err)
 	}
 
 	fmt.Println(changelog)

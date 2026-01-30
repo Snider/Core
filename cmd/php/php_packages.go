@@ -38,7 +38,7 @@ func addPHPPackagesLinkCommand(parent *cobra.Command) {
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.link.linking"))
 
 			if err := phppkg.LinkPackages(cwd, args); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.link_packages"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "link packages"}), err)
 			}
 
 			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.packages.link.done"))
@@ -64,7 +64,7 @@ func addPHPPackagesUnlinkCommand(parent *cobra.Command) {
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.packages.unlink.unlinking"))
 
 			if err := phppkg.UnlinkPackages(cwd, args); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.unlink_packages"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "unlink packages"}), err)
 			}
 
 			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.packages.unlink.done"))
@@ -113,7 +113,7 @@ func addPHPPackagesListCommand(parent *cobra.Command) {
 
 			packages, err := phppkg.ListLinkedPackages(cwd)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.list_packages"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "list packages"}), err)
 			}
 
 			if len(packages) == 0 {

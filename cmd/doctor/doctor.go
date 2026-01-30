@@ -33,7 +33,7 @@ func init() {
 }
 
 func runDoctor(verbose bool) error {
-	fmt.Println(i18n.T("cmd.doctor.checking"))
+	fmt.Println(i18n.T("common.progress.checking", map[string]any{"Item": "development environment"}))
 	fmt.Println()
 
 	var passed, failed, optional int

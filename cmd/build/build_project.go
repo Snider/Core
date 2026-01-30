@@ -41,7 +41,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	} else {
 		projectType, err = buildpkg.PrimaryType(projectDir)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.detect_type"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "detect project type"}), err)
 		}
 		if projectType == "" {
 			return fmt.Errorf("%s", i18n.T("cmd.build.error.no_project_type", map[string]interface{}{"Dir": projectDir}))
@@ -240,7 +240,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		// JSON output for CI
 		output, err := json.MarshalIndent(outputArtifacts, "", "  ")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.build.error.marshal_artifacts"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "marshal artifacts"}), err)
 		}
 		fmt.Println(string(output))
 	}
@@ -267,7 +267,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 	checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
 	if err := buildpkg.WriteChecksumFile(checksummedArtifacts, checksumPath); err != nil {
 		if !ciMode {
-			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("cmd.build.error.write_checksums"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("common.error.failed", map[string]any{"Action": "write CHECKSUMS.txt"}), err)
 		}
 		return nil, err
 	}

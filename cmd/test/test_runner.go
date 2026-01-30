@@ -54,7 +54,7 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 	cmd.Env = append(os.Environ(), getMacOSDeploymentTarget())
 
 	if !jsonOutput {
-		fmt.Printf("%s %s\n", testHeaderStyle.Render(i18n.T("common.label.test")), i18n.T("common.result.running_tests"))
+		fmt.Printf("%s %s\n", testHeaderStyle.Render(i18n.T("common.label.test")), i18n.T("common.progress.running", map[string]any{"Task": "tests"}))
 		fmt.Printf("  %s %s\n", i18n.T("common.label.package"), testDimStyle.Render(pkg))
 		if run != "" {
 			fmt.Printf("  %s  %s\n", i18n.T("common.label.filter"), testDimStyle.Render(run))

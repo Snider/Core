@@ -80,7 +80,7 @@ func runSDKDiff(basePath, specPath string) error {
 		return fmt.Errorf(i18n.T("cmd.sdk.diff.error.base_required"))
 	}
 
-	fmt.Printf("%s %s\n", sdkHeaderStyle.Render(i18n.T("cmd.sdk.diff.label")), i18n.T("cmd.sdk.diff.checking"))
+	fmt.Printf("%s %s\n", sdkHeaderStyle.Render(i18n.T("cmd.sdk.diff.label")), i18n.T("common.progress.checking", map[string]any{"Item": "breaking changes"}))
 	fmt.Printf("  %s %s\n", i18n.T("cmd.sdk.diff.base_label"), sdkDimStyle.Render(basePath))
 	fmt.Printf("  %s %s\n", i18n.T("common.label.current"), sdkDimStyle.Render(specPath))
 	fmt.Println()

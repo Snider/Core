@@ -149,20 +149,20 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	// Apply template with variables
 	content, err := container.ApplyTemplate(templateName, vars)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.apply_template")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "apply template"})+": %w", err)
 	}
 
 	// Create a temporary directory for the build
 	tmpDir, err := os.MkdirTemp("", "core-linuxkit-*")
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.create_temp")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "create temp directory"})+": %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
 	// Write the YAML file
 	yamlPath := filepath.Join(tmpDir, templateName+".yml")
 	if err := os.WriteFile(yamlPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.write_template")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "write template"})+": %w", err)
 	}
 
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.template")), repoNameStyle.Render(templateName))
@@ -171,7 +171,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	// Build the image using linuxkit
 	outputPath := filepath.Join(tmpDir, templateName)
 	if err := buildLinuxKitImage(yamlPath, outputPath); err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.build_image")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "build image"})+": %w", err)
 	}
 
 	// Find the built image (linuxkit creates .iso or other format)
@@ -186,7 +186,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	// Run the image
 	manager, err := container.NewLinuxKitManager()
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.init_manager")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
 
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.vm.label.hypervisor")), manager.Hypervisor().Name())
@@ -195,7 +195,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	ctx := context.Background()
 	c, err := manager.Run(ctx, imagePath, runOpts)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.vm.error.run_container")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "run container"})+": %w", err)
 	}
 
 	if runOpts.Detach {

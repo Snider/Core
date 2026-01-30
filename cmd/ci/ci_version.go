@@ -17,7 +17,7 @@ func runCIReleaseVersion() error {
 
 	version, err := release.DetermineVersion(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.determine_version"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "determine version"}), err)
 	}
 
 	fmt.Printf("%s %s\n", i18n.T("common.label.version"), releaseValueStyle.Render(version))

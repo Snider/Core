@@ -73,7 +73,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	args = append(args, pkg)
 
 	if !jsonOut {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.test")), i18n.T("common.result.running_tests"))
+		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.test")), i18n.T("common.progress.running", map[string]any{"Task": "tests"}))
 		fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("common.label.package")), pkg)
 		fmt.Println()
 	}
@@ -176,7 +176,7 @@ func addGoCovCommand(parent *cobra.Command) {
 				// Auto-discover packages with tests
 				pkgs, err := findTestPackages(".")
 				if err != nil {
-					return fmt.Errorf("%s: %w", i18n.T("cmd.go.cov.error.discover"), err)
+					return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "discover test packages"}), err)
 				}
 				if len(pkgs) == 0 {
 					return fmt.Errorf(i18n.T("cmd.go.cov.error.no_packages"))
@@ -187,13 +187,13 @@ func addGoCovCommand(parent *cobra.Command) {
 			// Create temp file for coverage data
 			covFile, err := os.CreateTemp("", "coverage-*.out")
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.go.cov.error.create_file"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create coverage file"}), err)
 			}
 			covPath := covFile.Name()
 			covFile.Close()
 			defer os.Remove(covPath)
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.coverage")), i18n.T("cmd.go.cov.running"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.coverage")), i18n.T("common.progress.running", map[string]any{"Task": "tests with coverage"}))
 			// Truncate package list if too long for display
 			displayPkg := pkg
 			if len(displayPkg) > 60 {
@@ -221,7 +221,7 @@ func addGoCovCommand(parent *cobra.Command) {
 				if testErr != nil {
 					return testErr
 				}
-				return fmt.Errorf("%s: %w", i18n.T("cmd.go.cov.error.get_coverage"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get coverage"}), err)
 			}
 
 			// Parse total coverage from last line
@@ -248,7 +248,7 @@ func addGoCovCommand(parent *cobra.Command) {
 				htmlPath := "coverage.html"
 				htmlCmd := exec.Command("go", "tool", "cover", "-html="+covPath, "-o="+htmlPath)
 				if err := htmlCmd.Run(); err != nil {
-					return fmt.Errorf("%s: %w", i18n.T("cmd.go.cov.error.generate_html"), err)
+					return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "generate HTML"}), err)
 				}
 				fmt.Printf("  %s %s\n", dimStyle.Render(i18n.T("cmd.go.cov.html_label")), htmlPath)
 

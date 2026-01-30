@@ -37,9 +37,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
-			// Detect test runner
-			runner := phppkg.DetectTestRunner(cwd)
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.test.running", map[string]interface{}{"Runner": runner}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("common.progress.running", map[string]any{"Task": "tests"}))
 
 			ctx := context.Background()
 
@@ -101,7 +99,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 			if fmtFix {
 				msg = i18n.T("cmd.php.fmt.formatting", map[string]interface{}{"Formatter": formatter})
 			} else {
-				msg = i18n.T("cmd.php.fmt.checking", map[string]interface{}{"Formatter": formatter})
+				msg = i18n.T("common.progress.checking", map[string]any{"Item": "code style"})
 			}
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), msg)
 
@@ -127,7 +125,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 			}
 
 			if fmtFix {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.fmt.success"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Code formatted"}))
 			} else {
 				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.fmt.no_issues"))
 			}
@@ -163,12 +161,12 @@ func addPHPAnalyseCommand(parent *cobra.Command) {
 			}
 
 			// Detect analyser
-			analyser, found := phppkg.DetectAnalyser(cwd)
+			_, found := phppkg.DetectAnalyser(cwd)
 			if !found {
 				return fmt.Errorf(i18n.T("cmd.php.analyse.no_analyser"))
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("cmd.php.analyse.running", map[string]interface{}{"Analyser": analyser}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.T("common.progress.running", map[string]any{"Task": "static analysis"}))
 
 			ctx := context.Background()
 
@@ -383,7 +381,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 				return fmt.Errorf(i18n.T("cmd.php.error.not_php"))
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.security")), i18n.T("cmd.php.security.running"))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.security")), i18n.T("common.progress.running", map[string]any{"Task": "security checks"}))
 
 			ctx := context.Background()
 
@@ -495,7 +493,7 @@ func addPHPQACommand(parent *cobra.Command) {
 			for i, s := range stages {
 				stageNames[i] = string(s)
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.qa")), i18n.T("cmd.php.qa.running", map[string]interface{}{"Stages": strings.Join(stageNames, " -> ")}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.qa")), i18n.T("common.progress.running", map[string]any{"Task": "QA pipeline"}))
 
 			ctx := context.Background()
 			var allPassed = true
@@ -725,7 +723,7 @@ func addPHPRectorCommand(parent *cobra.Command) {
 			}
 
 			if rectorFix {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.rector.refactored"))
+				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Code refactored"}))
 			} else {
 				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.rector.no_changes"))
 			}
@@ -770,7 +768,7 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 				return fmt.Errorf(i18n.T("cmd.php.error.infection_not_installed"))
 			}
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.infection")), i18n.T("cmd.php.infection.running"))
+			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.infection")), i18n.T("common.progress.running", map[string]any{"Task": "mutation testing"}))
 			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.infection.note"))
 
 			ctx := context.Background()

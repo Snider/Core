@@ -61,7 +61,7 @@ func runCIReleaseInit() error {
 
 	// Write config
 	if err := release.WriteConfig(cfg, projectDir); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.ci.error.write_config"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "write config"}), err)
 	}
 
 	fmt.Println()

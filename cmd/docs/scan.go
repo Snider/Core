@@ -30,7 +30,7 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return nil, "", fmt.Errorf("%s: %w", i18n.T("cmd.docs.error.load_registry"), err)
+			return nil, "", fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load registry"}), err)
 		}
 		basePath = filepath.Dir(registryPath)
 	} else {
@@ -38,14 +38,14 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return nil, "", fmt.Errorf("%s: %w", i18n.T("cmd.docs.error.load_registry"), err)
+				return nil, "", fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load registry"}), err)
 			}
 			basePath = filepath.Dir(registryPath)
 		} else {
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return nil, "", fmt.Errorf("%s: %w", i18n.T("cmd.docs.error.scan_directory"), err)
+				return nil, "", fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "scan directory"}), err)
 			}
 			basePath = cwd
 		}

@@ -68,7 +68,7 @@ var tasksCmd = &cobra.Command{
 
 		tasks, err := client.ListTasks(ctx, opts)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.list_tasks"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "list tasks"}), err)
 		}
 
 		if len(tasks) == 0 {
@@ -111,7 +111,7 @@ var taskCmd = &cobra.Command{
 				Limit:  50,
 			})
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.list_tasks"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "list tasks"}), err)
 			}
 
 			if len(tasks) == 0 {
@@ -140,7 +140,7 @@ var taskCmd = &cobra.Command{
 
 			task, err = client.GetTask(ctx, taskID)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_task"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get task"}), err)
 			}
 		}
 
@@ -149,7 +149,7 @@ var taskCmd = &cobra.Command{
 			cwd, _ := os.Getwd()
 			taskCtx, err := agentic.BuildTaskContext(task, cwd)
 			if err != nil {
-				fmt.Printf("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("cmd.ai.task.context_failed"), err)
+				fmt.Printf("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("common.error.failed", map[string]any{"Action": "build context"}), err)
 			} else {
 				fmt.Println(taskCtx.FormatContext())
 			}
@@ -163,10 +163,10 @@ var taskCmd = &cobra.Command{
 
 			claimedTask, err := client.ClaimTask(ctx, task.ID)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.claim_task"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "claim task"}), err)
 			}
 
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task.claimed"))
+			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("common.success.completed", map[string]any{"Action": "Task claimed"}))
 			fmt.Printf("   %s %s\n", i18n.T("common.label.status"), formatTaskStatus(claimedTask.Status))
 		}
 

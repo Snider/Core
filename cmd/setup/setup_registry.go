@@ -200,7 +200,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	// Run build if requested
 	if runBuild && succeeded > 0 {
 		fmt.Println()
-		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.setup.running_build"))
+		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("common.progress.running", map[string]any{"Task": "build"}))
 		buildCmd := exec.Command("core", "build")
 		buildCmd.Dir = basePath
 		buildCmd.Stdout = os.Stdout

@@ -76,7 +76,6 @@
 		"result": {
 			"all_passed": "All tests passed",
 			"no_issues": "No issues found",
-			"running_tests": "Running tests",
 			"run_with_coverage": "Run tests with coverage"
 		},
 		"hint": {
@@ -154,19 +153,6 @@
 				},
 				"short": "Claude Code integration"
 			},
-			"error": {
-				"claim_task": "failed to claim task",
-				"commit": "failed to commit",
-				"complete_task": "failed to complete task",
-				"create_pr": "failed to create PR",
-				"get_branch": "failed to get current branch",
-				"get_task": "failed to get task",
-				"git_status": "failed to check git status",
-				"list_tasks": "failed to list tasks",
-				"push": "failed to push",
-				"push_branch": "failed to push branch",
-				"update_task": "failed to update task"
-			},
 			"label": {
 				"blocked_by": "Blocked by:",
 				"claimed_by": "Claimed by:",
@@ -193,9 +179,7 @@
 				"pending": "pending"
 			},
 			"task": {
-				"claimed": "Task claimed successfully!",
 				"claiming": "Claiming task...",
-				"context_failed": "Failed to build context",
 				"flag": {
 					"auto": "Auto-select highest priority pending task",
 					"claim": "Claim the task after showing details",
@@ -217,7 +201,6 @@
 				"long": "Creates a git commit with a task reference and co-author attribution.\n\nCommit message format:\n  feat(scope): description\n\n  Task: #123\n  Co-Authored-By: Claude <noreply@anthropic.com>\n\nExamples:\n  core ai task:commit abc123 --message 'add user authentication'\n  core ai task:commit abc123 -m 'fix login bug' --scope auth\n  core ai task:commit abc123 -m 'update docs' --push",
 				"message_required": "commit message required (--message or -m)",
 				"no_changes": "No uncommitted changes to commit.",
-				"pushed": "Changes pushed successfully",
 				"pushing": "Pushing changes...",
 				"short": "Auto-commit changes with task reference"
 			},
@@ -229,8 +212,7 @@
 					"output": "Summary of the completed work"
 				},
 				"long": "Marks a task as completed with optional output and artifacts.\n\nExamples:\n  core ai task:complete abc123 --output 'Feature implemented'\n  core ai task:complete abc123 --failed --error 'Build failed'",
-				"short": "Mark a task as completed",
-				"success": "Task {{.ID}} completed successfully"
+				"short": "Mark a task as completed"
 			},
 			"task_pr": {
 				"branch_error": "cannot create PR from {{.Branch}} branch; create a feature branch first",
@@ -254,8 +236,7 @@
 				},
 				"flag_required": "at least one of --status, --progress, or --notes required",
 				"long": "Updates a task's status, progress, or adds notes.\n\nExamples:\n  core ai task:update abc123 --status in_progress\n  core ai task:update abc123 --progress 50 --notes 'Halfway done'",
-				"short": "Update task status or progress",
-				"success": "Task {{.ID}} updated successfully"
+				"short": "Update task status or progress"
 			},
 			"tasks": {
 				"flag": {
@@ -280,18 +261,15 @@
 			"error": {
 				"archive_failed": "archive failed",
 				"checksum_failed": "checksum failed",
-				"detect_type": "failed to detect project type",
 				"gpg_signing_failed": "GPG signing failed",
 				"invalid_target": "invalid target format \"{{.Target}}\", expected OS/arch (e.g., linux/amd64)",
-				"marshal_artifacts": "failed to marshal artifacts",
 				"no_project_type": "no supported project type detected in {{.Dir}}\nSupported types: go (go.mod), wails (wails.json), node (package.json), php (composer.json)",
 				"no_targets": "no valid targets specified",
 				"node_not_implemented": "Node.js builder not yet implemented",
 				"notarization_failed": "notarization failed",
 				"php_not_implemented": "PHP builder not yet implemented",
 				"signing_failed": "signing failed",
-				"unsupported_type": "unsupported project type",
-				"write_checksums": "failed to write CHECKSUMS.txt"
+				"unsupported_type": "unsupported project type"
 			},
 			"flag": {
 				"archive": "Create archives (tar.gz for linux/darwin, zip for windows)",
@@ -311,11 +289,6 @@
 				"compiling": "Compiling application...",
 				"copying_files": "Copying application files...",
 				"error": {
-					"anchor_template": "failed to anchor template filesystem",
-					"clean_build_dir": "failed to clean build directory",
-					"copy_files": "failed to copy application files",
-					"create_sod": "failed to create new sod instance",
-					"extract_template": "failed to extract template",
 					"go_build": "go build failed",
 					"go_mod_tidy": "go mod tidy failed",
 					"invalid_path": "invalid path specified",
@@ -342,17 +315,10 @@
 			},
 			"long": "Builds the current project with automatic type detection.\nSupports Go, Wails, Docker, LinuxKit, and Taskfile projects.\nConfiguration can be provided via .core/build.yaml or command-line flags.\n\nExamples:\n  core build                              # Auto-detect and build\n  core build --type docker                # Build Docker image\n  core build --type linuxkit              # Build LinuxKit image\n  core build --type linuxkit --config linuxkit.yml --format qcow2-bios",
 			"pwa": {
-				"asset_download_failed": "failed to download asset",
 				"download_complete": "PWA download complete.",
 				"downloading_to": "Downloading PWA to temporary directory:",
 				"error": {
-					"create_temp_dir": "failed to create temporary directory",
-					"download_failed": "failed to download PWA",
-					"fetch_manifest": "failed to fetch or parse manifest",
-					"fetch_url": "failed to fetch URL",
-					"no_manifest_tag": "no <link rel=\"manifest\"> tag found",
-					"read_response": "failed to read response body",
-					"write_index": "failed to write index.html"
+					"no_manifest_tag": "no <link rel=\"manifest\"> tag found"
 				},
 				"flag": {
 					"url": "The URL of the PWA to build"
@@ -393,10 +359,7 @@
 			},
 			"dry_run_hint": "(dry-run) use --we-are-go-for-launch to publish",
 			"error": {
-				"determine_version": "failed to determine version",
-				"generate_changelog": "failed to generate changelog",
-				"no_publishers": "no publishers configured in .core/release.yaml",
-				"write_config": "failed to write config"
+				"no_publishers": "no publishers configured in .core/release.yaml"
 			},
 			"flag": {
 				"draft": "Create release as a draft",
@@ -456,8 +419,7 @@
 					"all": "Commit all dirty repos without prompting"
 				},
 				"long": "Uses Claude to create commits for dirty repos.\nShows uncommitted changes and invokes Claude to generate commit messages.",
-				"short": "Claude-assisted commits across repos",
-				"success": "Committed successfully"
+				"short": "Claude-assisted commits across repos"
 			},
 			"committed": "committed",
 			"committing": "Committing",
@@ -531,7 +493,6 @@
 				"nothing": "Nothing to push",
 				"pull_and_retry": "Pull changes and retry push?",
 				"short": "Push commits across all repos",
-				"success": "Pushed successfully",
 				"uncommitted_changes_commit": "You have uncommitted changes. Commit with Claude first?"
 			},
 			"repos_with_changes": "{{.Count}} repo(s) with uncommitted changes:",
@@ -563,8 +524,7 @@
 			},
 			"sync": {
 				"long": "This command scans the 'pkg' directory for services and ensures that the\ntop-level public API for each service is in sync with its internal implementation.\nIt automatically generates the necessary Go files with type aliases.",
-				"short": "Synchronizes public service APIs with internal implementations",
-				"success": "Public APIs synchronized successfully."
+				"short": "Synchronizes public service APIs with internal implementations"
 			},
 			"untracked": "{{.Count}} untracked",
 			"vm": {
@@ -676,10 +636,6 @@
 			}
 		},
 		"docs": {
-			"error": {
-				"load_registry": "failed to load registry",
-				"scan_directory": "failed to scan directory"
-			},
 			"list": {
 				"coverage_summary": "{{.WithDocs}} with docs, {{.WithoutDocs}} without",
 				"header": {
@@ -745,7 +701,6 @@
 					"name": "pnpm"
 				}
 			},
-			"checking": "Checking development environment...",
 			"cli_auth": "CLI authenticated",
 			"cli_auth_missing": "CLI authentication - run: gh auth login",
 			"github": "GitHub Access:",
@@ -782,10 +737,6 @@
 				"below_threshold": "FAIL Coverage {{.Actual}}% is below threshold {{.Threshold}}%",
 				"error": {
 					"below_threshold": "coverage below threshold",
-					"create_file": "failed to create coverage file",
-					"discover": "failed to discover test packages",
-					"generate_html": "failed to generate HTML",
-					"get_coverage": "failed to get coverage",
 					"no_packages": "no test packages found"
 				},
 				"flag": {
@@ -796,7 +747,6 @@
 				"html_label": "HTML:",
 				"long": "Run tests and generate coverage report.\n\nExamples:\n  core go cov                  # Run with coverage summary\n  core go cov --html           # Generate HTML report\n  core go cov --open           # Generate and open HTML report\n  core go cov --threshold 80   # Fail if coverage < 80%",
 				"open_manually": "(open manually)",
-				"running": "Running tests with coverage",
 				"short": "Run tests with coverage report"
 			},
 			"fmt": {
@@ -883,7 +833,6 @@
 				},
 				"long": "Run PHPStan or Larastan static analysis.\n\nAuto-detects Larastan if installed, otherwise uses PHPStan.",
 				"no_analyser": "no static analyser found (install PHPStan: composer require phpstan/phpstan --dev)",
-				"running": "Running static analysis with {{.Analyser}}",
 				"short": "Run PHPStan static analysis"
 			},
 			"audit": {
@@ -904,7 +853,6 @@
 				"building_docker": "Building Docker image...",
 				"building_linuxkit": "Building LinuxKit image...",
 				"docker_run_with": "Run with:",
-				"docker_success": "Docker image built successfully",
 				"extensions": "Extensions:",
 				"flag": {
 					"dockerfile": "Path to custom Dockerfile",
@@ -919,7 +867,6 @@
 				"format": "Format:",
 				"frontend": "Frontend:",
 				"laravel": "Laravel:",
-				"linuxkit_success": "LinuxKit image built successfully",
 				"long": "Build a production-ready container image for the PHP project.\n\nBy default, builds a Docker image using FrankenPHP.\nUse --type linuxkit to build a LinuxKit VM image instead.",
 				"octane": "Octane:",
 				"php_version": "PHP Version:",
@@ -935,7 +882,6 @@
 				},
 				"long": "Deploy the PHP application to Coolify.\n\nRequires configuration in .env:\n  COOLIFY_URL=https://coolify.example.com\n  COOLIFY_TOKEN=your-api-token\n  COOLIFY_APP_ID=production-app-id\n  COOLIFY_STAGING_APP_ID=staging-app-id (optional)",
 				"short": "Deploy to Coolify",
-				"success": "Deployment completed successfully",
 				"triggered": "Deployment triggered. Use 'core php deploy:status' to check progress.",
 				"warning_status": "Deployment ended with status: {{.Status}}"
 			},
@@ -958,12 +904,10 @@
 				"long": "Rollback to a previous deployment.\n\nIf no deployment ID is specified, rolls back to the most recent\nsuccessful deployment.",
 				"rolling_back": "Rolling back {{.Environment}}...",
 				"short": "Rollback to previous deployment",
-				"success": "Rollback completed successfully",
 				"triggered": "Rollback triggered. Use 'core php deploy:status' to check progress.",
 				"warning_status": "Rollback ended with status: {{.Status}}"
 			},
 			"deploy_status": {
-				"checking": "Checking {{.Environment}} deployment status...",
 				"flag": {
 					"id": "Specific deployment ID",
 					"staging": "Check staging environment"
@@ -983,7 +927,6 @@
 					"no_vite": "Skip Vite dev server",
 					"port": "FrankenPHP port (default: 8000)"
 				},
-				"logs_failed": "Failed to get logs: {{.Error}}",
 				"long": "Starts all detected Laravel services.\n\nAuto-detects:\n  - Vite (vite.config.js/ts)\n  - Horizon (config/horizon.php)\n  - Reverb (config/reverb.php)\n  - Redis (from .env)",
 				"press_ctrl_c": "Press Ctrl+C to stop all services",
 				"services_started": "Services started:",
@@ -997,36 +940,24 @@
 				"audit_failed": "audit failed",
 				"critical_high_issues": "critical or high severity issues found",
 				"deploy_failed": "deployment failed",
-				"detect_config": "failed to detect project configuration",
 				"fmt_failed": "formatting failed",
 				"fmt_issues": "formatting issues found",
 				"infection_failed": "mutation testing failed",
 				"infection_not_installed": "infection not installed",
-				"link_packages": "failed to link packages",
-				"list_deployments": "failed to list deployments",
-				"list_packages": "failed to list packages",
 				"mkcert_not_installed": "mkcert not installed",
 				"not_laravel": "not a Laravel project (missing artisan or laravel/framework)",
 				"not_laravel_short": "not a Laravel project",
 				"not_php": "not a PHP project (missing composer.json)",
-				"open_shell": "failed to open shell",
 				"psalm_issues": "psalm found issues",
 				"psalm_not_installed": "psalm not installed",
 				"rector_failed": "rector failed",
 				"rector_not_installed": "rector not installed",
 				"rollback_failed": "rollback failed",
 				"security_failed": "security check failed",
-				"ssl_setup": "failed to setup SSL",
-				"start_container": "failed to start container",
-				"start_services": "failed to start services",
-				"status_failed": "failed to get status",
-				"stop_services": "failed to stop services",
-				"unlink_packages": "failed to unlink packages",
 				"update_packages": "composer update failed",
 				"vulns_found": "vulnerabilities found"
 			},
 			"fmt": {
-				"checking": "Checking code with {{.Formatter}}",
 				"flag": {
 					"fix": "Auto-fix formatting issues"
 				},
@@ -1034,8 +965,7 @@
 				"long": "Format PHP code using Laravel Pint.",
 				"no_formatter": "no formatter found (install Laravel Pint: composer require laravel/pint --dev)",
 				"no_issues": "No formatting issues found",
-				"short": "Format PHP code with Laravel Pint",
-				"success": "Code formatted successfully"
+				"short": "Format PHP code with Laravel Pint"
 			},
 			"infection": {
 				"complete": "Mutation testing complete",
@@ -1050,7 +980,6 @@
 				"long": "Run Infection mutation testing to measure test suite quality.\n\nMutation testing modifies your code and checks if tests catch\nthe changes. High mutation score = high quality tests.\n\nWarning: This can be slow on large codebases.",
 				"not_found": "Infection not found",
 				"note": "This may take a while...",
-				"running": "Running mutation testing",
 				"short": "Mutation testing for test quality"
 			},
 			"label": {
@@ -1148,7 +1077,6 @@
 				"no_checks": "No checks available",
 				"passed": "passed",
 				"pipeline_failed": "QA pipeline failed",
-				"running": "Running QA pipeline ({{.Stages}})",
 				"short": "Run full QA pipeline",
 				"some_failed": "Some checks failed ({{.Passed}}/{{.Total}} passed)",
 				"stage_prefix": "═══ ",
@@ -1167,7 +1095,6 @@
 				"long": "Run Rector for automated code improvements and PHP upgrades.\n\nRector can automatically upgrade PHP syntax, improve code quality,\nand apply framework-specific refactorings.",
 				"no_changes": "No changes needed",
 				"not_found": "Rector not found",
-				"refactored": "Code refactored successfully",
 				"refactoring": "Refactoring code with Rector",
 				"setup": "./vendor/bin/rector init",
 				"short": "Automated code refactoring"
@@ -1185,7 +1112,6 @@
 				"low": "Low:",
 				"medium": "Medium:",
 				"passed": "Passed:",
-				"running": "Running security checks",
 				"short": "Security vulnerability scanning",
 				"summary": "Security scan complete"
 			},
@@ -1201,7 +1127,6 @@
 				"long": "Run a production PHP container.\n\nThis starts the built Docker image in production mode.",
 				"name_required": "--name is required: specify the Docker image name",
 				"ports": "Ports:",
-				"running": "Running production container...",
 				"short": "Run production container",
 				"stopped": "Container stopped"
 			},
@@ -1252,20 +1177,16 @@
 					"parallel": "Run tests in parallel"
 				},
 				"long": "Run PHP tests using PHPUnit or Pest.\n\nAuto-detects Pest if tests/Pest.php exists, otherwise uses PHPUnit.",
-				"running": "Running tests with {{.Runner}}",
 				"short": "Run PHP tests (PHPUnit/Pest)"
 			}
 		},
 		"pkg": {
 			"error": {
 				"auth_failed": "authentication failed - try: unset GH_TOKEN && gh auth login",
-				"create_directory": "failed to create directory: %w",
 				"gh_not_authenticated": "gh CLI not authenticated. Run: gh auth login",
 				"invalid_repo_format": "invalid repo format: use org/repo (e.g., host-uk/core-php)",
-				"load_registry": "failed to load registry: %w",
 				"no_repos_yaml": "no repos.yaml found",
 				"no_repos_yaml_workspace": "no repos.yaml found - run from workspace directory",
-				"parse_results": "failed to parse results: %w",
 				"repo_required": "repository is required (e.g., core pkg install host-uk/core-php)",
 				"search_failed": "search failed: %s",
 				"specify_package": "specify package name or use --all"
@@ -1337,7 +1258,6 @@
 			"diff": {
 				"base_label": "Base:",
 				"breaking": "Breaking:",
-				"checking": "Checking for breaking changes",
 				"error": {
 					"base_required": "--base is required (version tag or file path)"
 				},
@@ -1391,7 +1311,6 @@
 				"setting_up": "Setting up repository",
 				"would_create": "Would create"
 			},
-			"running_build": "Running build...",
 			"short": "Bootstrap workspace or clone packages from registry",
 			"to_clone": "{{.Count}} to clone",
 			"wizard": {
@@ -1434,21 +1353,13 @@
 		},
 		"vm": {
 			"error": {
-				"apply_template": "failed to apply template",
-				"build_image": "failed to build image",
-				"create_temp": "failed to create temp directory",
 				"id_and_cmd_required": "container ID and command are required",
 				"id_required": "container ID is required",
-				"init_manager": "failed to initialize container manager",
 				"linuxkit_not_found": "linuxkit not found. Install with: brew install linuxkit (macOS) or see https://github.com/linuxkit/linuxkit",
-				"list_containers": "failed to list containers",
 				"multiple_match": "multiple containers match '{{.ID}}', be more specific",
 				"no_image_found": "no image found after build",
 				"no_match": "no container found matching: {{.ID}}",
-				"run_container": "failed to run container",
-				"stop_container": "failed to stop container",
-				"template_required": "template name is required",
-				"write_template": "failed to write template"
+				"template_required": "template name is required"
 			},
 			"exec": {
 				"long": "Execute a command inside a running VM via SSH.\n\nExamples:\n  core vm exec abc12345 ls -la\n  core vm exec abc1 /bin/sh",

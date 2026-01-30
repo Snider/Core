@@ -75,7 +75,7 @@ func addPHPDeployCommand(parent *cobra.Command) {
 
 			if deployWait {
 				if phppkg.IsDeploymentSuccessful(status.Status) {
-					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.deploy.success"))
+					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Deployment completed"}))
 				} else {
 					fmt.Printf("\n%s %s\n", errorStyle.Render(i18n.T("common.label.warning")), i18n.T("cmd.php.deploy.warning_status", map[string]interface{}{"Status": status.Status}))
 				}
@@ -115,7 +115,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 				env = phppkg.EnvStaging
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_status.checking", map[string]interface{}{"Environment": env}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("common.progress.checking", map[string]any{"Item": "deployment status"}))
 
 			ctx := context.Background()
 
@@ -127,7 +127,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 
 			status, err := phppkg.DeployStatus(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.status_failed"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get status"}), err)
 			}
 
 			printDeploymentStatus(status)
@@ -184,7 +184,7 @@ func addPHPDeployRollbackCommand(parent *cobra.Command) {
 
 			if rollbackWait {
 				if phppkg.IsDeploymentSuccessful(status.Status) {
-					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.deploy_rollback.success"))
+					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("common.success.completed", map[string]any{"Action": "Rollback completed"}))
 				} else {
 					fmt.Printf("\n%s %s\n", errorStyle.Render(i18n.T("common.label.warning")), i18n.T("cmd.php.deploy_rollback.warning_status", map[string]interface{}{"Status": status.Status}))
 				}
@@ -235,7 +235,7 @@ func addPHPDeployListCommand(parent *cobra.Command) {
 
 			deployments, err := phppkg.ListDeployments(ctx, cwd, env, limit)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.list_deployments"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "list deployments"}), err)
 			}
 
 			if len(deployments) == 0 {

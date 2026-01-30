@@ -34,7 +34,7 @@ func runPkgList() error {
 
 	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.pkg.error.load_registry"), err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "load registry"}), err)
 	}
 
 	basePath := reg.BasePath
@@ -120,7 +120,7 @@ func runPkgUpdate(packages []string, all bool) error {
 
 	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.pkg.error.load_registry"), err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "load registry"}), err)
 	}
 
 	basePath := reg.BasePath
@@ -200,7 +200,7 @@ func runPkgOutdated() error {
 
 	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
-		return fmt.Errorf(i18n.T("cmd.pkg.error.load_registry"), err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "load registry"}), err)
 	}
 
 	basePath := reg.BasePath

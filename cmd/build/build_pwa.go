@@ -36,13 +36,13 @@ func runPwaBuild(pwaURL string) error {
 
 	tempDir, err := os.MkdirTemp("", "core-pwa-build-*")
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.create_temp_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create temporary directory"}), err)
 	}
 	// defer os.RemoveAll(tempDir) // Keep temp dir for debugging
 	fmt.Printf("%s %s\n", i18n.T("cmd.build.pwa.downloading_to"), tempDir)
 
 	if err := downloadPWA(pwaURL, tempDir); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.download_failed"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "download PWA"}), err)
 	}
 
 	return runBuild(tempDir)
@@ -53,13 +53,13 @@ func downloadPWA(baseURL, destDir string) error {
 	// Fetch the main HTML page
 	resp, err := http.Get(baseURL)
 	if err != nil {
-		return fmt.Errorf("%s %s: %w", i18n.T("cmd.build.pwa.error.fetch_url"), baseURL, err)
+		return fmt.Errorf("%s %s: %w", i18n.T("common.error.failed", map[string]any{"Action": "fetch URL"}), baseURL, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.read_response"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "read response body"}), err)
 	}
 
 	// Find the manifest URL from the HTML
@@ -68,7 +68,7 @@ func downloadPWA(baseURL, destDir string) error {
 		// If no manifest, it's not a PWA, but we can still try to package it as a simple site.
 		fmt.Printf("%s %s\n", i18n.T("common.label.warning"), i18n.T("cmd.build.pwa.no_manifest"))
 		if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.write_index"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "write index.html"}), err)
 		}
 		return nil
 	}
@@ -78,20 +78,20 @@ func downloadPWA(baseURL, destDir string) error {
 	// Fetch and parse the manifest
 	manifest, err := fetchManifest(manifestURL)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.fetch_manifest"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "fetch or parse manifest"}), err)
 	}
 
 	// Download all assets listed in the manifest
 	assets := collectAssets(manifest, manifestURL)
 	for _, assetURL := range assets {
 		if err := downloadAsset(assetURL, destDir); err != nil {
-			fmt.Printf("%s %s %s: %v\n", i18n.T("common.label.warning"), i18n.T("cmd.build.pwa.asset_download_failed"), assetURL, err)
+			fmt.Printf("%s %s %s: %v\n", i18n.T("common.label.warning"), i18n.T("common.error.failed", map[string]any{"Action": "download asset"}), assetURL, err)
 		}
 	}
 
 	// Also save the root index.html
 	if err := os.WriteFile(filepath.Join(destDir, "index.html"), body, 0644); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.pwa.error.write_index"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "write index.html"}), err)
 	}
 
 	fmt.Println(i18n.T("cmd.build.pwa.download_complete"))
@@ -238,29 +238,29 @@ func runBuild(fromPath string) error {
 	outputExe := appName
 
 	if err := os.RemoveAll(buildDir); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.clean_build_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "clean build directory"}), err)
 	}
 
 	// 1. Generate the project from the embedded template
 	fmt.Println(i18n.T("cmd.build.from_path.generating_template"))
 	templateFS, err := debme.FS(guiTemplate, "tmpl/gui")
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.anchor_template"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "anchor template filesystem"}), err)
 	}
 	sod := gosod.New(templateFS)
 	if sod == nil {
-		return fmt.Errorf("%s", i18n.T("cmd.build.from_path.error.create_sod"))
+		return fmt.Errorf("%s", i18n.T("common.error.failed", map[string]any{"Action": "create new sod instance"}))
 	}
 
 	templateData := map[string]string{"AppName": appName}
 	if err := sod.Extract(buildDir, templateData); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.extract_template"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "extract template"}), err)
 	}
 
 	// 2. Copy the user's web app files
 	fmt.Println(i18n.T("cmd.build.from_path.copying_files"))
 	if err := copyDir(fromPath, htmlDir); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.build.from_path.error.copy_files"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "copy application files"}), err)
 	}
 
 	// 3. Compile the application

@@ -78,7 +78,7 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 	}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf(i18n.T("cmd.pkg.error.create_directory"), err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "create directory"}), err)
 	}
 
 	fmt.Printf("%s %s/%s\n", dimStyle.Render(i18n.T("cmd.pkg.install.installing_label")), org, repoName)

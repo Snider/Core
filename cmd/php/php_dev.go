@@ -126,7 +126,7 @@ func runPHPDev(opts phpDevOptions) error {
 	}()
 
 	if err := server.Start(ctx, devOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.start_services"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "start services"}), err)
 	}
 
 	// Print status
@@ -155,7 +155,7 @@ func runPHPDev(opts phpDevOptions) error {
 	// Stream unified logs
 	logsReader, err := server.Logs("", true)
 	if err != nil {
-		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.warning")), i18n.T("cmd.php.dev.logs_failed", map[string]interface{}{"Error": err}))
+		fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("common.label.warning")), i18n.T("common.error.failed", map[string]any{"Action": "get logs"}))
 	} else {
 		defer logsReader.Close()
 
@@ -270,7 +270,7 @@ func runPHPStop() error {
 	// This is a simplified version - in practice you'd want to track PIDs
 	server := phppkg.NewDevServer(phppkg.Options{Dir: cwd})
 	if err := server.Stop(); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.stop_services"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "stop services"}), err)
 	}
 
 	fmt.Printf("%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.dev.all_stopped"))
@@ -394,7 +394,7 @@ func runPHPSSL(domain string) error {
 
 	// Setup SSL
 	if err := phppkg.SetupSSL(domain, phppkg.SSLOptions{}); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.ssl_setup"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "setup SSL"}), err)
 	}
 
 	certFile, keyFile, _ := phppkg.CertPaths(domain, phppkg.SSLOptions{})

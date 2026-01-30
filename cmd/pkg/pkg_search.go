@@ -118,7 +118,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		}
 
 		if err := json.Unmarshal(output, &ghRepos); err != nil {
-			return fmt.Errorf(i18n.T("cmd.pkg.error.parse_results"), err)
+			return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "parse results"}), err)
 		}
 
 		if c != nil {

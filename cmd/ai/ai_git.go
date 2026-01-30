@@ -56,7 +56,7 @@ var taskCommitCmd = &cobra.Command{
 		// Get task details
 		task, err := client.GetTask(ctx, taskID)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_task"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get task"}), err)
 		}
 
 		// Build commit message with optional scope
@@ -77,7 +77,7 @@ var taskCommitCmd = &cobra.Command{
 		// Check for uncommitted changes
 		hasChanges, err := agentic.HasUncommittedChanges(ctx, cwd)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.git_status"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "check git status"}), err)
 		}
 
 		if !hasChanges {
@@ -88,7 +88,7 @@ var taskCommitCmd = &cobra.Command{
 		// Create commit
 		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_commit.creating", map[string]interface{}{"ID": taskID}))
 		if err := agentic.AutoCommit(ctx, task, cwd, fullMessage); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.commit"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "commit"}), err)
 		}
 
 		fmt.Printf("%s %s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_commit.committed"), fullMessage)
@@ -97,9 +97,9 @@ var taskCommitCmd = &cobra.Command{
 		if taskCommitPush {
 			fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_commit.pushing"))
 			if err := agentic.PushChanges(ctx, cwd); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.push"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "push"}), err)
 			}
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_commit.pushed"))
+			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("common.success.completed", map[string]any{"Action": "Changes pushed"}))
 		}
 
 		return nil
@@ -127,7 +127,7 @@ var taskPRCmd = &cobra.Command{
 		// Get task details
 		task, err := client.GetTask(ctx, taskID)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_task"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get task"}), err)
 		}
 
 		// Get current directory
@@ -139,7 +139,7 @@ var taskPRCmd = &cobra.Command{
 		// Check current branch
 		branch, err := agentic.GetCurrentBranch(ctx, cwd)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.get_branch"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get current branch"}), err)
 		}
 
 		if branch == "main" || branch == "master" {
@@ -151,7 +151,7 @@ var taskPRCmd = &cobra.Command{
 		if err := agentic.PushChanges(ctx, cwd); err != nil {
 			// Try setting upstream
 			if _, err := runGitCommand(cwd, "push", "-u", "origin", branch); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.push_branch"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "push branch"}), err)
 			}
 		}
 
@@ -170,7 +170,7 @@ var taskPRCmd = &cobra.Command{
 		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task_pr.creating"))
 		prURL, err := agentic.CreatePR(ctx, task, cwd, opts)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("cmd.ai.error.create_pr"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "create PR"}), err)
 		}
 
 		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("cmd.ai.task_pr.created"))
