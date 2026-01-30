@@ -327,23 +327,23 @@ var (
 // Helper Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Success returns a styled success message with checkmark.
-func Success(msg string) string {
+// FmtSuccess returns a styled success message with checkmark.
+func FmtSuccess(msg string) string {
 	return fmt.Sprintf("%s %s", SuccessStyle.Render(SymbolCheck), msg)
 }
 
-// Error returns a styled error message with cross.
-func Error(msg string) string {
+// FmtError returns a styled error message with cross.
+func FmtError(msg string) string {
 	return fmt.Sprintf("%s %s", ErrorStyle.Render(SymbolCross), msg)
 }
 
-// Warning returns a styled warning message with warning symbol.
-func Warning(msg string) string {
+// FmtWarning returns a styled warning message with warning symbol.
+func FmtWarning(msg string) string {
 	return fmt.Sprintf("%s %s", WarningStyle.Render(SymbolWarning), msg)
 }
 
-// Info returns a styled info message with info symbol.
-func Info(msg string) string {
+// FmtInfo returns a styled info message with info symbol.
+func FmtInfo(msg string) string {
 	return fmt.Sprintf("%s %s", InfoStyle.Render(SymbolInfo), msg)
 }
 
@@ -464,13 +464,13 @@ func Header(title string, withSeparator bool) string {
 	return fmt.Sprintf("\n%s", HeaderStyle.Render(title))
 }
 
-// Title returns a styled command/section title.
-func Title(text string) string {
+// FmtTitle returns a styled command/section title.
+func FmtTitle(text string) string {
 	return TitleStyle.Render(text)
 }
 
-// Dim returns dimmed text.
-func Dim(text string) string {
+// FmtDim returns dimmed text.
+func FmtDim(text string) string {
 	return DimStyle.Render(text)
 }
 
