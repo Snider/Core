@@ -206,7 +206,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		buildCmd.Stdout = os.Stdout
 		buildCmd.Stderr = os.Stderr
 		if err := buildCmd.Run(); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.build_failed"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
 		}
 	}
 

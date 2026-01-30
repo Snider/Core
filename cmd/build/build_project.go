@@ -25,13 +25,13 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 	}
 
 	// Load configuration from .core/build.yaml (or defaults)
 	buildCfg, err := buildpkg.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
 	}
 
 	// Detect project type if not specified
@@ -120,7 +120,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	artifacts, err := builder.Build(ctx, cfg, buildTargets)
 	if err != nil {
 		if !ciMode {
-			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("common.error.build_failed"), err)
+			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
 		}
 		return err
 	}

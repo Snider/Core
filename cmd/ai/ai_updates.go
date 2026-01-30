@@ -40,7 +40,7 @@ var taskUpdateCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -75,7 +75,7 @@ var taskCompleteCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)

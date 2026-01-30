@@ -302,7 +302,7 @@ func viewLogs(id string, follow bool) error {
 	ctx := context.Background()
 	reader, err := manager.Logs(ctx, fullID, follow)
 	if err != nil {
-		return fmt.Errorf(i18n.T("common.error.get_logs")+": %w", err)
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "get logs"})+": %w", err)
 	}
 	defer reader.Close()
 

@@ -43,7 +43,7 @@ var tasksCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -88,7 +88,7 @@ var taskCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
+			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
 		}
 
 		client := agentic.NewClientFromConfig(cfg)

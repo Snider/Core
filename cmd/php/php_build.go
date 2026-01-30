@@ -31,7 +31,7 @@ func addPHPBuildCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			ctx := context.Background()
@@ -135,7 +135,7 @@ func runPHPBuildDocker(ctx context.Context, projectDir string, opts dockerBuildO
 	fmt.Println()
 
 	if err := phppkg.BuildDocker(ctx, buildOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.build_failed"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
 	}
 
 	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.build.docker_success"))
@@ -173,7 +173,7 @@ func runPHPBuildLinuxKit(ctx context.Context, projectDir string, opts linuxKitBu
 	fmt.Println()
 
 	if err := phppkg.BuildLinuxKit(ctx, buildOpts); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.build_failed"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
 	}
 
 	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("common.label.done")), i18n.T("cmd.php.build.linuxkit_success"))

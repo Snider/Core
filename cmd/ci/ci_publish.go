@@ -17,13 +17,13 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Get current directory
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 	}
 
 	// Load configuration
 	cfg, err := release.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.load_config"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "load config"}), err)
 	}
 
 	// Apply CLI overrides

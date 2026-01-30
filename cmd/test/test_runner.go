@@ -93,7 +93,7 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 		// JSON output for CI/agents
 		printJSONResults(results, exitCode)
 		if exitCode != 0 {
-			return fmt.Errorf(i18n.T("common.error.tests_failed"))
+			return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "run tests"}))
 		}
 		return nil
 	}
@@ -109,7 +109,7 @@ func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bo
 
 	if exitCode != 0 {
 		fmt.Printf("\n%s %s\n", testFailStyle.Render(i18n.T("cli.fail")), i18n.T("cmd.test.tests_failed"))
-		return fmt.Errorf(i18n.T("common.error.tests_failed"))
+		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "run tests"}))
 	}
 
 	fmt.Printf("\n%s %s\n", testPassStyle.Render(i18n.T("cli.pass")), i18n.T("common.result.all_passed"))

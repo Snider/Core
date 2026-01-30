@@ -41,12 +41,7 @@
 		"error": {
 			"failed": "Failed to {{.Action}}",
 			"not_found": "{{.Item}} not found",
-			"no_items": "No {{.Items}} found",
-			"working_dir": "Failed to get working directory",
-			"load_config": "Failed to load config",
-			"build_failed": "Build failed",
-			"tests_failed": "Tests failed",
-			"get_logs": "Failed to get logs"
+			"no_items": "No {{.Items}} found"
 		},
 		"success": {
 			"completed": "{{.Action}} completed successfully",

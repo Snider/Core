@@ -12,7 +12,7 @@ import (
 func runCIReleaseVersion() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 	}
 
 	version, err := release.DetermineVersion(projectDir)

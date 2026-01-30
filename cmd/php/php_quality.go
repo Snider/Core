@@ -30,7 +30,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -56,7 +56,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 			}
 
 			if err := phppkg.RunTests(ctx, opts); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.tests_failed"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "run tests"}), err)
 			}
 
 			return nil
@@ -84,7 +84,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -155,7 +155,7 @@ func addPHPAnalyseCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -218,7 +218,7 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -283,7 +283,7 @@ func addPHPAuditCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -376,7 +376,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -474,7 +474,7 @@ func addPHPQACommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -682,7 +682,7 @@ func addPHPRectorCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {
@@ -756,7 +756,7 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+				return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 			}
 
 			if !phppkg.IsPHPProject(cwd) {

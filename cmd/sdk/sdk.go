@@ -64,7 +64,7 @@ func init() {
 func runSDKDiff(basePath, specPath string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 	}
 
 	// Detect current spec if not provided
@@ -106,7 +106,7 @@ func runSDKDiff(basePath, specPath string) error {
 func runSDKValidate(specPath string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.working_dir"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get working directory"}), err)
 	}
 
 	s := sdkpkg.New(projectDir, &sdkpkg.Config{Spec: specPath})

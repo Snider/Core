@@ -217,7 +217,7 @@ func runPHPLogs(service string, follow bool) error {
 
 	logsReader, err := server.Logs(service, follow)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("common.error.get_logs"), err)
+		return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "get logs"}), err)
 	}
 	defer logsReader.Close()
 
