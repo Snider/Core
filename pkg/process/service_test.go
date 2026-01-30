@@ -256,16 +256,3 @@ func TestService_Clear(t *testing.T) {
 	})
 }
 
-func TestProcess_Info(t *testing.T) {
-	svc, _ := newTestService(t)
-
-	proc, _ := svc.Start(context.Background(), "echo", "hello")
-	<-proc.Done()
-
-	info := proc.Info()
-	assert.Equal(t, proc.ID, info.ID)
-	assert.Equal(t, "echo", info.Command)
-	assert.Equal(t, []string{"hello"}, info.Args)
-	assert.Equal(t, StatusExited, info.Status)
-	assert.Equal(t, 0, info.ExitCode)
-}

@@ -92,6 +92,33 @@ func Kill(id string) error {
 	return svc.Kill(id)
 }
 
+// StartWithOptions spawns a process with full configuration using the default service.
+func StartWithOptions(ctx context.Context, opts RunOptions) (*Process, error) {
+	svc := Default()
+	if svc == nil {
+		return nil, ErrServiceNotInitialized
+	}
+	return svc.StartWithOptions(ctx, opts)
+}
+
+// RunWithOptions executes a command with options and waits using the default service.
+func RunWithOptions(ctx context.Context, opts RunOptions) (string, error) {
+	svc := Default()
+	if svc == nil {
+		return "", ErrServiceNotInitialized
+	}
+	return svc.RunWithOptions(ctx, opts)
+}
+
+// Running returns all currently running processes from the default service.
+func Running() []*Process {
+	svc := Default()
+	if svc == nil {
+		return nil
+	}
+	return svc.Running()
+}
+
 // ErrServiceNotInitialized is returned when the service is not initialized.
 var ErrServiceNotInitialized = &ServiceError{msg: "process: service not initialized"}
 
