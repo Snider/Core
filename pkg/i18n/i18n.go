@@ -403,17 +403,6 @@ func SetDefault(s *Service) {
 	defaultService = s
 }
 
-// SetDebug enables or disables debug mode on the default service.
-// In debug mode, translations show their keys: [key] translation
-//
-//	SetDebug(true)
-//	T("cli.success") // "[cli.success] Success"
-func SetDebug(enabled bool) {
-	if svc := Default(); svc != nil {
-		svc.SetDebug(enabled)
-	}
-}
-
 // SetFormality sets the default formality level on the default service.
 //
 //	SetFormality(FormalityFormal)  // Use formal address (Sie, vous)
@@ -563,24 +552,6 @@ func (s *Service) Mode() Mode {
 	return s.mode
 }
 
-// SetDebug enables or disables debug mode.
-// In debug mode, translations are prefixed with their key:
-//
-//	[cli.success] Success
-//	[core.delete] Delete config.yaml?
-func (s *Service) SetDebug(enabled bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.debug = enabled
-}
-
-// Debug returns whether debug mode is enabled.
-func (s *Service) Debug() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.debug
-}
-
 // SetFormality sets the default formality level for translations.
 // This affects languages that distinguish formal/informal address (Sie/du, vous/tu).
 //
@@ -667,7 +638,7 @@ func (s *Service) T(messageID string, args ...any) string {
 
 	// Debug mode: prefix with key
 	if s.debug {
-		return "[" + messageID + "] " + text
+		return debugFormat(messageID, text)
 	}
 
 	return text
@@ -814,11 +785,10 @@ func (s *Service) C(intent string, subject *Subject) *Composed {
 	debug := s.debug
 	s.mu.RUnlock()
 	if debug {
-		prefix := "[" + intent + "] "
-		result.Question = prefix + result.Question
-		result.Confirm = prefix + result.Confirm
-		result.Success = prefix + result.Success
-		result.Failure = prefix + result.Failure
+		result.Question = debugFormat(intent, result.Question)
+		result.Confirm = debugFormat(intent, result.Confirm)
+		result.Success = debugFormat(intent, result.Success)
+		result.Failure = debugFormat(intent, result.Failure)
 	}
 
 	return result
