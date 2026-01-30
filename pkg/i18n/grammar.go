@@ -233,6 +233,37 @@ var irregularVerbs = map[string]VerbForms{
 	"overwrite": {Past: "overwritten", Gerund: "overwriting"},
 	"reset":     {Past: "reset", Gerund: "resetting"},
 	"reboot":    {Past: "rebooted", Gerund: "rebooting"},
+
+	// Multi-syllable verbs with stressed final syllables (double consonant)
+	"submit":   {Past: "submitted", Gerund: "submitting"},
+	"permit":   {Past: "permitted", Gerund: "permitting"},
+	"admit":    {Past: "admitted", Gerund: "admitting"},
+	"omit":     {Past: "omitted", Gerund: "omitting"},
+	"commit":   {Past: "committed", Gerund: "committing"},
+	"transmit": {Past: "transmitted", Gerund: "transmitting"},
+	"prefer":   {Past: "preferred", Gerund: "preferring"},
+	"refer":    {Past: "referred", Gerund: "referring"},
+	"transfer": {Past: "transferred", Gerund: "transferring"},
+	"defer":    {Past: "deferred", Gerund: "deferring"},
+	"confer":   {Past: "conferred", Gerund: "conferring"},
+	"infer":    {Past: "inferred", Gerund: "inferring"},
+	"occur":    {Past: "occurred", Gerund: "occurring"},
+	"recur":    {Past: "recurred", Gerund: "recurring"},
+	"incur":    {Past: "incurred", Gerund: "incurring"},
+	"deter":    {Past: "deterred", Gerund: "deterring"},
+	"control":  {Past: "controlled", Gerund: "controlling"},
+	"patrol":   {Past: "patrolled", Gerund: "patrolling"},
+	"compel":   {Past: "compelled", Gerund: "compelling"},
+	"expel":    {Past: "expelled", Gerund: "expelling"},
+	"propel":   {Past: "propelled", Gerund: "propelling"},
+	"repel":    {Past: "repelled", Gerund: "repelling"},
+	"rebel":    {Past: "rebelled", Gerund: "rebelling"},
+	"excel":    {Past: "excelled", Gerund: "excelling"},
+	"cancel":   {Past: "cancelled", Gerund: "cancelling"}, // UK spelling
+	"travel":   {Past: "travelled", Gerund: "travelling"}, // UK spelling
+	"label":    {Past: "labelled", Gerund: "labelling"},   // UK spelling
+	"model":    {Past: "modelled", Gerund: "modelling"},   // UK spelling
+	"level":    {Past: "levelled", Gerund: "levelling"},   // UK spelling
 }
 
 // PastTense returns the past tense of a verb.
@@ -298,6 +329,7 @@ func applyRegularPastTense(verb string) string {
 }
 
 // noDoubleConsonant contains multi-syllable verbs that don't double the final consonant.
+// Note: UK English doubles -l (travelled, cancelled) - those are in irregularVerbs.
 var noDoubleConsonant = map[string]bool{
 	"open":    true,
 	"listen":  true,
@@ -314,11 +346,6 @@ var noDoubleConsonant = map[string]bool{
 	"edit":    true,
 	"credit":  true,
 	"orbit":   true,
-	"cancel":  true,
-	"model":   true,
-	"travel":  true,
-	"label":   true,
-	"level":   true,
 	"total":   true,
 	"target":  true,
 	"budget":  true,

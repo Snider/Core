@@ -106,10 +106,22 @@ func applyTemplate(text string, data any) string {
 		return text
 	}
 
+	// Check cache first
+	if cached, ok := templateCache.Load(text); ok {
+		var buf bytes.Buffer
+		if err := cached.(*template.Template).Execute(&buf, data); err != nil {
+			return text
+		}
+		return buf.String()
+	}
+
+	// Parse and cache
 	tmpl, err := template.New("").Parse(text)
 	if err != nil {
 		return text
 	}
+
+	templateCache.Store(text, tmpl)
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
