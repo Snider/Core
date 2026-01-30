@@ -37,18 +37,6 @@ import (
 //go:embed locales/*.json
 var localeFS embed.FS
 
-// Message represents a translation - either a simple string or plural forms.
-// Supports full CLDR plural categories for languages with complex plural rules.
-type Message struct {
-	Text  string // Simple string value (non-plural)
-	Zero  string // count == 0 (Arabic, Latvian, Welsh)
-	One   string // count == 1 (most languages)
-	Two   string // count == 2 (Arabic, Welsh)
-	Few   string // Small numbers (Slavic: 2-4, Arabic: 3-10)
-	Many  string // Larger numbers (Slavic: 5+, Arabic: 11-99)
-	Other string // Default/fallback form
-}
-
 // IsPlural returns true if this message has any plural forms.
 func (m Message) IsPlural() bool {
 	return m.Zero != "" || m.One != "" || m.Two != "" ||
