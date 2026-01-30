@@ -49,3 +49,8 @@ tasks:
     desc: "Regenerate i18n key constants from locale files"
     cmds:
       - go generate ./pkg/i18n/...
+
+  i18n:validate:
+    desc: "Validate i18n key usage across the codebase"
+    cmds:
+      - go run ./cmd/i18n-validate ./...
