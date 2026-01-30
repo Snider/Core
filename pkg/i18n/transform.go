@@ -21,6 +21,9 @@ func getCount(data any) int {
 
 // toInt converts any numeric type to int.
 func toInt(v any) int {
+	if v == nil {
+		return 0
+	}
 	switch n := v.(type) {
 	case int:
 		return n
@@ -38,6 +41,9 @@ func toInt(v any) int {
 
 // toInt64 converts any numeric type to int64.
 func toInt64(v any) int64 {
+	if v == nil {
+		return 0
+	}
 	switch n := v.(type) {
 	case int:
 		return int64(n)
@@ -55,6 +61,9 @@ func toInt64(v any) int64 {
 
 // toFloat64 converts any numeric type to float64.
 func toFloat64(v any) float64 {
+	if v == nil {
+		return 0
+	}
 	switch n := v.(type) {
 	case float64:
 		return n

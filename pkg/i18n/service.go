@@ -36,7 +36,7 @@ func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
 		filePath := filepath.Join(dir, entry.Name())
 		data, err := fs.ReadFile(fsys, filePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read locale %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("failed to read locale %q: %w", entry.Name(), err)
 		}
 
 		lang := strings.TrimSuffix(entry.Name(), ".json")
@@ -44,7 +44,7 @@ func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
 		lang = strings.ReplaceAll(lang, "_", "-")
 
 		if err := s.loadJSON(lang, data); err != nil {
-			return nil, fmt.Errorf("failed to parse locale %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("failed to parse locale %q: %w", entry.Name(), err)
 		}
 
 		tag := language.Make(lang)
@@ -52,7 +52,7 @@ func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
 	}
 
 	if len(s.availableLangs) == 0 {
-		return nil, fmt.Errorf("no locale files found in %s", dir)
+		return nil, fmt.Errorf("no locale files found in %q", dir)
 	}
 
 	// Try to detect system language
@@ -130,7 +130,7 @@ func (s *Service) SetLanguage(lang string) error {
 	bestMatch, _, confidence := matcher.Match(requestedLang)
 
 	if confidence == language.No {
-		return fmt.Errorf("unsupported language: %s", lang)
+		return fmt.Errorf("unsupported language: %q", lang)
 	}
 
 	s.currentLang = bestMatch.String()
@@ -531,14 +531,14 @@ func (s *Service) LoadFS(fsys fs.FS, dir string) error {
 		filePath := filepath.Join(dir, entry.Name())
 		data, err := fs.ReadFile(fsys, filePath)
 		if err != nil {
-			return fmt.Errorf("failed to read locale %s: %w", entry.Name(), err)
+			return fmt.Errorf("failed to read locale %q: %w", entry.Name(), err)
 		}
 
 		lang := strings.TrimSuffix(entry.Name(), ".json")
 		lang = strings.ReplaceAll(lang, "_", "-")
 
 		if err := s.loadJSON(lang, data); err != nil {
-			return fmt.Errorf("failed to parse locale %s: %w", entry.Name(), err)
+			return fmt.Errorf("failed to parse locale %q: %w", entry.Name(), err)
 		}
 
 		// Add to available languages if new

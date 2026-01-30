@@ -1,7 +1,7 @@
 // Package i18n provides internationalization for the CLI.
 package i18n
 
-// String returns the string representation of a Formality level.
+// String returns the string representation of the Formality.
 func (f Formality) String() string {
 	switch f {
 	case FormalityInformal:
@@ -13,7 +13,7 @@ func (f Formality) String() string {
 	}
 }
 
-// String returns the string representation of a TextDirection.
+// String returns the string representation of the TextDirection.
 func (d TextDirection) String() string {
 	if d == DirRTL {
 		return "rtl"
@@ -21,7 +21,7 @@ func (d TextDirection) String() string {
 	return "ltr"
 }
 
-// String returns the string representation of a PluralCategory.
+// String returns the string representation of the PluralCategory.
 func (p PluralCategory) String() string {
 	switch p {
 	case PluralZero:
@@ -39,7 +39,7 @@ func (p PluralCategory) String() string {
 	}
 }
 
-// String returns the string representation of a GrammaticalGender.
+// String returns the string representation of the GrammaticalGender.
 func (g GrammaticalGender) String() string {
 	switch g {
 	case GenderMasculine:

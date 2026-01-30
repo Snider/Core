@@ -7,9 +7,9 @@ import (
 	"unicode"
 )
 
-// getGrammarData returns the grammar data for the current language.
+// GetGrammarData returns the grammar data for the specified language.
 // Returns nil if no grammar data is loaded for the language.
-func getGrammarData(lang string) *GrammarData {
+func GetGrammarData(lang string) *GrammarData {
 	grammarCacheMu.RLock()
 	defer grammarCacheMu.RUnlock()
 	return grammarCache[lang]
@@ -26,7 +26,7 @@ func SetGrammarData(lang string, data *GrammarData) {
 // getVerbForm retrieves a verb form from JSON data.
 // Returns empty string if not found, allowing fallback to computed form.
 func getVerbForm(lang, verb, form string) string {
-	data := getGrammarData(lang)
+	data := GetGrammarData(lang)
 	if data == nil || data.Verbs == nil {
 		return ""
 	}
@@ -45,7 +45,7 @@ func getVerbForm(lang, verb, form string) string {
 // getWord retrieves a base word translation from JSON data.
 // Returns empty string if not found, allowing fallback to the key itself.
 func getWord(lang, word string) string {
-	data := getGrammarData(lang)
+	data := GetGrammarData(lang)
 	if data == nil || data.Words == nil {
 		return ""
 	}
@@ -55,7 +55,7 @@ func getWord(lang, word string) string {
 // getPunct retrieves a punctuation rule for the language.
 // Returns the default if not found.
 func getPunct(lang, rule, defaultVal string) string {
-	data := getGrammarData(lang)
+	data := GetGrammarData(lang)
 	if data == nil {
 		return defaultVal
 	}
@@ -75,7 +75,7 @@ func getPunct(lang, rule, defaultVal string) string {
 // getNounForm retrieves a noun form from JSON data.
 // Returns empty string if not found, allowing fallback to computed form.
 func getNounForm(lang, noun, form string) string {
-	data := getGrammarData(lang)
+	data := GetGrammarData(lang)
 	if data == nil || data.Nouns == nil {
 		return ""
 	}

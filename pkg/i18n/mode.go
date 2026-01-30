@@ -1,7 +1,7 @@
 // Package i18n provides internationalization for the CLI.
 package i18n
 
-// String returns the string representation of the mode.
+// String returns the string representation of the Mode.
 func (m Mode) String() string {
 	switch m {
 	case ModeNormal:
