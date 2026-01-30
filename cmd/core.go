@@ -20,7 +20,13 @@ import (
 	"os"
 
 	"github.com/host-uk/core/pkg/cli"
+	"github.com/host-uk/core/pkg/framework"
 	"github.com/spf13/cobra"
+)
+
+const (
+	appName    = "core"
+	appVersion = "0.1.0"
 )
 
 // Terminal styles using Tailwind colour palette (from shared package).
@@ -34,14 +40,29 @@ var (
 
 // rootCmd is the base command for the CLI.
 var rootCmd = &cobra.Command{
-	Use:     "core",
+	Use:     appName,
 	Short:   "CLI tool for development and production",
-	Version: "0.1.0",
+	Version: appVersion,
 }
 
 // Execute initialises and runs the CLI application.
 // Commands are registered based on build tags (see core_ci.go and core_dev.go).
 func Execute() error {
+	// Initialise CLI runtime with services
+	if err := cli.Init(cli.Options{
+		AppName: appName,
+		Version: appVersion,
+		Services: []framework.Option{
+			framework.WithName("i18n", cli.NewI18nService(cli.I18nOptions{})),
+			framework.WithName("log", cli.NewLogService(cli.LogOptions{
+				Level: cli.LogLevelInfo,
+			})),
+		},
+	}); err != nil {
+		return err
+	}
+	defer cli.Shutdown()
+
 	return rootCmd.Execute()
 }
 

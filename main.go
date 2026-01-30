@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/host-uk/core/cmd"
 )
 
 func main() {
-	err := cmd.Execute()
-	if err != nil {
-		return
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

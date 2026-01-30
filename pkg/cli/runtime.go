@@ -38,21 +38,26 @@ type runtime struct {
 
 // Options configures the CLI runtime.
 type Options struct {
-	AppName string
-	Version string
+	AppName  string
+	Version  string
+	Services []framework.Option // Additional services to register
 }
 
 // Init initialises the global CLI runtime.
-// Call this once at startup (typically in main.go).
+// Call this once at startup (typically in main.go or cmd.Execute).
 func Init(opts Options) error {
 	var initErr error
 	once.Do(func() {
 		ctx, cancel := context.WithCancel(context.Background())
 
-		c, err := framework.New(
+		// Build options: signal service + any additional services
+		coreOpts := []framework.Option{
 			framework.WithName("signal", newSignalService(cancel)),
-			framework.WithServiceLock(),
-		)
+		}
+		coreOpts = append(coreOpts, opts.Services...)
+		coreOpts = append(coreOpts, framework.WithServiceLock())
+
+		c, err := framework.New(coreOpts...)
 		if err != nil {
 			initErr = err
 			cancel()
