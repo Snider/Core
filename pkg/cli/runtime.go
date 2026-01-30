@@ -41,6 +41,10 @@ type Options struct {
 	AppName  string
 	Version  string
 	Services []framework.Option // Additional services to register
+
+	// OnReload is called when SIGHUP is received (daemon mode).
+	// Use for configuration reloading. Leave nil to ignore SIGHUP.
+	OnReload func() error
 }
 
 // Init initialises the global CLI runtime.
@@ -50,9 +54,15 @@ func Init(opts Options) error {
 	once.Do(func() {
 		ctx, cancel := context.WithCancel(context.Background())
 
+		// Build signal service options
+		var signalOpts []SignalOption
+		if opts.OnReload != nil {
+			signalOpts = append(signalOpts, WithReloadHandler(opts.OnReload))
+		}
+
 		// Build options: signal service + any additional services
 		coreOpts := []framework.Option{
-			framework.WithName("signal", newSignalService(cancel)),
+			framework.WithName("signal", newSignalService(cancel, signalOpts...)),
 		}
 		coreOpts = append(coreOpts, opts.Services...)
 		coreOpts = append(coreOpts, framework.WithServiceLock())
@@ -143,27 +153,61 @@ func Dim(msg string) {
 // --- Signal Service (internal) ---
 
 type signalService struct {
-	cancel  context.CancelFunc
-	sigChan chan os.Signal
+	cancel   context.CancelFunc
+	sigChan  chan os.Signal
+	onReload func() error
 }
 
-func newSignalService(cancel context.CancelFunc) func(*framework.Core) (any, error) {
+// SignalOption configures signal handling.
+type SignalOption func(*signalService)
+
+// WithReloadHandler sets a callback for SIGHUP.
+func WithReloadHandler(fn func() error) SignalOption {
+	return func(s *signalService) {
+		s.onReload = fn
+	}
+}
+
+func newSignalService(cancel context.CancelFunc, opts ...SignalOption) func(*framework.Core) (any, error) {
 	return func(c *framework.Core) (any, error) {
-		return &signalService{
+		svc := &signalService{
 			cancel:  cancel,
 			sigChan: make(chan os.Signal, 1),
-		}, nil
+		}
+		for _, opt := range opts {
+			opt(svc)
+		}
+		return svc, nil
 	}
 }
 
 func (s *signalService) OnStartup(ctx context.Context) error {
-	signal.Notify(s.sigChan, syscall.SIGINT, syscall.SIGTERM)
+	signals := []os.Signal{syscall.SIGINT, syscall.SIGTERM}
+	if s.onReload != nil {
+		signals = append(signals, syscall.SIGHUP)
+	}
+	signal.Notify(s.sigChan, signals...)
 
 	go func() {
-		select {
-		case <-s.sigChan:
-			s.cancel()
-		case <-ctx.Done():
+		for {
+			select {
+			case sig := <-s.sigChan:
+				switch sig {
+				case syscall.SIGHUP:
+					if s.onReload != nil {
+						if err := s.onReload(); err != nil {
+							LogError(fmt.Sprintf("reload failed: %v", err))
+						} else {
+							LogInfo("configuration reloaded")
+						}
+					}
+				case syscall.SIGINT, syscall.SIGTERM:
+					s.cancel()
+					return
+				}
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 

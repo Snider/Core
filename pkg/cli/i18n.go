@@ -14,7 +14,7 @@ type I18nService struct {
 	svc *i18n.Service
 
 	// Collect mode state
-	missingKeys   []i18n.MissingKeyAction
+	missingKeys   []i18n.MissingKey
 	missingKeysMu sync.Mutex
 }
 
@@ -44,7 +44,7 @@ func NewI18nService(opts I18nOptions) func(*framework.Core) (any, error) {
 		return &I18nService{
 			ServiceRuntime: framework.NewServiceRuntime(c, opts),
 			svc:            svc,
-			missingKeys:    make([]i18n.MissingKeyAction, 0),
+			missingKeys:    make([]i18n.MissingKey, 0),
 		}, nil
 	}
 }
@@ -55,25 +55,25 @@ func (s *I18nService) OnStartup(ctx context.Context) error {
 
 	// Register action handler for collect mode
 	if s.svc.Mode() == i18n.ModeCollect {
-		i18n.SetActionHandler(s.handleMissingKey)
+		i18n.OnMissingKey(s.handleMissingKey)
 	}
 
 	return nil
 }
 
 // handleMissingKey accumulates missing keys in collect mode.
-func (s *I18nService) handleMissingKey(action i18n.MissingKeyAction) {
+func (s *I18nService) handleMissingKey(mk i18n.MissingKey) {
 	s.missingKeysMu.Lock()
 	defer s.missingKeysMu.Unlock()
-	s.missingKeys = append(s.missingKeys, action)
+	s.missingKeys = append(s.missingKeys, mk)
 }
 
 // MissingKeys returns all missing keys collected in collect mode.
 // Call this at the end of a QA session to report missing translations.
-func (s *I18nService) MissingKeys() []i18n.MissingKeyAction {
+func (s *I18nService) MissingKeys() []i18n.MissingKey {
 	s.missingKeysMu.Lock()
 	defer s.missingKeysMu.Unlock()
-	result := make([]i18n.MissingKeyAction, len(s.missingKeys))
+	result := make([]i18n.MissingKey, len(s.missingKeys))
 	copy(result, s.missingKeys)
 	return result
 }
@@ -91,9 +91,9 @@ func (s *I18nService) SetMode(mode i18n.Mode) {
 
 	// Update action handler registration
 	if mode == i18n.ModeCollect {
-		i18n.SetActionHandler(s.handleMissingKey)
+		i18n.OnMissingKey(s.handleMissingKey)
 	} else {
-		i18n.SetActionHandler(nil)
+		i18n.OnMissingKey(nil)
 	}
 }
 
