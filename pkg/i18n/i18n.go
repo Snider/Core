@@ -750,6 +750,14 @@ func (s *Service) handleI18nNamespace(key string, args []any) string {
 		return FormatOrdinal(toInt(args[0]))
 	}
 
+	// i18n.ago → FormatAgo(count, unit)
+	if key == "i18n.ago" && len(args) >= 2 {
+		count := toInt(args[0])
+		if unit, ok := args[1].(string); ok {
+			return FormatAgo(count, unit)
+		}
+	}
+
 	return ""
 }
 

@@ -338,7 +338,7 @@ func printDeploymentSummary(index int, status *phppkg.DeploymentStatus) {
 
 	age := ""
 	if !status.StartedAt.IsZero() {
-		age = formatTimeAgo(status.StartedAt)
+		age = i18n.TimeAgo(status.StartedAt)
 	}
 
 	fmt.Printf("  %s %s %s",
@@ -362,29 +362,3 @@ func printDeploymentSummary(index int, status *phppkg.DeploymentStatus) {
 	fmt.Println()
 }
 
-func formatTimeAgo(t time.Time) string {
-	duration := time.Since(t)
-
-	switch {
-	case duration < time.Minute:
-		return i18n.T("cli.time.just_now")
-	case duration < time.Hour:
-		mins := int(duration.Minutes())
-		if mins == 1 {
-			return i18n.T("cli.time.minute_ago")
-		}
-		return i18n.T("cli.time.minutes_ago", map[string]interface{}{"Count": mins})
-	case duration < 24*time.Hour:
-		hours := int(duration.Hours())
-		if hours == 1 {
-			return i18n.T("cli.time.hour_ago")
-		}
-		return i18n.T("cli.time.hours_ago", map[string]interface{}{"Count": hours})
-	default:
-		days := int(duration.Hours() / 24)
-		if days == 1 {
-			return i18n.T("cli.time.day_ago")
-		}
-		return i18n.T("cli.time.days_ago", map[string]interface{}{"Count": days})
-	}
-}
