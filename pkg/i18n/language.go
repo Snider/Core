@@ -67,7 +67,8 @@ func IsRTLLanguage(lang string) bool {
 	return false
 }
 
-// English: one (n=1), other
+// pluralRuleEnglish returns the plural category for English.
+// Categories: one (n=1), other.
 func pluralRuleEnglish(n int) PluralCategory {
 	if n == 1 {
 		return PluralOne
@@ -75,12 +76,14 @@ func pluralRuleEnglish(n int) PluralCategory {
 	return PluralOther
 }
 
-// German: same as English
+// pluralRuleGerman returns the plural category for German.
+// Categories: same as English.
 func pluralRuleGerman(n int) PluralCategory {
 	return pluralRuleEnglish(n)
 }
 
-// French: one (n=0,1), other
+// pluralRuleFrench returns the plural category for French.
+// Categories: one (n=0,1), other.
 func pluralRuleFrench(n int) PluralCategory {
 	if n == 0 || n == 1 {
 		return PluralOne
@@ -88,7 +91,8 @@ func pluralRuleFrench(n int) PluralCategory {
 	return PluralOther
 }
 
-// Spanish: one (n=1), many (n=0 or n>=1000000), other
+// pluralRuleSpanish returns the plural category for Spanish.
+// Categories: one (n=1), other.
 func pluralRuleSpanish(n int) PluralCategory {
 	if n == 1 {
 		return PluralOne
@@ -96,7 +100,8 @@ func pluralRuleSpanish(n int) PluralCategory {
 	return PluralOther
 }
 
-// Russian: one (n%10=1, n%100!=11), few (n%10=2-4, n%100!=12-14), many (others)
+// pluralRuleRussian returns the plural category for Russian.
+// Categories: one (n%10=1, n%100!=11), few (n%10=2-4, n%100!=12-14), many (others).
 func pluralRuleRussian(n int) PluralCategory {
 	mod10 := n % 10
 	mod100 := n % 100
@@ -110,7 +115,8 @@ func pluralRuleRussian(n int) PluralCategory {
 	return PluralMany
 }
 
-// Polish: one (n=1), few (n%10=2-4, n%100!=12-14), many (others)
+// pluralRulePolish returns the plural category for Polish.
+// Categories: one (n=1), few (n%10=2-4, n%100!=12-14), many (others).
 func pluralRulePolish(n int) PluralCategory {
 	if n == 1 {
 		return PluralOne
@@ -123,7 +129,8 @@ func pluralRulePolish(n int) PluralCategory {
 	return PluralMany
 }
 
-// Arabic: zero (n=0), one (n=1), two (n=2), few (n%100=3-10), many (n%100=11-99), other
+// pluralRuleArabic returns the plural category for Arabic.
+// Categories: zero (n=0), one (n=1), two (n=2), few (n%100=3-10), many (n%100=11-99), other.
 func pluralRuleArabic(n int) PluralCategory {
 	if n == 0 {
 		return PluralZero
@@ -144,15 +151,20 @@ func pluralRuleArabic(n int) PluralCategory {
 	return PluralOther
 }
 
-// Chinese/Japanese/Korean: other (no plural distinction)
+// pluralRuleChinese returns the plural category for Chinese.
+// Categories: other (no plural distinction).
 func pluralRuleChinese(n int) PluralCategory {
 	return PluralOther
 }
 
+// pluralRuleJapanese returns the plural category for Japanese.
+// Categories: other (no plural distinction).
 func pluralRuleJapanese(n int) PluralCategory {
 	return PluralOther
 }
 
+// pluralRuleKorean returns the plural category for Korean.
+// Categories: other (no plural distinction).
 func pluralRuleKorean(n int) PluralCategory {
 	return PluralOther
 }

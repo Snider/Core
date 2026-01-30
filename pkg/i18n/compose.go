@@ -27,53 +27,77 @@ func NewSubject(noun string, value any) *Subject {
 
 // Count sets the count for pluralization.
 // Used to determine singular/plural forms in templates.
+// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("file", files).Count(len(files))
 func (s *Subject) Count(n int) *Subject {
+	if s == nil {
+		return nil
+	}
 	s.count = n
 	return s
 }
 
 // Gender sets the grammatical gender for languages that require it.
 // Common values: "masculine", "feminine", "neuter"
+// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("user", user).Gender("female")
 func (s *Subject) Gender(g string) *Subject {
+	if s == nil {
+		return nil
+	}
 	s.gender = g
 	return s
 }
 
 // In sets the location context for the subject.
 // Used in templates to provide spatial context.
+// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("file", "config.yaml").In("workspace")
 func (s *Subject) In(location string) *Subject {
+	if s == nil {
+		return nil
+	}
 	s.location = location
 	return s
 }
 
 // Formal sets the formality level to formal (Sie, vous, usted).
 // Use for polite/professional address in languages that distinguish formality.
+// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("colleague", name).Formal()
 func (s *Subject) Formal() *Subject {
+	if s == nil {
+		return nil
+	}
 	s.formality = FormalityFormal
 	return s
 }
 
 // Informal sets the formality level to informal (du, tu, tú).
 // Use for casual/friendly address in languages that distinguish formality.
+// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("friend", name).Informal()
 func (s *Subject) Informal() *Subject {
+	if s == nil {
+		return nil
+	}
 	s.formality = FormalityInformal
 	return s
 }
 
 // Formality sets the formality level explicitly.
+// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("user", name).Formality(FormalityFormal)
 func (s *Subject) Formality(f Formality) *Subject {
+	if s == nil {
+		return nil
+	}
 	s.formality = f
 	return s
 }
@@ -94,41 +118,41 @@ func (s *Subject) IsPlural() bool {
 	return s != nil && s.count != 1
 }
 
-// CountValue returns the count value.
-func (s *Subject) CountValue() int {
+// CountInt returns the count value.
+func (s *Subject) CountInt() int {
 	if s == nil {
 		return 1
 	}
 	return s.count
 }
 
-// GenderValue returns the grammatical gender.
-func (s *Subject) GenderValue() string {
+// GenderString returns the grammatical gender.
+func (s *Subject) GenderString() string {
 	if s == nil {
 		return ""
 	}
 	return s.gender
 }
 
-// Location returns the location context.
-func (s *Subject) Location() string {
+// LocationString returns the location context.
+func (s *Subject) LocationString() string {
 	if s == nil {
 		return ""
 	}
 	return s.location
 }
 
-// NounValue returns the noun type.
-func (s *Subject) NounValue() string {
+// NounString returns the noun type.
+func (s *Subject) NounString() string {
 	if s == nil {
 		return ""
 	}
 	return s.Noun
 }
 
-// FormalityValue returns the formality level.
+// FormalityString returns the formality level.
 // Returns FormalityNeutral if not explicitly set.
-func (s *Subject) FormalityValue() Formality {
+func (s *Subject) FormalityString() Formality {
 	if s == nil {
 		return FormalityNeutral
 	}
