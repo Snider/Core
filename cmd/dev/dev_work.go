@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/host-uk/core/cmd/shared"
+	"github.com/host-uk/core/pkg/agentic"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
@@ -302,17 +302,21 @@ func printStatusTable(statuses []git.RepoStatus) {
 }
 
 func claudeCommit(ctx context.Context, repoPath, repoName, registryPath string) error {
-	// Load AGENTS.md context if available
-	agentsPath := filepath.Join(filepath.Dir(registryPath), "AGENTS.md")
-	var agentContext string
-	if data, err := os.ReadFile(agentsPath); err == nil {
-		agentContext = string(data) + "\n\n"
-	}
-
-	prompt := agentContext + "Review the uncommitted changes and create an appropriate commit. " +
-		"Use Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>. Be concise."
+	prompt := agentic.Prompt("commit")
 
 	cmd := exec.CommandContext(ctx, "claude", "-p", prompt, "--allowedTools", "Bash,Read,Glob,Grep")
+	cmd.Dir = repoPath
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd.Run()
+}
+
+func claudeEditCommit(ctx context.Context, repoPath, repoName, registryPath string) error {
+	prompt := agentic.Prompt("commit")
+
+	cmd := exec.CommandContext(ctx, "claude", "-p", prompt, "--allowedTools", "Bash,Read,Write,Edit,Glob,Grep")
 	cmd.Dir = repoPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

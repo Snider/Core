@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
@@ -37,8 +38,14 @@ func addPushCommand(parent *cobra.Command) {
 
 func runPush(registryPath string, force bool) error {
 	ctx := context.Background()
+	cwd, _ := os.Getwd()
 
-	// Find or use provided registry, fall back to directory scan
+	// Check if current directory is a git repo (single-repo mode)
+	if registryPath == "" && isGitRepo(cwd) {
+		return runPushSingleRepo(ctx, cwd, force)
+	}
+
+	// Multi-repo mode: find or use provided registry
 	var reg *repos.Registry
 	var err error
 
@@ -57,8 +64,7 @@ func runPush(registryPath string, force bool) error {
 			}
 			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 		} else {
-			// Fallback: scan current directory
-			cwd, _ := os.Getwd()
+			// Fallback: scan current directory for repos
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
 				return fmt.Errorf("failed to scan directory: %w", err)
@@ -183,5 +189,112 @@ func runPush(registryPath string, force bool) error {
 	}
 	fmt.Println()
 
+	return nil
+}
+
+// runPushSingleRepo handles push for a single repo (current directory).
+func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
+	repoName := filepath.Base(repoPath)
+
+	// Get status
+	statuses := git.Status(ctx, git.StatusOptions{
+		Paths: []string{repoPath},
+		Names: map[string]string{repoPath: repoName},
+	})
+
+	if len(statuses) == 0 {
+		return fmt.Errorf("failed to get repo status")
+	}
+
+	s := statuses[0]
+	if s.Error != nil {
+		return s.Error
+	}
+
+	if !s.HasUnpushed() {
+		// Check if there are uncommitted changes
+		if s.IsDirty() {
+			fmt.Printf("%s: ", repoNameStyle.Render(s.Name))
+			if s.Modified > 0 {
+				fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
+			}
+			if s.Untracked > 0 {
+				fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
+			}
+			if s.Staged > 0 {
+				fmt.Printf("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
+			}
+			fmt.Println()
+			fmt.Println()
+			if shared.Confirm(i18n.T("cmd.dev.push.uncommitted_changes_commit")) {
+				fmt.Println()
+				// Use edit-enabled commit if only untracked files (may need .gitignore fix)
+				var err error
+				if s.Modified == 0 && s.Staged == 0 && s.Untracked > 0 {
+					err = claudeEditCommit(ctx, repoPath, repoName, "")
+				} else {
+					err = runCommitSingleRepo(ctx, repoPath, false)
+				}
+				if err != nil {
+					return err
+				}
+				// Re-check - only push if Claude created commits
+				newStatuses := git.Status(ctx, git.StatusOptions{
+					Paths: []string{repoPath},
+					Names: map[string]string{repoPath: repoName},
+				})
+				if len(newStatuses) > 0 && newStatuses[0].HasUnpushed() {
+					return runPushSingleRepo(ctx, repoPath, force)
+				}
+			}
+			return nil
+		}
+		fmt.Println(i18n.T("cmd.dev.push.all_up_to_date"))
+		return nil
+	}
+
+	// Show commits to push
+	fmt.Printf("%s: %s\n", repoNameStyle.Render(s.Name),
+		aheadStyle.Render(i18n.T("cmd.dev.push.commits_count", map[string]interface{}{"Count": s.Ahead})))
+
+	// Confirm unless --force
+	if !force {
+		fmt.Println()
+		if !shared.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": s.Ahead, "Repos": 1})) {
+			fmt.Println(i18n.T("cli.aborted"))
+			return nil
+		}
+	}
+
+	fmt.Println()
+
+	// Push
+	err := git.Push(ctx, repoPath)
+	if err != nil {
+		if git.IsNonFastForward(err) {
+			fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), repoName, i18n.T("cmd.dev.push.diverged"))
+			fmt.Println()
+			fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
+			if shared.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
+				fmt.Println()
+				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), repoName)
+				if pullErr := git.Pull(ctx, repoPath); pullErr != nil {
+					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), repoName, pullErr)
+					return pullErr
+				}
+				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), repoName)
+				if pushErr := git.Push(ctx, repoPath); pushErr != nil {
+					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), repoName, pushErr)
+					return pushErr
+				}
+				fmt.Printf("  %s %s\n", successStyle.Render("v"), repoName)
+				return nil
+			}
+		}
+		fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), repoName, err)
+		return err
+	}
+
+	fmt.Printf("  %s %s\n", successStyle.Render("v"), repoName)
 	return nil
 }

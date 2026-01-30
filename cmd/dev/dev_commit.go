@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
@@ -37,8 +38,14 @@ func addCommitCommand(parent *cobra.Command) {
 
 func runCommit(registryPath string, all bool) error {
 	ctx := context.Background()
+	cwd, _ := os.Getwd()
 
-	// Find or use provided registry, fall back to directory scan
+	// Check if current directory is a git repo (single-repo mode)
+	if registryPath == "" && isGitRepo(cwd) {
+		return runCommitSingleRepo(ctx, cwd, all)
+	}
+
+	// Multi-repo mode: find or use provided registry
 	var reg *repos.Registry
 	var err error
 
@@ -57,8 +64,7 @@ func runCommit(registryPath string, all bool) error {
 			}
 			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.registry_label")), registryPath)
 		} else {
-			// Fallback: scan current directory
-			cwd, _ := os.Getwd()
+			// Fallback: scan current directory for repos
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
 				return fmt.Errorf("failed to scan directory: %w", err)
@@ -152,5 +158,68 @@ func runCommit(registryPath string, all bool) error {
 	}
 	fmt.Println()
 
+	return nil
+}
+
+// isGitRepo checks if a directory is a git repository.
+func isGitRepo(path string) bool {
+	gitDir := path + "/.git"
+	info, err := os.Stat(gitDir)
+	return err == nil && info.IsDir()
+}
+
+// runCommitSingleRepo handles commit for a single repo (current directory).
+func runCommitSingleRepo(ctx context.Context, repoPath string, all bool) error {
+	repoName := filepath.Base(repoPath)
+
+	// Get status
+	statuses := git.Status(ctx, git.StatusOptions{
+		Paths: []string{repoPath},
+		Names: map[string]string{repoPath: repoName},
+	})
+
+	if len(statuses) == 0 || statuses[0].Error != nil {
+		if len(statuses) > 0 && statuses[0].Error != nil {
+			return statuses[0].Error
+		}
+		return fmt.Errorf("failed to get repo status")
+	}
+
+	s := statuses[0]
+	if !s.IsDirty() {
+		fmt.Println(i18n.T("cmd.dev.no_changes"))
+		return nil
+	}
+
+	// Show status
+	fmt.Printf("%s: ", repoNameStyle.Render(s.Name))
+	if s.Modified > 0 {
+		fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
+	}
+	if s.Untracked > 0 {
+		fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
+	}
+	if s.Staged > 0 {
+		fmt.Printf("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
+	}
+	fmt.Println()
+
+	// Confirm unless --all
+	if !all {
+		fmt.Println()
+		if !shared.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
+			fmt.Println(i18n.T("cli.aborted"))
+			return nil
+		}
+	}
+
+	fmt.Println()
+
+	// Commit
+	if err := claudeCommit(ctx, repoPath, repoName, ""); err != nil {
+		fmt.Printf("  %s %s\n", errorStyle.Render("x"), err)
+		return err
+	}
+	fmt.Printf("  %s %s\n", successStyle.Render("v"), i18n.T("cmd.dev.committed"))
 	return nil
 }
