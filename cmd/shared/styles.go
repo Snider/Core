@@ -241,6 +241,27 @@ var (
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Git Status Styles (for repo state indicators)
+// ─────────────────────────────────────────────────────────────────────────────
+
+var (
+	// GitDirtyStyle for uncommitted changes (red).
+	GitDirtyStyle = lipgloss.NewStyle().Foreground(ColourRed500)
+
+	// GitAheadStyle for unpushed commits (green).
+	GitAheadStyle = lipgloss.NewStyle().Foreground(ColourGreen500)
+
+	// GitBehindStyle for unpulled commits (amber).
+	GitBehindStyle = lipgloss.NewStyle().Foreground(ColourAmber500)
+
+	// GitCleanStyle for clean state (gray).
+	GitCleanStyle = lipgloss.NewStyle().Foreground(ColourGray500)
+
+	// GitConflictStyle for merge conflicts (red, bold).
+	GitConflictStyle = lipgloss.NewStyle().Bold(true).Foreground(ColourRed500)
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Box Styles (for bordered content)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -330,6 +351,53 @@ func StatusPart(count int, label string, style lipgloss.Style) string {
 // Example: StatusText("clean", SuccessStyle) -> "clean" in green
 func StatusText(text string, style lipgloss.Style) string {
 	return style.Render(text)
+}
+
+// CheckMark returns a styled checkmark (✓) or dash (—) based on presence.
+// Useful for showing presence/absence in tables and lists.
+func CheckMark(present bool) string {
+	if present {
+		return SuccessStyle.Render(SymbolCheck)
+	}
+	return DimStyle.Render("—")
+}
+
+// CheckMarkCustom returns a styled indicator with custom symbols and styles.
+func CheckMarkCustom(present bool, presentStyle, absentStyle lipgloss.Style, presentSymbol, absentSymbol string) string {
+	if present {
+		return presentStyle.Render(presentSymbol)
+	}
+	return absentStyle.Render(absentSymbol)
+}
+
+// Label returns a styled label for key-value display.
+// Example: Label("Status") -> "Status:" in dim gray
+func Label(text string) string {
+	return KeyStyle.Render(text + ":")
+}
+
+// LabelValue returns a styled "label: value" pair.
+// Example: LabelValue("Branch", "main") -> "Branch: main"
+func LabelValue(label, value string) string {
+	return fmt.Sprintf("%s %s", Label(label), value)
+}
+
+// LabelValueStyled returns a styled "label: value" pair with custom value style.
+func LabelValueStyled(label, value string, valueStyle lipgloss.Style) string {
+	return fmt.Sprintf("%s %s", Label(label), valueStyle.Render(value))
+}
+
+// CheckResult formats a check result with name and optional version.
+// Used for environment checks like `✓ go 1.22.0` or `✗ docker`.
+func CheckResult(ok bool, name string, version string) string {
+	symbol := ErrorStyle.Render(SymbolCross)
+	if ok {
+		symbol = SuccessStyle.Render(SymbolCheck)
+	}
+	if version != "" {
+		return fmt.Sprintf("  %s %s %s", symbol, name, DimStyle.Render(version))
+	}
+	return fmt.Sprintf("  %s %s", symbol, name)
 }
 
 // Bullet returns a bulleted item.

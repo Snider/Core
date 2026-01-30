@@ -45,22 +45,12 @@ var (
 	repoNameStyle = shared.RepoNameStyle
 )
 
-// Table styles for status display
+// Table styles for status display (with padding for table cells)
 var (
-	cellStyle = lipgloss.NewStyle().
-			Padding(0, 1)
-
-	dirtyStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ef4444")). // red-500
-			Padding(0, 1)
-
-	aheadStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#22c55e")). // green-500
-			Padding(0, 1)
-
-	cleanStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6b7280")). // gray-500
-			Padding(0, 1)
+	cellStyle  = lipgloss.NewStyle().Padding(0, 1)
+	dirtyStyle = shared.GitDirtyStyle.Padding(0, 1)
+	aheadStyle = shared.GitAheadStyle.Padding(0, 1)
+	cleanStyle = shared.GitCleanStyle.Padding(0, 1)
 )
 
 // AddCommands registers the 'dev' command and all subcommands.

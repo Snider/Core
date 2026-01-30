@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
 
@@ -41,22 +42,11 @@ func runDocsList(registryPath string) error {
 	for _, repo := range reg.List() {
 		info := scanRepoDocs(repo)
 
-		readme := docsMissingStyle.Render("—")
-		if info.Readme != "" {
-			readme = docsFoundStyle.Render("✓")
-		}
+		readme := shared.CheckMark(info.Readme != "")
+		claude := shared.CheckMark(info.ClaudeMd != "")
+		changelog := shared.CheckMark(info.Changelog != "")
 
-		claude := docsMissingStyle.Render("—")
-		if info.ClaudeMd != "" {
-			claude = docsFoundStyle.Render("✓")
-		}
-
-		changelog := docsMissingStyle.Render("—")
-		if info.Changelog != "" {
-			changelog = docsFoundStyle.Render("✓")
-		}
-
-		docsDir := docsMissingStyle.Render("—")
+		docsDir := shared.CheckMark(false)
 		if len(info.DocsFiles) > 0 {
 			docsDir = docsFoundStyle.Render(fmt.Sprintf("%d files", len(info.DocsFiles)))
 		}
@@ -78,7 +68,7 @@ func runDocsList(registryPath string) error {
 
 	fmt.Println()
 	fmt.Printf("%s %d with docs, %d without\n",
-		dimStyle.Render("Coverage:"),
+		shared.Label("Coverage"),
 		withDocs,
 		withoutDocs,
 	)

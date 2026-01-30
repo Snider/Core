@@ -2,31 +2,21 @@
 package docs
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
 
 // Style and utility aliases from shared
 var (
-	repoNameStyle = shared.RepoNameStyle
-	successStyle  = shared.SuccessStyle
-	errorStyle    = shared.ErrorStyle
-	dimStyle      = shared.DimStyle
-	headerStyle   = shared.HeaderStyle
-	confirm       = shared.Confirm
-)
-
-// Package-specific styles
-var (
-	docsFoundStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	docsMissingStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	docsFileStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#3b82f6")) // blue-500
+	repoNameStyle    = shared.RepoNameStyle
+	successStyle     = shared.SuccessStyle
+	errorStyle       = shared.ErrorStyle
+	dimStyle         = shared.DimStyle
+	headerStyle      = shared.HeaderStyle
+	confirm          = shared.Confirm
+	docsFoundStyle   = shared.SuccessStyle
+	docsMissingStyle = shared.DimStyle
+	docsFileStyle    = shared.InfoStyle
 )
 
 var docsCmd = &cobra.Command{

@@ -43,14 +43,14 @@ func runDoctor(verbose bool) error {
 	for _, c := range requiredChecks {
 		ok, version := runCheck(c)
 		if ok {
-			if verbose && version != "" {
-				fmt.Printf("  %s %s %s\n", successStyle.Render("✓"), c.name, dimStyle.Render(version))
+			if verbose {
+				fmt.Println(shared.CheckResult(true, c.name, version))
 			} else {
-				fmt.Printf("  %s %s\n", successStyle.Render("✓"), c.name)
+				fmt.Println(shared.CheckResult(true, c.name, ""))
 			}
 			passed++
 		} else {
-			fmt.Printf("  %s %s - %s\n", errorStyle.Render("✗"), c.name, c.description)
+			fmt.Printf("  %s %s - %s\n", errorStyle.Render(shared.SymbolCross), c.name, c.description)
 			failed++
 		}
 	}
@@ -60,14 +60,14 @@ func runDoctor(verbose bool) error {
 	for _, c := range optionalChecks {
 		ok, version := runCheck(c)
 		if ok {
-			if verbose && version != "" {
-				fmt.Printf("  %s %s %s\n", successStyle.Render("✓"), c.name, dimStyle.Render(version))
+			if verbose {
+				fmt.Println(shared.CheckResult(true, c.name, version))
 			} else {
-				fmt.Printf("  %s %s\n", successStyle.Render("✓"), c.name)
+				fmt.Println(shared.CheckResult(true, c.name, ""))
 			}
 			passed++
 		} else {
-			fmt.Printf("  %s %s - %s\n", dimStyle.Render("○"), c.name, dimStyle.Render(c.description))
+			fmt.Printf("  %s %s - %s\n", dimStyle.Render(shared.SymbolSkip), c.name, dimStyle.Render(c.description))
 			optional++
 		}
 	}
@@ -75,16 +75,16 @@ func runDoctor(verbose bool) error {
 	// Check GitHub access
 	fmt.Println("\nGitHub Access:")
 	if checkGitHubSSH() {
-		fmt.Printf("  %s SSH key found\n", successStyle.Render("✓"))
+		fmt.Println(shared.CheckResult(true, "SSH key found", ""))
 	} else {
-		fmt.Printf("  %s SSH key missing - run: ssh-keygen && gh ssh-key add\n", errorStyle.Render("✗"))
+		fmt.Printf("  %s SSH key missing - run: ssh-keygen && gh ssh-key add\n", errorStyle.Render(shared.SymbolCross))
 		failed++
 	}
 
 	if checkGitHubCLI() {
-		fmt.Printf("  %s CLI authenticated\n", successStyle.Render("✓"))
+		fmt.Println(shared.CheckResult(true, "CLI authenticated", ""))
 	} else {
-		fmt.Printf("  %s CLI authentication - run: gh auth login\n", errorStyle.Render("✗"))
+		fmt.Printf("  %s CLI authentication - run: gh auth login\n", errorStyle.Render(shared.SymbolCross))
 		failed++
 	}
 
@@ -95,12 +95,12 @@ func runDoctor(verbose bool) error {
 	// Summary
 	fmt.Println()
 	if failed > 0 {
-		fmt.Printf("%s %d issues found\n", errorStyle.Render("Doctor:"), failed)
+		fmt.Println(shared.Error(fmt.Sprintf("Doctor: %d issues found", failed)))
 		fmt.Println("\nInstall missing tools:")
 		printInstallInstructions()
 		return fmt.Errorf("%d required tools missing", failed)
 	}
 
-	fmt.Printf("%s Environment ready\n", successStyle.Render("Doctor:"))
+	fmt.Println(shared.Success("Doctor: Environment ready"))
 	return nil
 }
