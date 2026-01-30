@@ -34,12 +34,6 @@ import (
 //go:embed locales/*.json
 var localeFS embed.FS
 
-// IsPlural returns true if this message has any plural forms.
-func (m Message) IsPlural() bool {
-	return m.Zero != "" || m.One != "" || m.Two != "" ||
-		m.Few != "" || m.Many != "" || m.Other != ""
-}
-
 // ForCategory returns the appropriate text for a plural category.
 // Falls back through the category hierarchy to find a non-empty string.
 func (m Message) ForCategory(cat PluralCategory) string {

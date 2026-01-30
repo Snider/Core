@@ -49,3 +49,9 @@ func isPluralObject(m map[string]any) bool {
 	}
 	return true
 }
+
+// IsPlural returns true if this message has any plural forms.
+func (m Message) IsPlural() bool {
+	return m.Zero != "" || m.One != "" || m.Two != "" ||
+		m.Few != "" || m.Many != "" || m.Other != ""
+}
