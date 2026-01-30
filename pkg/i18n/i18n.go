@@ -61,7 +61,11 @@ func Raw(messageID string, args ...any) string {
 var ErrServiceNotInitialized = errors.New("i18n: service not initialized")
 
 // SetLanguage sets the language for the default service.
-// Returns ErrServiceNotInitialized if the service has not been initialized.
+// Returns ErrServiceNotInitialized if the service has not been initialized,
+// or an error if the language tag is invalid or unsupported.
+//
+// Unlike other Set* functions, this returns an error because it validates
+// the language tag against available locales.
 func SetLanguage(lang string) error {
 	svc := Default()
 	if svc == nil {
@@ -71,14 +75,16 @@ func SetLanguage(lang string) error {
 }
 
 // CurrentLanguage returns the current language code from the default service.
+// Returns "en-GB" (the fallback language) if the service is not initialized.
 func CurrentLanguage() string {
 	if svc := Default(); svc != nil {
 		return svc.Language()
 	}
-	return ""
+	return "en-GB"
 }
 
 // SetMode sets the translation mode for the default service.
+// Does nothing if the service is not initialized.
 func SetMode(m Mode) {
 	if svc := Default(); svc != nil {
 		svc.SetMode(m)

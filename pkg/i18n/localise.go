@@ -9,6 +9,7 @@ import (
 )
 
 // SetFormality sets the default formality level on the default service.
+// Does nothing if the service is not initialized.
 //
 //	SetFormality(FormalityFormal)  // Use formal address (Sie, vous)
 func SetFormality(f Formality) {

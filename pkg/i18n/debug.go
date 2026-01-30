@@ -13,6 +13,7 @@ package i18n
 // to find and update translations during development.
 
 // SetDebug enables or disables debug mode on the default service.
+// Does nothing if the service is not initialized.
 // In debug mode, translations show their keys: [key] translation
 //
 //	SetDebug(true)
