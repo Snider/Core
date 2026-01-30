@@ -27,7 +27,6 @@ func NewSubject(noun string, value any) *Subject {
 
 // Count sets the count for pluralization.
 // Used to determine singular/plural forms in templates.
-// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("file", files).Count(len(files))
 func (s *Subject) Count(n int) *Subject {
@@ -40,7 +39,6 @@ func (s *Subject) Count(n int) *Subject {
 
 // Gender sets the grammatical gender for languages that require it.
 // Common values: "masculine", "feminine", "neuter"
-// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("user", user).Gender("female")
 func (s *Subject) Gender(g string) *Subject {
@@ -53,7 +51,6 @@ func (s *Subject) Gender(g string) *Subject {
 
 // In sets the location context for the subject.
 // Used in templates to provide spatial context.
-// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("file", "config.yaml").In("workspace")
 func (s *Subject) In(location string) *Subject {
@@ -66,7 +63,6 @@ func (s *Subject) In(location string) *Subject {
 
 // Formal sets the formality level to formal (Sie, vous, usted).
 // Use for polite/professional address in languages that distinguish formality.
-// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("colleague", name).Formal()
 func (s *Subject) Formal() *Subject {
@@ -79,7 +75,6 @@ func (s *Subject) Formal() *Subject {
 
 // Informal sets the formality level to informal (du, tu, tú).
 // Use for casual/friendly address in languages that distinguish formality.
-// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("friend", name).Informal()
 func (s *Subject) Informal() *Subject {
@@ -91,7 +86,6 @@ func (s *Subject) Informal() *Subject {
 }
 
 // Formality sets the formality level explicitly.
-// Panics if called on nil receiver; use S() to create subjects.
 //
 //	S("user", name).Formality(FormalityFormal)
 func (s *Subject) Formality(f Formality) *Subject {

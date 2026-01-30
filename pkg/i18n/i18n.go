@@ -44,16 +44,55 @@ func T(messageID string, args ...any) string {
 }
 
 // _ is the raw gettext-style translation helper.
-// Unlike T(), this does NOT handle core.* namespace magic.
+// Unlike T(), this does NOT handle i18n.* namespace magic.
 // Use this for direct key lookups without auto-composition.
 //
 //	i18n._("cli.success")           // Raw lookup
 //	i18n.T("i18n.label.status")     // Smart: returns "Status:"
 func _(messageID string, args ...any) string {
+	return Raw(messageID, args...)
+}
+
+// Raw is the raw translation helper without i18n.* namespace magic.
+// Alias for _() with a more descriptive name matching Service.Raw().
+//
+//	Raw("cli.success")              // Direct lookup
+func Raw(messageID string, args ...any) string {
 	if svc := Default(); svc != nil {
 		return svc.Raw(messageID, args...)
 	}
 	return messageID
+}
+
+// SetLanguage sets the language for the default service.
+func SetLanguage(lang string) error {
+	if svc := Default(); svc != nil {
+		return svc.SetLanguage(lang)
+	}
+	return nil
+}
+
+// CurrentLanguage returns the current language code from the default service.
+func CurrentLanguage() string {
+	if svc := Default(); svc != nil {
+		return svc.Language()
+	}
+	return ""
+}
+
+// SetMode sets the translation mode for the default service.
+func SetMode(m Mode) {
+	if svc := Default(); svc != nil {
+		svc.SetMode(m)
+	}
+}
+
+// CurrentMode returns the current translation mode from the default service.
+func CurrentMode() Mode {
+	if svc := Default(); svc != nil {
+		return svc.Mode()
+	}
+	return ModeNormal
 }
 
 // N formats a number using the i18n.numeric.* namespace.
