@@ -115,7 +115,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	repoList := reg.List()
 	for i, repo := range repoList {
 		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.P("fetch")), i+1, len(repoList), repo.Name)
+		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.fetch")), i+1, len(repoList), repo.Name)
 
 		prs, err := fetchPRs(repoFullName, repo.Name, author)
 		if err != nil {
