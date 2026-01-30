@@ -172,4 +172,100 @@ func TestNewTemplateData(t *testing.T) {
 		assert.Equal(t, "", data.Location)
 		assert.Nil(t, data.Value)
 	})
+
+	t.Run("with formality", func(t *testing.T) {
+		s := S("user", "Hans").Formal()
+		data := newTemplateData(s)
+
+		assert.Equal(t, FormalityFormal, data.Formality)
+		assert.True(t, data.IsFormal)
+	})
+
+	t.Run("with plural", func(t *testing.T) {
+		s := S("file", "*.go").Count(5)
+		data := newTemplateData(s)
+
+		assert.True(t, data.IsPlural)
+		assert.Equal(t, 5, data.Count)
+	})
+}
+
+func TestSubject_Formality(t *testing.T) {
+	t.Run("default is neutral", func(t *testing.T) {
+		s := S("user", "name")
+		assert.Equal(t, FormalityNeutral, s.GetFormality())
+		assert.False(t, s.IsFormal())
+		assert.False(t, s.IsInformal())
+	})
+
+	t.Run("Formal()", func(t *testing.T) {
+		s := S("user", "name").Formal()
+		assert.Equal(t, FormalityFormal, s.GetFormality())
+		assert.True(t, s.IsFormal())
+	})
+
+	t.Run("Informal()", func(t *testing.T) {
+		s := S("user", "name").Informal()
+		assert.Equal(t, FormalityInformal, s.GetFormality())
+		assert.True(t, s.IsInformal())
+	})
+
+	t.Run("Formality() explicit", func(t *testing.T) {
+		s := S("user", "name").Formality(FormalityFormal)
+		assert.Equal(t, FormalityFormal, s.GetFormality())
+	})
+
+	t.Run("nil safety", func(t *testing.T) {
+		var s *Subject
+		assert.Equal(t, FormalityNeutral, s.GetFormality())
+		assert.False(t, s.IsFormal())
+		assert.False(t, s.IsInformal())
+	})
+}
+
+func TestIntentBuilder(t *testing.T) {
+	// Initialize the default service for tests
+	_ = Init()
+
+	t.Run("basic fluent API", func(t *testing.T) {
+		builder := I("core.delete").For(S("file", "config.yaml"))
+		assert.NotNil(t, builder)
+	})
+
+	t.Run("With alias", func(t *testing.T) {
+		builder := I("core.delete").With(S("file", "config.yaml"))
+		assert.NotNil(t, builder)
+	})
+
+	t.Run("Compose returns all forms", func(t *testing.T) {
+		result := I("core.delete").For(S("file", "config.yaml")).Compose()
+		assert.NotEmpty(t, result.Question)
+		assert.NotEmpty(t, result.Success)
+		assert.NotEmpty(t, result.Failure)
+	})
+
+	t.Run("Question returns string", func(t *testing.T) {
+		question := I("core.delete").For(S("file", "config.yaml")).Question()
+		assert.Contains(t, question, "config.yaml")
+	})
+
+	t.Run("Success returns string", func(t *testing.T) {
+		success := I("core.delete").For(S("file", "config.yaml")).Success()
+		assert.NotEmpty(t, success)
+	})
+
+	t.Run("Failure returns string", func(t *testing.T) {
+		failure := I("core.delete").For(S("file", "config.yaml")).Failure()
+		assert.Contains(t, failure, "delete")
+	})
+
+	t.Run("Meta returns metadata", func(t *testing.T) {
+		meta := I("core.delete").Meta()
+		assert.True(t, meta.Dangerous)
+	})
+
+	t.Run("IsDangerous helper", func(t *testing.T) {
+		assert.True(t, I("core.delete").IsDangerous())
+		assert.False(t, I("core.save").IsDangerous())
+	})
 }

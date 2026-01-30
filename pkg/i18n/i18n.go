@@ -42,15 +42,56 @@ import (
 var localeFS embed.FS
 
 // Message represents a translation - either a simple string or plural forms.
+// Supports full CLDR plural categories for languages with complex plural rules.
 type Message struct {
-	Text  string // Simple string value
-	One   string // Singular form (count == 1)
-	Other string // Plural form (count != 1)
+	Text  string // Simple string value (non-plural)
+	Zero  string // count == 0 (Arabic, Latvian, Welsh)
+	One   string // count == 1 (most languages)
+	Two   string // count == 2 (Arabic, Welsh)
+	Few   string // Small numbers (Slavic: 2-4, Arabic: 3-10)
+	Many  string // Larger numbers (Slavic: 5+, Arabic: 11-99)
+	Other string // Default/fallback form
 }
 
-// IsPlural returns true if this message has plural forms.
+// IsPlural returns true if this message has any plural forms.
 func (m Message) IsPlural() bool {
-	return m.One != "" || m.Other != ""
+	return m.Zero != "" || m.One != "" || m.Two != "" ||
+		m.Few != "" || m.Many != "" || m.Other != ""
+}
+
+// ForCategory returns the appropriate text for a plural category.
+// Falls back through the category hierarchy to find a non-empty string.
+func (m Message) ForCategory(cat PluralCategory) string {
+	switch cat {
+	case PluralZero:
+		if m.Zero != "" {
+			return m.Zero
+		}
+	case PluralOne:
+		if m.One != "" {
+			return m.One
+		}
+	case PluralTwo:
+		if m.Two != "" {
+			return m.Two
+		}
+	case PluralFew:
+		if m.Few != "" {
+			return m.Few
+		}
+	case PluralMany:
+		if m.Many != "" {
+			return m.Many
+		}
+	}
+	// Fallback to Other, then One, then Text
+	if m.Other != "" {
+		return m.Other
+	}
+	if m.One != "" {
+		return m.One
+	}
+	return m.Text
 }
 
 // Service provides internationalization and localization.
@@ -59,8 +100,9 @@ type Service struct {
 	currentLang    string
 	fallbackLang   string
 	availableLangs []language.Tag
-	mode           Mode // Translation mode (Normal, Strict, Collect)
-	debug          bool // Debug mode shows key prefixes
+	mode           Mode      // Translation mode (Normal, Strict, Collect)
+	debug          bool      // Debug mode shows key prefixes
+	formality      Formality // Default formality level for translations
 	mu             sync.RWMutex
 }
 
@@ -151,11 +193,23 @@ func flatten(prefix string, data map[string]any, out map[string]Message) {
 			out[fullKey] = Message{Text: v}
 
 		case map[string]any:
-			// Check if this is a plural object (has "one" or "other" keys)
+			// Check if this is a plural object (has CLDR plural category keys)
 			if isPluralObject(v) {
 				msg := Message{}
+				if zero, ok := v["zero"].(string); ok {
+					msg.Zero = zero
+				}
 				if one, ok := v["one"].(string); ok {
 					msg.One = one
+				}
+				if two, ok := v["two"].(string); ok {
+					msg.Two = two
+				}
+				if few, ok := v["few"].(string); ok {
+					msg.Few = few
+				}
+				if many, ok := v["many"].(string); ok {
+					msg.Many = many
 				}
 				if other, ok := v["other"].(string); ok {
 					msg.Other = other
@@ -170,13 +224,20 @@ func flatten(prefix string, data map[string]any, out map[string]Message) {
 }
 
 // isPluralObject checks if a map represents plural forms.
+// Recognizes all CLDR plural categories: zero, one, two, few, many, other.
 func isPluralObject(m map[string]any) bool {
+	_, hasZero := m["zero"]
 	_, hasOne := m["one"]
+	_, hasTwo := m["two"]
+	_, hasFew := m["few"]
+	_, hasMany := m["many"]
 	_, hasOther := m["other"]
-	// It's a plural object if it has one/other and no nested objects
-	if !hasOne && !hasOther {
+
+	// It's a plural object if it has any plural category key
+	if !hasZero && !hasOne && !hasTwo && !hasFew && !hasMany && !hasOther {
 		return false
 	}
+	// But not if it contains nested objects (those are namespace containers)
 	for _, v := range m {
 		if _, isMap := v.(map[string]any); isMap {
 			return false
@@ -251,6 +312,28 @@ func SetDebug(enabled bool) {
 	if svc := Default(); svc != nil {
 		svc.SetDebug(enabled)
 	}
+}
+
+// SetFormality sets the default formality level on the default service.
+//
+//	SetFormality(FormalityFormal)  // Use formal address (Sie, vous)
+func SetFormality(f Formality) {
+	if svc := Default(); svc != nil {
+		svc.SetFormality(f)
+	}
+}
+
+// Direction returns the text direction for the current language.
+func Direction() TextDirection {
+	if svc := Default(); svc != nil {
+		return svc.Direction()
+	}
+	return DirLTR
+}
+
+// IsRTL returns true if the current language uses right-to-left text.
+func IsRTL() bool {
+	return Direction() == DirRTL
 }
 
 // T translates a message using the default service.
@@ -398,6 +481,45 @@ func (s *Service) Debug() bool {
 	return s.debug
 }
 
+// SetFormality sets the default formality level for translations.
+// This affects languages that distinguish formal/informal address (Sie/du, vous/tu).
+//
+//	svc.SetFormality(FormalityFormal)  // Use formal address
+func (s *Service) SetFormality(f Formality) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.formality = f
+}
+
+// Formality returns the current formality level.
+func (s *Service) Formality() Formality {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.formality
+}
+
+// Direction returns the text direction for the current language.
+func (s *Service) Direction() TextDirection {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if IsRTLLanguage(s.currentLang) {
+		return DirRTL
+	}
+	return DirLTR
+}
+
+// IsRTL returns true if the current language uses right-to-left text direction.
+func (s *Service) IsRTL() bool {
+	return s.Direction() == DirRTL
+}
+
+// PluralCategory returns the plural category for a count in the current language.
+func (s *Service) PluralCategory(n int) PluralCategory {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return GetPluralCategory(s.currentLang, n)
+}
+
 // T translates a message by its ID.
 // Optional template data can be passed for interpolation.
 //
@@ -442,14 +564,9 @@ func (s *Service) T(messageID string, args ...any) string {
 	text := msg.Text
 	if msg.IsPlural() {
 		count := getCount(data)
-		if count == 1 {
-			text = msg.One
-		} else {
-			text = msg.Other
-		}
-		if text == "" {
-			text = msg.Other // Fallback to other
-		}
+		// Use CLDR plural category for current language
+		category := GetPluralCategory(s.currentLang, count)
+		text = msg.ForCategory(category)
 	}
 
 	if text == "" {

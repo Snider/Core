@@ -165,6 +165,89 @@ func TestNestedKeys(t *testing.T) {
 	assert.Equal(t, "Show status only, don't push", result)
 }
 
+func TestMessage_ForCategory(t *testing.T) {
+	t.Run("basic categories", func(t *testing.T) {
+		msg := Message{
+			Zero:  "no items",
+			One:   "1 item",
+			Two:   "2 items",
+			Few:   "a few items",
+			Many:  "many items",
+			Other: "some items",
+		}
+
+		assert.Equal(t, "no items", msg.ForCategory(PluralZero))
+		assert.Equal(t, "1 item", msg.ForCategory(PluralOne))
+		assert.Equal(t, "2 items", msg.ForCategory(PluralTwo))
+		assert.Equal(t, "a few items", msg.ForCategory(PluralFew))
+		assert.Equal(t, "many items", msg.ForCategory(PluralMany))
+		assert.Equal(t, "some items", msg.ForCategory(PluralOther))
+	})
+
+	t.Run("fallback to other", func(t *testing.T) {
+		msg := Message{
+			One:   "1 item",
+			Other: "items",
+		}
+
+		// Categories without explicit values fall back to Other
+		assert.Equal(t, "items", msg.ForCategory(PluralZero))
+		assert.Equal(t, "1 item", msg.ForCategory(PluralOne))
+		assert.Equal(t, "items", msg.ForCategory(PluralFew))
+	})
+
+	t.Run("fallback to one then text", func(t *testing.T) {
+		msg := Message{
+			One: "single item",
+		}
+
+		// Falls back to One when Other is empty
+		assert.Equal(t, "single item", msg.ForCategory(PluralOther))
+		assert.Equal(t, "single item", msg.ForCategory(PluralMany))
+	})
+}
+
+func TestServiceFormality(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	t.Run("default is neutral", func(t *testing.T) {
+		assert.Equal(t, FormalityNeutral, svc.Formality())
+	})
+
+	t.Run("set formality", func(t *testing.T) {
+		svc.SetFormality(FormalityFormal)
+		assert.Equal(t, FormalityFormal, svc.Formality())
+
+		svc.SetFormality(FormalityInformal)
+		assert.Equal(t, FormalityInformal, svc.Formality())
+	})
+}
+
+func TestServiceDirection(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	t.Run("English is LTR", func(t *testing.T) {
+		err := svc.SetLanguage("en-GB")
+		require.NoError(t, err)
+
+		assert.Equal(t, DirLTR, svc.Direction())
+		assert.False(t, svc.IsRTL())
+	})
+}
+
+func TestServicePluralCategory(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	t.Run("English plural rules", func(t *testing.T) {
+		assert.Equal(t, PluralOne, svc.PluralCategory(1))
+		assert.Equal(t, PluralOther, svc.PluralCategory(0))
+		assert.Equal(t, PluralOther, svc.PluralCategory(5))
+	})
+}
+
 func TestDebugMode(t *testing.T) {
 	t.Run("default is disabled", func(t *testing.T) {
 		svc, err := New()
