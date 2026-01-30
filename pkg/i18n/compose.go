@@ -32,6 +32,13 @@ func S(noun string, value any) *Subject {
 	}
 }
 
+// NewSubject is an alias for S() for readability in longer expressions.
+//
+//	NewSubject("file", path).Count(3).In("workspace")
+func NewSubject(noun string, value any) *Subject {
+	return S(noun, value)
+}
+
 // Count sets the count for pluralization.
 // Used to determine singular/plural forms in templates.
 //

@@ -60,6 +60,7 @@ type Service struct {
 	fallbackLang   string
 	availableLangs []language.Tag
 	mode           Mode // Translation mode (Normal, Strict, Collect)
+	debug          bool // Debug mode shows key prefixes
 	mu             sync.RWMutex
 }
 
@@ -241,6 +242,17 @@ func SetDefault(s *Service) {
 	defaultService = s
 }
 
+// SetDebug enables or disables debug mode on the default service.
+// In debug mode, translations show their keys: [key] translation
+//
+//	SetDebug(true)
+//	T("cli.success") // "[cli.success] Success"
+func SetDebug(enabled bool) {
+	if svc := Default(); svc != nil {
+		svc.SetDebug(enabled)
+	}
+}
+
 // T translates a message using the default service.
 // For semantic intents (core.* namespace), pass a Subject as the first argument.
 //
@@ -368,6 +380,24 @@ func (s *Service) Mode() Mode {
 	return s.mode
 }
 
+// SetDebug enables or disables debug mode.
+// In debug mode, translations are prefixed with their key:
+//
+//	[cli.success] Success
+//	[core.delete] Delete config.yaml?
+func (s *Service) SetDebug(enabled bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.debug = enabled
+}
+
+// Debug returns whether debug mode is enabled.
+func (s *Service) Debug() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.debug
+}
+
 // T translates a message by its ID.
 // Optional template data can be passed for interpolation.
 //
@@ -429,6 +459,11 @@ func (s *Service) T(messageID string, args ...any) string {
 	// Apply template if we have data
 	if data != nil {
 		text = applyTemplate(text, data)
+	}
+
+	// Debug mode: prefix with key
+	if s.debug {
+		return "[" + messageID + "] " + text
 	}
 
 	return text
@@ -494,13 +529,27 @@ func (s *Service) C(intent string, subject *Subject) *Composed {
 	// Create template data from subject
 	data := newTemplateData(subject)
 
-	return &Composed{
+	result := &Composed{
 		Question: executeIntentTemplate(intentDef.Question, data),
 		Confirm:  executeIntentTemplate(intentDef.Confirm, data),
 		Success:  executeIntentTemplate(intentDef.Success, data),
 		Failure:  executeIntentTemplate(intentDef.Failure, data),
 		Meta:     intentDef.Meta,
 	}
+
+	// Debug mode: prefix each form with the intent key
+	s.mu.RLock()
+	debug := s.debug
+	s.mu.RUnlock()
+	if debug {
+		prefix := "[" + intent + "] "
+		result.Question = prefix + result.Question
+		result.Confirm = prefix + result.Confirm
+		result.Success = prefix + result.Success
+		result.Failure = prefix + result.Failure
+	}
+
+	return result
 }
 
 // executeIntentTemplate executes an intent template with the given data.

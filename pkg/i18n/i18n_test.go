@@ -164,3 +164,74 @@ func TestNestedKeys(t *testing.T) {
 	result = svc.T("cmd.dev.work.flag.status")
 	assert.Equal(t, "Show status only, don't push", result)
 }
+
+func TestDebugMode(t *testing.T) {
+	t.Run("default is disabled", func(t *testing.T) {
+		svc, err := New()
+		require.NoError(t, err)
+		assert.False(t, svc.Debug())
+	})
+
+	t.Run("T with debug mode", func(t *testing.T) {
+		svc, err := New()
+		require.NoError(t, err)
+
+		// Without debug
+		result := svc.T("cli.success")
+		assert.Equal(t, "Success", result)
+
+		// Enable debug
+		svc.SetDebug(true)
+		assert.True(t, svc.Debug())
+
+		// With debug - shows key prefix
+		result = svc.T("cli.success")
+		assert.Equal(t, "[cli.success] Success", result)
+
+		// Disable debug
+		svc.SetDebug(false)
+		result = svc.T("cli.success")
+		assert.Equal(t, "Success", result)
+	})
+
+	t.Run("C with debug mode", func(t *testing.T) {
+		svc, err := New()
+		require.NoError(t, err)
+
+		subject := S("file", "config.yaml")
+
+		// Without debug
+		result := svc.C("core.delete", subject)
+		assert.NotContains(t, result.Question, "[core.delete]")
+
+		// Enable debug
+		svc.SetDebug(true)
+
+		// With debug - shows key prefix on all forms
+		result = svc.C("core.delete", subject)
+		assert.Contains(t, result.Question, "[core.delete]")
+		assert.Contains(t, result.Success, "[core.delete]")
+		assert.Contains(t, result.Failure, "[core.delete]")
+	})
+
+	t.Run("package-level SetDebug", func(t *testing.T) {
+		// Reset default
+		defaultService = nil
+		defaultOnce = sync.Once{}
+		defaultErr = nil
+
+		err := Init()
+		require.NoError(t, err)
+
+		// Enable debug via package function
+		SetDebug(true)
+		assert.True(t, Default().Debug())
+
+		// Translate
+		result := T("cli.success")
+		assert.Equal(t, "[cli.success] Success", result)
+
+		// Cleanup
+		SetDebug(false)
+	})
+}

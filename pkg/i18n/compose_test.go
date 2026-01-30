@@ -25,6 +25,12 @@ func TestSubject_Good(t *testing.T) {
 		assert.Equal(t, "", s.location)
 	})
 
+	t.Run("NewSubject alias", func(t *testing.T) {
+		s := NewSubject("repo", "core-php")
+		assert.Equal(t, "repo", s.Noun)
+		assert.Equal(t, "core-php", s.Value)
+	})
+
 	t.Run("with count", func(t *testing.T) {
 		s := S("file", "*.go").Count(5)
 		assert.Equal(t, 5, s.GetCount())
