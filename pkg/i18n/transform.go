@@ -26,7 +26,11 @@ func toInt(v any) int {
 		return n
 	case int64:
 		return int(n)
+	case int32:
+		return int(n)
 	case float64:
+		return int(n)
+	case float32:
 		return int(n)
 	}
 	return 0

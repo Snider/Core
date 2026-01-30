@@ -25,6 +25,7 @@ package i18n
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"text/template"
 )
@@ -43,20 +44,12 @@ func T(messageID string, args ...any) string {
 	return messageID
 }
 
-// _ is the raw gettext-style translation helper.
-// Unlike T(), this does NOT handle i18n.* namespace magic.
+// Raw is the raw translation helper without i18n.* namespace magic.
+// Unlike T(), this does NOT handle i18n.* namespace patterns.
 // Use this for direct key lookups without auto-composition.
 //
-//	i18n._("cli.success")           // Raw lookup
-//	i18n.T("i18n.label.status")     // Smart: returns "Status:"
-func _(messageID string, args ...any) string {
-	return Raw(messageID, args...)
-}
-
-// Raw is the raw translation helper without i18n.* namespace magic.
-// Alias for _() with a more descriptive name matching Service.Raw().
-//
 //	Raw("cli.success")              // Direct lookup
+//	T("i18n.label.status")          // Smart: returns "Status:"
 func Raw(messageID string, args ...any) string {
 	if svc := Default(); svc != nil {
 		return svc.Raw(messageID, args...)
@@ -64,12 +57,17 @@ func Raw(messageID string, args ...any) string {
 	return messageID
 }
 
+// ErrServiceNotInitialized is returned when the i18n service is not initialized.
+var ErrServiceNotInitialized = errors.New("i18n: service not initialized")
+
 // SetLanguage sets the language for the default service.
+// Returns ErrServiceNotInitialized if the service has not been initialized.
 func SetLanguage(lang string) error {
-	if svc := Default(); svc != nil {
-		return svc.SetLanguage(lang)
+	svc := Default()
+	if svc == nil {
+		return ErrServiceNotInitialized
 	}
-	return nil
+	return svc.SetLanguage(lang)
 }
 
 // CurrentLanguage returns the current language code from the default service.
