@@ -486,7 +486,7 @@ func addPHPQACommand(parent *cobra.Command) {
 			stages := phppkg.GetQAStages(opts)
 
 			// Print header
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.qa")), i18n.T("common.progress.running", map[string]any{"Task": "QA pipeline"}))
+			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.Label("qa")), i18n.ProgressSubject("run", "QA pipeline"))
 
 			ctx := context.Background()
 
@@ -512,17 +512,17 @@ func addPHPQACommand(parent *cobra.Command) {
 						fmt.Println()
 					}
 					currentStage = stage
-					fmt.Printf("%s\n", phpQAStageStyle.Render(i18n.T("cmd.php.qa.stage_prefix")+strings.ToUpper(stage)+i18n.T("cmd.php.qa.stage_suffix")))
+					fmt.Printf("%s\n", phpQAStageStyle.Render("── "+strings.ToUpper(stage)+" ──"))
 				}
 
 				icon := phpQAPassedStyle.Render("✓")
-				status := phpQAPassedStyle.Render(i18n.T("cmd.php.qa.passed"))
+				status := phpQAPassedStyle.Render(i18n.T("i18n.done.pass"))
 				if checkResult.Skipped {
 					icon = dimStyle.Render("-")
-					status = dimStyle.Render(i18n.T("cmd.php.qa.skipped"))
+					status = dimStyle.Render(i18n.T("i18n.done.skip"))
 				} else if !checkResult.Passed {
 					icon = phpQAFailedStyle.Render("✗")
-					status = phpQAFailedStyle.Render(i18n.T("cmd.php.qa.failed"))
+					status = phpQAFailedStyle.Render(i18n.T("i18n.done.fail"))
 				}
 
 				fmt.Printf("  %s %s %s %s\n", icon, checkResult.Name, status, dimStyle.Render(checkResult.Duration))
@@ -531,15 +531,15 @@ func addPHPQACommand(parent *cobra.Command) {
 
 			// Print summary
 			if result.Passed {
-				fmt.Printf("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("cmd.php.qa.all_passed", map[string]interface{}{"Passed": result.PassedCount, "Total": len(result.Results)}))
-				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("common.label.duration")), result.Duration)
+				fmt.Printf("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("i18n.count.check", result.PassedCount)+" "+i18n.T("i18n.done.pass"))
+				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("i18n.label.duration")), result.Duration)
 				return nil
 			}
 
-			fmt.Printf("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("cmd.php.qa.some_failed", map[string]interface{}{"Passed": result.PassedCount, "Total": len(result.Results)}))
+			fmt.Printf("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("i18n.count.check", result.PassedCount)+"/"+fmt.Sprint(len(result.Results))+" "+i18n.T("i18n.done.pass"))
 
 			// Show what needs fixing
-			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.php.qa.to_fix")))
+			fmt.Printf("%s\n", dimStyle.Render(i18n.T("i18n.label.fix")))
 			for _, checkResult := range result.Results {
 				if checkResult.Passed || checkResult.Skipped {
 					continue
@@ -555,13 +555,13 @@ func addPHPQACommand(parent *cobra.Command) {
 				}
 			}
 
-			return fmt.Errorf(i18n.T("cmd.php.qa.pipeline_failed"))
+			return fmt.Errorf("%s", i18n.T("i18n.fail.run", "QA pipeline"))
 		},
 	}
 
-	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, i18n.T("cmd.php.qa.flag.quick"))
-	qaCmd.Flags().BoolVar(&qaFull, "full", false, i18n.T("cmd.php.qa.flag.full"))
-	qaCmd.Flags().BoolVar(&qaFix, "fix", false, i18n.T("common.flag.fix"))
+	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, "Run quick checks only (audit, fmt, stan)")
+	qaCmd.Flags().BoolVar(&qaFull, "full", false, "Run all stages including slow checks")
+	qaCmd.Flags().BoolVar(&qaFix, "fix", false, "Auto-fix issues where possible")
 
 	parent.AddCommand(qaCmd)
 }
@@ -582,25 +582,25 @@ func getCheckStage(checkName string, stages []phppkg.QAStage, dir string) string
 func getQAFixCommand(checkName string, fixEnabled bool) string {
 	switch checkName {
 	case "audit":
-		return i18n.T("common.hint.fix_deps")
+		return i18n.T("i18n.progress.update", "dependencies")
 	case "fmt":
 		if fixEnabled {
 			return ""
 		}
 		return "core php fmt --fix"
 	case "stan":
-		return i18n.T("cmd.php.qa.fix_phpstan")
+		return i18n.T("i18n.progress.fix", "PHPStan errors")
 	case "psalm":
-		return i18n.T("cmd.php.qa.fix_psalm")
+		return i18n.T("i18n.progress.fix", "Psalm errors")
 	case "test":
-		return i18n.T("cmd.php.qa.fix_tests")
+		return i18n.T("i18n.progress.fix", i18n.T("i18n.done.fail")+" tests")
 	case "rector":
 		if fixEnabled {
 			return ""
 		}
 		return "core php rector --fix"
 	case "infection":
-		return i18n.T("cmd.php.qa.fix_infection")
+		return i18n.T("i18n.progress.improve", "test coverage")
 	}
 	return ""
 }

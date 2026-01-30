@@ -313,27 +313,27 @@ type QACheckRunResult struct {
 	Output   string
 }
 
-// GetIssueMessage returns a localized issue message for a check.
+// GetIssueMessage returns an issue message for a check.
 func (r QACheckRunResult) GetIssueMessage() string {
 	if r.Passed || r.Skipped {
 		return ""
 	}
 	switch r.Name {
 	case "audit":
-		return i18n.T("cmd.php.qa.issue_audit")
+		return i18n.T("i18n.done.find", "vulnerabilities")
 	case "fmt":
-		return i18n.T("cmd.php.qa.issue_style")
+		return i18n.T("i18n.done.find", "style issues")
 	case "stan":
-		return i18n.T("cmd.php.qa.issue_analysis")
+		return i18n.T("i18n.done.find", "analysis errors")
 	case "psalm":
-		return i18n.T("cmd.php.qa.issue_types")
+		return i18n.T("i18n.done.find", "type errors")
 	case "test":
-		return i18n.T("cmd.php.qa.issue_tests")
+		return i18n.T("i18n.done.fail", "tests")
 	case "rector":
-		return i18n.T("cmd.php.qa.issue_rector")
+		return i18n.T("i18n.done.find", "refactoring suggestions")
 	case "infection":
-		return i18n.T("cmd.php.qa.issue_mutation")
+		return i18n.T("i18n.fail.pass", "mutation testing")
 	default:
-		return "issues found"
+		return i18n.T("i18n.done.find", "issues")
 	}
 }

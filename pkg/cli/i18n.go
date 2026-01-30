@@ -41,6 +41,9 @@ func NewI18nService(opts I18nOptions) func(*framework.Core) (any, error) {
 		// Set mode if specified
 		svc.SetMode(opts.Mode)
 
+		// Set as global default so i18n.T() works everywhere
+		i18n.SetDefault(svc)
+
 		return &I18nService{
 			ServiceRuntime: framework.NewServiceRuntime(c, opts),
 			svc:            svc,
