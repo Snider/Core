@@ -4,18 +4,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addDocsListCommand(parent *clir.Command) {
-	var registryPath string
+// Flag variable for list command
+var docsListRegistryPath string
 
-	listCmd := parent.NewSubCommand("list", "List documentation across repos")
-	listCmd.StringFlag("registry", "Path to repos.yaml", &registryPath)
+var docsListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List documentation across repos",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runDocsList(docsListRegistryPath)
+	},
+}
 
-	listCmd.Action(func() error {
-		return runDocsList(registryPath)
-	})
+func init() {
+	docsListCmd.Flags().StringVar(&docsListRegistryPath, "registry", "", "Path to repos.yaml")
 }
 
 func runDocsList(registryPath string) error {

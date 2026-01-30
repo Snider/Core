@@ -16,9 +16,9 @@
 //   - build sdk: Generate API SDKs from OpenAPI spec
 package build
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'build' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddBuildCommand(app)
+func AddCommands(root *cobra.Command) {
+	AddBuildCommand(root)
 }

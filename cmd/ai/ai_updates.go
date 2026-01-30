@@ -5,45 +5,39 @@ package ai
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addTaskUpdateCommand(parent *clir.Command) {
-	var status string
-	var progress int
-	var notes string
+// task:update command flags
+var (
+	taskUpdateStatus   string
+	taskUpdateProgress int
+	taskUpdateNotes    string
+)
 
-	cmd := parent.NewSubCommand("task:update", "Update task status or progress")
-	cmd.LongDescription("Updates a task's status, progress, or adds notes.\n\n" +
-		"Examples:\n" +
-		"  core ai task:update abc123 --status in_progress\n" +
-		"  core ai task:update abc123 --progress 50 --notes 'Halfway done'")
+// task:complete command flags
+var (
+	taskCompleteOutput   string
+	taskCompleteFailed   bool
+	taskCompleteErrorMsg string
+)
 
-	cmd.StringFlag("status", "New status (pending, in_progress, completed, blocked)", &status)
-	cmd.IntFlag("progress", "Progress percentage (0-100)", &progress)
-	cmd.StringFlag("notes", "Notes about the update", &notes)
+var taskUpdateCmd = &cobra.Command{
+	Use:   "task:update [task-id]",
+	Short: "Update task status or progress",
+	Long: `Updates a task's status, progress, or adds notes.
 
-	cmd.Action(func() error {
-		// Find task ID from args
-		args := os.Args
-		var taskID string
-		for i, arg := range args {
-			if arg == "task:update" && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-				taskID = args[i+1]
-				break
-			}
-		}
+Examples:
+  core ai task:update abc123 --status in_progress
+  core ai task:update abc123 --progress 50 --notes 'Halfway done'`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		taskID := args[0]
 
-		if taskID == "" {
-			return fmt.Errorf("task ID required")
-		}
-
-		if status == "" && progress == 0 && notes == "" {
+		if taskUpdateStatus == "" && taskUpdateProgress == 0 && taskUpdateNotes == "" {
 			return fmt.Errorf("at least one of --status, --progress, or --notes required")
 		}
 
@@ -58,11 +52,11 @@ func addTaskUpdateCommand(parent *clir.Command) {
 		defer cancel()
 
 		update := agentic.TaskUpdate{
-			Progress: progress,
-			Notes:    notes,
+			Progress: taskUpdateProgress,
+			Notes:    taskUpdateNotes,
 		}
-		if status != "" {
-			update.Status = agentic.TaskStatus(status)
+		if taskUpdateStatus != "" {
+			update.Status = agentic.TaskStatus(taskUpdateStatus)
 		}
 
 		if err := client.UpdateTask(ctx, taskID, update); err != nil {
@@ -71,38 +65,20 @@ func addTaskUpdateCommand(parent *clir.Command) {
 
 		fmt.Printf("%s Task %s updated successfully\n", successStyle.Render(">>"), taskID)
 		return nil
-	})
+	},
 }
 
-func addTaskCompleteCommand(parent *clir.Command) {
-	var output string
-	var failed bool
-	var errorMsg string
+var taskCompleteCmd = &cobra.Command{
+	Use:   "task:complete [task-id]",
+	Short: "Mark a task as completed",
+	Long: `Marks a task as completed with optional output and artifacts.
 
-	cmd := parent.NewSubCommand("task:complete", "Mark a task as completed")
-	cmd.LongDescription("Marks a task as completed with optional output and artifacts.\n\n" +
-		"Examples:\n" +
-		"  core ai task:complete abc123 --output 'Feature implemented'\n" +
-		"  core ai task:complete abc123 --failed --error 'Build failed'")
-
-	cmd.StringFlag("output", "Summary of the completed work", &output)
-	cmd.BoolFlag("failed", "Mark the task as failed", &failed)
-	cmd.StringFlag("error", "Error message if failed", &errorMsg)
-
-	cmd.Action(func() error {
-		// Find task ID from args
-		args := os.Args
-		var taskID string
-		for i, arg := range args {
-			if arg == "task:complete" && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-				taskID = args[i+1]
-				break
-			}
-		}
-
-		if taskID == "" {
-			return fmt.Errorf("task ID required")
-		}
+Examples:
+  core ai task:complete abc123 --output 'Feature implemented'
+  core ai task:complete abc123 --failed --error 'Build failed'`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		taskID := args[0]
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
@@ -115,20 +91,40 @@ func addTaskCompleteCommand(parent *clir.Command) {
 		defer cancel()
 
 		result := agentic.TaskResult{
-			Success:      !failed,
-			Output:       output,
-			ErrorMessage: errorMsg,
+			Success:      !taskCompleteFailed,
+			Output:       taskCompleteOutput,
+			ErrorMessage: taskCompleteErrorMsg,
 		}
 
 		if err := client.CompleteTask(ctx, taskID, result); err != nil {
 			return fmt.Errorf("failed to complete task: %w", err)
 		}
 
-		if failed {
+		if taskCompleteFailed {
 			fmt.Printf("%s Task %s marked as failed\n", errorStyle.Render(">>"), taskID)
 		} else {
 			fmt.Printf("%s Task %s completed successfully\n", successStyle.Render(">>"), taskID)
 		}
 		return nil
-	})
+	},
+}
+
+func init() {
+	// task:update command flags
+	taskUpdateCmd.Flags().StringVar(&taskUpdateStatus, "status", "", "New status (pending, in_progress, completed, blocked)")
+	taskUpdateCmd.Flags().IntVar(&taskUpdateProgress, "progress", 0, "Progress percentage (0-100)")
+	taskUpdateCmd.Flags().StringVar(&taskUpdateNotes, "notes", "", "Notes about the update")
+
+	// task:complete command flags
+	taskCompleteCmd.Flags().StringVar(&taskCompleteOutput, "output", "", "Summary of the completed work")
+	taskCompleteCmd.Flags().BoolVar(&taskCompleteFailed, "failed", false, "Mark the task as failed")
+	taskCompleteCmd.Flags().StringVar(&taskCompleteErrorMsg, "error", "", "Error message if failed")
+}
+
+func addTaskUpdateCommand(parent *cobra.Command) {
+	parent.AddCommand(taskUpdateCmd)
+}
+
+func addTaskCompleteCommand(parent *cobra.Command) {
+	parent.AddCommand(taskCompleteCmd)
 }

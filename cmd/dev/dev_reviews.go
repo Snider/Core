@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // PR-specific styles
@@ -67,24 +67,31 @@ type GitHubPR struct {
 	RepoName string `json:"-"`
 }
 
+// Reviews command flags
+var (
+	reviewsRegistryPath string
+	reviewsAuthor       string
+	reviewsShowAll      bool
+)
+
 // addReviewsCommand adds the 'reviews' command to the given parent command.
-func addReviewsCommand(parent *clir.Command) {
-	var registryPath string
-	var author string
-	var showAll bool
+func addReviewsCommand(parent *cobra.Command) {
+	reviewsCmd := &cobra.Command{
+		Use:   "reviews",
+		Short: "List PRs needing review across all repos",
+		Long: `Fetches open PRs from GitHub for all repos in the registry.
+Shows review status (approved, changes requested, pending).
+Requires the 'gh' CLI to be installed and authenticated.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runReviews(reviewsRegistryPath, reviewsAuthor, reviewsShowAll)
+		},
+	}
 
-	reviewsCmd := parent.NewSubCommand("reviews", "List PRs needing review across all repos")
-	reviewsCmd.LongDescription("Fetches open PRs from GitHub for all repos in the registry.\n" +
-		"Shows review status (approved, changes requested, pending).\n" +
-		"Requires the 'gh' CLI to be installed and authenticated.")
+	reviewsCmd.Flags().StringVar(&reviewsRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	reviewsCmd.Flags().StringVar(&reviewsAuthor, "author", "", "Filter by PR author")
+	reviewsCmd.Flags().BoolVar(&reviewsShowAll, "all", false, "Show all PRs including drafts")
 
-	reviewsCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	reviewsCmd.StringFlag("author", "Filter by PR author", &author)
-	reviewsCmd.BoolFlag("all", "Show all PRs including drafts", &showAll)
-
-	reviewsCmd.Action(func() error {
-		return runReviews(registryPath, author, showAll)
-	})
+	parent.AddCommand(reviewsCmd)
 }
 
 func runReviews(registryPath string, author string, showAll bool) error {

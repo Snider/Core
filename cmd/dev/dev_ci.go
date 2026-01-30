@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // CI-specific styles
@@ -45,27 +45,35 @@ type WorkflowRun struct {
 	RepoName string `json:"-"`
 }
 
+// CI command flags
+var (
+	ciRegistryPath string
+	ciBranch       string
+	ciFailedOnly   bool
+)
+
 // addCICommand adds the 'ci' command to the given parent command.
-func addCICommand(parent *clir.Command) {
-	var registryPath string
-	var branch string
-	var failedOnly bool
+func addCICommand(parent *cobra.Command) {
+	ciCmd := &cobra.Command{
+		Use:   "ci",
+		Short: "Check CI status across all repos",
+		Long: `Fetches GitHub Actions workflow status for all repos.
+Shows latest run status for each repo.
+Requires the 'gh' CLI to be installed and authenticated.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			branch := ciBranch
+			if branch == "" {
+				branch = "main"
+			}
+			return runCI(ciRegistryPath, branch, ciFailedOnly)
+		},
+	}
 
-	ciCmd := parent.NewSubCommand("ci", "Check CI status across all repos")
-	ciCmd.LongDescription("Fetches GitHub Actions workflow status for all repos.\n" +
-		"Shows latest run status for each repo.\n" +
-		"Requires the 'gh' CLI to be installed and authenticated.")
+	ciCmd.Flags().StringVar(&ciRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	ciCmd.Flags().StringVarP(&ciBranch, "branch", "b", "main", "Filter by branch")
+	ciCmd.Flags().BoolVar(&ciFailedOnly, "failed", false, "Show only failed runs")
 
-	ciCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	ciCmd.StringFlag("branch", "Filter by branch (default: main)", &branch)
-	ciCmd.BoolFlag("failed", "Show only failed runs", &failedOnly)
-
-	ciCmd.Action(func() error {
-		if branch == "" {
-			branch = "main"
-		}
-		return runCI(registryPath, branch, failedOnly)
-	})
+	parent.AddCommand(ciCmd)
 }
 
 func runCI(registryPath string, branch string, failedOnly bool) error {

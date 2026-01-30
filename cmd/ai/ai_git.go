@@ -12,47 +12,44 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addTaskCommitCommand(parent *clir.Command) {
-	var message string
-	var scope string
-	var push bool
+// task:commit command flags
+var (
+	taskCommitMessage string
+	taskCommitScope   string
+	taskCommitPush    bool
+)
 
-	cmd := parent.NewSubCommand("task:commit", "Auto-commit changes with task reference")
-	cmd.LongDescription("Creates a git commit with a task reference and co-author attribution.\n\n" +
-		"Commit message format:\n" +
-		"  feat(scope): description\n" +
-		"\n" +
-		"  Task: #123\n" +
-		"  Co-Authored-By: Claude <noreply@anthropic.com>\n\n" +
-		"Examples:\n" +
-		"  core ai task:commit abc123 --message 'add user authentication'\n" +
-		"  core ai task:commit abc123 -m 'fix login bug' --scope auth\n" +
-		"  core ai task:commit abc123 -m 'update docs' --push")
+// task:pr command flags
+var (
+	taskPRTitle  string
+	taskPRDraft  bool
+	taskPRLabels string
+	taskPRBase   string
+)
 
-	cmd.StringFlag("message", "Commit message (without task reference)", &message)
-	cmd.StringFlag("m", "Commit message (short form)", &message)
-	cmd.StringFlag("scope", "Scope for the commit type (e.g., auth, api, ui)", &scope)
-	cmd.BoolFlag("push", "Push changes after committing", &push)
+var taskCommitCmd = &cobra.Command{
+	Use:   "task:commit [task-id]",
+	Short: "Auto-commit changes with task reference",
+	Long: `Creates a git commit with a task reference and co-author attribution.
 
-	cmd.Action(func() error {
-		// Find task ID from args
-		args := os.Args
-		var taskID string
-		for i, arg := range args {
-			if arg == "task:commit" && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-				taskID = args[i+1]
-				break
-			}
-		}
+Commit message format:
+  feat(scope): description
 
-		if taskID == "" {
-			return fmt.Errorf("task ID required")
-		}
+  Task: #123
+  Co-Authored-By: Claude <noreply@anthropic.com>
 
-		if message == "" {
+Examples:
+  core ai task:commit abc123 --message 'add user authentication'
+  core ai task:commit abc123 -m 'fix login bug' --scope auth
+  core ai task:commit abc123 -m 'update docs' --push`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		taskID := args[0]
+
+		if taskCommitMessage == "" {
 			return fmt.Errorf("commit message required (--message or -m)")
 		}
 
@@ -75,10 +72,10 @@ func addTaskCommitCommand(parent *clir.Command) {
 		// Build commit message with optional scope
 		commitType := inferCommitType(task.Labels)
 		var fullMessage string
-		if scope != "" {
-			fullMessage = fmt.Sprintf("%s(%s): %s", commitType, scope, message)
+		if taskCommitScope != "" {
+			fullMessage = fmt.Sprintf("%s(%s): %s", commitType, taskCommitScope, taskCommitMessage)
 		} else {
-			fullMessage = fmt.Sprintf("%s: %s", commitType, message)
+			fullMessage = fmt.Sprintf("%s: %s", commitType, taskCommitMessage)
 		}
 
 		// Get current directory
@@ -107,7 +104,7 @@ func addTaskCommitCommand(parent *clir.Command) {
 		fmt.Printf("%s Committed: %s\n", successStyle.Render(">>"), fullMessage)
 
 		// Push if requested
-		if push {
+		if taskCommitPush {
 			fmt.Printf("%s Pushing changes...\n", dimStyle.Render(">>"))
 			if err := agentic.PushChanges(ctx, cwd); err != nil {
 				return fmt.Errorf("failed to push: %w", err)
@@ -116,43 +113,24 @@ func addTaskCommitCommand(parent *clir.Command) {
 		}
 
 		return nil
-	})
+	},
 }
 
-func addTaskPRCommand(parent *clir.Command) {
-	var title string
-	var draft bool
-	var labels string
-	var base string
+var taskPRCmd = &cobra.Command{
+	Use:   "task:pr [task-id]",
+	Short: "Create a pull request for a task",
+	Long: `Creates a GitHub pull request linked to a task.
 
-	cmd := parent.NewSubCommand("task:pr", "Create a pull request for a task")
-	cmd.LongDescription("Creates a GitHub pull request linked to a task.\n\n" +
-		"Requires the GitHub CLI (gh) to be installed and authenticated.\n\n" +
-		"Examples:\n" +
-		"  core ai task:pr abc123\n" +
-		"  core ai task:pr abc123 --title 'Add authentication feature'\n" +
-		"  core ai task:pr abc123 --draft --labels 'enhancement,needs-review'\n" +
-		"  core ai task:pr abc123 --base develop")
+Requires the GitHub CLI (gh) to be installed and authenticated.
 
-	cmd.StringFlag("title", "PR title (defaults to task title)", &title)
-	cmd.BoolFlag("draft", "Create as draft PR", &draft)
-	cmd.StringFlag("labels", "Labels to add (comma-separated)", &labels)
-	cmd.StringFlag("base", "Base branch (defaults to main)", &base)
-
-	cmd.Action(func() error {
-		// Find task ID from args
-		args := os.Args
-		var taskID string
-		for i, arg := range args {
-			if arg == "task:pr" && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-				taskID = args[i+1]
-				break
-			}
-		}
-
-		if taskID == "" {
-			return fmt.Errorf("task ID required")
-		}
+Examples:
+  core ai task:pr abc123
+  core ai task:pr abc123 --title 'Add authentication feature'
+  core ai task:pr abc123 --draft --labels 'enhancement,needs-review'
+  core ai task:pr abc123 --base develop`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		taskID := args[0]
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
@@ -197,13 +175,13 @@ func addTaskPRCommand(parent *clir.Command) {
 
 		// Build PR options
 		opts := agentic.PROptions{
-			Title: title,
-			Draft: draft,
-			Base:  base,
+			Title: taskPRTitle,
+			Draft: taskPRDraft,
+			Base:  taskPRBase,
 		}
 
-		if labels != "" {
-			opts.Labels = strings.Split(labels, ",")
+		if taskPRLabels != "" {
+			opts.Labels = strings.Split(taskPRLabels, ",")
 		}
 
 		// Create PR
@@ -217,7 +195,28 @@ func addTaskPRCommand(parent *clir.Command) {
 		fmt.Printf("   URL: %s\n", prURL)
 
 		return nil
-	})
+	},
+}
+
+func init() {
+	// task:commit command flags
+	taskCommitCmd.Flags().StringVarP(&taskCommitMessage, "message", "m", "", "Commit message (without task reference)")
+	taskCommitCmd.Flags().StringVar(&taskCommitScope, "scope", "", "Scope for the commit type (e.g., auth, api, ui)")
+	taskCommitCmd.Flags().BoolVar(&taskCommitPush, "push", false, "Push changes after committing")
+
+	// task:pr command flags
+	taskPRCmd.Flags().StringVar(&taskPRTitle, "title", "", "PR title (defaults to task title)")
+	taskPRCmd.Flags().BoolVar(&taskPRDraft, "draft", false, "Create as draft PR")
+	taskPRCmd.Flags().StringVar(&taskPRLabels, "labels", "", "Labels to add (comma-separated)")
+	taskPRCmd.Flags().StringVar(&taskPRBase, "base", "", "Base branch (defaults to main)")
+}
+
+func addTaskCommitCommand(parent *cobra.Command) {
+	parent.AddCommand(taskCommitCmd)
+}
+
+func addTaskPRCommand(parent *cobra.Command) {
+	parent.AddCommand(taskPRCmd)
 }
 
 // inferCommitType infers the commit type from task labels.

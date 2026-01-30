@@ -8,24 +8,31 @@ import (
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+// Commit command flags
+var (
+	commitRegistryPath string
+	commitAll          bool
 )
 
 // addCommitCommand adds the 'commit' command to the given parent command.
-func addCommitCommand(parent *clir.Command) {
-	var registryPath string
-	var all bool
+func addCommitCommand(parent *cobra.Command) {
+	commitCmd := &cobra.Command{
+		Use:   "commit",
+		Short: "Claude-assisted commits across repos",
+		Long: `Uses Claude to create commits for dirty repos.
+Shows uncommitted changes and invokes Claude to generate commit messages.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runCommit(commitRegistryPath, commitAll)
+		},
+	}
 
-	commitCmd := parent.NewSubCommand("commit", "Claude-assisted commits across repos")
-	commitCmd.LongDescription("Uses Claude to create commits for dirty repos.\n" +
-		"Shows uncommitted changes and invokes Claude to generate commit messages.")
+	commitCmd.Flags().StringVar(&commitRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	commitCmd.Flags().BoolVar(&commitAll, "all", false, "Commit all dirty repos without prompting")
 
-	commitCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	commitCmd.BoolFlag("all", "Commit all dirty repos without prompting", &all)
-
-	commitCmd.Action(func() error {
-		return runCommit(registryPath, all)
-	})
+	parent.AddCommand(commitCmd)
 }
 
 func runCommit(registryPath string, all bool) error {

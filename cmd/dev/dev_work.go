@@ -13,27 +13,35 @@ import (
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+// Work command flags
+var (
+	workStatusOnly   bool
+	workAutoCommit   bool
+	workRegistryPath string
 )
 
 // addWorkCommand adds the 'work' command to the given parent command.
-func addWorkCommand(parent *clir.Command) {
-	var statusOnly bool
-	var autoCommit bool
-	var registryPath string
+func addWorkCommand(parent *cobra.Command) {
+	workCmd := &cobra.Command{
+		Use:   "work",
+		Short: "Multi-repo git operations",
+		Long: `Manage git status, commits, and pushes across multiple repositories.
 
-	workCmd := parent.NewSubCommand("work", "Multi-repo git operations")
-	workCmd.LongDescription("Manage git status, commits, and pushes across multiple repositories.\n\n" +
-		"Reads repos.yaml to discover repositories and their relationships.\n" +
-		"Shows status, optionally commits with Claude, and pushes changes.")
+Reads repos.yaml to discover repositories and their relationships.
+Shows status, optionally commits with Claude, and pushes changes.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runWork(workRegistryPath, workStatusOnly, workAutoCommit)
+		},
+	}
 
-	workCmd.BoolFlag("status", "Show status only, don't push", &statusOnly)
-	workCmd.BoolFlag("commit", "Use Claude to commit dirty repos before pushing", &autoCommit)
-	workCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
+	workCmd.Flags().BoolVar(&workStatusOnly, "status", false, "Show status only, don't push")
+	workCmd.Flags().BoolVar(&workAutoCommit, "commit", false, "Use Claude to commit dirty repos before pushing")
+	workCmd.Flags().StringVar(&workRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
 
-	workCmd.Action(func() error {
-		return runWork(registryPath, statusOnly, autoCommit)
-	})
+	parent.AddCommand(workCmd)
 }
 
 func runWork(registryPath string, statusOnly, autoCommit bool) error {

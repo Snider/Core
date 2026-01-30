@@ -12,9 +12,9 @@
 // Templates are built from YAML definitions and can include variables.
 package vm
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'vm' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddVMCommands(app)
+func AddCommands(root *cobra.Command) {
+	AddVMCommands(root)
 }

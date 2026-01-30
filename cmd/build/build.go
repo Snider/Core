@@ -5,7 +5,7 @@ import (
 	"embed"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Build command styles
@@ -32,100 +32,130 @@ var (
 //go:embed all:tmpl/gui
 var guiTemplate embed.FS
 
-// AddBuildCommand adds the new build command and its subcommands to the clir app.
-func AddBuildCommand(app *clir.Cli) {
-	buildCmd := app.NewSubCommand("build", "Build projects with auto-detection and cross-compilation")
-	buildCmd.LongDescription("Builds the current project with automatic type detection.\n" +
-		"Supports Go, Wails, Docker, LinuxKit, and Taskfile projects.\n" +
-		"Configuration can be provided via .core/build.yaml or command-line flags.\n\n" +
-		"Examples:\n" +
-		"  core build                              # Auto-detect and build\n" +
-		"  core build --type docker                # Build Docker image\n" +
-		"  core build --type linuxkit              # Build LinuxKit image\n" +
-		"  core build --type linuxkit --config linuxkit.yml --format qcow2-bios")
-
-	// Flags for the main build command
-	var buildType string
-	var ciMode bool
-	var targets string
-	var outputDir string
-	var doArchive bool
-	var doChecksum bool
+// Flags for the main build command
+var (
+	buildType  string
+	ciMode     bool
+	targets    string
+	outputDir  string
+	doArchive  bool
+	doChecksum bool
 
 	// Docker/LinuxKit specific flags
-	var configPath string
-	var format string
-	var push bool
-	var imageName string
+	configPath string
+	format     string
+	push       bool
+	imageName  string
 
 	// Signing flags
-	var noSign bool
-	var notarize bool
+	noSign   bool
+	notarize bool
 
-	buildCmd.StringFlag("type", "Builder type (go, wails, docker, linuxkit, taskfile) - auto-detected if not specified", &buildType)
-	buildCmd.BoolFlag("ci", "CI mode - minimal output with JSON artifact list at the end", &ciMode)
-	buildCmd.StringFlag("targets", "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)", &targets)
-	buildCmd.StringFlag("output", "Output directory for artifacts (default: dist)", &outputDir)
-	buildCmd.BoolFlag("archive", "Create archives (tar.gz for linux/darwin, zip for windows) - default: true", &doArchive)
-	buildCmd.BoolFlag("checksum", "Generate SHA256 checksums and CHECKSUMS.txt - default: true", &doChecksum)
+	// from-path subcommand
+	fromPath string
 
-	// Docker/LinuxKit specific
-	buildCmd.StringFlag("config", "Config file path (for linuxkit: YAML config, for docker: Dockerfile)", &configPath)
-	buildCmd.StringFlag("format", "Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk)", &format)
-	buildCmd.BoolFlag("push", "Push Docker image after build (default: false)", &push)
-	buildCmd.StringFlag("image", "Docker image name (e.g., host-uk/core-devops)", &imageName)
+	// pwa subcommand
+	pwaURL string
 
-	// Signing flags
-	buildCmd.BoolFlag("no-sign", "Skip all code signing", &noSign)
-	buildCmd.BoolFlag("notarize", "Enable macOS notarization (requires Apple credentials)", &notarize)
+	// sdk subcommand
+	sdkSpec    string
+	sdkLang    string
+	sdkVersion string
+	sdkDryRun  bool
+)
 
-	// Set defaults for archive and checksum (true by default)
-	doArchive = true
-	doChecksum = true
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "Build projects with auto-detection and cross-compilation",
+	Long: `Builds the current project with automatic type detection.
+Supports Go, Wails, Docker, LinuxKit, and Taskfile projects.
+Configuration can be provided via .core/build.yaml or command-line flags.
 
-	// Default action for `core build` (no subcommand)
-	buildCmd.Action(func() error {
+Examples:
+  core build                              # Auto-detect and build
+  core build --type docker                # Build Docker image
+  core build --type linuxkit              # Build LinuxKit image
+  core build --type linuxkit --config linuxkit.yml --format qcow2-bios`,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName, noSign, notarize)
-	})
+	},
+}
 
-	// --- `build from-path` command (legacy PWA/GUI build) ---
-	fromPathCmd := buildCmd.NewSubCommand("from-path", "Build from a local directory.")
-	var fromPath string
-	fromPathCmd.StringFlag("path", "The path to the static web application files.", &fromPath)
-	fromPathCmd.Action(func() error {
+var fromPathCmd = &cobra.Command{
+	Use:   "from-path",
+	Short: "Build from a local directory.",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if fromPath == "" {
 			return errPathRequired
 		}
 		return runBuild(fromPath)
-	})
+	},
+}
 
-	// --- `build pwa` command (legacy PWA build) ---
-	pwaCmd := buildCmd.NewSubCommand("pwa", "Build from a live PWA URL.")
-	var pwaURL string
-	pwaCmd.StringFlag("url", "The URL of the PWA to build.", &pwaURL)
-	pwaCmd.Action(func() error {
+var pwaCmd = &cobra.Command{
+	Use:   "pwa",
+	Short: "Build from a live PWA URL.",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if pwaURL == "" {
 			return errURLRequired
 		}
 		return runPwaBuild(pwaURL)
-	})
+	},
+}
 
-	// --- `build sdk` command ---
-	sdkBuildCmd := buildCmd.NewSubCommand("sdk", "Generate API SDKs from OpenAPI spec")
-	sdkBuildCmd.LongDescription("Generates typed API clients from OpenAPI specifications.\n" +
-		"Supports TypeScript, Python, Go, and PHP.\n\n" +
-		"Examples:\n" +
-		"  core build sdk                    # Generate all configured SDKs\n" +
-		"  core build sdk --lang typescript  # Generate only TypeScript SDK\n" +
-		"  core build sdk --spec api.yaml    # Use specific OpenAPI spec")
+var sdkBuildCmd = &cobra.Command{
+	Use:   "sdk",
+	Short: "Generate API SDKs from OpenAPI spec",
+	Long: `Generates typed API clients from OpenAPI specifications.
+Supports TypeScript, Python, Go, and PHP.
 
-	var sdkSpec, sdkLang, sdkVersion string
-	var sdkDryRun bool
-	sdkBuildCmd.StringFlag("spec", "Path to OpenAPI spec file", &sdkSpec)
-	sdkBuildCmd.StringFlag("lang", "Generate only this language (typescript, python, go, php)", &sdkLang)
-	sdkBuildCmd.StringFlag("version", "Version to embed in generated SDKs", &sdkVersion)
-	sdkBuildCmd.BoolFlag("dry-run", "Show what would be generated without writing files", &sdkDryRun)
-	sdkBuildCmd.Action(func() error {
+Examples:
+  core build sdk                    # Generate all configured SDKs
+  core build sdk --lang typescript  # Generate only TypeScript SDK
+  core build sdk --spec api.yaml    # Use specific OpenAPI spec`,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		return runBuildSDK(sdkSpec, sdkLang, sdkVersion, sdkDryRun)
-	})
+	},
+}
+
+func init() {
+	// Main build command flags
+	buildCmd.Flags().StringVar(&buildType, "type", "", "Builder type (go, wails, docker, linuxkit, taskfile) - auto-detected if not specified")
+	buildCmd.Flags().BoolVar(&ciMode, "ci", false, "CI mode - minimal output with JSON artifact list at the end")
+	buildCmd.Flags().StringVar(&targets, "targets", "", "Comma-separated OS/arch pairs (e.g., linux/amd64,darwin/arm64)")
+	buildCmd.Flags().StringVar(&outputDir, "output", "", "Output directory for artifacts (default: dist)")
+	buildCmd.Flags().BoolVar(&doArchive, "archive", true, "Create archives (tar.gz for linux/darwin, zip for windows)")
+	buildCmd.Flags().BoolVar(&doChecksum, "checksum", true, "Generate SHA256 checksums and CHECKSUMS.txt")
+
+	// Docker/LinuxKit specific
+	buildCmd.Flags().StringVar(&configPath, "config", "", "Config file path (for linuxkit: YAML config, for docker: Dockerfile)")
+	buildCmd.Flags().StringVar(&format, "format", "", "Output format for linuxkit (iso-bios, qcow2-bios, raw, vmdk)")
+	buildCmd.Flags().BoolVar(&push, "push", false, "Push Docker image after build")
+	buildCmd.Flags().StringVar(&imageName, "image", "", "Docker image name (e.g., host-uk/core-devops)")
+
+	// Signing flags
+	buildCmd.Flags().BoolVar(&noSign, "no-sign", false, "Skip all code signing")
+	buildCmd.Flags().BoolVar(&notarize, "notarize", false, "Enable macOS notarization (requires Apple credentials)")
+
+	// from-path subcommand flags
+	fromPathCmd.Flags().StringVar(&fromPath, "path", "", "The path to the static web application files.")
+
+	// pwa subcommand flags
+	pwaCmd.Flags().StringVar(&pwaURL, "url", "", "The URL of the PWA to build.")
+
+	// sdk subcommand flags
+	sdkBuildCmd.Flags().StringVar(&sdkSpec, "spec", "", "Path to OpenAPI spec file")
+	sdkBuildCmd.Flags().StringVar(&sdkLang, "lang", "", "Generate only this language (typescript, python, go, php)")
+	sdkBuildCmd.Flags().StringVar(&sdkVersion, "version", "", "Version to embed in generated SDKs")
+	sdkBuildCmd.Flags().BoolVar(&sdkDryRun, "dry-run", false, "Show what would be generated without writing files")
+
+	// Add subcommands
+	buildCmd.AddCommand(fromPathCmd)
+	buildCmd.AddCommand(pwaCmd)
+	buildCmd.AddCommand(sdkBuildCmd)
+}
+
+// AddBuildCommand adds the new build command and its subcommands to the cobra app.
+func AddBuildCommand(root *cobra.Command) {
+	root.AddCommand(buildCmd)
 }

@@ -2,13 +2,12 @@ package dev
 
 import (
 	"fmt"
-	"os"
 	"sort"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Impact-specific styles
@@ -24,31 +23,25 @@ var (
 			Foreground(lipgloss.Color("#22c55e")) // green-500
 )
 
+// Impact command flags
+var impactRegistryPath string
+
 // addImpactCommand adds the 'impact' command to the given parent command.
-func addImpactCommand(parent *clir.Command) {
-	var registryPath string
+func addImpactCommand(parent *cobra.Command) {
+	impactCmd := &cobra.Command{
+		Use:   "impact <repo-name>",
+		Short: "Show impact of changing a repo",
+		Long: `Analyzes the dependency graph to show which repos
+would be affected by changes to the specified repo.`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runImpact(impactRegistryPath, args[0])
+		},
+	}
 
-	impactCmd := parent.NewSubCommand("impact", "Show impact of changing a repo")
-	impactCmd.LongDescription("Analyzes the dependency graph to show which repos\n" +
-		"would be affected by changes to the specified repo.")
+	impactCmd.Flags().StringVar(&impactRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
 
-	impactCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-
-	impactCmd.Action(func() error {
-		args := os.Args[2:] // Skip "core" and "impact"
-		// Filter out flags
-		var repoName string
-		for _, arg := range args {
-			if arg[0] != '-' {
-				repoName = arg
-				break
-			}
-		}
-		if repoName == "" {
-			return fmt.Errorf("usage: core impact <repo-name>")
-		}
-		return runImpact(registryPath, repoName)
-	})
+	parent.AddCommand(impactCmd)
 }
 
 func runImpact(registryPath string, repoName string) error {

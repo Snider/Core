@@ -7,9 +7,9 @@
 // Configuration via .core/sdk.yaml. For SDK generation, use: core build sdk
 package sdk
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'sdk' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddSDKCommand(app)
+func AddCommands(root *cobra.Command) {
+	root.AddCommand(sdkCmd)
 }

@@ -8,24 +8,31 @@ import (
 
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+// Health command flags
+var (
+	healthRegistryPath string
+	healthVerbose      bool
 )
 
 // addHealthCommand adds the 'health' command to the given parent command.
-func addHealthCommand(parent *clir.Command) {
-	var registryPath string
-	var verbose bool
+func addHealthCommand(parent *cobra.Command) {
+	healthCmd := &cobra.Command{
+		Use:   "health",
+		Short: "Quick health check across all repos",
+		Long: `Shows a summary of repository health:
+total repos, dirty repos, unpushed commits, etc.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runHealth(healthRegistryPath, healthVerbose)
+		},
+	}
 
-	healthCmd := parent.NewSubCommand("health", "Quick health check across all repos")
-	healthCmd.LongDescription("Shows a summary of repository health:\n" +
-		"total repos, dirty repos, unpushed commits, etc.")
+	healthCmd.Flags().StringVar(&healthRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	healthCmd.Flags().BoolVarP(&healthVerbose, "verbose", "v", false, "Show detailed breakdown")
 
-	healthCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	healthCmd.BoolFlag("verbose", "Show detailed breakdown", &verbose)
-
-	healthCmd.Action(func() error {
-		return runHealth(registryPath, verbose)
-	})
+	parent.AddCommand(healthCmd)
 }
 
 func runHealth(registryPath string, verbose bool) error {

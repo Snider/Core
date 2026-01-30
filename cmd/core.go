@@ -17,32 +17,92 @@
 package cmd
 
 import (
-	"github.com/charmbracelet/lipgloss"
-	"github.com/leaanthony/clir"
+	"os"
+
+	"github.com/host-uk/core/cmd/shared"
+	"github.com/spf13/cobra"
 )
 
-// Terminal styles using Tailwind color palette.
+// Terminal styles using Tailwind colour palette (from shared package).
 var (
 	// coreStyle is used for primary headings and the CLI name.
-	coreStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#3b82f6")). // blue-500
-			Bold(true)
-
-	// subPkgStyle is used for subcommand names and secondary headings.
-	subPkgStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#e2e8f0")). // gray-200
-			Bold(true)
+	coreStyle = shared.RepoNameStyle
 
 	// linkStyle is used for URLs and clickable references.
-	linkStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#3b82f6")). // blue-500
-			Underline(true)
+	linkStyle = shared.LinkStyle
 )
+
+// rootCmd is the base command for the CLI.
+var rootCmd = &cobra.Command{
+	Use:     "core",
+	Short:   "CLI tool for development and production",
+	Version: "0.1.0",
+}
 
 // Execute initialises and runs the CLI application.
 // Commands are registered based on build tags (see core_ci.go and core_dev.go).
 func Execute() error {
-	app := clir.NewCli("core", "CLI tool for development and production", "0.1.0")
-	registerCommands(app)
-	return app.Run()
+	return rootCmd.Execute()
+}
+
+func init() {
+	// Add shell completion command
+	rootCmd.AddCommand(completionCmd)
+}
+
+// completionCmd generates shell completion scripts.
+var completionCmd = &cobra.Command{
+	Use:   "completion [bash|zsh|fish|powershell]",
+	Short: "Generate shell completion script",
+	Long: `Generate shell completion script for the specified shell.
+
+To load completions:
+
+Bash:
+  $ source <(core completion bash)
+
+  # To load completions for each session, execute once:
+  # Linux:
+  $ core completion bash > /etc/bash_completion.d/core
+  # macOS:
+  $ core completion bash > $(brew --prefix)/etc/bash_completion.d/core
+
+Zsh:
+  # If shell completion is not already enabled in your environment,
+  # you will need to enable it. You can execute the following once:
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+  # To load completions for each session, execute once:
+  $ core completion zsh > "${fpath[1]}/_core"
+
+  # You will need to start a new shell for this setup to take effect.
+
+Fish:
+  $ core completion fish | source
+
+  # To load completions for each session, execute once:
+  $ core completion fish > ~/.config/fish/completions/core.fish
+
+PowerShell:
+  PS> core completion powershell | Out-String | Invoke-Expression
+
+  # To load completions for every new session, run:
+  PS> core completion powershell > core.ps1
+  # and source this file from your PowerShell profile.
+`,
+	DisableFlagsInUseLine: true,
+	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	Run: func(cmd *cobra.Command, args []string) {
+		switch args[0] {
+		case "bash":
+			_ = cmd.Root().GenBashCompletion(os.Stdout)
+		case "zsh":
+			_ = cmd.Root().GenZshCompletion(os.Stdout)
+		case "fish":
+			_ = cmd.Root().GenFishCompletion(os.Stdout, true)
+		case "powershell":
+			_ = cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+		}
+	},
 }

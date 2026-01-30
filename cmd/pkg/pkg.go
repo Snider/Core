@@ -3,7 +3,7 @@ package pkg
 
 import (
 	"github.com/host-uk/core/cmd/shared"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Style and utility aliases
@@ -17,16 +17,20 @@ var (
 )
 
 // AddPkgCommands adds the 'pkg' command and subcommands for package management.
-func AddPkgCommands(parent *clir.Cli) {
-	pkgCmd := parent.NewSubCommand("pkg", "Package management for core-* repos")
-	pkgCmd.LongDescription("Manage host-uk/core-* packages and repositories.\n\n" +
-		"Commands:\n" +
-		"  search    Search GitHub for packages\n" +
-		"  install   Clone a package from GitHub\n" +
-		"  list      List installed packages\n" +
-		"  update    Update installed packages\n" +
-		"  outdated  Check for outdated packages")
+func AddPkgCommands(root *cobra.Command) {
+	pkgCmd := &cobra.Command{
+		Use:   "pkg",
+		Short: "Package management for core-* repos",
+		Long: "Manage host-uk/core-* packages and repositories.\n\n" +
+			"Commands:\n" +
+			"  search    Search GitHub for packages\n" +
+			"  install   Clone a package from GitHub\n" +
+			"  list      List installed packages\n" +
+			"  update    Update installed packages\n" +
+			"  outdated  Check for outdated packages",
+	}
 
+	root.AddCommand(pkgCmd)
 	addPkgSearchCommand(pkgCmd)
 	addPkgInstallCommand(pkgCmd)
 	addPkgListCommand(pkgCmd)

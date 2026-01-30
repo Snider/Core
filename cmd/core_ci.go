@@ -19,13 +19,11 @@ import (
 	"github.com/host-uk/core/cmd/ci"
 	"github.com/host-uk/core/cmd/doctor"
 	"github.com/host-uk/core/cmd/sdk"
-	"github.com/leaanthony/clir"
 )
 
-// registerCommands adds CI/release commands only.
-func registerCommands(app *clir.Cli) {
-	build.AddCommands(app)
-	ci.AddCommands(app)
-	sdk.AddCommands(app)
-	doctor.AddCommands(app)
+func init() {
+	build.AddCommands(rootCmd)
+	ci.AddCommands(rootCmd)
+	sdk.AddCommands(rootCmd)
+	doctor.AddCommands(rootCmd)
 }

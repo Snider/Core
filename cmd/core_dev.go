@@ -35,31 +35,29 @@ import (
 	"github.com/host-uk/core/cmd/setup"
 	testcmd "github.com/host-uk/core/cmd/test"
 	"github.com/host-uk/core/cmd/vm"
-	"github.com/leaanthony/clir"
 )
 
-// registerCommands adds all development commands.
-func registerCommands(app *clir.Cli) {
+func init() {
 	// Multi-repo workflow
-	dev.AddCommands(app)
+	dev.AddCommands(rootCmd)
 
 	// AI agent tools
-	ai.AddCommands(app)
+	ai.AddCommands(rootCmd)
 
 	// Language tooling
-	gocmd.AddCommands(app)
-	php.AddCommands(app)
+	gocmd.AddCommands(rootCmd)
+	php.AddCommands(rootCmd)
 
 	// Build and release
-	build.AddCommands(app)
-	ci.AddCommands(app)
-	sdk.AddCommands(app)
+	build.AddCommands(rootCmd)
+	ci.AddCommands(rootCmd)
+	sdk.AddCommands(rootCmd)
 
 	// Environment management
-	pkg.AddCommands(app)
-	vm.AddCommands(app)
-	docs.AddCommands(app)
-	setup.AddCommands(app)
-	doctor.AddCommands(app)
-	testcmd.AddCommands(app)
+	pkg.AddCommands(rootCmd)
+	vm.AddCommands(rootCmd)
+	docs.AddCommands(rootCmd)
+	setup.AddCommands(rootCmd)
+	doctor.AddCommands(rootCmd)
+	testcmd.AddCommands(rootCmd)
 }

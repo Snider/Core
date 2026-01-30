@@ -11,9 +11,9 @@
 // Flags: --verbose, --coverage, --short, --pkg, --run, --race, --json
 package testcmd
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'test' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddTestCommand(app)
+func AddCommands(root *cobra.Command) {
+	root.AddCommand(testCmd)
 }

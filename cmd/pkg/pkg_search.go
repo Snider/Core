@@ -12,44 +12,53 @@ import (
 
 	"github.com/host-uk/core/pkg/cache"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+var (
+	searchOrg     string
+	searchPattern string
+	searchType    string
+	searchLimit   int
+	searchRefresh bool
 )
 
 // addPkgSearchCommand adds the 'pkg search' command.
-func addPkgSearchCommand(parent *clir.Command) {
-	var org string
-	var pattern string
-	var repoType string
-	var limit int
-	var refresh bool
+func addPkgSearchCommand(parent *cobra.Command) {
+	searchCmd := &cobra.Command{
+		Use:   "search",
+		Short: "Search GitHub for packages",
+		Long: "Searches GitHub for repositories matching a pattern.\n" +
+			"Uses gh CLI for authenticated search. Results are cached for 1 hour.\n\n" +
+			"Examples:\n" +
+			"  core pkg search                           # List all host-uk repos\n" +
+			"  core pkg search --pattern 'core-*'        # Search for core-* repos\n" +
+			"  core pkg search --org mycompany           # Search different org\n" +
+			"  core pkg search --refresh                 # Bypass cache",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			org := searchOrg
+			pattern := searchPattern
+			limit := searchLimit
+			if org == "" {
+				org = "host-uk"
+			}
+			if pattern == "" {
+				pattern = "*"
+			}
+			if limit == 0 {
+				limit = 50
+			}
+			return runPkgSearch(org, pattern, searchType, limit, searchRefresh)
+		},
+	}
 
-	searchCmd := parent.NewSubCommand("search", "Search GitHub for packages")
-	searchCmd.LongDescription("Searches GitHub for repositories matching a pattern.\n" +
-		"Uses gh CLI for authenticated search. Results are cached for 1 hour.\n\n" +
-		"Examples:\n" +
-		"  core pkg search                           # List all host-uk repos\n" +
-		"  core pkg search --pattern 'core-*'        # Search for core-* repos\n" +
-		"  core pkg search --org mycompany           # Search different org\n" +
-		"  core pkg search --refresh                 # Bypass cache")
+	searchCmd.Flags().StringVar(&searchOrg, "org", "", "GitHub organization (default: host-uk)")
+	searchCmd.Flags().StringVar(&searchPattern, "pattern", "", "Repo name pattern (* for wildcard)")
+	searchCmd.Flags().StringVar(&searchType, "type", "", "Filter by type in name (mod, services, plug, website)")
+	searchCmd.Flags().IntVar(&searchLimit, "limit", 0, "Max results (default 50)")
+	searchCmd.Flags().BoolVar(&searchRefresh, "refresh", false, "Bypass cache and fetch fresh data")
 
-	searchCmd.StringFlag("org", "GitHub organization (default: host-uk)", &org)
-	searchCmd.StringFlag("pattern", "Repo name pattern (* for wildcard)", &pattern)
-	searchCmd.StringFlag("type", "Filter by type in name (mod, services, plug, website)", &repoType)
-	searchCmd.IntFlag("limit", "Max results (default 50)", &limit)
-	searchCmd.BoolFlag("refresh", "Bypass cache and fetch fresh data", &refresh)
-
-	searchCmd.Action(func() error {
-		if org == "" {
-			org = "host-uk"
-		}
-		if pattern == "" {
-			pattern = "*"
-		}
-		if limit == 0 {
-			limit = 50
-		}
-		return runPkgSearch(org, pattern, repoType, limit, refresh)
-	})
+	parent.AddCommand(searchCmd)
 }
 
 type ghRepo struct {

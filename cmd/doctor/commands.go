@@ -10,9 +10,9 @@
 // Provides platform-specific installation instructions for missing tools.
 package doctor
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'doctor' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddDoctorCommand(app)
+func AddCommands(root *cobra.Command) {
+	root.AddCommand(doctorCmd)
 }

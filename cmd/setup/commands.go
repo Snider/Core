@@ -23,9 +23,9 @@
 // Uses gh CLI with HTTPS when authenticated, falls back to SSH.
 package setup
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'setup' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddSetupCommand(app)
+func AddCommands(root *cobra.Command) {
+	AddSetupCommand(root)
 }

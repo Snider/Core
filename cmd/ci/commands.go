@@ -9,9 +9,9 @@
 // Configuration via .core/release.yaml.
 package ci
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'ci' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddCIReleaseCommand(app)
+func AddCommands(root *cobra.Command) {
+	root.AddCommand(ciCmd)
 }

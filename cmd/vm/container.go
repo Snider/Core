@@ -10,65 +10,68 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/container"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+var (
+	runName         string
+	runDetach       bool
+	runMemory       int
+	runCPUs         int
+	runSSHPort      int
+	runTemplateName string
+	runVarFlags     []string
 )
 
 // addVMRunCommand adds the 'run' command under vm.
-func addVMRunCommand(parent *clir.Command) {
-	var (
-		name         string
-		detach       bool
-		memory       int
-		cpus         int
-		sshPort      int
-		templateName string
-		varFlags     []string
-	)
+func addVMRunCommand(parent *cobra.Command) {
+	runCmd := &cobra.Command{
+		Use:   "run [image]",
+		Short: "Run a LinuxKit image or template",
+		Long: "Runs a LinuxKit image as a VM using the available hypervisor.\n\n" +
+			"Supported image formats: .iso, .qcow2, .vmdk, .raw\n\n" +
+			"You can also run from a template using --template, which will build and run\n" +
+			"the image automatically. Use --var to set template variables.\n\n" +
+			"Examples:\n" +
+			"  core vm run image.iso\n" +
+			"  core vm run -d image.qcow2\n" +
+			"  core vm run --name myvm --memory 2048 --cpus 4 image.iso\n" +
+			"  core vm run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n" +
+			"  core vm run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts := container.RunOptions{
+				Name:    runName,
+				Detach:  runDetach,
+				Memory:  runMemory,
+				CPUs:    runCPUs,
+				SSHPort: runSSHPort,
+			}
 
-	runCmd := parent.NewSubCommand("run", "Run a LinuxKit image or template")
-	runCmd.LongDescription("Runs a LinuxKit image as a VM using the available hypervisor.\n\n" +
-		"Supported image formats: .iso, .qcow2, .vmdk, .raw\n\n" +
-		"You can also run from a template using --template, which will build and run\n" +
-		"the image automatically. Use --var to set template variables.\n\n" +
-		"Examples:\n" +
-		"  core vm run image.iso\n" +
-		"  core vm run -d image.qcow2\n" +
-		"  core vm run --name myvm --memory 2048 --cpus 4 image.iso\n" +
-		"  core vm run --template core-dev --var SSH_KEY=\"ssh-rsa AAAA...\"\n" +
-		"  core vm run --template server-php --var SSH_KEY=\"...\" --var DOMAIN=example.com")
+			// If template is specified, build and run from template
+			if runTemplateName != "" {
+				vars := ParseVarFlags(runVarFlags)
+				return RunFromTemplate(runTemplateName, vars, opts)
+			}
 
-	runCmd.StringFlag("name", "Name for the container", &name)
-	runCmd.BoolFlag("d", "Run in detached mode (background)", &detach)
-	runCmd.IntFlag("memory", "Memory in MB (default: 1024)", &memory)
-	runCmd.IntFlag("cpus", "Number of CPUs (default: 1)", &cpus)
-	runCmd.IntFlag("ssh-port", "SSH port for exec commands (default: 2222)", &sshPort)
-	runCmd.StringFlag("template", "Run from a LinuxKit template (build + run)", &templateName)
-	runCmd.StringsFlag("var", "Template variable in KEY=VALUE format (can be repeated)", &varFlags)
+			// Otherwise, require an image path
+			if len(args) == 0 {
+				return fmt.Errorf("image path is required (or use --template)")
+			}
+			image := args[0]
 
-	runCmd.Action(func() error {
-		opts := container.RunOptions{
-			Name:    name,
-			Detach:  detach,
-			Memory:  memory,
-			CPUs:    cpus,
-			SSHPort: sshPort,
-		}
+			return runContainer(image, runName, runDetach, runMemory, runCPUs, runSSHPort)
+		},
+	}
 
-		// If template is specified, build and run from template
-		if templateName != "" {
-			vars := ParseVarFlags(varFlags)
-			return RunFromTemplate(templateName, vars, opts)
-		}
+	runCmd.Flags().StringVar(&runName, "name", "", "Name for the container")
+	runCmd.Flags().BoolVarP(&runDetach, "detach", "d", false, "Run in detached mode (background)")
+	runCmd.Flags().IntVar(&runMemory, "memory", 0, "Memory in MB (default: 1024)")
+	runCmd.Flags().IntVar(&runCPUs, "cpus", 0, "Number of CPUs (default: 1)")
+	runCmd.Flags().IntVar(&runSSHPort, "ssh-port", 0, "SSH port for exec commands (default: 2222)")
+	runCmd.Flags().StringVar(&runTemplateName, "template", "", "Run from a LinuxKit template (build + run)")
+	runCmd.Flags().StringArrayVar(&runVarFlags, "var", nil, "Template variable in KEY=VALUE format (can be repeated)")
 
-		// Otherwise, require an image path
-		args := runCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("image path is required (or use --template)")
-		}
-		image := args[0]
-
-		return runContainer(image, name, detach, memory, cpus, sshPort)
-	})
+	parent.AddCommand(runCmd)
 }
 
 func runContainer(image, name string, detach bool, memory, cpus, sshPort int) error {
@@ -111,21 +114,25 @@ func runContainer(image, name string, detach bool, memory, cpus, sshPort int) er
 	return nil
 }
 
+var psAll bool
+
 // addVMPsCommand adds the 'ps' command under vm.
-func addVMPsCommand(parent *clir.Command) {
-	var all bool
+func addVMPsCommand(parent *cobra.Command) {
+	psCmd := &cobra.Command{
+		Use:   "ps",
+		Short: "List running VMs",
+		Long: "Lists all VMs. By default, only shows running VMs.\n\n" +
+			"Examples:\n" +
+			"  core vm ps\n" +
+			"  core vm ps -a",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listContainers(psAll)
+		},
+	}
 
-	psCmd := parent.NewSubCommand("ps", "List running VMs")
-	psCmd.LongDescription("Lists all VMs. By default, only shows running VMs.\n\n" +
-		"Examples:\n" +
-		"  core vm ps\n" +
-		"  core vm ps -a")
+	psCmd.Flags().BoolVarP(&psAll, "all", "a", false, "Show all containers (including stopped)")
 
-	psCmd.BoolFlag("a", "Show all containers (including stopped)", &all)
-
-	psCmd.Action(func() error {
-		return listContainers(all)
-	})
+	parent.AddCommand(psCmd)
 }
 
 func listContainers(all bool) error {
@@ -207,20 +214,23 @@ func formatDuration(d time.Duration) string {
 }
 
 // addVMStopCommand adds the 'stop' command under vm.
-func addVMStopCommand(parent *clir.Command) {
-	stopCmd := parent.NewSubCommand("stop", "Stop a running VM")
-	stopCmd.LongDescription("Stops a running VM by ID.\n\n" +
-		"Examples:\n" +
-		"  core vm stop abc12345\n" +
-		"  core vm stop abc1")
+func addVMStopCommand(parent *cobra.Command) {
+	stopCmd := &cobra.Command{
+		Use:   "stop <container-id>",
+		Short: "Stop a running VM",
+		Long: "Stops a running VM by ID.\n\n" +
+			"Examples:\n" +
+			"  core vm stop abc12345\n" +
+			"  core vm stop abc1",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("container ID is required")
+			}
+			return stopContainer(args[0])
+		},
+	}
 
-	stopCmd.Action(func() error {
-		args := stopCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("container ID is required")
-		}
-		return stopContainer(args[0])
-	})
+	parent.AddCommand(stopCmd)
 }
 
 func stopContainer(id string) error {
@@ -271,25 +281,28 @@ func resolveContainerID(manager *container.LinuxKitManager, partialID string) (s
 	}
 }
 
+var logsFollow bool
+
 // addVMLogsCommand adds the 'logs' command under vm.
-func addVMLogsCommand(parent *clir.Command) {
-	var follow bool
+func addVMLogsCommand(parent *cobra.Command) {
+	logsCmd := &cobra.Command{
+		Use:   "logs <container-id>",
+		Short: "View VM logs",
+		Long: "View logs from a VM.\n\n" +
+			"Examples:\n" +
+			"  core vm logs abc12345\n" +
+			"  core vm logs -f abc1",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("container ID is required")
+			}
+			return viewLogs(args[0], logsFollow)
+		},
+	}
 
-	logsCmd := parent.NewSubCommand("logs", "View VM logs")
-	logsCmd.LongDescription("View logs from a VM.\n\n" +
-		"Examples:\n" +
-		"  core vm logs abc12345\n" +
-		"  core vm logs -f abc1")
+	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, "Follow log output")
 
-	logsCmd.BoolFlag("f", "Follow log output", &follow)
-
-	logsCmd.Action(func() error {
-		args := logsCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("container ID is required")
-		}
-		return viewLogs(args[0], follow)
-	})
+	parent.AddCommand(logsCmd)
 }
 
 func viewLogs(id string, follow bool) error {
@@ -315,20 +328,23 @@ func viewLogs(id string, follow bool) error {
 }
 
 // addVMExecCommand adds the 'exec' command under vm.
-func addVMExecCommand(parent *clir.Command) {
-	execCmd := parent.NewSubCommand("exec", "Execute a command in a VM")
-	execCmd.LongDescription("Execute a command inside a running VM via SSH.\n\n" +
-		"Examples:\n" +
-		"  core vm exec abc12345 ls -la\n" +
-		"  core vm exec abc1 /bin/sh")
+func addVMExecCommand(parent *cobra.Command) {
+	execCmd := &cobra.Command{
+		Use:   "exec <container-id> <command> [args...]",
+		Short: "Execute a command in a VM",
+		Long: "Execute a command inside a running VM via SSH.\n\n" +
+			"Examples:\n" +
+			"  core vm exec abc12345 ls -la\n" +
+			"  core vm exec abc1 /bin/sh",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 2 {
+				return fmt.Errorf("container ID and command are required")
+			}
+			return execInContainer(args[0], args[1:])
+		},
+	}
 
-	execCmd.Action(func() error {
-		args := execCmd.OtherArgs()
-		if len(args) < 2 {
-			return fmt.Errorf("container ID and command are required")
-		}
-		return execInContainer(args[0], args[1:])
-	})
+	parent.AddCommand(execCmd)
 }
 
 func execInContainer(id string, cmd []string) error {

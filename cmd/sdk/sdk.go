@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	sdkpkg "github.com/host-uk/core/pkg/sdk"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -27,30 +27,49 @@ var (
 		Foreground(lipgloss.Color("#6b7280"))
 )
 
-// AddSDKCommand adds the sdk command and its subcommands.
-func AddSDKCommand(app *clir.Cli) {
-	sdkCmd := app.NewSubCommand("sdk", "SDK validation and API compatibility tools")
-	sdkCmd.LongDescription("Tools for validating OpenAPI specs and checking API compatibility.\n" +
-		"To generate SDKs, use: core build sdk\n\n" +
-		"Commands:\n" +
-		"  diff      Check for breaking API changes\n" +
-		"  validate  Validate OpenAPI spec syntax")
+var sdkCmd = &cobra.Command{
+	Use:   "sdk",
+	Short: "SDK validation and API compatibility tools",
+	Long: `Tools for validating OpenAPI specs and checking API compatibility.
+To generate SDKs, use: core build sdk
 
-	// sdk diff
-	diffCmd := sdkCmd.NewSubCommand("diff", "Check for breaking API changes")
-	var basePath, specPath string
-	diffCmd.StringFlag("base", "Base spec (version tag or file)", &basePath)
-	diffCmd.StringFlag("spec", "Current spec file", &specPath)
-	diffCmd.Action(func() error {
-		return runSDKDiff(basePath, specPath)
-	})
+Commands:
+  diff      Check for breaking API changes
+  validate  Validate OpenAPI spec syntax`,
+}
 
-	// sdk validate
-	validateCmd := sdkCmd.NewSubCommand("validate", "Validate OpenAPI spec")
-	validateCmd.StringFlag("spec", "Path to OpenAPI spec file", &specPath)
-	validateCmd.Action(func() error {
-		return runSDKValidate(specPath)
-	})
+var diffBasePath string
+var diffSpecPath string
+
+var sdkDiffCmd = &cobra.Command{
+	Use:   "diff",
+	Short: "Check for breaking API changes",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runSDKDiff(diffBasePath, diffSpecPath)
+	},
+}
+
+var validateSpecPath string
+
+var sdkValidateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "Validate OpenAPI spec",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runSDKValidate(validateSpecPath)
+	},
+}
+
+func init() {
+	// sdk diff flags
+	sdkDiffCmd.Flags().StringVar(&diffBasePath, "base", "", "Base spec (version tag or file)")
+	sdkDiffCmd.Flags().StringVar(&diffSpecPath, "spec", "", "Current spec file")
+
+	// sdk validate flags
+	sdkValidateCmd.Flags().StringVar(&validateSpecPath, "spec", "", "Path to OpenAPI spec file")
+
+	// Add subcommands
+	sdkCmd.AddCommand(sdkDiffCmd)
+	sdkCmd.AddCommand(sdkValidateCmd)
 }
 
 func runSDKDiff(basePath, specPath string) error {

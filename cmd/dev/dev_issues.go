@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Issue-specific styles
@@ -62,26 +62,34 @@ type GitHubIssue struct {
 	RepoName string `json:"-"`
 }
 
+// Issues command flags
+var (
+	issuesRegistryPath string
+	issuesLimit        int
+	issuesAssignee     string
+)
+
 // addIssuesCommand adds the 'issues' command to the given parent command.
-func addIssuesCommand(parent *clir.Command) {
-	var registryPath string
-	var limit int
-	var assignee string
+func addIssuesCommand(parent *cobra.Command) {
+	issuesCmd := &cobra.Command{
+		Use:   "issues",
+		Short: "List open issues across all repos",
+		Long: `Fetches open issues from GitHub for all repos in the registry.
+Requires the 'gh' CLI to be installed and authenticated.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			limit := issuesLimit
+			if limit == 0 {
+				limit = 10
+			}
+			return runIssues(issuesRegistryPath, limit, issuesAssignee)
+		},
+	}
 
-	issuesCmd := parent.NewSubCommand("issues", "List open issues across all repos")
-	issuesCmd.LongDescription("Fetches open issues from GitHub for all repos in the registry.\n" +
-		"Requires the 'gh' CLI to be installed and authenticated.")
+	issuesCmd.Flags().StringVar(&issuesRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	issuesCmd.Flags().IntVarP(&issuesLimit, "limit", "l", 10, "Max issues per repo")
+	issuesCmd.Flags().StringVarP(&issuesAssignee, "assignee", "a", "", "Filter by assignee (use @me for yourself)")
 
-	issuesCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	issuesCmd.IntFlag("limit", "Max issues per repo (default 10)", &limit)
-	issuesCmd.StringFlag("assignee", "Filter by assignee (use @me for yourself)", &assignee)
-
-	issuesCmd.Action(func() error {
-		if limit == 0 {
-			limit = 10
-		}
-		return runIssues(registryPath, limit, assignee)
-	})
+	parent.AddCommand(issuesCmd)
 }
 
 func runIssues(registryPath string, limit int, assignee string) error {

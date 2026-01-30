@@ -8,24 +8,31 @@ import (
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+// Push command flags
+var (
+	pushRegistryPath string
+	pushForce        bool
 )
 
 // addPushCommand adds the 'push' command to the given parent command.
-func addPushCommand(parent *clir.Command) {
-	var registryPath string
-	var force bool
+func addPushCommand(parent *cobra.Command) {
+	pushCmd := &cobra.Command{
+		Use:   "push",
+		Short: "Push commits across all repos",
+		Long: `Pushes unpushed commits for all repos.
+Shows repos with commits to push and confirms before pushing.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPush(pushRegistryPath, pushForce)
+		},
+	}
 
-	pushCmd := parent.NewSubCommand("push", "Push commits across all repos")
-	pushCmd.LongDescription("Pushes unpushed commits for all repos.\n" +
-		"Shows repos with commits to push and confirms before pushing.")
+	pushCmd.Flags().StringVar(&pushRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	pushCmd.Flags().BoolVarP(&pushForce, "force", "f", false, "Skip confirmation prompt")
 
-	pushCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	pushCmd.BoolFlag("force", "Skip confirmation prompt", &force)
-
-	pushCmd.Action(func() error {
-		return runPush(registryPath, force)
-	})
+	parent.AddCommand(pushCmd)
 }
 
 func runPush(registryPath string, force bool) error {

@@ -4,74 +4,82 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addGoFmtCommand(parent *clir.Command) {
-	var (
-		fix   bool
-		diff  bool
-		check bool
-	)
+var (
+	fmtFix   bool
+	fmtDiff  bool
+	fmtCheck bool
+)
 
-	fmtCmd := parent.NewSubCommand("fmt", "Format Go code")
-	fmtCmd.LongDescription("Format Go code using gofmt or goimports.\n\n" +
-		"Examples:\n" +
-		"  core go fmt              # Check formatting\n" +
-		"  core go fmt --fix        # Fix formatting\n" +
-		"  core go fmt --diff       # Show diff")
+func addGoFmtCommand(parent *cobra.Command) {
+	fmtCmd := &cobra.Command{
+		Use:   "fmt",
+		Short: "Format Go code",
+		Long: "Format Go code using gofmt or goimports.\n\n" +
+			"Examples:\n" +
+			"  core go fmt              # Check formatting\n" +
+			"  core go fmt --fix        # Fix formatting\n" +
+			"  core go fmt --diff       # Show diff",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmtArgs := []string{}
+			if fmtFix {
+				fmtArgs = append(fmtArgs, "-w")
+			}
+			if fmtDiff {
+				fmtArgs = append(fmtArgs, "-d")
+			}
+			if !fmtFix && !fmtDiff {
+				fmtArgs = append(fmtArgs, "-l")
+			}
+			fmtArgs = append(fmtArgs, ".")
 
-	fmtCmd.BoolFlag("fix", "Fix formatting in place", &fix)
-	fmtCmd.BoolFlag("diff", "Show diff of changes", &diff)
-	fmtCmd.BoolFlag("check", "Check only, exit 1 if not formatted", &check)
+			// Try goimports first, fall back to gofmt
+			var execCmd *exec.Cmd
+			if _, err := exec.LookPath("goimports"); err == nil {
+				execCmd = exec.Command("goimports", fmtArgs...)
+			} else {
+				execCmd = exec.Command("gofmt", fmtArgs...)
+			}
 
-	fmtCmd.Action(func() error {
-		args := []string{}
-		if fix {
-			args = append(args, "-w")
-		}
-		if diff {
-			args = append(args, "-d")
-		}
-		if !fix && !diff {
-			args = append(args, "-l")
-		}
-		args = append(args, ".")
+			execCmd.Stdout = os.Stdout
+			execCmd.Stderr = os.Stderr
+			return execCmd.Run()
+		},
+	}
 
-		// Try goimports first, fall back to gofmt
-		var cmd *exec.Cmd
-		if _, err := exec.LookPath("goimports"); err == nil {
-			cmd = exec.Command("goimports", args...)
-		} else {
-			cmd = exec.Command("gofmt", args...)
-		}
+	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, "Fix formatting in place")
+	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, "Show diff of changes")
+	fmtCmd.Flags().BoolVar(&fmtCheck, "check", false, "Check only, exit 1 if not formatted")
 
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	})
+	parent.AddCommand(fmtCmd)
 }
 
-func addGoLintCommand(parent *clir.Command) {
-	var fix bool
+var lintFix bool
 
-	lintCmd := parent.NewSubCommand("lint", "Run golangci-lint")
-	lintCmd.LongDescription("Run golangci-lint on the codebase.\n\n" +
-		"Examples:\n" +
-		"  core go lint\n" +
-		"  core go lint --fix")
+func addGoLintCommand(parent *cobra.Command) {
+	lintCmd := &cobra.Command{
+		Use:   "lint",
+		Short: "Run golangci-lint",
+		Long: "Run golangci-lint on the codebase.\n\n" +
+			"Examples:\n" +
+			"  core go lint\n" +
+			"  core go lint --fix",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			lintArgs := []string{"run"}
+			if lintFix {
+				lintArgs = append(lintArgs, "--fix")
+			}
 
-	lintCmd.BoolFlag("fix", "Fix issues automatically", &fix)
+			execCmd := exec.Command("golangci-lint", lintArgs...)
+			execCmd.Stdout = os.Stdout
+			execCmd.Stderr = os.Stderr
+			return execCmd.Run()
+		},
+	}
 
-	lintCmd.Action(func() error {
-		args := []string{"run"}
-		if fix {
-			args = append(args, "--fix")
-		}
+	lintCmd.Flags().BoolVar(&lintFix, "fix", false, "Fix issues automatically")
 
-		cmd := exec.Command("golangci-lint", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	})
+	parent.AddCommand(lintCmd)
 }

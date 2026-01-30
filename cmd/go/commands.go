@@ -14,9 +14,9 @@
 // Sets MACOSX_DEPLOYMENT_TARGET to suppress linker warnings on macOS.
 package gocmd
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'go' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddGoCommands(app)
+func AddCommands(root *cobra.Command) {
+	AddGoCommands(root)
 }

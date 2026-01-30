@@ -12,47 +12,51 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	phppkg "github.com/host-uk/core/pkg/php"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addPHPDevCommand(parent *clir.Command) {
-	var (
-		noVite    bool
-		noHorizon bool
-		noReverb  bool
-		noRedis   bool
-		https     bool
-		domain    string
-		port      int
-	)
+var (
+	devNoVite    bool
+	devNoHorizon bool
+	devNoReverb  bool
+	devNoRedis   bool
+	devHTTPS     bool
+	devDomain    string
+	devPort      int
+)
 
-	devCmd := parent.NewSubCommand("dev", "Start Laravel development environment")
-	devCmd.LongDescription("Starts all detected Laravel services.\n\n" +
-		"Auto-detects:\n" +
-		"  - Vite (vite.config.js/ts)\n" +
-		"  - Horizon (config/horizon.php)\n" +
-		"  - Reverb (config/reverb.php)\n" +
-		"  - Redis (from .env)")
+func addPHPDevCommand(parent *cobra.Command) {
+	devCmd := &cobra.Command{
+		Use:   "dev",
+		Short: "Start Laravel development environment",
+		Long: "Starts all detected Laravel services.\n\n" +
+			"Auto-detects:\n" +
+			"  - Vite (vite.config.js/ts)\n" +
+			"  - Horizon (config/horizon.php)\n" +
+			"  - Reverb (config/reverb.php)\n" +
+			"  - Redis (from .env)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPHPDev(phpDevOptions{
+				NoVite:    devNoVite,
+				NoHorizon: devNoHorizon,
+				NoReverb:  devNoReverb,
+				NoRedis:   devNoRedis,
+				HTTPS:     devHTTPS,
+				Domain:    devDomain,
+				Port:      devPort,
+			})
+		},
+	}
 
-	devCmd.BoolFlag("no-vite", "Skip Vite dev server", &noVite)
-	devCmd.BoolFlag("no-horizon", "Skip Laravel Horizon", &noHorizon)
-	devCmd.BoolFlag("no-reverb", "Skip Laravel Reverb", &noReverb)
-	devCmd.BoolFlag("no-redis", "Skip Redis server", &noRedis)
-	devCmd.BoolFlag("https", "Enable HTTPS with mkcert", &https)
-	devCmd.StringFlag("domain", "Domain for SSL certificate (default: from APP_URL or localhost)", &domain)
-	devCmd.IntFlag("port", "FrankenPHP port (default: 8000)", &port)
+	devCmd.Flags().BoolVar(&devNoVite, "no-vite", false, "Skip Vite dev server")
+	devCmd.Flags().BoolVar(&devNoHorizon, "no-horizon", false, "Skip Laravel Horizon")
+	devCmd.Flags().BoolVar(&devNoReverb, "no-reverb", false, "Skip Laravel Reverb")
+	devCmd.Flags().BoolVar(&devNoRedis, "no-redis", false, "Skip Redis server")
+	devCmd.Flags().BoolVar(&devHTTPS, "https", false, "Enable HTTPS with mkcert")
+	devCmd.Flags().StringVar(&devDomain, "domain", "", "Domain for SSL certificate (default: from APP_URL or localhost)")
+	devCmd.Flags().IntVar(&devPort, "port", 0, "FrankenPHP port (default: 8000)")
 
-	devCmd.Action(func() error {
-		return runPHPDev(phpDevOptions{
-			NoVite:    noVite,
-			NoHorizon: noHorizon,
-			NoReverb:  noReverb,
-			NoRedis:   noRedis,
-			HTTPS:     https,
-			Domain:    domain,
-			Port:      port,
-		})
-	})
+	parent.AddCommand(devCmd)
 }
 
 type phpDevOptions struct {
@@ -181,20 +185,26 @@ shutdown:
 	return nil
 }
 
-func addPHPLogsCommand(parent *clir.Command) {
-	var follow bool
-	var service string
+var (
+	logsFollow  bool
+	logsService string
+)
 
-	logsCmd := parent.NewSubCommand("logs", "View service logs")
-	logsCmd.LongDescription("Stream logs from Laravel services.\n\n" +
-		"Services: frankenphp, vite, horizon, reverb, redis")
+func addPHPLogsCommand(parent *cobra.Command) {
+	logsCmd := &cobra.Command{
+		Use:   "logs",
+		Short: "View service logs",
+		Long: "Stream logs from Laravel services.\n\n" +
+			"Services: frankenphp, vite, horizon, reverb, redis",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPHPLogs(logsService, logsFollow)
+		},
+	}
 
-	logsCmd.BoolFlag("follow", "Follow log output", &follow)
-	logsCmd.StringFlag("service", "Specific service (default: all)", &service)
+	logsCmd.Flags().BoolVar(&logsFollow, "follow", false, "Follow log output")
+	logsCmd.Flags().StringVar(&logsService, "service", "", "Specific service (default: all)")
 
-	logsCmd.Action(func() error {
-		return runPHPLogs(service, follow)
-	})
+	parent.AddCommand(logsCmd)
 }
 
 func runPHPLogs(service string, follow bool) error {
@@ -241,12 +251,16 @@ func runPHPLogs(service string, follow bool) error {
 	return scanner.Err()
 }
 
-func addPHPStopCommand(parent *clir.Command) {
-	stopCmd := parent.NewSubCommand("stop", "Stop all Laravel services")
+func addPHPStopCommand(parent *cobra.Command) {
+	stopCmd := &cobra.Command{
+		Use:   "stop",
+		Short: "Stop all Laravel services",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPHPStop()
+		},
+	}
 
-	stopCmd.Action(func() error {
-		return runPHPStop()
-	})
+	parent.AddCommand(stopCmd)
 }
 
 func runPHPStop() error {
@@ -268,12 +282,16 @@ func runPHPStop() error {
 	return nil
 }
 
-func addPHPStatusCommand(parent *clir.Command) {
-	statusCmd := parent.NewSubCommand("status", "Show service status")
+func addPHPStatusCommand(parent *cobra.Command) {
+	statusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show service status",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPHPStatus()
+		},
+	}
 
-	statusCmd.Action(func() error {
-		return runPHPStatus()
-	})
+	parent.AddCommand(statusCmd)
 }
 
 func runPHPStatus() error {
@@ -325,16 +343,20 @@ func runPHPStatus() error {
 	return nil
 }
 
-func addPHPSSLCommand(parent *clir.Command) {
-	var domain string
+var sslDomain string
 
-	sslCmd := parent.NewSubCommand("ssl", "Setup SSL certificates with mkcert")
+func addPHPSSLCommand(parent *cobra.Command) {
+	sslCmd := &cobra.Command{
+		Use:   "ssl",
+		Short: "Setup SSL certificates with mkcert",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPHPSSL(sslDomain)
+		},
+	}
 
-	sslCmd.StringFlag("domain", "Domain for certificate (default: from APP_URL)", &domain)
+	sslCmd.Flags().StringVar(&sslDomain, "domain", "", "Domain for certificate (default: from APP_URL)")
 
-	sslCmd.Action(func() error {
-		return runPHPSSL(domain)
-	})
+	parent.AddCommand(sslCmd)
 }
 
 func runPHPSSL(domain string) error {

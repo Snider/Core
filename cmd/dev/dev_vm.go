@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/devops"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // addVMCommands adds the dev environment VM commands to the dev parent command.
 // These are added as direct subcommands: core dev install, core dev boot, etc.
-func addVMCommands(parent *clir.Command) {
+func addVMCommands(parent *cobra.Command) {
 	addVMInstallCommand(parent)
 	addVMBootCommand(parent)
 	addVMStopCommand(parent)
@@ -25,17 +25,23 @@ func addVMCommands(parent *clir.Command) {
 }
 
 // addVMInstallCommand adds the 'dev install' command.
-func addVMInstallCommand(parent *clir.Command) {
-	installCmd := parent.NewSubCommand("install", "Download and install the dev environment image")
-	installCmd.LongDescription("Downloads the platform-specific dev environment image.\n\n" +
-		"The image includes Go, PHP, Node.js, Python, Docker, and Claude CLI.\n" +
-		"Downloads are cached at ~/.core/images/\n\n" +
-		"Examples:\n" +
-		"  core dev install")
+func addVMInstallCommand(parent *cobra.Command) {
+	installCmd := &cobra.Command{
+		Use:   "install",
+		Short: "Download and install the dev environment image",
+		Long: `Downloads the platform-specific dev environment image.
 
-	installCmd.Action(func() error {
-		return runVMInstall()
-	})
+The image includes Go, PHP, Node.js, Python, Docker, and Claude CLI.
+Downloads are cached at ~/.core/images/
+
+Examples:
+  core dev install`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMInstall()
+		},
+	}
+
+	parent.AddCommand(installCmd)
 }
 
 func runVMInstall() error {
@@ -85,26 +91,34 @@ func runVMInstall() error {
 	return nil
 }
 
+// VM boot command flags
+var (
+	vmBootMemory int
+	vmBootCPUs   int
+	vmBootFresh  bool
+)
+
 // addVMBootCommand adds the 'devops boot' command.
-func addVMBootCommand(parent *clir.Command) {
-	var memory int
-	var cpus int
-	var fresh bool
+func addVMBootCommand(parent *cobra.Command) {
+	bootCmd := &cobra.Command{
+		Use:   "boot",
+		Short: "Start the dev environment",
+		Long: `Boots the dev environment VM.
 
-	bootCmd := parent.NewSubCommand("boot", "Start the dev environment")
-	bootCmd.LongDescription("Boots the dev environment VM.\n\n" +
-		"Examples:\n" +
-		"  core dev boot\n" +
-		"  core dev boot --memory 8192 --cpus 4\n" +
-		"  core dev boot --fresh")
+Examples:
+  core dev boot
+  core dev boot --memory 8192 --cpus 4
+  core dev boot --fresh`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMBoot(vmBootMemory, vmBootCPUs, vmBootFresh)
+		},
+	}
 
-	bootCmd.IntFlag("memory", "Memory in MB (default: 4096)", &memory)
-	bootCmd.IntFlag("cpus", "Number of CPUs (default: 2)", &cpus)
-	bootCmd.BoolFlag("fresh", "Stop existing and start fresh", &fresh)
+	bootCmd.Flags().IntVar(&vmBootMemory, "memory", 0, "Memory in MB (default: 4096)")
+	bootCmd.Flags().IntVar(&vmBootCPUs, "cpus", 0, "Number of CPUs (default: 2)")
+	bootCmd.Flags().BoolVar(&vmBootFresh, "fresh", false, "Stop existing and start fresh")
 
-	bootCmd.Action(func() error {
-		return runVMBoot(memory, cpus, fresh)
-	})
+	parent.AddCommand(bootCmd)
 }
 
 func runVMBoot(memory, cpus int, fresh bool) error {
@@ -145,15 +159,20 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 }
 
 // addVMStopCommand adds the 'devops stop' command.
-func addVMStopCommand(parent *clir.Command) {
-	stopCmd := parent.NewSubCommand("stop", "Stop the dev environment")
-	stopCmd.LongDescription("Stops the running dev environment VM.\n\n" +
-		"Examples:\n" +
-		"  core dev stop")
+func addVMStopCommand(parent *cobra.Command) {
+	stopCmd := &cobra.Command{
+		Use:   "stop",
+		Short: "Stop the dev environment",
+		Long: `Stops the running dev environment VM.
 
-	stopCmd.Action(func() error {
-		return runVMStop()
-	})
+Examples:
+  core dev stop`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMStop()
+		},
+	}
+
+	parent.AddCommand(stopCmd)
 }
 
 func runVMStop() error {
@@ -184,15 +203,20 @@ func runVMStop() error {
 }
 
 // addVMStatusCommand adds the 'devops status' command.
-func addVMStatusCommand(parent *clir.Command) {
-	statusCmd := parent.NewSubCommand("vm-status", "Show dev environment status")
-	statusCmd.LongDescription("Shows the current status of the dev environment.\n\n" +
-		"Examples:\n" +
-		"  core dev vm-status")
+func addVMStatusCommand(parent *cobra.Command) {
+	statusCmd := &cobra.Command{
+		Use:   "vm-status",
+		Short: "Show dev environment status",
+		Long: `Shows the current status of the dev environment.
 
-	statusCmd.Action(func() error {
-		return runVMStatus()
-	})
+Examples:
+  core dev vm-status`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMStatus()
+		},
+	}
+
+	parent.AddCommand(statusCmd)
 }
 
 func runVMStatus() error {
@@ -255,24 +279,30 @@ func formatVMUptime(d time.Duration) string {
 	return fmt.Sprintf("%dd %dh", int(d.Hours()/24), int(d.Hours())%24)
 }
 
+// VM shell command flags
+var vmShellConsole bool
+
 // addVMShellCommand adds the 'devops shell' command.
-func addVMShellCommand(parent *clir.Command) {
-	var console bool
+func addVMShellCommand(parent *cobra.Command) {
+	shellCmd := &cobra.Command{
+		Use:   "shell [-- command...]",
+		Short: "Connect to the dev environment",
+		Long: `Opens an interactive shell in the dev environment.
 
-	shellCmd := parent.NewSubCommand("shell", "Connect to the dev environment")
-	shellCmd.LongDescription("Opens an interactive shell in the dev environment.\n\n" +
-		"Uses SSH by default, or serial console with --console.\n\n" +
-		"Examples:\n" +
-		"  core dev shell\n" +
-		"  core dev shell --console\n" +
-		"  core dev shell -- ls -la")
+Uses SSH by default, or serial console with --console.
 
-	shellCmd.BoolFlag("console", "Use serial console instead of SSH", &console)
+Examples:
+  core dev shell
+  core dev shell --console
+  core dev shell -- ls -la`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMShell(vmShellConsole, args)
+		},
+	}
 
-	shellCmd.Action(func() error {
-		args := shellCmd.OtherArgs()
-		return runVMShell(console, args)
-	})
+	shellCmd.Flags().BoolVar(&vmShellConsole, "console", false, "Use serial console instead of SSH")
+
+	parent.AddCommand(shellCmd)
 }
 
 func runVMShell(console bool, command []string) error {
@@ -290,25 +320,34 @@ func runVMShell(console bool, command []string) error {
 	return d.Shell(ctx, opts)
 }
 
+// VM serve command flags
+var (
+	vmServePort int
+	vmServePath string
+)
+
 // addVMServeCommand adds the 'devops serve' command.
-func addVMServeCommand(parent *clir.Command) {
-	var port int
-	var path string
+func addVMServeCommand(parent *cobra.Command) {
+	serveCmd := &cobra.Command{
+		Use:   "serve",
+		Short: "Mount project and start dev server",
+		Long: `Mounts the current project into the dev environment and starts a dev server.
 
-	serveCmd := parent.NewSubCommand("serve", "Mount project and start dev server")
-	serveCmd.LongDescription("Mounts the current project into the dev environment and starts a dev server.\n\n" +
-		"Auto-detects the appropriate serve command based on project files.\n\n" +
-		"Examples:\n" +
-		"  core dev serve\n" +
-		"  core dev serve --port 3000\n" +
-		"  core dev serve --path public")
+Auto-detects the appropriate serve command based on project files.
 
-	serveCmd.IntFlag("port", "Port to serve on (default: 8000)", &port)
-	serveCmd.StringFlag("path", "Subdirectory to serve", &path)
+Examples:
+  core dev serve
+  core dev serve --port 3000
+  core dev serve --path public`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMServe(vmServePort, vmServePath)
+		},
+	}
 
-	serveCmd.Action(func() error {
-		return runVMServe(port, path)
-	})
+	serveCmd.Flags().IntVarP(&vmServePort, "port", "p", 0, "Port to serve on (default: 8000)")
+	serveCmd.Flags().StringVar(&vmServePath, "path", "", "Subdirectory to serve")
+
+	parent.AddCommand(serveCmd)
 }
 
 func runVMServe(port int, path string) error {
@@ -331,24 +370,30 @@ func runVMServe(port int, path string) error {
 	return d.Serve(ctx, projectDir, opts)
 }
 
+// VM test command flags
+var vmTestName string
+
 // addVMTestCommand adds the 'devops test' command.
-func addVMTestCommand(parent *clir.Command) {
-	var name string
+func addVMTestCommand(parent *cobra.Command) {
+	testCmd := &cobra.Command{
+		Use:   "test [-- command...]",
+		Short: "Run tests in the dev environment",
+		Long: `Runs tests in the dev environment.
 
-	testCmd := parent.NewSubCommand("test", "Run tests in the dev environment")
-	testCmd.LongDescription("Runs tests in the dev environment.\n\n" +
-		"Auto-detects the test command based on project files, or uses .core/test.yaml.\n\n" +
-		"Examples:\n" +
-		"  core dev test\n" +
-		"  core dev test --name integration\n" +
-		"  core dev test -- go test -v ./...")
+Auto-detects the test command based on project files, or uses .core/test.yaml.
 
-	testCmd.StringFlag("name", "Run named test command from .core/test.yaml", &name)
+Examples:
+  core dev test
+  core dev test --name integration
+  core dev test -- go test -v ./...`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMTest(vmTestName, args)
+		},
+	}
 
-	testCmd.Action(func() error {
-		args := testCmd.OtherArgs()
-		return runVMTest(name, args)
-	})
+	testCmd.Flags().StringVarP(&vmTestName, "name", "n", "", "Run named test command from .core/test.yaml")
+
+	parent.AddCommand(testCmd)
 }
 
 func runVMTest(name string, command []string) error {
@@ -371,34 +416,44 @@ func runVMTest(name string, command []string) error {
 	return d.Test(ctx, projectDir, opts)
 }
 
+// VM claude command flags
+var (
+	vmClaudeNoAuth    bool
+	vmClaudeModel     string
+	vmClaudeAuthFlags []string
+)
+
 // addVMClaudeCommand adds the 'devops claude' command.
-func addVMClaudeCommand(parent *clir.Command) {
-	var noAuth bool
-	var model string
-	var authFlags []string
+func addVMClaudeCommand(parent *cobra.Command) {
+	claudeCmd := &cobra.Command{
+		Use:   "claude",
+		Short: "Start sandboxed Claude session",
+		Long: `Starts a Claude Code session inside the dev environment sandbox.
 
-	claudeCmd := parent.NewSubCommand("claude", "Start sandboxed Claude session")
-	claudeCmd.LongDescription("Starts a Claude Code session inside the dev environment sandbox.\n\n" +
-		"Provides isolation while forwarding selected credentials.\n" +
-		"Auto-boots the dev environment if not running.\n\n" +
-		"Auth options (default: all):\n" +
-		"  gh        - GitHub CLI auth\n" +
-		"  anthropic - Anthropic API key\n" +
-		"  ssh       - SSH agent forwarding\n" +
-		"  git       - Git config (name, email)\n\n" +
-		"Examples:\n" +
-		"  core dev claude\n" +
-		"  core dev claude --model opus\n" +
-		"  core dev claude --auth gh,anthropic\n" +
-		"  core dev claude --no-auth")
+Provides isolation while forwarding selected credentials.
+Auto-boots the dev environment if not running.
 
-	claudeCmd.BoolFlag("no-auth", "Don't forward any auth credentials", &noAuth)
-	claudeCmd.StringFlag("model", "Model to use (opus, sonnet)", &model)
-	claudeCmd.StringsFlag("auth", "Selective auth forwarding (gh,anthropic,ssh,git)", &authFlags)
+Auth options (default: all):
+  gh        - GitHub CLI auth
+  anthropic - Anthropic API key
+  ssh       - SSH agent forwarding
+  git       - Git config (name, email)
 
-	claudeCmd.Action(func() error {
-		return runVMClaude(noAuth, model, authFlags)
-	})
+Examples:
+  core dev claude
+  core dev claude --model opus
+  core dev claude --auth gh,anthropic
+  core dev claude --no-auth`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMClaude(vmClaudeNoAuth, vmClaudeModel, vmClaudeAuthFlags)
+		},
+	}
+
+	claudeCmd.Flags().BoolVar(&vmClaudeNoAuth, "no-auth", false, "Don't forward any auth credentials")
+	claudeCmd.Flags().StringVarP(&vmClaudeModel, "model", "m", "", "Model to use (opus, sonnet)")
+	claudeCmd.Flags().StringSliceVar(&vmClaudeAuthFlags, "auth", nil, "Selective auth forwarding (gh,anthropic,ssh,git)")
+
+	parent.AddCommand(claudeCmd)
 }
 
 func runVMClaude(noAuth bool, model string, authFlags []string) error {
@@ -422,21 +477,27 @@ func runVMClaude(noAuth bool, model string, authFlags []string) error {
 	return d.Claude(ctx, projectDir, opts)
 }
 
+// VM update command flags
+var vmUpdateApply bool
+
 // addVMUpdateCommand adds the 'devops update' command.
-func addVMUpdateCommand(parent *clir.Command) {
-	var apply bool
+func addVMUpdateCommand(parent *cobra.Command) {
+	updateCmd := &cobra.Command{
+		Use:   "update",
+		Short: "Check for and apply updates",
+		Long: `Checks for dev environment updates and optionally applies them.
 
-	updateCmd := parent.NewSubCommand("update", "Check for and apply updates")
-	updateCmd.LongDescription("Checks for dev environment updates and optionally applies them.\n\n" +
-		"Examples:\n" +
-		"  core dev update\n" +
-		"  core dev update --apply")
+Examples:
+  core dev update
+  core dev update --apply`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runVMUpdate(vmUpdateApply)
+		},
+	}
 
-	updateCmd.BoolFlag("apply", "Download and apply the update", &apply)
+	updateCmd.Flags().BoolVar(&vmUpdateApply, "apply", false, "Download and apply the update")
 
-	updateCmd.Action(func() error {
-		return runVMUpdate(apply)
-	})
+	parent.AddCommand(updateCmd)
 }
 
 func runVMUpdate(apply bool) error {

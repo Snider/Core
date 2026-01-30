@@ -31,7 +31,7 @@ package dev
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared package
@@ -64,28 +64,36 @@ var (
 )
 
 // AddCommands registers the 'dev' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	devCmd := app.NewSubCommand("dev", "Multi-repo development workflow")
-	devCmd.LongDescription("Manage multiple git repositories and GitHub integration.\n\n" +
-		"Uses repos.yaml to discover repositories. Falls back to scanning\n" +
-		"the current directory if no registry is found.\n\n" +
-		"Git Operations:\n" +
-		"  work      Combined status -> commit -> push workflow\n" +
-		"  health    Quick repo health summary\n" +
-		"  commit    Claude-assisted commit messages\n" +
-		"  push      Push repos with unpushed commits\n" +
-		"  pull      Pull repos behind remote\n\n" +
-		"GitHub Integration (requires gh CLI):\n" +
-		"  issues    List open issues across repos\n" +
-		"  reviews   List PRs awaiting review\n" +
-		"  ci        Check GitHub Actions status\n" +
-		"  impact    Analyse dependency impact\n\n" +
-		"Dev Environment:\n" +
-		"  install   Download dev environment image\n" +
-		"  boot      Start dev environment VM\n" +
-		"  stop      Stop dev environment VM\n" +
-		"  shell     Open shell in dev VM\n" +
-		"  status    Check dev VM status")
+func AddCommands(root *cobra.Command) {
+	devCmd := &cobra.Command{
+		Use:   "dev",
+		Short: "Multi-repo development workflow",
+		Long: `Manage multiple git repositories and GitHub integration.
+
+Uses repos.yaml to discover repositories. Falls back to scanning
+the current directory if no registry is found.
+
+Git Operations:
+  work      Combined status -> commit -> push workflow
+  health    Quick repo health summary
+  commit    Claude-assisted commit messages
+  push      Push repos with unpushed commits
+  pull      Pull repos behind remote
+
+GitHub Integration (requires gh CLI):
+  issues    List open issues across repos
+  reviews   List PRs awaiting review
+  ci        Check GitHub Actions status
+  impact    Analyse dependency impact
+
+Dev Environment:
+  install   Download dev environment image
+  boot      Start dev environment VM
+  stop      Stop dev environment VM
+  shell     Open shell in dev VM
+  status    Check dev VM status`,
+	}
+	root.AddCommand(devCmd)
 
 	// Git operations
 	addWorkCommand(devCmd)

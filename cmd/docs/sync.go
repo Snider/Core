@@ -6,22 +6,28 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addDocsSyncCommand(parent *clir.Command) {
-	var registryPath string
-	var dryRun bool
-	var outputDir string
+// Flag variables for sync command
+var (
+	docsSyncRegistryPath string
+	docsSyncDryRun       bool
+	docsSyncOutputDir    string
+)
 
-	syncCmd := parent.NewSubCommand("sync", "Sync documentation to core-php/docs/packages/")
-	syncCmd.StringFlag("registry", "Path to repos.yaml", &registryPath)
-	syncCmd.BoolFlag("dry-run", "Show what would be synced without copying", &dryRun)
-	syncCmd.StringFlag("output", "Output directory (default: core-php/docs/packages)", &outputDir)
+var docsSyncCmd = &cobra.Command{
+	Use:   "sync",
+	Short: "Sync documentation to core-php/docs/packages/",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runDocsSync(docsSyncRegistryPath, docsSyncOutputDir, docsSyncDryRun)
+	},
+}
 
-	syncCmd.Action(func() error {
-		return runDocsSync(registryPath, outputDir, dryRun)
-	})
+func init() {
+	docsSyncCmd.Flags().StringVar(&docsSyncRegistryPath, "registry", "", "Path to repos.yaml")
+	docsSyncCmd.Flags().BoolVar(&docsSyncDryRun, "dry-run", false, "Show what would be synced without copying")
+	docsSyncCmd.Flags().StringVar(&docsSyncOutputDir, "output", "", "Output directory (default: core-php/docs/packages)")
 }
 
 // packageOutputName maps repo name to output folder name

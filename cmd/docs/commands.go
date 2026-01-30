@@ -8,9 +8,9 @@
 // to a central location for unified documentation builds.
 package docs
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'docs' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddDocsCommand(app)
+func AddCommands(root *cobra.Command) {
+	root.AddCommand(docsCmd)
 }

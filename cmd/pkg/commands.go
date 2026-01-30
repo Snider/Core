@@ -11,9 +11,9 @@
 // .core/cache/ within the workspace directory.
 package pkg
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'pkg' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddPkgCommands(app)
+func AddCommands(root *cobra.Command) {
+	AddPkgCommands(root)
 }

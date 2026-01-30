@@ -11,34 +11,41 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addTasksCommand(parent *clir.Command) {
-	var status string
-	var priority string
-	var labels string
-	var limit int
-	var project string
+// tasks command flags
+var (
+	tasksStatus   string
+	tasksPriority string
+	tasksLabels   string
+	tasksLimit    int
+	tasksProject  string
+)
 
-	cmd := parent.NewSubCommand("tasks", "List available tasks from core-agentic")
-	cmd.LongDescription("Lists tasks from the core-agentic service.\n\n" +
-		"Configuration is loaded from:\n" +
-		"  1. Environment variables (AGENTIC_TOKEN, AGENTIC_BASE_URL)\n" +
-		"  2. .env file in current directory\n" +
-		"  3. ~/.core/agentic.yaml\n\n" +
-		"Examples:\n" +
-		"  core ai tasks\n" +
-		"  core ai tasks --status pending --priority high\n" +
-		"  core ai tasks --labels bug,urgent")
+// task command flags
+var (
+	taskAutoSelect  bool
+	taskClaim       bool
+	taskShowContext bool
+)
 
-	cmd.StringFlag("status", "Filter by status (pending, in_progress, completed, blocked)", &status)
-	cmd.StringFlag("priority", "Filter by priority (critical, high, medium, low)", &priority)
-	cmd.StringFlag("labels", "Filter by labels (comma-separated)", &labels)
-	cmd.IntFlag("limit", "Max number of tasks to return (default 20)", &limit)
-	cmd.StringFlag("project", "Filter by project", &project)
+var tasksCmd = &cobra.Command{
+	Use:   "tasks",
+	Short: "List available tasks from core-agentic",
+	Long: `Lists tasks from the core-agentic service.
 
-	cmd.Action(func() error {
+Configuration is loaded from:
+  1. Environment variables (AGENTIC_TOKEN, AGENTIC_BASE_URL)
+  2. .env file in current directory
+  3. ~/.core/agentic.yaml
+
+Examples:
+  core ai tasks
+  core ai tasks --status pending --priority high
+  core ai tasks --labels bug,urgent`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		limit := tasksLimit
 		if limit == 0 {
 			limit = 20
 		}
@@ -52,17 +59,17 @@ func addTasksCommand(parent *clir.Command) {
 
 		opts := agentic.ListOptions{
 			Limit:   limit,
-			Project: project,
+			Project: tasksProject,
 		}
 
-		if status != "" {
-			opts.Status = agentic.TaskStatus(status)
+		if tasksStatus != "" {
+			opts.Status = agentic.TaskStatus(tasksStatus)
 		}
-		if priority != "" {
-			opts.Priority = agentic.TaskPriority(priority)
+		if tasksPriority != "" {
+			opts.Priority = agentic.TaskPriority(tasksPriority)
 		}
-		if labels != "" {
-			opts.Labels = strings.Split(labels, ",")
+		if tasksLabels != "" {
+			opts.Labels = strings.Split(tasksLabels, ",")
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -80,27 +87,20 @@ func addTasksCommand(parent *clir.Command) {
 
 		printTaskList(tasks)
 		return nil
-	})
+	},
 }
 
-func addTaskCommand(parent *clir.Command) {
-	var autoSelect bool
-	var claim bool
-	var showContext bool
+var taskCmd = &cobra.Command{
+	Use:   "task [task-id]",
+	Short: "Show task details or auto-select a task",
+	Long: `Shows details of a specific task or auto-selects the highest priority task.
 
-	cmd := parent.NewSubCommand("task", "Show task details or auto-select a task")
-	cmd.LongDescription("Shows details of a specific task or auto-selects the highest priority task.\n\n" +
-		"Examples:\n" +
-		"  core ai task abc123           # Show task details\n" +
-		"  core ai task abc123 --claim   # Show and claim the task\n" +
-		"  core ai task abc123 --context # Show task with gathered context\n" +
-		"  core ai task --auto           # Auto-select highest priority pending task")
-
-	cmd.BoolFlag("auto", "Auto-select highest priority pending task", &autoSelect)
-	cmd.BoolFlag("claim", "Claim the task after showing details", &claim)
-	cmd.BoolFlag("context", "Show gathered context for AI collaboration", &showContext)
-
-	cmd.Action(func() error {
+Examples:
+  core ai task abc123           # Show task details
+  core ai task abc123 --claim   # Show and claim the task
+  core ai task abc123 --context # Show task with gathered context
+  core ai task --auto           # Auto-select highest priority pending task`,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
@@ -113,19 +113,13 @@ func addTaskCommand(parent *clir.Command) {
 
 		var task *agentic.Task
 
-		// Get the task ID from remaining args
-		args := os.Args
+		// Get the task ID from args
 		var taskID string
-
-		// Find the task ID in args (after "task" subcommand)
-		for i, arg := range args {
-			if arg == "task" && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-				taskID = args[i+1]
-				break
-			}
+		if len(args) > 0 {
+			taskID = args[0]
 		}
 
-		if autoSelect {
+		if taskAutoSelect {
 			// Auto-select: find highest priority pending task
 			tasks, err := client.ListTasks(ctx, agentic.ListOptions{
 				Status: agentic.StatusPending,
@@ -153,7 +147,7 @@ func addTaskCommand(parent *clir.Command) {
 			})
 
 			task = &tasks[0]
-			claim = true // Auto-select implies claiming
+			taskClaim = true // Auto-select implies claiming
 		} else {
 			if taskID == "" {
 				return fmt.Errorf("task ID required (or use --auto)")
@@ -166,7 +160,7 @@ func addTaskCommand(parent *clir.Command) {
 		}
 
 		// Show context if requested
-		if showContext {
+		if taskShowContext {
 			cwd, _ := os.Getwd()
 			taskCtx, err := agentic.BuildTaskContext(task, cwd)
 			if err != nil {
@@ -178,7 +172,7 @@ func addTaskCommand(parent *clir.Command) {
 			printTaskDetails(task)
 		}
 
-		if claim && task.Status == agentic.StatusPending {
+		if taskClaim && task.Status == agentic.StatusPending {
 			fmt.Println()
 			fmt.Printf("%s Claiming task...\n", dimStyle.Render(">>"))
 
@@ -192,7 +186,29 @@ func addTaskCommand(parent *clir.Command) {
 		}
 
 		return nil
-	})
+	},
+}
+
+func init() {
+	// tasks command flags
+	tasksCmd.Flags().StringVar(&tasksStatus, "status", "", "Filter by status (pending, in_progress, completed, blocked)")
+	tasksCmd.Flags().StringVar(&tasksPriority, "priority", "", "Filter by priority (critical, high, medium, low)")
+	tasksCmd.Flags().StringVar(&tasksLabels, "labels", "", "Filter by labels (comma-separated)")
+	tasksCmd.Flags().IntVar(&tasksLimit, "limit", 20, "Max number of tasks to return")
+	tasksCmd.Flags().StringVar(&tasksProject, "project", "", "Filter by project")
+
+	// task command flags
+	taskCmd.Flags().BoolVar(&taskAutoSelect, "auto", false, "Auto-select highest priority pending task")
+	taskCmd.Flags().BoolVar(&taskClaim, "claim", false, "Claim the task after showing details")
+	taskCmd.Flags().BoolVar(&taskShowContext, "context", false, "Show gathered context for AI collaboration")
+}
+
+func addTasksCommand(parent *cobra.Command) {
+	parent.AddCommand(tasksCmd)
+}
+
+func addTaskCommand(parent *cobra.Command) {
+	parent.AddCommand(taskCmd)
 }
 
 func printTaskList(tasks []agentic.Task) {

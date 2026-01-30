@@ -5,7 +5,7 @@ package ai
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared package
@@ -53,7 +53,7 @@ var (
 )
 
 // AddAgenticCommands adds the agentic task management commands to the ai command.
-func AddAgenticCommands(parent *clir.Command) {
+func AddAgenticCommands(parent *cobra.Command) {
 	// Task listing and viewing
 	addTasksCommand(parent)
 	addTaskCommand(parent)

@@ -4,7 +4,7 @@ package docs
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Style and utility aliases from shared
@@ -29,13 +29,14 @@ var (
 			Foreground(lipgloss.Color("#3b82f6")) // blue-500
 )
 
-// AddDocsCommand adds the 'docs' command to the given parent command.
-func AddDocsCommand(parent *clir.Cli) {
-	docsCmd := parent.NewSubCommand("docs", "Documentation management")
-	docsCmd.LongDescription("Manage documentation across all repos.\n" +
-		"Scan for docs, check coverage, and sync to core-php/docs/packages/.")
+var docsCmd = &cobra.Command{
+	Use:   "docs",
+	Short: "Documentation management",
+	Long: `Manage documentation across all repos.
+Scan for docs, check coverage, and sync to core-php/docs/packages/.`,
+}
 
-	// Add subcommands
-	addDocsSyncCommand(docsCmd)
-	addDocsListCommand(docsCmd)
+func init() {
+	docsCmd.AddCommand(docsSyncCmd)
+	docsCmd.AddCommand(docsListCmd)
 }

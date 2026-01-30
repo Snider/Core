@@ -33,9 +33,9 @@
 //   - deploy:list: List recent deployments
 package php
 
-import "github.com/leaanthony/clir"
+import "github.com/spf13/cobra"
 
 // AddCommands registers the 'php' command and all subcommands.
-func AddCommands(app *clir.Cli) {
-	AddPHPCommands(app)
+func AddCommands(root *cobra.Command) {
+	AddPHPCommands(root)
 }

@@ -8,20 +8,24 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // addPkgListCommand adds the 'pkg list' command.
-func addPkgListCommand(parent *clir.Command) {
-	listCmd := parent.NewSubCommand("list", "List installed packages")
-	listCmd.LongDescription("Lists all packages in the current workspace.\n\n" +
-		"Reads from repos.yaml or scans for git repositories.\n\n" +
-		"Examples:\n" +
-		"  core pkg list")
+func addPkgListCommand(parent *cobra.Command) {
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List installed packages",
+		Long: "Lists all packages in the current workspace.\n\n" +
+			"Reads from repos.yaml or scans for git repositories.\n\n" +
+			"Examples:\n" +
+			"  core pkg list",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPkgList()
+		},
+	}
 
-	listCmd.Action(func() error {
-		return runPkgList()
-	})
+	parent.AddCommand(listCmd)
 }
 
 func runPkgList() error {
@@ -89,25 +93,28 @@ func runPkgList() error {
 	return nil
 }
 
+var updateAll bool
+
 // addPkgUpdateCommand adds the 'pkg update' command.
-func addPkgUpdateCommand(parent *clir.Command) {
-	var all bool
+func addPkgUpdateCommand(parent *cobra.Command) {
+	updateCmd := &cobra.Command{
+		Use:   "update [packages...]",
+		Short: "Update installed packages",
+		Long: "Pulls latest changes for installed packages.\n\n" +
+			"Examples:\n" +
+			"  core pkg update core-php       # Update specific package\n" +
+			"  core pkg update --all          # Update all packages",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !updateAll && len(args) == 0 {
+				return fmt.Errorf("specify package name or use --all")
+			}
+			return runPkgUpdate(args, updateAll)
+		},
+	}
 
-	updateCmd := parent.NewSubCommand("update", "Update installed packages")
-	updateCmd.LongDescription("Pulls latest changes for installed packages.\n\n" +
-		"Examples:\n" +
-		"  core pkg update core-php       # Update specific package\n" +
-		"  core pkg update --all          # Update all packages")
+	updateCmd.Flags().BoolVar(&updateAll, "all", false, "Update all packages")
 
-	updateCmd.BoolFlag("all", "Update all packages", &all)
-
-	updateCmd.Action(func() error {
-		args := updateCmd.OtherArgs()
-		if !all && len(args) == 0 {
-			return fmt.Errorf("specify package name or use --all")
-		}
-		return runPkgUpdate(args, all)
-	})
+	parent.AddCommand(updateCmd)
 }
 
 func runPkgUpdate(packages []string, all bool) error {
@@ -177,15 +184,19 @@ func runPkgUpdate(packages []string, all bool) error {
 }
 
 // addPkgOutdatedCommand adds the 'pkg outdated' command.
-func addPkgOutdatedCommand(parent *clir.Command) {
-	outdatedCmd := parent.NewSubCommand("outdated", "Check for outdated packages")
-	outdatedCmd.LongDescription("Checks which packages have unpulled commits.\n\n" +
-		"Examples:\n" +
-		"  core pkg outdated")
+func addPkgOutdatedCommand(parent *cobra.Command) {
+	outdatedCmd := &cobra.Command{
+		Use:   "outdated",
+		Short: "Check for outdated packages",
+		Long: "Checks which packages have unpulled commits.\n\n" +
+			"Examples:\n" +
+			"  core pkg outdated",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPkgOutdated()
+		},
+	}
 
-	outdatedCmd.Action(func() error {
-		return runPkgOutdated()
-	})
+	parent.AddCommand(outdatedCmd)
 }
 
 func runPkgOutdated() error {

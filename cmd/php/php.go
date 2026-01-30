@@ -4,7 +4,7 @@ package php
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
@@ -78,15 +78,19 @@ var (
 )
 
 // AddPHPCommands adds PHP/Laravel development commands.
-func AddPHPCommands(parent *clir.Cli) {
-	phpCmd := parent.NewSubCommand("php", "Laravel/PHP development tools")
-	phpCmd.LongDescription("Manage Laravel development environment with FrankenPHP.\n\n" +
-		"Services orchestrated:\n" +
-		"  - FrankenPHP/Octane (port 8000, HTTPS on 443)\n" +
-		"  - Vite dev server (port 5173)\n" +
-		"  - Laravel Horizon (queue workers)\n" +
-		"  - Laravel Reverb (WebSocket, port 8080)\n" +
-		"  - Redis (port 6379)")
+func AddPHPCommands(root *cobra.Command) {
+	phpCmd := &cobra.Command{
+		Use:   "php",
+		Short: "Laravel/PHP development tools",
+		Long: "Manage Laravel development environment with FrankenPHP.\n\n" +
+			"Services orchestrated:\n" +
+			"  - FrankenPHP/Octane (port 8000, HTTPS on 443)\n" +
+			"  - Vite dev server (port 5173)\n" +
+			"  - Laravel Horizon (queue workers)\n" +
+			"  - Laravel Reverb (WebSocket, port 8080)\n" +
+			"  - Redis (port 6379)",
+	}
+	root.AddCommand(phpCmd)
 
 	// Development
 	addPHPDevCommand(phpCmd)

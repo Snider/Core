@@ -1,13 +1,17 @@
 package dev
 
 import (
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // addAPICommands adds the 'api' command and its subcommands to the given parent command.
-func addAPICommands(parent *clir.Command) {
+func addAPICommands(parent *cobra.Command) {
 	// Create the 'api' command
-	apiCmd := parent.NewSubCommand("api", "Tools for managing service APIs")
+	apiCmd := &cobra.Command{
+		Use:   "api",
+		Short: "Tools for managing service APIs",
+	}
+	parent.AddCommand(apiCmd)
 
 	// Add the 'sync' command to 'api'
 	addSyncCommand(apiCmd)

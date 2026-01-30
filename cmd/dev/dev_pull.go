@@ -8,24 +8,31 @@ import (
 
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+// Pull command flags
+var (
+	pullRegistryPath string
+	pullAll          bool
 )
 
 // addPullCommand adds the 'pull' command to the given parent command.
-func addPullCommand(parent *clir.Command) {
-	var registryPath string
-	var all bool
+func addPullCommand(parent *cobra.Command) {
+	pullCmd := &cobra.Command{
+		Use:   "pull",
+		Short: "Pull updates across all repos",
+		Long: `Pulls updates for all repos.
+By default only pulls repos that are behind. Use --all to pull all repos.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPull(pullRegistryPath, pullAll)
+		},
+	}
 
-	pullCmd := parent.NewSubCommand("pull", "Pull updates across all repos")
-	pullCmd.LongDescription("Pulls updates for all repos.\n" +
-		"By default only pulls repos that are behind. Use --all to pull all repos.")
+	pullCmd.Flags().StringVar(&pullRegistryPath, "registry", "", "Path to repos.yaml (auto-detected if not specified)")
+	pullCmd.Flags().BoolVar(&pullAll, "all", false, "Pull all repos, not just those behind")
 
-	pullCmd.StringFlag("registry", "Path to repos.yaml (auto-detected if not specified)", &registryPath)
-	pullCmd.BoolFlag("all", "Pull all repos, not just those behind", &all)
-
-	pullCmd.Action(func() error {
-		return runPull(registryPath, all)
-	})
+	parent.AddCommand(pullCmd)
 }
 
 func runPull(registryPath string, all bool) error {

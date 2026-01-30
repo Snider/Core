@@ -10,63 +10,72 @@ import (
 	"text/tabwriter"
 
 	"github.com/host-uk/core/pkg/container"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // addVMTemplatesCommand adds the 'templates' command under vm.
-func addVMTemplatesCommand(parent *clir.Command) {
-	templatesCmd := parent.NewSubCommand("templates", "Manage LinuxKit templates")
-	templatesCmd.LongDescription("Manage LinuxKit YAML templates for building VMs.\n\n" +
-		"Templates provide pre-configured LinuxKit configurations for common use cases.\n" +
-		"They support variable substitution with ${VAR} and ${VAR:-default} syntax.\n\n" +
-		"Examples:\n" +
-		"  core vm templates                    # List available templates\n" +
-		"  core vm templates show core-dev      # Show template content\n" +
-		"  core vm templates vars server-php    # Show template variables")
-
-	// Default action: list templates
-	templatesCmd.Action(func() error {
-		return listTemplates()
-	})
+func addVMTemplatesCommand(parent *cobra.Command) {
+	templatesCmd := &cobra.Command{
+		Use:   "templates",
+		Short: "Manage LinuxKit templates",
+		Long: "Manage LinuxKit YAML templates for building VMs.\n\n" +
+			"Templates provide pre-configured LinuxKit configurations for common use cases.\n" +
+			"They support variable substitution with ${VAR} and ${VAR:-default} syntax.\n\n" +
+			"Examples:\n" +
+			"  core vm templates                    # List available templates\n" +
+			"  core vm templates show core-dev      # Show template content\n" +
+			"  core vm templates vars server-php    # Show template variables",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listTemplates()
+		},
+	}
 
 	// Add subcommands
 	addTemplatesShowCommand(templatesCmd)
 	addTemplatesVarsCommand(templatesCmd)
+
+	parent.AddCommand(templatesCmd)
 }
 
 // addTemplatesShowCommand adds the 'templates show' subcommand.
-func addTemplatesShowCommand(parent *clir.Command) {
-	showCmd := parent.NewSubCommand("show", "Display template content")
-	showCmd.LongDescription("Display the content of a LinuxKit template.\n\n" +
-		"Examples:\n" +
-		"  core templates show core-dev\n" +
-		"  core templates show server-php")
+func addTemplatesShowCommand(parent *cobra.Command) {
+	showCmd := &cobra.Command{
+		Use:   "show <template-name>",
+		Short: "Display template content",
+		Long: "Display the content of a LinuxKit template.\n\n" +
+			"Examples:\n" +
+			"  core templates show core-dev\n" +
+			"  core templates show server-php",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("template name is required")
+			}
+			return showTemplate(args[0])
+		},
+	}
 
-	showCmd.Action(func() error {
-		args := showCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("template name is required")
-		}
-		return showTemplate(args[0])
-	})
+	parent.AddCommand(showCmd)
 }
 
 // addTemplatesVarsCommand adds the 'templates vars' subcommand.
-func addTemplatesVarsCommand(parent *clir.Command) {
-	varsCmd := parent.NewSubCommand("vars", "Show template variables")
-	varsCmd.LongDescription("Display all variables used in a template.\n\n" +
-		"Shows required variables (no default) and optional variables (with defaults).\n\n" +
-		"Examples:\n" +
-		"  core templates vars core-dev\n" +
-		"  core templates vars server-php")
+func addTemplatesVarsCommand(parent *cobra.Command) {
+	varsCmd := &cobra.Command{
+		Use:   "vars <template-name>",
+		Short: "Show template variables",
+		Long: "Display all variables used in a template.\n\n" +
+			"Shows required variables (no default) and optional variables (with defaults).\n\n" +
+			"Examples:\n" +
+			"  core templates vars core-dev\n" +
+			"  core templates vars server-php",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("template name is required")
+			}
+			return showTemplateVars(args[0])
+		},
+	}
 
-	varsCmd.Action(func() error {
-		args := varsCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("template name is required")
-		}
-		return showTemplateVars(args[0])
-	})
+	parent.AddCommand(varsCmd)
 }
 
 func listTemplates() error {

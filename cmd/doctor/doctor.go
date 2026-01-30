@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/host-uk/core/cmd/shared"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
@@ -15,19 +15,21 @@ var (
 	dimStyle     = shared.DimStyle
 )
 
-// AddDoctorCommand adds the 'doctor' command to the given parent command.
-func AddDoctorCommand(parent *clir.Cli) {
-	var verbose bool
+// Flag variable for doctor command
+var doctorVerbose bool
 
-	doctorCmd := parent.NewSubCommand("doctor", "Check development environment")
-	doctorCmd.LongDescription("Checks that all required tools are installed and configured.\n" +
-		"Run this before `core setup` to ensure your environment is ready.")
+var doctorCmd = &cobra.Command{
+	Use:   "doctor",
+	Short: "Check development environment",
+	Long: `Checks that all required tools are installed and configured.
+Run this before 'core setup' to ensure your environment is ready.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runDoctor(doctorVerbose)
+	},
+}
 
-	doctorCmd.BoolFlag("verbose", "Show detailed version information", &verbose)
-
-	doctorCmd.Action(func() error {
-		return runDoctor(verbose)
-	})
+func init() {
+	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, "Show detailed version information")
 }
 
 func runDoctor(verbose bool) error {

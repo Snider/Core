@@ -10,22 +10,29 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
 // addSyncCommand adds the 'sync' command to the given parent command.
-func addSyncCommand(parent *clir.Command) {
-	syncCmd := parent.NewSubCommand("sync", "Synchronizes the public service APIs with their internal implementations.")
-	syncCmd.LongDescription("This command scans the 'pkg' directory for services and ensures that the\ntop-level public API for each service is in sync with its internal implementation.\nIt automatically generates the necessary Go files with type aliases.")
-	syncCmd.Action(func() error {
-		if err := runSync(); err != nil {
-			return fmt.Errorf("Error: %w", err)
-		}
-		fmt.Println("Public APIs synchronized successfully.")
-		return nil
-	})
+func addSyncCommand(parent *cobra.Command) {
+	syncCmd := &cobra.Command{
+		Use:   "sync",
+		Short: "Synchronizes the public service APIs with their internal implementations.",
+		Long: `This command scans the 'pkg' directory for services and ensures that the
+top-level public API for each service is in sync with its internal implementation.
+It automatically generates the necessary Go files with type aliases.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := runSync(); err != nil {
+				return fmt.Errorf("Error: %w", err)
+			}
+			fmt.Println("Public APIs synchronized successfully.")
+			return nil
+		},
+	}
+
+	parent.AddCommand(syncCmd)
 }
 
 type symbolInfo struct {

@@ -8,31 +8,36 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
+)
+
+var (
+	installTargetDir    string
+	installAddToReg     bool
 )
 
 // addPkgInstallCommand adds the 'pkg install' command.
-func addPkgInstallCommand(parent *clir.Command) {
-	var targetDir string
-	var addToRegistry bool
+func addPkgInstallCommand(parent *cobra.Command) {
+	installCmd := &cobra.Command{
+		Use:   "install <org/repo>",
+		Short: "Clone a package from GitHub",
+		Long: "Clones a repository from GitHub.\n\n" +
+			"Examples:\n" +
+			"  core pkg install host-uk/core-php\n" +
+			"  core pkg install host-uk/core-tenant --dir ./packages\n" +
+			"  core pkg install host-uk/core-admin --add",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("repository is required (e.g., core pkg install host-uk/core-php)")
+			}
+			return runPkgInstall(args[0], installTargetDir, installAddToReg)
+		},
+	}
 
-	installCmd := parent.NewSubCommand("install", "Clone a package from GitHub")
-	installCmd.LongDescription("Clones a repository from GitHub.\n\n" +
-		"Examples:\n" +
-		"  core pkg install host-uk/core-php\n" +
-		"  core pkg install host-uk/core-tenant --dir ./packages\n" +
-		"  core pkg install host-uk/core-admin --add")
+	installCmd.Flags().StringVar(&installTargetDir, "dir", "", "Target directory (default: ./packages or current dir)")
+	installCmd.Flags().BoolVar(&installAddToReg, "add", false, "Add to repos.yaml registry")
 
-	installCmd.StringFlag("dir", "Target directory (default: ./packages or current dir)", &targetDir)
-	installCmd.BoolFlag("add", "Add to repos.yaml registry", &addToRegistry)
-
-	installCmd.Action(func() error {
-		args := installCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("repository is required (e.g., core pkg install host-uk/core-php)")
-		}
-		return runPkgInstall(args[0], targetDir, addToRegistry)
-	})
+	parent.AddCommand(installCmd)
 }
 
 func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {

@@ -7,67 +7,71 @@ import (
 	"strings"
 
 	phppkg "github.com/host-uk/core/pkg/php"
-	"github.com/leaanthony/clir"
+	"github.com/spf13/cobra"
 )
 
-func addPHPBuildCommand(parent *clir.Command) {
-	var (
-		buildType  string
-		imageName  string
-		tag        string
-		platform   string
-		dockerfile string
-		outputPath string
-		format     string
-		template   string
-		noCache    bool
-	)
+var (
+	buildType       string
+	buildImageName  string
+	buildTag        string
+	buildPlatform   string
+	buildDockerfile string
+	buildOutputPath string
+	buildFormat     string
+	buildTemplate   string
+	buildNoCache    bool
+)
 
-	buildCmd := parent.NewSubCommand("build", "Build Docker or LinuxKit image")
-	buildCmd.LongDescription("Build a production-ready container image for the PHP project.\n\n" +
-		"By default, builds a Docker image using FrankenPHP.\n" +
-		"Use --type linuxkit to build a LinuxKit VM image instead.\n\n" +
-		"Examples:\n" +
-		"  core php build                           # Build Docker image\n" +
-		"  core php build --name myapp --tag v1.0   # Build with custom name/tag\n" +
-		"  core php build --type linuxkit           # Build LinuxKit image\n" +
-		"  core php build --type linuxkit --format iso  # Build ISO image")
+func addPHPBuildCommand(parent *cobra.Command) {
+	buildCmd := &cobra.Command{
+		Use:   "build",
+		Short: "Build Docker or LinuxKit image",
+		Long: "Build a production-ready container image for the PHP project.\n\n" +
+			"By default, builds a Docker image using FrankenPHP.\n" +
+			"Use --type linuxkit to build a LinuxKit VM image instead.\n\n" +
+			"Examples:\n" +
+			"  core php build                           # Build Docker image\n" +
+			"  core php build --name myapp --tag v1.0   # Build with custom name/tag\n" +
+			"  core php build --type linuxkit           # Build LinuxKit image\n" +
+			"  core php build --type linuxkit --format iso  # Build ISO image",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed to get working directory: %w", err)
+			}
 
-	buildCmd.StringFlag("type", "Build type: docker (default) or linuxkit", &buildType)
-	buildCmd.StringFlag("name", "Image name (default: project directory name)", &imageName)
-	buildCmd.StringFlag("tag", "Image tag (default: latest)", &tag)
-	buildCmd.StringFlag("platform", "Target platform (e.g., linux/amd64, linux/arm64)", &platform)
-	buildCmd.StringFlag("dockerfile", "Path to custom Dockerfile", &dockerfile)
-	buildCmd.StringFlag("output", "Output path for LinuxKit image", &outputPath)
-	buildCmd.StringFlag("format", "LinuxKit output format: qcow2 (default), iso, raw, vmdk", &format)
-	buildCmd.StringFlag("template", "LinuxKit template name (default: server-php)", &template)
-	buildCmd.BoolFlag("no-cache", "Build without cache", &noCache)
+			ctx := context.Background()
 
-	buildCmd.Action(func() error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
-		}
+			switch strings.ToLower(buildType) {
+			case "linuxkit":
+				return runPHPBuildLinuxKit(ctx, cwd, linuxKitBuildOptions{
+					OutputPath: buildOutputPath,
+					Format:     buildFormat,
+					Template:   buildTemplate,
+				})
+			default:
+				return runPHPBuildDocker(ctx, cwd, dockerBuildOptions{
+					ImageName:  buildImageName,
+					Tag:        buildTag,
+					Platform:   buildPlatform,
+					Dockerfile: buildDockerfile,
+					NoCache:    buildNoCache,
+				})
+			}
+		},
+	}
 
-		ctx := context.Background()
+	buildCmd.Flags().StringVar(&buildType, "type", "", "Build type: docker (default) or linuxkit")
+	buildCmd.Flags().StringVar(&buildImageName, "name", "", "Image name (default: project directory name)")
+	buildCmd.Flags().StringVar(&buildTag, "tag", "", "Image tag (default: latest)")
+	buildCmd.Flags().StringVar(&buildPlatform, "platform", "", "Target platform (e.g., linux/amd64, linux/arm64)")
+	buildCmd.Flags().StringVar(&buildDockerfile, "dockerfile", "", "Path to custom Dockerfile")
+	buildCmd.Flags().StringVar(&buildOutputPath, "output", "", "Output path for LinuxKit image")
+	buildCmd.Flags().StringVar(&buildFormat, "format", "", "LinuxKit output format: qcow2 (default), iso, raw, vmdk")
+	buildCmd.Flags().StringVar(&buildTemplate, "template", "", "LinuxKit template name (default: server-php)")
+	buildCmd.Flags().BoolVar(&buildNoCache, "no-cache", false, "Build without cache")
 
-		switch strings.ToLower(buildType) {
-		case "linuxkit":
-			return runPHPBuildLinuxKit(ctx, cwd, linuxKitBuildOptions{
-				OutputPath: outputPath,
-				Format:     format,
-				Template:   template,
-			})
-		default:
-			return runPHPBuildDocker(ctx, cwd, dockerBuildOptions{
-				ImageName:  imageName,
-				Tag:        tag,
-				Platform:   platform,
-				Dockerfile: dockerfile,
-				NoCache:    noCache,
-			})
-		}
-	})
+	parent.AddCommand(buildCmd)
 }
 
 type dockerBuildOptions struct {
@@ -182,115 +186,120 @@ func runPHPBuildLinuxKit(ctx context.Context, projectDir string, opts linuxKitBu
 	return nil
 }
 
-func addPHPServeCommand(parent *clir.Command) {
-	var (
-		imageName     string
-		tag           string
-		containerName string
-		port          int
-		httpsPort     int
-		detach        bool
-		envFile       string
-	)
+var (
+	serveImageName     string
+	serveTag           string
+	serveContainerName string
+	servePort          int
+	serveHTTPSPort     int
+	serveDetach        bool
+	serveEnvFile       string
+)
 
-	serveCmd := parent.NewSubCommand("serve", "Run production container")
-	serveCmd.LongDescription("Run a production PHP container.\n\n" +
-		"This starts the built Docker image in production mode.\n\n" +
-		"Examples:\n" +
-		"  core php serve --name myapp              # Run container\n" +
-		"  core php serve --name myapp -d           # Run detached\n" +
-		"  core php serve --name myapp --port 8080  # Custom port")
-
-	serveCmd.StringFlag("name", "Docker image name (required)", &imageName)
-	serveCmd.StringFlag("tag", "Image tag (default: latest)", &tag)
-	serveCmd.StringFlag("container", "Container name", &containerName)
-	serveCmd.IntFlag("port", "HTTP port (default: 80)", &port)
-	serveCmd.IntFlag("https-port", "HTTPS port (default: 443)", &httpsPort)
-	serveCmd.BoolFlag("d", "Run in detached mode", &detach)
-	serveCmd.StringFlag("env-file", "Path to environment file", &envFile)
-
-	serveCmd.Action(func() error {
-		if imageName == "" {
-			// Try to detect from current directory
-			cwd, err := os.Getwd()
-			if err == nil {
-				imageName = phppkg.GetLaravelAppName(cwd)
-				if imageName != "" {
-					imageName = strings.ToLower(strings.ReplaceAll(imageName, " ", "-"))
+func addPHPServeCommand(parent *cobra.Command) {
+	serveCmd := &cobra.Command{
+		Use:   "serve",
+		Short: "Run production container",
+		Long: "Run a production PHP container.\n\n" +
+			"This starts the built Docker image in production mode.\n\n" +
+			"Examples:\n" +
+			"  core php serve --name myapp              # Run container\n" +
+			"  core php serve --name myapp -d           # Run detached\n" +
+			"  core php serve --name myapp --port 8080  # Custom port",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			imageName := serveImageName
+			if imageName == "" {
+				// Try to detect from current directory
+				cwd, err := os.Getwd()
+				if err == nil {
+					imageName = phppkg.GetLaravelAppName(cwd)
+					if imageName != "" {
+						imageName = strings.ToLower(strings.ReplaceAll(imageName, " ", "-"))
+					}
+				}
+				if imageName == "" {
+					return fmt.Errorf("--name is required: specify the Docker image name")
 				}
 			}
-			if imageName == "" {
-				return fmt.Errorf("--name is required: specify the Docker image name")
+
+			ctx := context.Background()
+
+			opts := phppkg.ServeOptions{
+				ImageName:     imageName,
+				Tag:           serveTag,
+				ContainerName: serveContainerName,
+				Port:          servePort,
+				HTTPSPort:     serveHTTPSPort,
+				Detach:        serveDetach,
+				EnvFile:       serveEnvFile,
+				Output:        os.Stdout,
 			}
-		}
 
-		ctx := context.Background()
+			fmt.Printf("%s Running production container...\n\n", dimStyle.Render("PHP:"))
+			fmt.Printf("%s %s:%s\n", dimStyle.Render("Image:"), imageName, func() string {
+				if serveTag == "" {
+					return "latest"
+				}
+				return serveTag
+			}())
 
-		opts := phppkg.ServeOptions{
-			ImageName:     imageName,
-			Tag:           tag,
-			ContainerName: containerName,
-			Port:          port,
-			HTTPSPort:     httpsPort,
-			Detach:        detach,
-			EnvFile:       envFile,
-			Output:        os.Stdout,
-		}
-
-		fmt.Printf("%s Running production container...\n\n", dimStyle.Render("PHP:"))
-		fmt.Printf("%s %s:%s\n", dimStyle.Render("Image:"), imageName, func() string {
-			if tag == "" {
-				return "latest"
+			effectivePort := servePort
+			if effectivePort == 0 {
+				effectivePort = 80
 			}
-			return tag
-		}())
+			effectiveHTTPSPort := serveHTTPSPort
+			if effectiveHTTPSPort == 0 {
+				effectiveHTTPSPort = 443
+			}
 
-		effectivePort := port
-		if effectivePort == 0 {
-			effectivePort = 80
-		}
-		effectiveHTTPSPort := httpsPort
-		if effectiveHTTPSPort == 0 {
-			effectiveHTTPSPort = 443
-		}
+			fmt.Printf("%s http://localhost:%d, https://localhost:%d\n",
+				dimStyle.Render("Ports:"), effectivePort, effectiveHTTPSPort)
+			fmt.Println()
 
-		fmt.Printf("%s http://localhost:%d, https://localhost:%d\n",
-			dimStyle.Render("Ports:"), effectivePort, effectiveHTTPSPort)
-		fmt.Println()
+			if err := phppkg.ServeProduction(ctx, opts); err != nil {
+				return fmt.Errorf("failed to start container: %w", err)
+			}
 
-		if err := phppkg.ServeProduction(ctx, opts); err != nil {
-			return fmt.Errorf("failed to start container: %w", err)
-		}
+			if !serveDetach {
+				fmt.Printf("\n%s Container stopped\n", dimStyle.Render("PHP:"))
+			}
 
-		if !detach {
-			fmt.Printf("\n%s Container stopped\n", dimStyle.Render("PHP:"))
-		}
+			return nil
+		},
+	}
 
-		return nil
-	})
+	serveCmd.Flags().StringVar(&serveImageName, "name", "", "Docker image name (required)")
+	serveCmd.Flags().StringVar(&serveTag, "tag", "", "Image tag (default: latest)")
+	serveCmd.Flags().StringVar(&serveContainerName, "container", "", "Container name")
+	serveCmd.Flags().IntVar(&servePort, "port", 0, "HTTP port (default: 80)")
+	serveCmd.Flags().IntVar(&serveHTTPSPort, "https-port", 0, "HTTPS port (default: 443)")
+	serveCmd.Flags().BoolVarP(&serveDetach, "detach", "d", false, "Run in detached mode")
+	serveCmd.Flags().StringVar(&serveEnvFile, "env-file", "", "Path to environment file")
+
+	parent.AddCommand(serveCmd)
 }
 
-func addPHPShellCommand(parent *clir.Command) {
-	shellCmd := parent.NewSubCommand("shell", "Open shell in running container")
-	shellCmd.LongDescription("Open an interactive shell in a running PHP container.\n\n" +
-		"Examples:\n" +
-		"  core php shell abc123   # Shell into container by ID\n" +
-		"  core php shell myapp    # Shell into container by name")
+func addPHPShellCommand(parent *cobra.Command) {
+	shellCmd := &cobra.Command{
+		Use:   "shell [container]",
+		Short: "Open shell in running container",
+		Long: "Open an interactive shell in a running PHP container.\n\n" +
+			"Examples:\n" +
+			"  core php shell abc123   # Shell into container by ID\n" +
+			"  core php shell myapp    # Shell into container by name",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
 
-	shellCmd.Action(func() error {
-		args := shellCmd.OtherArgs()
-		if len(args) == 0 {
-			return fmt.Errorf("container ID or name is required")
-		}
+			fmt.Printf("%s Opening shell in container %s...\n", dimStyle.Render("PHP:"), args[0])
 
-		ctx := context.Background()
+			if err := phppkg.Shell(ctx, args[0]); err != nil {
+				return fmt.Errorf("failed to open shell: %w", err)
+			}
 
-		fmt.Printf("%s Opening shell in container %s...\n", dimStyle.Render("PHP:"), args[0])
+			return nil
+		},
+	}
 
-		if err := phppkg.Shell(ctx, args[0]); err != nil {
-			return fmt.Errorf("failed to open shell: %w", err)
-		}
-
-		return nil
-	})
+	parent.AddCommand(shellCmd)
 }
