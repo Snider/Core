@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -300,6 +300,11 @@ func (s *Service) PluralCategory(n int) PluralCategory {
 
 // AddHandler appends a handler to the end of the handler chain.
 // Later handlers have lower priority (run if earlier handlers don't match).
+//
+// Note: Handlers are executed during T() while holding a read lock.
+// Handlers should not call back into the same Service instance to avoid
+// contention. Grammar functions like PastTense() use currentLangForGrammar()
+// which safely calls Default().Language().
 func (s *Service) AddHandler(h KeyHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -481,8 +486,19 @@ func (s *Service) getEffectiveFormality(data any) Formality {
 
 	// Check if data is a map with Formality field
 	if m, ok := data.(map[string]any); ok {
-		if f, ok := m["Formality"].(Formality); ok && f != FormalityNeutral {
-			return f
+		switch f := m["Formality"].(type) {
+		case Formality:
+			if f != FormalityNeutral {
+				return f
+			}
+		case string:
+			// Support string values for convenience
+			switch strings.ToLower(f) {
+			case "formal":
+				return FormalityFormal
+			case "informal":
+				return FormalityInformal
+			}
 		}
 	}
 
@@ -577,7 +593,7 @@ func (s *Service) LoadFS(fsys fs.FS, dir string) error {
 			continue
 		}
 
-		filePath := filepath.Join(dir, entry.Name())
+		filePath := path.Join(dir, entry.Name()) // Use path.Join for fs.FS (forward slashes)
 		data, err := fs.ReadFile(fsys, filePath)
 		if err != nil {
 			return fmt.Errorf("failed to read locale %q: %w", entry.Name(), err)
