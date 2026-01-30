@@ -29,7 +29,6 @@
 package dev
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
@@ -45,9 +44,8 @@ var (
 	repoNameStyle = shared.RepoNameStyle
 )
 
-// Table styles for status display (with padding for table cells)
+// Table styles for status display (extends shared styles with cell padding)
 var (
-	cellStyle  = lipgloss.NewStyle().Padding(0, 1)
 	dirtyStyle = shared.GitDirtyStyle.Padding(0, 1)
 	aheadStyle = shared.GitAheadStyle.Padding(0, 1)
 	cleanStyle = shared.GitCleanStyle.Padding(0, 1)
