@@ -211,10 +211,11 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 
 		case map[string]any:
 			// Check if this is a verb form object
+			// Grammar data lives under "gram.*" (a nod to Gram - grandmother)
 			if grammar != nil && isVerbFormObject(v) {
 				verbName := key
-				if strings.HasPrefix(fullKey, "common.verb.") {
-					verbName = strings.TrimPrefix(fullKey, "common.verb.")
+				if strings.HasPrefix(fullKey, "gram.verb.") {
+					verbName = strings.TrimPrefix(fullKey, "gram.verb.")
 				}
 				forms := VerbForms{}
 				if base, ok := v["base"].(string); ok {
@@ -233,8 +234,8 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 			// Check if this is a noun form object
 			if grammar != nil && isNounFormObject(v) {
 				nounName := key
-				if strings.HasPrefix(fullKey, "common.noun.") {
-					nounName = strings.TrimPrefix(fullKey, "common.noun.")
+				if strings.HasPrefix(fullKey, "gram.noun.") {
+					nounName = strings.TrimPrefix(fullKey, "gram.noun.")
 				}
 				forms := NounForms{}
 				if one, ok := v["one"].(string); ok {
@@ -251,7 +252,7 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 			}
 
 			// Check if this is an article object
-			if grammar != nil && fullKey == "common.article" {
+			if grammar != nil && fullKey == "gram.article" {
 				if indef, ok := v["indefinite"].(map[string]any); ok {
 					if def, ok := indef["default"].(string); ok {
 						grammar.Articles.IndefiniteDefault = def

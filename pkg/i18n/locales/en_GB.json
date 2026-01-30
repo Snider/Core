@@ -1,5 +1,5 @@
 {
-	"common": {
+	"gram": {
 		"verb": {
 			"be": { "base": "be", "past": "was", "gerund": "being" },
 			"go": { "base": "go", "past": "went", "gerund": "going" },
@@ -47,7 +47,9 @@
 		"article": {
 			"indefinite": { "default": "a", "vowel": "an" },
 			"definite": "the"
-		},
+		}
+	},
+	"common": {
 		"prompt": {
 			"yes": "y",
 			"no": "n",
