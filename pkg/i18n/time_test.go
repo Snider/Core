@@ -73,13 +73,13 @@ func TestI18nAgoNamespace(t *testing.T) {
 	require.NoError(t, err)
 	SetDefault(svc)
 
-	t.Run("i18n.ago pattern", func(t *testing.T) {
-		result := T("i18n.ago", 5, "minute")
+	t.Run("i18n.numeric.ago pattern", func(t *testing.T) {
+		result := T("i18n.numeric.ago", 5, "minute")
 		assert.Equal(t, "5 minutes ago", result)
 	})
 
-	t.Run("i18n.ago singular", func(t *testing.T) {
-		result := T("i18n.ago", 1, "hour")
+	t.Run("i18n.numeric.ago singular", func(t *testing.T) {
+		result := T("i18n.numeric.ago", 1, "hour")
 		assert.Equal(t, "1 hour ago", result)
 	})
 }

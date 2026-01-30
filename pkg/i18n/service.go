@@ -337,28 +337,6 @@ func (s *Service) handleI18nNamespace(key string, args []any) string {
 		}
 	}
 
-	// Legacy i18n.{format} shortcuts (kept for compatibility)
-	if len(args) > 0 {
-		switch key {
-		case "i18n.number":
-			return FormatNumber(toInt64(args[0]))
-		case "i18n.decimal":
-			return FormatDecimal(toFloat64(args[0]))
-		case "i18n.percent":
-			return FormatPercent(toFloat64(args[0]))
-		case "i18n.bytes":
-			return FormatBytes(toInt64(args[0]))
-		case "i18n.ordinal":
-			return FormatOrdinal(toInt(args[0]))
-		case "i18n.ago":
-			if len(args) >= 2 {
-				if unit, ok := args[1].(string); ok {
-					return FormatAgo(toInt(args[0]), unit)
-				}
-			}
-		}
-	}
-
 	return ""
 }
 

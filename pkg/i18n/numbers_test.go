@@ -146,28 +146,28 @@ func TestI18nNumberNamespace(t *testing.T) {
 	require.NoError(t, err)
 	SetDefault(svc)
 
-	t.Run("i18n.number", func(t *testing.T) {
-		result := svc.T("i18n.number", 1234567)
+	t.Run("i18n.numeric.number", func(t *testing.T) {
+		result := svc.T("i18n.numeric.number", 1234567)
 		assert.Equal(t, "1,234,567", result)
 	})
 
-	t.Run("i18n.decimal", func(t *testing.T) {
-		result := svc.T("i18n.decimal", 1234.56)
+	t.Run("i18n.numeric.decimal", func(t *testing.T) {
+		result := svc.T("i18n.numeric.decimal", 1234.56)
 		assert.Equal(t, "1,234.56", result)
 	})
 
-	t.Run("i18n.percent", func(t *testing.T) {
-		result := svc.T("i18n.percent", 0.85)
+	t.Run("i18n.numeric.percent", func(t *testing.T) {
+		result := svc.T("i18n.numeric.percent", 0.85)
 		assert.Equal(t, "85%", result)
 	})
 
-	t.Run("i18n.bytes", func(t *testing.T) {
-		result := svc.T("i18n.bytes", 1572864)
+	t.Run("i18n.numeric.bytes", func(t *testing.T) {
+		result := svc.T("i18n.numeric.bytes", 1572864)
 		assert.Equal(t, "1.5 MB", result)
 	})
 
-	t.Run("i18n.ordinal", func(t *testing.T) {
-		result := svc.T("i18n.ordinal", 3)
+	t.Run("i18n.numeric.ordinal", func(t *testing.T) {
+		result := svc.T("i18n.numeric.ordinal", 3)
 		assert.Equal(t, "3rd", result)
 	})
 }
