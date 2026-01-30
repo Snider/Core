@@ -82,13 +82,13 @@ func TestOnMissingKey(t *testing.T) {
 
 func TestServiceMode(t *testing.T) {
 	// Reset default service after tests
-	originalService := defaultService
+	originalService := defaultService.Load()
 	defer func() {
-		defaultService = originalService
+		defaultService.Store(originalService)
 	}()
 
 	t.Run("default mode is normal", func(t *testing.T) {
-		defaultService = nil
+		defaultService.Store(nil)
 		defaultOnce = sync.Once{}
 		defaultErr = nil
 

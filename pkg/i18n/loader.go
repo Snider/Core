@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // FSLoader loads translations from a filesystem (embedded or disk).
@@ -16,6 +17,7 @@ type FSLoader struct {
 
 	// Cache of available languages (populated on first Languages() call)
 	languages []string
+	langOnce  sync.Once
 }
 
 // NewFSLoader creates a loader for the given filesystem and directory.
@@ -66,25 +68,24 @@ func (l *FSLoader) Load(lang string) (map[string]Message, *GrammarData, error) {
 }
 
 // Languages implements Loader.Languages - returns available language codes.
+// Thread-safe: uses sync.Once to ensure the directory is scanned only once.
 func (l *FSLoader) Languages() []string {
-	if l.languages != nil {
-		return l.languages
-	}
-
-	entries, err := fs.ReadDir(l.fsys, l.dir)
-	if err != nil {
-		return nil
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
+	l.langOnce.Do(func() {
+		entries, err := fs.ReadDir(l.fsys, l.dir)
+		if err != nil {
+			return
 		}
-		lang := strings.TrimSuffix(entry.Name(), ".json")
-		// Normalise underscore to hyphen (en_GB -> en-GB)
-		lang = strings.ReplaceAll(lang, "_", "-")
-		l.languages = append(l.languages, lang)
-	}
+
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+				continue
+			}
+			lang := strings.TrimSuffix(entry.Name(), ".json")
+			// Normalise underscore to hyphen (en_GB -> en-GB)
+			lang = strings.ReplaceAll(lang, "_", "-")
+			l.languages = append(l.languages, lang)
+		}
+	})
 
 	return l.languages
 }

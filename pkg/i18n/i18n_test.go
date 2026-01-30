@@ -60,7 +60,7 @@ func TestSetLanguage(t *testing.T) {
 
 func TestDefaultService(t *testing.T) {
 	// Reset default for test
-	defaultService = nil
+	defaultService.Store(nil)
 	defaultOnce = sync.Once{}
 	defaultErr = nil
 
@@ -280,7 +280,7 @@ func TestDebugMode(t *testing.T) {
 
 	t.Run("package-level SetDebug", func(t *testing.T) {
 		// Reset default
-		defaultService = nil
+		defaultService.Store(nil)
 		defaultOnce = sync.Once{}
 		defaultErr = nil
 

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"golang.org/x/text/language"
 )
@@ -75,7 +76,7 @@ func WithDebug(enabled bool) Option {
 
 // Default is the global i18n service instance.
 var (
-	defaultService *Service
+	defaultService atomic.Pointer[Service]
 	defaultOnce    sync.Once
 	defaultErr     error
 )
@@ -148,22 +149,28 @@ func NewWithLoader(loader Loader, opts ...Option) (*Service, error) {
 // Init initializes the default global service.
 func Init() error {
 	defaultOnce.Do(func() {
-		defaultService, defaultErr = New()
+		svc, err := New()
+		if err == nil {
+			defaultService.Store(svc)
+		}
+		defaultErr = err
 	})
 	return defaultErr
 }
 
 // Default returns the global i18n service, initializing if needed.
+// Thread-safe: can be called concurrently.
 func Default() *Service {
-	if defaultService == nil {
+	if defaultService.Load() == nil {
 		_ = Init()
 	}
-	return defaultService
+	return defaultService.Load()
 }
 
 // SetDefault sets the global i18n service.
+// Thread-safe: can be called concurrently with Default().
 func SetDefault(s *Service) {
-	defaultService = s
+	defaultService.Store(s)
 }
 
 // loadJSON parses nested JSON and flattens to dot-notation keys.

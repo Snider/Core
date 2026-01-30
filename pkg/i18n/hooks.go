@@ -3,25 +3,32 @@ package i18n
 
 import (
 	"runtime"
+	"sync/atomic"
 )
 
-var missingKeyHandler MissingKeyHandler
+var missingKeyHandler atomic.Value // stores MissingKeyHandler
 
 // OnMissingKey registers a handler for missing translation keys.
 // Called when T() can't find a key in ModeCollect.
+// Thread-safe: can be called concurrently with translations.
 //
 //	i18n.SetMode(i18n.ModeCollect)
 //	i18n.OnMissingKey(func(m i18n.MissingKey) {
 //	    log.Printf("MISSING: %s at %s:%d", m.Key, m.CallerFile, m.CallerLine)
 //	})
 func OnMissingKey(h MissingKeyHandler) {
-	missingKeyHandler = h
+	missingKeyHandler.Store(h)
 }
 
 // dispatchMissingKey creates and dispatches a MissingKey event.
 // Called internally when a key is missing in ModeCollect.
 func dispatchMissingKey(key string, args map[string]any) {
-	if missingKeyHandler == nil {
+	v := missingKeyHandler.Load()
+	if v == nil {
+		return
+	}
+	h, ok := v.(MissingKeyHandler)
+	if !ok || h == nil {
 		return
 	}
 
@@ -31,7 +38,7 @@ func dispatchMissingKey(key string, args map[string]any) {
 		line = 0
 	}
 
-	missingKeyHandler(MissingKey{
+	h(MissingKey{
 		Key:        key,
 		Args:       args,
 		CallerFile: file,
