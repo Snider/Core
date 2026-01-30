@@ -75,7 +75,7 @@ func New() (*Service, error) {
 // NewWithFS creates a new i18n service loading locales from the given filesystem.
 // This allows the GUI to provide its own locale files.
 func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
-	bundle := i18n.NewBundle(language.English)
+	bundle := i18n.NewBundle(language.BritishEnglish)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 	availableLangs, err := loadLocalesFromFS(bundle, fsys, dir)
@@ -86,14 +86,14 @@ func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
 	s := &Service{
 		bundle:         bundle,
 		availableLangs: availableLangs,
-		currentLang:    "en",
+		currentLang:    "en-GB",
 	}
 
 	// Try to detect system language
 	if detected, err := detectLanguage(availableLangs); err == nil && detected != "" {
 		_ = s.SetLanguage(detected)
 	} else {
-		_ = s.SetLanguage("en")
+		_ = s.SetLanguage("en-GB")
 	}
 
 	return s, nil
@@ -105,9 +105,9 @@ func NewWithBundle(bundle *i18n.Bundle, langs []language.Tag) *Service {
 	s := &Service{
 		bundle:         bundle,
 		availableLangs: langs,
-		currentLang:    "en",
+		currentLang:    "en-GB",
 	}
-	_ = s.SetLanguage("en")
+	_ = s.SetLanguage("en-GB")
 	return s
 }
 
