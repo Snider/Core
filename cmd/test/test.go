@@ -4,30 +4,20 @@
 package testcmd
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/cmd/shared"
 	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
 var (
-	testHeaderStyle = shared.RepoNameStyle
-	testPassStyle   = shared.SuccessStyle
-	testFailStyle   = shared.ErrorStyle
-	testSkipStyle   = shared.WarningStyle
-	testDimStyle    = shared.DimStyle
-)
-
-// Coverage-specific styles
-var (
-	testCovHighStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#22c55e")) // green-500
-
-	testCovMedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	testCovLowStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ef4444")) // red-500
+	testHeaderStyle  = shared.RepoNameStyle
+	testPassStyle    = shared.SuccessStyle
+	testFailStyle    = shared.ErrorStyle
+	testSkipStyle    = shared.WarningStyle
+	testDimStyle     = shared.DimStyle
+	testCovHighStyle = shared.CoverageHighStyle
+	testCovMedStyle  = shared.CoverageMedStyle
+	testCovLowStyle  = shared.CoverageLowStyle
 )
 
 // Flag variables for test command

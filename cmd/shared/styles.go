@@ -193,6 +193,54 @@ var (
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Coverage Styles (for test/code coverage display)
+// ─────────────────────────────────────────────────────────────────────────────
+
+var (
+	// CoverageHighStyle for good coverage (80%+).
+	CoverageHighStyle = lipgloss.NewStyle().Foreground(ColourGreen500)
+
+	// CoverageMedStyle for moderate coverage (50-79%).
+	CoverageMedStyle = lipgloss.NewStyle().Foreground(ColourAmber500)
+
+	// CoverageLowStyle for low coverage (<50%).
+	CoverageLowStyle = lipgloss.NewStyle().Foreground(ColourRed500)
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Priority Styles (for task/issue priority levels)
+// ─────────────────────────────────────────────────────────────────────────────
+
+var (
+	// PriorityHighStyle for high/critical priority (red, bold).
+	PriorityHighStyle = lipgloss.NewStyle().Bold(true).Foreground(ColourRed500)
+
+	// PriorityMediumStyle for medium priority (amber).
+	PriorityMediumStyle = lipgloss.NewStyle().Foreground(ColourAmber500)
+
+	// PriorityLowStyle for low priority (green).
+	PriorityLowStyle = lipgloss.NewStyle().Foreground(ColourGreen500)
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Severity Styles (for security/QA severity levels)
+// ─────────────────────────────────────────────────────────────────────────────
+
+var (
+	// SeverityCriticalStyle for critical issues (red, bold).
+	SeverityCriticalStyle = lipgloss.NewStyle().Bold(true).Foreground(ColourRed500)
+
+	// SeverityHighStyle for high severity issues (orange, bold).
+	SeverityHighStyle = lipgloss.NewStyle().Bold(true).Foreground(ColourOrange500)
+
+	// SeverityMediumStyle for medium severity issues (amber).
+	SeverityMediumStyle = lipgloss.NewStyle().Foreground(ColourAmber500)
+
+	// SeverityLowStyle for low severity issues (gray).
+	SeverityLowStyle = lipgloss.NewStyle().Foreground(ColourGray500)
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Box Styles (for bordered content)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -349,6 +397,61 @@ func Command(cmd string) string {
 // Number renders a number with styling.
 func Number(n int) string {
 	return NumberStyle.Render(fmt.Sprintf("%d", n))
+}
+
+// FormatCoverage formats a coverage percentage with colour based on thresholds.
+// High (green) >= 80%, Medium (amber) >= 50%, Low (red) < 50%.
+func FormatCoverage(percent float64) string {
+	var style lipgloss.Style
+	switch {
+	case percent >= 80:
+		style = CoverageHighStyle
+	case percent >= 50:
+		style = CoverageMedStyle
+	default:
+		style = CoverageLowStyle
+	}
+	return style.Render(fmt.Sprintf("%.1f%%", percent))
+}
+
+// FormatCoverageCustom formats coverage with custom thresholds.
+func FormatCoverageCustom(percent, highThreshold, medThreshold float64) string {
+	var style lipgloss.Style
+	switch {
+	case percent >= highThreshold:
+		style = CoverageHighStyle
+	case percent >= medThreshold:
+		style = CoverageMedStyle
+	default:
+		style = CoverageLowStyle
+	}
+	return style.Render(fmt.Sprintf("%.1f%%", percent))
+}
+
+// FormatSeverity returns styled text for a severity level.
+func FormatSeverity(level string) string {
+	switch strings.ToLower(level) {
+	case "critical":
+		return SeverityCriticalStyle.Render(level)
+	case "high":
+		return SeverityHighStyle.Render(level)
+	case "medium", "med":
+		return SeverityMediumStyle.Render(level)
+	default:
+		return SeverityLowStyle.Render(level)
+	}
+}
+
+// FormatPriority returns styled text for a priority level.
+func FormatPriority(level string) string {
+	switch strings.ToLower(level) {
+	case "high", "critical", "urgent":
+		return PriorityHighStyle.Render(level)
+	case "medium", "med", "normal":
+		return PriorityMediumStyle.Render(level)
+	default:
+		return PriorityLowStyle.Render(level)
+	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -15,66 +15,36 @@ var (
 	linkStyle    = shared.LinkStyle
 )
 
-// Service colors for log output
+// Service colors for log output (domain-specific, keep local)
 var (
-	phpFrankenPHPStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6366f1")) // indigo-500
-
-	phpViteStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#eab308")) // yellow-500
-
-	phpHorizonStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#f97316")) // orange-500
-
-	phpReverbStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#8b5cf6")) // violet-500
-
-	phpRedisStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ef4444")) // red-500
-
-	phpStatusRunning = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#22c55e")). // green-500
-				Bold(true)
-
-	phpStatusStopped = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6b7280")) // gray-500
-
-	phpStatusError = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ef4444")). // red-500
-			Bold(true)
+	phpFrankenPHPStyle = lipgloss.NewStyle().Foreground(shared.ColourIndigo500)
+	phpViteStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#eab308")) // yellow-500
+	phpHorizonStyle    = lipgloss.NewStyle().Foreground(shared.ColourOrange500)
+	phpReverbStyle     = lipgloss.NewStyle().Foreground(shared.ColourViolet500)
+	phpRedisStyle      = lipgloss.NewStyle().Foreground(shared.ColourRed500)
 )
 
-// QA command styles
+// Status styles (from shared)
 var (
-	phpQAPassedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#22c55e")). // green-500
-				Bold(true)
+	phpStatusRunning = shared.SuccessStyle
+	phpStatusStopped = shared.StatusPendingStyle
+	phpStatusError   = shared.ErrorStyle
+)
 
-	phpQAFailedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#ef4444")). // red-500
-				Bold(true)
+// QA command styles (from shared)
+var (
+	phpQAPassedStyle  = shared.SuccessStyle
+	phpQAFailedStyle  = shared.ErrorStyle
+	phpQAWarningStyle = shared.WarningStyle
+	phpQAStageStyle   = lipgloss.NewStyle().Bold(true).Foreground(shared.ColourIndigo500)
+)
 
-	phpQAWarningStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#f59e0b")). // amber-500
-				Bold(true)
-
-	phpQAStageStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6366f1")). // indigo-500
-			Bold(true)
-
-	phpSecurityCriticalStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#ef4444")). // red-500
-					Bold(true)
-
-	phpSecurityHighStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#f97316")). // orange-500
-				Bold(true)
-
-	phpSecurityMediumStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#f59e0b")) // amber-500
-
-	phpSecurityLowStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6b7280")) // gray-500
+// Security severity styles (from shared)
+var (
+	phpSecurityCriticalStyle = shared.SeverityCriticalStyle
+	phpSecurityHighStyle     = shared.SeverityHighStyle
+	phpSecurityMediumStyle   = shared.SeverityMediumStyle
+	phpSecurityLowStyle      = shared.SeverityLowStyle
 )
 
 // AddPHPCommands adds PHP/Laravel development commands.

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/host-uk/core/cmd/shared"
 )
 
 type packageCoverage struct {
@@ -151,16 +151,7 @@ func printCoverageSummary(results testResults) {
 }
 
 func formatCoverage(cov float64) string {
-	var style lipgloss.Style
-	switch {
-	case cov >= 80:
-		style = testCovHighStyle
-	case cov >= 50:
-		style = testCovMedStyle
-	default:
-		style = testCovLowStyle
-	}
-	return style.Render(fmt.Sprintf("%.1f%%", cov))
+	return shared.FormatCoverage(cov)
 }
 
 func shortenPackageName(name string) string {
