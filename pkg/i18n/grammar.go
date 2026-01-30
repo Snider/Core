@@ -356,7 +356,7 @@ func applyRegularPlural(noun string) string {
 //	Article("hour")     // "an" (silent h)
 func Article(word string) string {
 	if word == "" {
-		return "a"
+		return ""
 	}
 
 	lower := strings.ToLower(strings.TrimSpace(word))

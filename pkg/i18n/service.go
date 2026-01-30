@@ -491,6 +491,8 @@ func (s *Service) Raw(messageID string, args ...any) string {
 	return text
 }
 
+// getMessage retrieves a message by language and key.
+// Returns the message and true if found, or empty Message and false if not.
 func (s *Service) getMessage(lang, key string) (Message, bool) {
 	msgs, ok := s.messages[lang]
 	if !ok {

@@ -243,7 +243,7 @@ func TestArticle(t *testing.T) {
 		{"heir", "an"},
 
 		// Edge cases
-		{"", "a"},
+		{"", ""},
 		{" error ", "an"},
 	}
 
