@@ -15,6 +15,7 @@ import (
 
 // Service provides internationalization and localization.
 type Service struct {
+	loader         Loader                        // Source for loading translations
 	messages       map[string]map[string]Message // lang -> key -> message
 	currentLang    string
 	fallbackLang   string
@@ -24,6 +25,52 @@ type Service struct {
 	formality      Formality    // Default formality level for translations
 	handlers       []KeyHandler // Handler chain for dynamic key patterns
 	mu             sync.RWMutex
+}
+
+// Option configures a Service during construction.
+type Option func(*Service)
+
+// WithFallback sets the fallback language for missing translations.
+func WithFallback(lang string) Option {
+	return func(s *Service) {
+		s.fallbackLang = lang
+	}
+}
+
+// WithFormality sets the default formality level.
+func WithFormality(f Formality) Option {
+	return func(s *Service) {
+		s.formality = f
+	}
+}
+
+// WithHandlers sets custom handlers (replaces default handlers).
+func WithHandlers(handlers ...KeyHandler) Option {
+	return func(s *Service) {
+		s.handlers = handlers
+	}
+}
+
+// WithDefaultHandlers adds the default i18n.* namespace handlers.
+// Use this after WithHandlers to add defaults back, or to ensure defaults are present.
+func WithDefaultHandlers() Option {
+	return func(s *Service) {
+		s.handlers = append(s.handlers, DefaultHandlers()...)
+	}
+}
+
+// WithMode sets the translation mode.
+func WithMode(m Mode) Option {
+	return func(s *Service) {
+		s.mode = m
+	}
+}
+
+// WithDebug enables or disables debug mode.
+func WithDebug(enabled bool) Option {
+	return func(s *Service) {
+		s.debug = enabled
+	}
 }
 
 // Default is the global i18n service instance.
@@ -39,49 +86,53 @@ var localeFS embed.FS
 // Ensure Service implements Translator at compile time.
 var _ Translator = (*Service)(nil)
 
-// New creates a new i18n service with embedded locales.
-func New() (*Service, error) {
-	return NewWithFS(localeFS, "locales")
+// New creates a new i18n service with embedded locales and default options.
+func New(opts ...Option) (*Service, error) {
+	return NewWithLoader(NewFSLoader(localeFS, "locales"), opts...)
 }
 
 // NewWithFS creates a new i18n service loading locales from the given filesystem.
-func NewWithFS(fsys fs.FS, dir string) (*Service, error) {
+func NewWithFS(fsys fs.FS, dir string, opts ...Option) (*Service, error) {
+	return NewWithLoader(NewFSLoader(fsys, dir), opts...)
+}
+
+// NewWithLoader creates a new i18n service with a custom loader.
+// Use this for custom storage backends (database, remote API, etc.).
+//
+//	loader := NewFSLoader(customFS, "translations")
+//	svc, err := NewWithLoader(loader, WithFallback("de-DE"))
+func NewWithLoader(loader Loader, opts ...Option) (*Service, error) {
 	s := &Service{
+		loader:       loader,
 		messages:     make(map[string]map[string]Message),
 		fallbackLang: "en-GB",
 		handlers:     DefaultHandlers(),
 	}
 
-	entries, err := fs.ReadDir(fsys, dir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read locales directory: %w", err)
+	// Apply options
+	for _, opt := range opts {
+		opt(s)
 	}
 
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
+	// Load all available languages
+	langs := loader.Languages()
+	if len(langs) == 0 {
+		return nil, fmt.Errorf("no languages available from loader")
+	}
 
-		filePath := filepath.Join(dir, entry.Name())
-		data, err := fs.ReadFile(fsys, filePath)
+	for _, lang := range langs {
+		messages, grammar, err := loader.Load(lang)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read locale %q: %w", entry.Name(), err)
+			return nil, fmt.Errorf("failed to load locale %q: %w", lang, err)
 		}
 
-		lang := strings.TrimSuffix(entry.Name(), ".json")
-		// Normalise underscore to hyphen (en_GB -> en-GB)
-		lang = strings.ReplaceAll(lang, "_", "-")
-
-		if err := s.loadJSON(lang, data); err != nil {
-			return nil, fmt.Errorf("failed to parse locale %q: %w", entry.Name(), err)
+		s.messages[lang] = messages
+		if grammar != nil && (len(grammar.Verbs) > 0 || len(grammar.Nouns) > 0 || len(grammar.Words) > 0) {
+			SetGrammarData(lang, grammar)
 		}
 
 		tag := language.Make(lang)
 		s.availableLangs = append(s.availableLangs, tag)
-	}
-
-	if len(s.availableLangs) == 0 {
-		return nil, fmt.Errorf("no locale files found in %q", dir)
 	}
 
 	// Try to detect system language

@@ -396,3 +396,82 @@ func TestFormalityMessageSelection(t *testing.T) {
 		assert.Equal(t, "Hey there", result)
 	})
 }
+
+func TestNewWithOptions(t *testing.T) {
+	t.Run("WithFallback", func(t *testing.T) {
+		svc, err := New(WithFallback("de-DE"))
+		require.NoError(t, err)
+		assert.Equal(t, "de-DE", svc.fallbackLang)
+	})
+
+	t.Run("WithFormality", func(t *testing.T) {
+		svc, err := New(WithFormality(FormalityFormal))
+		require.NoError(t, err)
+		assert.Equal(t, FormalityFormal, svc.Formality())
+	})
+
+	t.Run("WithMode", func(t *testing.T) {
+		svc, err := New(WithMode(ModeStrict))
+		require.NoError(t, err)
+		assert.Equal(t, ModeStrict, svc.Mode())
+	})
+
+	t.Run("WithDebug", func(t *testing.T) {
+		svc, err := New(WithDebug(true))
+		require.NoError(t, err)
+		assert.True(t, svc.Debug())
+	})
+
+	t.Run("WithHandlers replaces defaults", func(t *testing.T) {
+		customHandler := LabelHandler{}
+		svc, err := New(WithHandlers(customHandler))
+		require.NoError(t, err)
+		assert.Len(t, svc.Handlers(), 1)
+	})
+
+	t.Run("WithDefaultHandlers adds back defaults", func(t *testing.T) {
+		svc, err := New(WithHandlers(), WithDefaultHandlers())
+		require.NoError(t, err)
+		assert.Len(t, svc.Handlers(), 6) // 6 default handlers
+	})
+
+	t.Run("multiple options", func(t *testing.T) {
+		svc, err := New(
+			WithFallback("fr-FR"),
+			WithFormality(FormalityInformal),
+			WithMode(ModeCollect),
+			WithDebug(true),
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "fr-FR", svc.fallbackLang)
+		assert.Equal(t, FormalityInformal, svc.Formality())
+		assert.Equal(t, ModeCollect, svc.Mode())
+		assert.True(t, svc.Debug())
+	})
+}
+
+func TestNewWithLoader(t *testing.T) {
+	t.Run("uses custom loader", func(t *testing.T) {
+		loader := NewFSLoader(localeFS, "locales")
+		svc, err := NewWithLoader(loader)
+		require.NoError(t, err)
+		assert.NotNil(t, svc.loader)
+		assert.Contains(t, svc.AvailableLanguages(), "en-GB")
+	})
+
+	t.Run("with options", func(t *testing.T) {
+		loader := NewFSLoader(localeFS, "locales")
+		svc, err := NewWithLoader(loader, WithFallback("de-DE"), WithFormality(FormalityFormal))
+		require.NoError(t, err)
+		assert.Equal(t, "de-DE", svc.fallbackLang)
+		assert.Equal(t, FormalityFormal, svc.Formality())
+	})
+}
+
+func TestNewWithFS(t *testing.T) {
+	t.Run("with options", func(t *testing.T) {
+		svc, err := NewWithFS(localeFS, "locales", WithDebug(true))
+		require.NoError(t, err)
+		assert.True(t, svc.Debug())
+	})
+}

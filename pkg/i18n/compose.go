@@ -10,19 +10,13 @@ import (
 //
 //	S("file", "config.yaml")     // "config.yaml"
 //	S("repo", repo)              // Uses repo.String() or fmt.Sprint()
+//	S("file", path).Count(3).In("workspace")
 func S(noun string, value any) *Subject {
 	return &Subject{
 		Noun:  noun,
 		Value: value,
 		count: 1, // Default to singular
 	}
-}
-
-// NewSubject is an alias for S() for readability in longer expressions.
-//
-//	NewSubject("file", path).Count(3).In("workspace")
-func NewSubject(noun string, value any) *Subject {
-	return S(noun, value)
 }
 
 // Count sets the count for pluralization.

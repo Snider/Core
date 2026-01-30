@@ -25,8 +25,8 @@ func TestSubject_Good(t *testing.T) {
 		assert.Equal(t, "", s.location)
 	})
 
-	t.Run("NewSubject alias", func(t *testing.T) {
-		s := NewSubject("repo", "core-php")
+	t.Run("S with different value types", func(t *testing.T) {
+		s := S("repo", "core-php")
 		assert.Equal(t, "repo", s.Noun)
 		assert.Equal(t, "core-php", s.Value)
 	})
