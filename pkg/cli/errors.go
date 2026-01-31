@@ -81,10 +81,18 @@ func Join(errs ...error) error {
 // Fatal Functions (print and exit)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Fatal prints an error message and exits with code 1.
+func Fatal(err error) {
+	if err != nil {
+		fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + err.Error()))
+		os.Exit(1)
+	}
+}
+
 // Fatalf prints a formatted error message and exits with code 1.
 func Fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	fmt.Println(ErrorStyle.Render(SymbolCross + " " + msg))
+	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
 	os.Exit(1)
 }
 
@@ -97,7 +105,7 @@ func FatalWrap(err error, msg string) {
 		return
 	}
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
-	fmt.Println(ErrorStyle.Render(SymbolCross + " " + fullMsg))
+	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
 	os.Exit(1)
 }
 
@@ -111,6 +119,6 @@ func FatalWrapVerb(err error, verb, subject string) {
 	}
 	msg := i18n.ActionFailed(verb, subject)
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
-	fmt.Println(ErrorStyle.Render(SymbolCross + " " + fullMsg))
+	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
 	os.Exit(1)
 }

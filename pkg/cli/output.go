@@ -3,174 +3,99 @@ package cli
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/pkg/i18n"
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Style Namespace
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Styles provides namespaced access to CLI styles.
-// Usage: cli.Style.Dim.Render("text"), cli.Style.Success.Render("done")
-var Style = struct {
-	// Text styles
-	Dim     lipgloss.Style
-	Muted   lipgloss.Style
-	Bold    lipgloss.Style
-	Value   lipgloss.Style
-	Accent  lipgloss.Style
-	Code    lipgloss.Style
-	Key     lipgloss.Style
-	Number  lipgloss.Style
-	Link    lipgloss.Style
-	Header  lipgloss.Style
-	Title   lipgloss.Style
-	Stage   lipgloss.Style
-	PrNum   lipgloss.Style
-	AccentL lipgloss.Style
-
-	// Status styles
-	Success lipgloss.Style
-	Error   lipgloss.Style
-	Warning lipgloss.Style
-	Info    lipgloss.Style
-
-	// Git styles
-	Dirty    lipgloss.Style
-	Ahead    lipgloss.Style
-	Behind   lipgloss.Style
-	Clean    lipgloss.Style
-	Conflict lipgloss.Style
-
-	// Repo name style
-	Repo lipgloss.Style
-
-	// Coverage styles
-	CoverageHigh lipgloss.Style
-	CoverageMed  lipgloss.Style
-	CoverageLow  lipgloss.Style
-
-	// Priority styles
-	PriorityHigh   lipgloss.Style
-	PriorityMedium lipgloss.Style
-	PriorityLow    lipgloss.Style
-
-	// Severity styles
-	SeverityCritical lipgloss.Style
-	SeverityHigh     lipgloss.Style
-	SeverityMedium   lipgloss.Style
-	SeverityLow      lipgloss.Style
-
-	// Status indicator styles
-	StatusPending lipgloss.Style
-	StatusRunning lipgloss.Style
-	StatusSuccess lipgloss.Style
-	StatusError   lipgloss.Style
-	StatusWarning lipgloss.Style
-
-	// Deploy styles
-	DeploySuccess lipgloss.Style
-	DeployPending lipgloss.Style
-	DeployFailed  lipgloss.Style
-
-	// Box styles
-	Box        lipgloss.Style
-	BoxHeader  lipgloss.Style
-	ErrorBox   lipgloss.Style
-	SuccessBox lipgloss.Style
-}{
-	// Text styles
-	Dim:     DimStyle,
-	Muted:   MutedStyle,
-	Bold:    BoldStyle,
-	Value:   ValueStyle,
-	Accent:  AccentStyle,
-	Code:    CodeStyle,
-	Key:     KeyStyle,
-	Number:  NumberStyle,
-	Link:    LinkStyle,
-	Header:  HeaderStyle,
-	Title:   TitleStyle,
-	Stage:   StageStyle,
-	PrNum:   PrNumberStyle,
-	AccentL: AccentLabelStyle,
-
-	// Status styles
-	Success: SuccessStyle,
-	Error:   ErrorStyle,
-	Warning: WarningStyle,
-	Info:    InfoStyle,
-
-	// Git styles
-	Dirty:    GitDirtyStyle,
-	Ahead:    GitAheadStyle,
-	Behind:   GitBehindStyle,
-	Clean:    GitCleanStyle,
-	Conflict: GitConflictStyle,
-
-	// Repo name style
-	Repo: RepoNameStyle,
-
-	// Coverage styles
-	CoverageHigh: CoverageHighStyle,
-	CoverageMed:  CoverageMedStyle,
-	CoverageLow:  CoverageLowStyle,
-
-	// Priority styles
-	PriorityHigh:   PriorityHighStyle,
-	PriorityMedium: PriorityMediumStyle,
-	PriorityLow:    PriorityLowStyle,
-
-	// Severity styles
-	SeverityCritical: SeverityCriticalStyle,
-	SeverityHigh:     SeverityHighStyle,
-	SeverityMedium:   SeverityMediumStyle,
-	SeverityLow:      SeverityLowStyle,
-
-	// Status indicator styles
-	StatusPending: StatusPendingStyle,
-	StatusRunning: StatusRunningStyle,
-	StatusSuccess: StatusSuccessStyle,
-	StatusError:   StatusErrorStyle,
-	StatusWarning: StatusWarningStyle,
-
-	// Deploy styles
-	DeploySuccess: DeploySuccessStyle,
-	DeployPending: DeployPendingStyle,
-	DeployFailed:  DeployFailedStyle,
-
-	// Box styles
-	Box:        BoxStyle,
-	BoxHeader:  BoxHeaderStyle,
-	ErrorBox:   ErrorBoxStyle,
-	SuccessBox: SuccessBoxStyle,
+// Blank prints an empty line.
+func Blank() {
+	fmt.Println()
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Core Output Functions
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Line translates a key via i18n.T and prints with newline.
-// If no key is provided, prints an empty line.
-//
-//	cli.Line("i18n.progress.check")           // prints "Checking...\n"
-//	cli.Line("cmd.dev.ci.short")              // prints translated text + \n
-//	cli.Line("greeting", map[string]any{"Name": "World"})  // with args
-//	cli.Line("")                              // prints empty line
-func Line(key string, args ...any) {
-	if key == "" {
-		fmt.Println()
-		return
-	}
+// Echo translates a key via i18n.T and prints with newline.
+// No automatic styling - use Success/Error/Warn/Info for styled output.
+func Echo(key string, args ...any) {
 	fmt.Println(i18n.T(key, args...))
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Input Functions
-// ─────────────────────────────────────────────────────────────────────────────
+// Print outputs formatted text (no newline).
+// Glyph shortcodes like :check: are converted.
+func Print(format string, args ...any) {
+	fmt.Print(compileGlyphs(fmt.Sprintf(format, args...)))
+}
 
-// Scanln reads from stdin, similar to fmt.Scanln.
+// Println outputs formatted text with newline.
+// Glyph shortcodes like :check: are converted.
+func Println(format string, args ...any) {
+	fmt.Println(compileGlyphs(fmt.Sprintf(format, args...)))
+}
+
+// Success prints a success message with checkmark (green).
+func Success(msg string) {
+	fmt.Println(SuccessStyle.Render(Glyph(":check:") + " " + msg))
+}
+
+// Successf prints a formatted success message.
+func Successf(format string, args ...any) {
+	Success(fmt.Sprintf(format, args...))
+}
+
+// Error prints an error message with cross (red).
+func Error(msg string) {
+	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
+}
+
+// Errorf prints a formatted error message.
+func Errorf(format string, args ...any) {
+	Error(fmt.Sprintf(format, args...))
+}
+
+// Warn prints a warning message with warning symbol (amber).
+func Warn(msg string) {
+	fmt.Println(WarningStyle.Render(Glyph(":warn:") + " " + msg))
+}
+
+// Warnf prints a formatted warning message.
+func Warnf(format string, args ...any) {
+	Warn(fmt.Sprintf(format, args...))
+}
+
+// Info prints an info message with info symbol (blue).
+func Info(msg string) {
+	fmt.Println(InfoStyle.Render(Glyph(":info:") + " " + msg))
+}
+
+// Infof prints a formatted info message.
+func Infof(format string, args ...any) {
+	Info(fmt.Sprintf(format, args...))
+}
+
+// Dim prints dimmed text.
+func Dim(msg string) {
+	fmt.Println(DimStyle.Render(msg))
+}
+
+// Progress prints a progress indicator that overwrites the current line.
+// Uses i18n.Progress for gerund form ("Checking...").
+func Progress(verb string, current, total int, item ...string) {
+	msg := i18n.Progress(verb)
+	if len(item) > 0 && item[0] != "" {
+		fmt.Printf("\033[2K\r%s %d/%d %s", DimStyle.Render(msg), current, total, item[0])
+	} else {
+		fmt.Printf("\033[2K\r%s %d/%d", DimStyle.Render(msg), current, total)
+	}
+}
+
+// ProgressDone clears the progress line.
+func ProgressDone() {
+	fmt.Print("\033[2K\r")
+}
+
+// Label prints a "Label: value" line.
+func Label(word, value string) {
+	fmt.Printf("%s %s\n", KeyStyle.Render(i18n.Label(word)), value)
+}
+
+// Scanln reads from stdin.
 func Scanln(a ...any) (int, error) {
 	return fmt.Scanln(a...)
 }

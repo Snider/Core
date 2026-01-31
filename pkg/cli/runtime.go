@@ -144,45 +144,7 @@ func Shutdown() {
 	instance.core.ServiceShutdown(instance.ctx)
 }
 
-// --- Output Functions ---
 
-// Success prints a success message with checkmark.
-func Success(msg string) {
-	fmt.Println(SuccessStyle.Render(SymbolCheck + " " + msg))
-}
-
-// Error prints an error message with cross.
-func Error(msg string) {
-	fmt.Println(ErrorStyle.Render(SymbolCross + " " + msg))
-}
-
-// Fatal prints an error message and exits with code 1.
-func Fatal(err error) {
-	if err != nil {
-		Error(err.Error())
-		os.Exit(1)
-	}
-}
-
-// Warning prints a warning message.
-func Warning(msg string) {
-	fmt.Println(WarningStyle.Render(SymbolWarning + " " + msg))
-}
-
-// Info prints an info message.
-func Info(msg string) {
-	fmt.Println(InfoStyle.Render(SymbolInfo + " " + msg))
-}
-
-// Title prints a title/header.
-func Title(msg string) {
-	fmt.Println(TitleStyle.Render(msg))
-}
-
-// Dim prints dimmed/subtle text.
-func Dim(msg string) {
-	fmt.Println(DimStyle.Render(msg))
-}
 
 // --- Signal Service (internal) ---
 
