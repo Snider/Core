@@ -135,7 +135,7 @@ func addPHPPackagesListCommand(parent *cobra.Command) {
 				cli.Print("  %s %s\n", successStyle.Render("*"), name)
 				cli.Print("    %s %s\n", dimStyle.Render(i18n.Label("path")), pkg.Path)
 				cli.Print("    %s %s\n", dimStyle.Render(i18n.Label("version")), version)
-				cli.Line("")
+				cli.Blank()
 			}
 
 			return nil

@@ -12,9 +12,9 @@ import (
 
 // Deploy command styles (aliases to shared)
 var (
-	phpDeployStyle        = cli.DeploySuccessStyle
-	phpDeployPendingStyle = cli.StatusWarningStyle
-	phpDeployFailedStyle  = cli.StatusErrorStyle
+	phpDeployStyle        = cli.SuccessStyle
+	phpDeployPendingStyle = cli.WarningStyle
+	phpDeployFailedStyle  = cli.ErrorStyle
 )
 
 func addPHPDeployCommands(parent *cobra.Command) {
@@ -357,5 +357,5 @@ func printDeploymentSummary(index int, status *DeploymentStatus) {
 		cli.Print(" %s", dimStyle.Render(cli.Sprintf("(%s)", age)))
 	}
 
-	cli.Line("")
+	cli.Blank()
 }

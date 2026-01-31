@@ -2,7 +2,6 @@
 package vm
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
@@ -14,7 +13,7 @@ func init() {
 
 // Style aliases from shared
 var (
-	repoNameStyle = cli.RepoNameStyle
+	repoNameStyle = cli.RepoStyle
 	successStyle  = cli.SuccessStyle
 	errorStyle    = cli.ErrorStyle
 	dimStyle      = cli.DimStyle
@@ -22,8 +21,8 @@ var (
 
 // VM-specific styles
 var (
-	varStyle     = lipgloss.NewStyle().Foreground(cli.ColourAmber500)
-	defaultStyle = lipgloss.NewStyle().Foreground(cli.ColourGray500).Italic(true)
+	varStyle     = cli.NewStyle().Foreground(cli.ColourAmber500)
+	defaultStyle = cli.NewStyle().Foreground(cli.ColourGray500).Italic()
 )
 
 // AddVMCommands adds container-related commands under 'vm' to the CLI.

@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
@@ -90,7 +90,7 @@ func runPHPDev(opts phpDevOptions) error {
 	for _, svc := range services {
 		cli.Print("  %s %s\n", successStyle.Render("*"), svc)
 	}
-	cli.Line("")
+	cli.Blank()
 
 	// Setup options
 	port := opts.Port
@@ -132,7 +132,7 @@ func runPHPDev(opts phpDevOptions) error {
 	// Print status
 	cli.Print("%s %s\n", successStyle.Render(i18n.T("cmd.php.label.running")), i18n.T("cmd.php.dev.services_started"))
 	printServiceStatuses(server.Status())
-	cli.Line("")
+	cli.Blank()
 
 	// Print URLs
 	appURL := GetLaravelAppURL(cwd)
@@ -313,7 +313,7 @@ func runPHPStatus() error {
 		style := getServiceStyle(string(svc))
 		cli.Print("  %s %s\n", style.Render("*"), svc)
 	}
-	cli.Line("")
+	cli.Blank()
 
 	// Package manager
 	pm := DetectPackageManager(cwd)
@@ -435,7 +435,7 @@ func printColoredLog(line string) {
 	// Parse service prefix from log line
 	timestamp := time.Now().Format("15:04:05")
 
-	var style lipgloss.Style
+	var style *cli.AnsiStyle
 	serviceName := ""
 
 	if strings.HasPrefix(line, "[FrankenPHP]") {
@@ -471,7 +471,7 @@ func printColoredLog(line string) {
 	)
 }
 
-func getServiceStyle(name string) lipgloss.Style {
+func getServiceStyle(name string) *cli.AnsiStyle {
 	switch strings.ToLower(name) {
 	case "frankenphp":
 		return phpFrankenPHPStyle

@@ -102,7 +102,7 @@ func runPHPBuildDocker(ctx context.Context, projectDir string, opts dockerBuildO
 	if len(config.PHPExtensions) > 0 {
 		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.extensions")), strings.Join(config.PHPExtensions, ", "))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	// Build options
 	buildOpts := DockerBuildOptions{
@@ -132,7 +132,7 @@ func runPHPBuildDocker(ctx context.Context, projectDir string, opts dockerBuildO
 	if opts.Platform != "" {
 		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.platform")), opts.Platform)
 	}
-	cli.Line("")
+	cli.Blank()
 
 	if err := BuildDocker(ctx, buildOpts); err != nil {
 		return cli.Err("%s: %w", i18n.T("i18n.fail.build"), err)
@@ -170,7 +170,7 @@ func runPHPBuildLinuxKit(ctx context.Context, projectDir string, opts linuxKitBu
 
 	cli.Print("%s %s\n", dimStyle.Render(i18n.Label("template")), buildOpts.Template)
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.build.format")), buildOpts.Format)
-	cli.Line("")
+	cli.Blank()
 
 	if err := BuildLinuxKit(ctx, buildOpts); err != nil {
 		return cli.Err("%s: %w", i18n.T("i18n.fail.build"), err)
@@ -243,7 +243,7 @@ func addPHPServeCommand(parent *cobra.Command) {
 
 			cli.Print("%s http://localhost:%d, https://localhost:%d\n",
 				dimStyle.Render("Ports:"), effectivePort, effectiveHTTPSPort)
-			cli.Line("")
+			cli.Blank()
 
 			if err := ServeProduction(ctx, opts); err != nil {
 				return cli.Err("%s: %w", i18n.T("i18n.fail.start", "container"), err)

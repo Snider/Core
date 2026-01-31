@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
@@ -333,7 +333,7 @@ func addPHPAuditCommand(parent *cobra.Command) {
 				}
 			}
 
-			cli.Line("")
+			cli.Blank()
 
 			if totalVulns > 0 {
 				cli.Print("%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("cmd.php.audit.found_vulns", map[string]interface{}{"Count": totalVulns}))
@@ -400,7 +400,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 				category := strings.Split(check.ID, "_")[0]
 				if category != currentCategory {
 					if currentCategory != "" {
-						cli.Line("")
+						cli.Blank()
 					}
 					currentCategory = category
 					cli.Print("  %s\n", dimStyle.Render(strings.ToUpper(category)+i18n.T("cmd.php.security.checks_suffix")))
@@ -420,7 +420,7 @@ func addPHPSecurityCommand(parent *cobra.Command) {
 				}
 			}
 
-			cli.Line("")
+			cli.Blank()
 
 			// Print summary
 			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("summary")), i18n.T("cmd.php.security.summary"))
@@ -509,7 +509,7 @@ func addPHPQACommand(parent *cobra.Command) {
 				stage := getCheckStage(checkResult.Name, stages, cwd)
 				if stage != currentStage {
 					if currentStage != "" {
-						cli.Line("")
+						cli.Blank()
 					}
 					currentStage = stage
 					cli.Print("%s\n", phpQAStageStyle.Render("── "+strings.ToUpper(stage)+" ──"))
@@ -527,7 +527,7 @@ func addPHPQACommand(parent *cobra.Command) {
 
 				cli.Print("  %s %s %s %s\n", icon, checkResult.Name, status, dimStyle.Render(checkResult.Duration))
 			}
-			cli.Line("")
+			cli.Blank()
 
 			// Print summary
 			if result.Passed {
@@ -740,7 +740,7 @@ func addPHPInfectionCommand(parent *cobra.Command) {
 	parent.AddCommand(infectionCmd)
 }
 
-func getSeverityStyle(severity string) lipgloss.Style {
+func getSeverityStyle(severity string) *cli.AnsiStyle {
 	switch strings.ToLower(severity) {
 	case "critical":
 		return phpSecurityCriticalStyle
