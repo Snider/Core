@@ -3,12 +3,13 @@ package php
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // FormatOptions configures PHP code formatting.
@@ -58,8 +59,8 @@ const (
 type AnalyserType string
 
 const (
-	AnalyserPHPStan   AnalyserType = "phpstan"
-	AnalyserLarastan  AnalyserType = "larastan"
+	AnalyserPHPStan  AnalyserType = "phpstan"
+	AnalyserLarastan AnalyserType = "larastan"
 )
 
 // DetectFormatter detects which formatter is available in the project.
@@ -122,7 +123,7 @@ func Format(ctx context.Context, opts FormatOptions) error {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -134,7 +135,7 @@ func Format(ctx context.Context, opts FormatOptions) error {
 	// Check if formatter is available
 	formatter, found := DetectFormatter(opts.Dir)
 	if !found {
-		return fmt.Errorf("no formatter found (install Laravel Pint: composer require laravel/pint --dev)")
+		return cli.Err("no formatter found (install Laravel Pint: composer require laravel/pint --dev)")
 	}
 
 	var cmdName string
@@ -158,7 +159,7 @@ func Analyse(ctx context.Context, opts AnalyseOptions) error {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -170,7 +171,7 @@ func Analyse(ctx context.Context, opts AnalyseOptions) error {
 	// Check if analyser is available
 	analyser, found := DetectAnalyser(opts.Dir)
 	if !found {
-		return fmt.Errorf("no static analyser found (install PHPStan: composer require phpstan/phpstan --dev)")
+		return cli.Err("no static analyser found (install PHPStan: composer require phpstan/phpstan --dev)")
 	}
 
 	var cmdName string
@@ -226,7 +227,7 @@ func buildPHPStanCommand(opts AnalyseOptions) (string, []string) {
 	args := []string{"analyse"}
 
 	if opts.Level > 0 {
-		args = append(args, "--level", fmt.Sprintf("%d", opts.Level))
+		args = append(args, "--level", cli.Sprintf("%d", opts.Level))
 	}
 
 	if opts.Memory != "" {
@@ -292,7 +293,7 @@ func RunPsalm(ctx context.Context, opts PsalmOptions) error {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -311,7 +312,7 @@ func RunPsalm(ctx context.Context, opts PsalmOptions) error {
 	args := []string{"--no-progress"}
 
 	if opts.Level > 0 && opts.Level <= 8 {
-		args = append(args, fmt.Sprintf("--error-level=%d", opts.Level))
+		args = append(args, cli.Sprintf("--error-level=%d", opts.Level))
 	}
 
 	if opts.Fix {
@@ -368,7 +369,7 @@ func RunAudit(ctx context.Context, opts AuditOptions) ([]AuditResult, error) {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get working directory: %w", err)
+			return nil, cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -520,7 +521,7 @@ func RunRector(ctx context.Context, opts RectorOptions) error {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -597,7 +598,7 @@ func RunInfection(ctx context.Context, opts InfectionOptions) error {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -629,9 +630,9 @@ func RunInfection(ctx context.Context, opts InfectionOptions) error {
 		threads = 4
 	}
 
-	args = append(args, fmt.Sprintf("--min-msi=%d", minMSI))
-	args = append(args, fmt.Sprintf("--min-covered-msi=%d", minCoveredMSI))
-	args = append(args, fmt.Sprintf("--threads=%d", threads))
+	args = append(args, cli.Sprintf("--min-msi=%d", minMSI))
+	args = append(args, cli.Sprintf("--min-covered-msi=%d", minCoveredMSI))
+	args = append(args, cli.Sprintf("--threads=%d", threads))
 
 	if opts.Filter != "" {
 		args = append(args, "--filter="+opts.Filter)
@@ -774,7 +775,7 @@ func RunSecurityChecks(ctx context.Context, opts SecurityOptions) (*SecurityResu
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get working directory: %w", err)
+			return nil, cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}
@@ -793,7 +794,7 @@ func RunSecurityChecks(ctx context.Context, opts SecurityOptions) (*SecurityResu
 			CWE:         "CWE-1395",
 		}
 		if !check.Passed {
-			check.Message = fmt.Sprintf("Found %d vulnerabilities", audit.Vulnerabilities)
+			check.Message = cli.Sprintf("Found %d vulnerabilities", audit.Vulnerabilities)
 		}
 		result.Checks = append(result.Checks, check)
 	}

@@ -2,7 +2,6 @@ package php
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -46,7 +45,7 @@ func addPHPDeployCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+				return cli.Err("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			env := EnvProduction
@@ -54,7 +53,7 @@ func addPHPDeployCommand(parent *cobra.Command) {
 				env = EnvStaging
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy.deploying", map[string]interface{}{"Environment": env}))
+			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy.deploying", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
@@ -67,19 +66,19 @@ func addPHPDeployCommand(parent *cobra.Command) {
 
 			status, err := Deploy(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.deploy_failed"), err)
+				return cli.Err("%s: %w", i18n.T("cmd.php.error.deploy_failed"), err)
 			}
 
 			printDeploymentStatus(status)
 
 			if deployWait {
 				if IsDeploymentSuccessful(status.Status) {
-					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Deployment completed"}))
+					cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Deployment completed"}))
 				} else {
-					fmt.Printf("\n%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("cmd.php.deploy.warning_status", map[string]interface{}{"Status": status.Status}))
+					cli.Print("\n%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("cmd.php.deploy.warning_status", map[string]interface{}{"Status": status.Status}))
 				}
 			} else {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.deploy.triggered"))
+				cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.deploy.triggered"))
 			}
 
 			return nil
@@ -106,7 +105,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+				return cli.Err("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			env := EnvProduction
@@ -114,7 +113,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 				env = EnvStaging
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.ProgressSubject("check", "deployment status"))
+			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.ProgressSubject("check", "deployment status"))
 
 			ctx := context.Background()
 
@@ -126,7 +125,7 @@ func addPHPDeployStatusCommand(parent *cobra.Command) {
 
 			status, err := DeployStatus(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "status"), err)
+				return cli.Err("%s: %w", i18n.T("i18n.fail.get", "status"), err)
 			}
 
 			printDeploymentStatus(status)
@@ -155,7 +154,7 @@ func addPHPDeployRollbackCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+				return cli.Err("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			env := EnvProduction
@@ -163,7 +162,7 @@ func addPHPDeployRollbackCommand(parent *cobra.Command) {
 				env = EnvStaging
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_rollback.rolling_back", map[string]interface{}{"Environment": env}))
+			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_rollback.rolling_back", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
@@ -176,19 +175,19 @@ func addPHPDeployRollbackCommand(parent *cobra.Command) {
 
 			status, err := Rollback(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("cmd.php.error.rollback_failed"), err)
+				return cli.Err("%s: %w", i18n.T("cmd.php.error.rollback_failed"), err)
 			}
 
 			printDeploymentStatus(status)
 
 			if rollbackWait {
 				if IsDeploymentSuccessful(status.Status) {
-					fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Rollback completed"}))
+					cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Rollback completed"}))
 				} else {
-					fmt.Printf("\n%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("cmd.php.deploy_rollback.warning_status", map[string]interface{}{"Status": status.Status}))
+					cli.Print("\n%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("cmd.php.deploy_rollback.warning_status", map[string]interface{}{"Status": status.Status}))
 				}
 			} else {
-				fmt.Printf("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.deploy_rollback.triggered"))
+				cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.deploy_rollback.triggered"))
 			}
 
 			return nil
@@ -215,7 +214,7 @@ func addPHPDeployListCommand(parent *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+				return cli.Err("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 			}
 
 			env := EnvProduction
@@ -228,17 +227,17 @@ func addPHPDeployListCommand(parent *cobra.Command) {
 				limit = 10
 			}
 
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_list.recent", map[string]interface{}{"Environment": env}))
+			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.deploy")), i18n.T("cmd.php.deploy_list.recent", map[string]interface{}{"Environment": env}))
 
 			ctx := context.Background()
 
 			deployments, err := ListDeployments(ctx, cwd, env, limit)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.list", "deployments"), err)
+				return cli.Err("%s: %w", i18n.T("i18n.fail.list", "deployments"), err)
 			}
 
 			if len(deployments) == 0 {
-				fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.deploy_list.none_found"))
+				cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.info")), i18n.T("cmd.php.deploy_list.none_found"))
 				return nil
 			}
 
@@ -266,18 +265,18 @@ func printDeploymentStatus(status *DeploymentStatus) {
 		statusStyle = phpDeployFailedStyle
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("status")), statusStyle.Render(status.Status))
+	cli.Print("%s %s\n", dimStyle.Render(i18n.Label("status")), statusStyle.Render(status.Status))
 
 	if status.ID != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.id")), status.ID)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.id")), status.ID)
 	}
 
 	if status.URL != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("url")), linkStyle.Render(status.URL))
+		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("url")), linkStyle.Render(status.URL))
 	}
 
 	if status.Branch != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.branch")), status.Branch)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.branch")), status.Branch)
 	}
 
 	if status.Commit != "" {
@@ -285,26 +284,26 @@ func printDeploymentStatus(status *DeploymentStatus) {
 		if len(commit) > 7 {
 			commit = commit[:7]
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.commit")), commit)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.commit")), commit)
 		if status.CommitMessage != "" {
 			// Truncate long messages
 			msg := status.CommitMessage
 			if len(msg) > 60 {
 				msg = msg[:57] + "..."
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.message")), msg)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.message")), msg)
 		}
 	}
 
 	if !status.StartedAt.IsZero() {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("started")), status.StartedAt.Format(time.RFC3339))
+		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("started")), status.StartedAt.Format(time.RFC3339))
 	}
 
 	if !status.CompletedAt.IsZero() {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.completed")), status.CompletedAt.Format(time.RFC3339))
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.completed")), status.CompletedAt.Format(time.RFC3339))
 		if !status.StartedAt.IsZero() {
 			duration := status.CompletedAt.Sub(status.StartedAt)
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.duration")), duration.Round(time.Second))
+			cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.php.label.duration")), duration.Round(time.Second))
 		}
 	}
 }
@@ -340,24 +339,23 @@ func printDeploymentSummary(index int, status *DeploymentStatus) {
 		age = i18n.TimeAgo(status.StartedAt)
 	}
 
-	fmt.Printf("  %s %s %s",
-		dimStyle.Render(fmt.Sprintf("#%d", index)),
-		statusStyle.Render(fmt.Sprintf("[%s]", status.Status)),
+	cli.Print("  %s %s %s",
+		dimStyle.Render(cli.Sprintf("#%d", index)),
+		statusStyle.Render(cli.Sprintf("[%s]", status.Status)),
 		id,
 	)
 
 	if commit != "" {
-		fmt.Printf(" %s", commit)
+		cli.Print(" %s", commit)
 	}
 
 	if msg != "" {
-		fmt.Printf(" - %s", msg)
+		cli.Print(" - %s", msg)
 	}
 
 	if age != "" {
-		fmt.Printf(" %s", dimStyle.Render(fmt.Sprintf("(%s)", age)))
+		cli.Print(" %s", dimStyle.Render(cli.Sprintf("(%s)", age)))
 	}
 
-	fmt.Println()
+	cli.Line("")
 }
-

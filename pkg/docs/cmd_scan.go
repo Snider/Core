@@ -1,12 +1,12 @@
 package docs
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
 )
@@ -30,7 +30,7 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return nil, "", fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "registry"), err)
+			return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "registry"))
 		}
 		basePath = filepath.Dir(registryPath)
 	} else {
@@ -38,14 +38,14 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return nil, "", fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "registry"), err)
+				return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "registry"))
 			}
 			basePath = filepath.Dir(registryPath)
 		} else {
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return nil, "", fmt.Errorf("%s: %w", i18n.T("i18n.fail.scan", "directory"), err)
+				return nil, "", cli.Wrap(err, i18n.T("i18n.fail.scan", "directory"))
 			}
 			basePath = cwd
 		}

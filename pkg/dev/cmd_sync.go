@@ -2,7 +2,6 @@ package dev
 
 import (
 	"bytes"
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -10,23 +9,23 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
 // addSyncCommand adds the 'sync' command to the given parent command.
-func addSyncCommand(parent *cobra.Command) {
-	syncCmd := &cobra.Command{
+func addSyncCommand(parent *cli.Command) {
+	syncCmd := &cli.Command{
 		Use:   "sync",
 		Short: i18n.T("cmd.dev.sync.short"),
 		Long:  i18n.T("cmd.dev.sync.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			if err := runSync(); err != nil {
-				return fmt.Errorf("%s %w", i18n.Label("error"), err)
+				return cli.Wrap(err, i18n.Label("error"))
 			}
-			fmt.Println(i18n.T("i18n.done.sync", "public APIs"))
+			cli.Text(i18n.T("i18n.done.sync", "public APIs"))
 			return nil
 		},
 	}
@@ -43,7 +42,7 @@ func runSync() error {
 	pkgDir := "pkg"
 	internalDirs, err := os.ReadDir(pkgDir)
 	if err != nil {
-		return fmt.Errorf("failed to read pkg directory: %w", err)
+		return cli.Wrap(err, "failed to read pkg directory")
 	}
 
 	for _, dir := range internalDirs {
@@ -62,11 +61,11 @@ func runSync() error {
 
 		symbols, err := getExportedSymbols(internalFile)
 		if err != nil {
-			return fmt.Errorf("error getting symbols for service '%s': %w", serviceName, err)
+			return cli.Wrap(err, cli.Sprintf("error getting symbols for service '%s'", serviceName))
 		}
 
 		if err := generatePublicAPIFile(publicDir, publicFile, serviceName, symbols); err != nil {
-			return fmt.Errorf("error generating public API file for service '%s': %w", serviceName, err)
+			return cli.Wrap(err, cli.Sprintf("error generating public API file for service '%s'", serviceName))
 		}
 	}
 

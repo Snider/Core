@@ -1,22 +1,20 @@
 package docs
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // Flag variable for list command
 var docsListRegistryPath string
 
-var docsListCmd = &cobra.Command{
+var docsListCmd = &cli.Command{
 	Use:   "list",
 	Short: i18n.T("cmd.docs.list.short"),
 	Long:  i18n.T("cmd.docs.list.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return runDocsList(docsListRegistryPath)
 	},
 }
@@ -31,14 +29,14 @@ func runDocsList(registryPath string) error {
 		return err
 	}
 
-	fmt.Printf("\n%-20s  %-8s  %-8s  %-10s  %s\n",
+	cli.Print("\n%-20s  %-8s  %-8s  %-10s  %s\n",
 		headerStyle.Render(i18n.Label("repo")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.readme")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.claude")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.changelog")),
 		headerStyle.Render(i18n.T("cmd.docs.list.header.docs")),
 	)
-	fmt.Println(strings.Repeat("─", 70))
+	cli.Text(strings.Repeat("─", 70))
 
 	var withDocs, withoutDocs int
 	for _, repo := range reg.List() {
@@ -53,7 +51,7 @@ func runDocsList(registryPath string) error {
 			docsDir = docsFoundStyle.Render(i18n.T("common.count.files", map[string]interface{}{"Count": len(info.DocsFiles)}))
 		}
 
-		fmt.Printf("%-20s  %-8s  %-8s  %-10s  %s\n",
+		cli.Print("%-20s  %-8s  %-8s  %-10s  %s\n",
 			repoNameStyle.Render(info.Name),
 			readme,
 			claude,
@@ -68,8 +66,8 @@ func runDocsList(registryPath string) error {
 		}
 	}
 
-	fmt.Println()
-	fmt.Printf("%s %s\n",
+	cli.Line("")
+	cli.Print("%s %s\n",
 		cli.Label(i18n.Label("coverage")),
 		i18n.T("cmd.docs.list.coverage_summary", map[string]interface{}{"WithDocs": withDocs, "WithoutDocs": withoutDocs}),
 	)

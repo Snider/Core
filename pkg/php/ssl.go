@@ -1,10 +1,11 @@
 package php
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 const (
@@ -25,13 +26,13 @@ func GetSSLDir(opts SSLOptions) (string, error) {
 	if dir == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return "", fmt.Errorf("failed to get home directory: %w", err)
+			return "", cli.WrapVerb(err, "get", "home directory")
 		}
 		dir = filepath.Join(home, DefaultSSLDir)
 	}
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create SSL directory: %w", err)
+		return "", cli.WrapVerb(err, "create", "SSL directory")
 	}
 
 	return dir, nil
@@ -44,8 +45,8 @@ func CertPaths(domain string, opts SSLOptions) (certFile, keyFile string, err er
 		return "", "", err
 	}
 
-	certFile = filepath.Join(dir, fmt.Sprintf("%s.pem", domain))
-	keyFile = filepath.Join(dir, fmt.Sprintf("%s-key.pem", domain))
+	certFile = filepath.Join(dir, cli.Sprintf("%s.pem", domain))
+	keyFile = filepath.Join(dir, cli.Sprintf("%s-key.pem", domain))
 
 	return certFile, keyFile, nil
 }
@@ -74,7 +75,7 @@ func CertsExist(domain string, opts SSLOptions) bool {
 func SetupSSL(domain string, opts SSLOptions) error {
 	// Check if mkcert is installed
 	if _, err := exec.LookPath("mkcert"); err != nil {
-		return fmt.Errorf("mkcert is not installed. Install it with: brew install mkcert (macOS) or see https://github.com/FiloSottile/mkcert")
+		return cli.Err("mkcert is not installed. Install it with: brew install mkcert (macOS) or see https://github.com/FiloSottile/mkcert")
 	}
 
 	dir, err := GetSSLDir(opts)
@@ -85,12 +86,12 @@ func SetupSSL(domain string, opts SSLOptions) error {
 	// Install local CA (idempotent operation)
 	installCmd := exec.Command("mkcert", "-install")
 	if output, err := installCmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to install mkcert CA: %w\n%s", err, output)
+		return cli.Err("failed to install mkcert CA: %v\n%s", err, output)
 	}
 
 	// Generate certificates
-	certFile := filepath.Join(dir, fmt.Sprintf("%s.pem", domain))
-	keyFile := filepath.Join(dir, fmt.Sprintf("%s-key.pem", domain))
+	certFile := filepath.Join(dir, cli.Sprintf("%s.pem", domain))
+	keyFile := filepath.Join(dir, cli.Sprintf("%s-key.pem", domain))
 
 	// mkcert generates cert and key with specific naming
 	genCmd := exec.Command("mkcert",
@@ -103,7 +104,7 @@ func SetupSSL(domain string, opts SSLOptions) error {
 	)
 
 	if output, err := genCmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to generate certificates: %w\n%s", err, output)
+		return cli.Err("failed to generate certificates: %v\n%s", err, output)
 	}
 
 	return nil
@@ -134,13 +135,13 @@ func IsMkcertInstalled() bool {
 // InstallMkcertCA installs the local CA for mkcert.
 func InstallMkcertCA() error {
 	if !IsMkcertInstalled() {
-		return fmt.Errorf("mkcert is not installed")
+		return cli.Err("mkcert is not installed")
 	}
 
 	cmd := exec.Command("mkcert", "-install")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to install mkcert CA: %w\n%s", err, output)
+		return cli.Err("failed to install mkcert CA: %v\n%s", err, output)
 	}
 
 	return nil
@@ -149,13 +150,13 @@ func InstallMkcertCA() error {
 // GetMkcertCARoot returns the path to the mkcert CA root directory.
 func GetMkcertCARoot() (string, error) {
 	if !IsMkcertInstalled() {
-		return "", fmt.Errorf("mkcert is not installed")
+		return "", cli.Err("mkcert is not installed")
 	}
 
 	cmd := exec.Command("mkcert", "-CAROOT")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to get mkcert CA root: %w", err)
+		return "", cli.WrapVerb(err, "get", "mkcert CA root")
 	}
 
 	return filepath.Clean(string(output)), nil

@@ -2,7 +2,6 @@ package dev
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Commit command flags
@@ -20,12 +18,12 @@ var (
 )
 
 // addCommitCommand adds the 'commit' command to the given parent command.
-func addCommitCommand(parent *cobra.Command) {
-	commitCmd := &cobra.Command{
+func addCommitCommand(parent *cli.Command) {
+	commitCmd := &cli.Command{
 		Use:   "commit",
 		Short: i18n.T("cmd.dev.commit.short"),
 		Long:  i18n.T("cmd.dev.commit.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runCommit(commitRegistryPath, commitAll)
 		},
 	}
@@ -52,24 +50,24 @@ func runCommit(registryPath string, all bool) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		} else {
 			// Fallback: scan current directory for repos
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 			registryPath = cwd
 		}
 	}
@@ -86,7 +84,7 @@ func runCommit(registryPath string, all bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
+		cli.Text(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -105,58 +103,58 @@ func runCommit(registryPath string, all bool) error {
 	}
 
 	if len(dirtyRepos) == 0 {
-		fmt.Println(i18n.T("cmd.dev.no_changes"))
+		cli.Text(i18n.T("cmd.dev.no_changes"))
 		return nil
 	}
 
 	// Show dirty repos
-	fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.repos_with_changes", map[string]interface{}{"Count": len(dirtyRepos)}))
+	cli.Print("\n%s\n\n", i18n.T("cmd.dev.repos_with_changes", map[string]interface{}{"Count": len(dirtyRepos)}))
 	for _, s := range dirtyRepos {
-		fmt.Printf("  %s: ", repoNameStyle.Render(s.Name))
+		cli.Print("  %s: ", repoNameStyle.Render(s.Name))
 		if s.Modified > 0 {
-			fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
+			cli.Print("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
 		}
 		if s.Untracked > 0 {
-			fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
+			cli.Print("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
 		}
 		if s.Staged > 0 {
-			fmt.Printf("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
+			cli.Print("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
 		}
-		fmt.Println()
+		cli.Line("")
 	}
 
 	// Confirm unless --all
 	if !all {
-		fmt.Println()
+		cli.Line("")
 		if !cli.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
-			fmt.Println(i18n.T("cli.aborted"))
+			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	fmt.Println()
+	cli.Line("")
 
 	// Commit each dirty repo
 	var succeeded, failed int
 	for _, s := range dirtyRepos {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.committing")), s.Name)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.committing")), s.Name)
 
 		if err := claudeCommit(ctx, s.Path, s.Name, registryPath); err != nil {
-			fmt.Printf("  %s %s\n", errorStyle.Render("x"), err)
+			cli.Print("  %s %s\n", errorStyle.Render("x"), err)
 			failed++
 		} else {
-			fmt.Printf("  %s %s\n", successStyle.Render("v"), i18n.T("cmd.dev.committed"))
+			cli.Print("  %s %s\n", successStyle.Render("v"), i18n.T("cmd.dev.committed"))
 			succeeded++
 		}
-		fmt.Println()
+		cli.Line("")
 	}
 
 	// Summary
-	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.done_succeeded", map[string]interface{}{"Count": succeeded})))
+	cli.Print("%s", successStyle.Render(i18n.T("cmd.dev.done_succeeded", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
+		cli.Print(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
-	fmt.Println()
+	cli.Line("")
 
 	return nil
 }
@@ -182,44 +180,44 @@ func runCommitSingleRepo(ctx context.Context, repoPath string, all bool) error {
 		if len(statuses) > 0 && statuses[0].Error != nil {
 			return statuses[0].Error
 		}
-		return fmt.Errorf("failed to get repo status")
+		return cli.Err("failed to get repo status")
 	}
 
 	s := statuses[0]
 	if !s.IsDirty() {
-		fmt.Println(i18n.T("cmd.dev.no_changes"))
+		cli.Text(i18n.T("cmd.dev.no_changes"))
 		return nil
 	}
 
 	// Show status
-	fmt.Printf("%s: ", repoNameStyle.Render(s.Name))
+	cli.Print("%s: ", repoNameStyle.Render(s.Name))
 	if s.Modified > 0 {
-		fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
+		cli.Print("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
 	}
 	if s.Untracked > 0 {
-		fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
+		cli.Print("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
 	}
 	if s.Staged > 0 {
-		fmt.Printf("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
+		cli.Print("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
 	}
-	fmt.Println()
+	cli.Line("")
 
 	// Confirm unless --all
 	if !all {
-		fmt.Println()
+		cli.Line("")
 		if !cli.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
-			fmt.Println(i18n.T("cli.aborted"))
+			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	fmt.Println()
+	cli.Line("")
 
 	// Commit
 	if err := claudeCommit(ctx, repoPath, repoName, ""); err != nil {
-		fmt.Printf("  %s %s\n", errorStyle.Render("x"), err)
+		cli.Print("  %s %s\n", errorStyle.Render("x"), err)
 		return err
 	}
-	fmt.Printf("  %s %s\n", successStyle.Render("v"), i18n.T("cmd.dev.committed"))
+	cli.Print("  %s %s\n", successStyle.Render("v"), i18n.T("cmd.dev.committed"))
 	return nil
 }

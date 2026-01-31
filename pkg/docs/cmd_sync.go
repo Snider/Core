@@ -1,13 +1,12 @@
 package docs
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // Flag variables for sync command
@@ -17,11 +16,11 @@ var (
 	docsSyncOutputDir    string
 )
 
-var docsSyncCmd = &cobra.Command{
+var docsSyncCmd = &cli.Command{
 	Use:   "sync",
 	Short: i18n.T("cmd.docs.sync.short"),
 	Long:  i18n.T("cmd.docs.sync.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return runDocsSync(docsSyncRegistryPath, docsSyncOutputDir, docsSyncDryRun)
 	},
 }
@@ -83,45 +82,45 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	}
 
 	if len(docsInfo) == 0 {
-		fmt.Println(i18n.T("cmd.docs.sync.no_docs_found"))
+		cli.Text(i18n.T("cmd.docs.sync.no_docs_found"))
 		return nil
 	}
 
-	fmt.Printf("\n%s %s\n\n", dimStyle.Render(i18n.T("cmd.docs.sync.found_label")), i18n.T("cmd.docs.sync.repos_with_docs", map[string]interface{}{"Count": len(docsInfo)}))
+	cli.Print("\n%s %s\n\n", dimStyle.Render(i18n.T("cmd.docs.sync.found_label")), i18n.T("cmd.docs.sync.repos_with_docs", map[string]interface{}{"Count": len(docsInfo)}))
 
 	// Show what will be synced
 	var totalFiles int
 	for _, info := range docsInfo {
 		totalFiles += len(info.DocsFiles)
 		outName := packageOutputName(info.Name)
-		fmt.Printf("  %s → %s %s\n",
+		cli.Print("  %s → %s %s\n",
 			repoNameStyle.Render(info.Name),
 			docsFileStyle.Render("packages/"+outName+"/"),
 			dimStyle.Render(i18n.T("cmd.docs.sync.files_count", map[string]interface{}{"Count": len(info.DocsFiles)})))
 
 		for _, f := range info.DocsFiles {
-			fmt.Printf("    %s\n", dimStyle.Render(f))
+			cli.Print("    %s\n", dimStyle.Render(f))
 		}
 	}
 
-	fmt.Printf("\n%s %s\n",
+	cli.Print("\n%s %s\n",
 		dimStyle.Render(i18n.Label("total")),
 		i18n.T("cmd.docs.sync.total_summary", map[string]interface{}{"Files": totalFiles, "Repos": len(docsInfo), "Output": outputDir}))
 
 	if dryRun {
-		fmt.Printf("\n%s\n", dimStyle.Render(i18n.T("cmd.docs.sync.dry_run_notice")))
+		cli.Print("\n%s\n", dimStyle.Render(i18n.T("cmd.docs.sync.dry_run_notice")))
 		return nil
 	}
 
 	// Confirm
-	fmt.Println()
+	cli.Line("")
 	if !confirm(i18n.T("cmd.docs.sync.confirm")) {
-		fmt.Println(i18n.T("common.prompt.abort"))
+		cli.Text(i18n.T("common.prompt.abort"))
 		return nil
 	}
 
 	// Sync docs
-	fmt.Println()
+	cli.Line("")
 	var synced int
 	for _, info := range docsInfo {
 		outName := packageOutputName(info.Name)
@@ -131,7 +130,7 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		os.RemoveAll(repoOutDir)
 
 		if err := os.MkdirAll(repoOutDir, 0755); err != nil {
-			fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), info.Name, err)
+			cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), info.Name, err)
 			continue
 		}
 
@@ -142,15 +141,15 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 			dst := filepath.Join(repoOutDir, f)
 			os.MkdirAll(filepath.Dir(dst), 0755)
 			if err := copyFile(src, dst); err != nil {
-				fmt.Printf("  %s %s: %s\n", errorStyle.Render("✗"), f, err)
+				cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), f, err)
 			}
 		}
 
-		fmt.Printf("  %s %s → packages/%s/\n", successStyle.Render("✓"), info.Name, outName)
+		cli.Print("  %s %s → packages/%s/\n", successStyle.Render("✓"), info.Name, outName)
 		synced++
 	}
 
-	fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("i18n.done.sync")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
+	cli.Print("\n%s %s\n", successStyle.Render(i18n.T("i18n.done.sync")), i18n.T("cmd.docs.sync.synced_packages", map[string]interface{}{"Count": synced}))
 
 	return nil
 }

@@ -31,7 +31,6 @@ package dev
 import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -57,8 +56,8 @@ var (
 )
 
 // AddDevCommands registers the 'dev' command and all subcommands.
-func AddDevCommands(root *cobra.Command) {
-	devCmd := &cobra.Command{
+func AddDevCommands(root *cli.Command) {
+	devCmd := &cli.Command{
 		Use:   "dev",
 		Short: i18n.T("cmd.dev.short"),
 		Long:  i18n.T("cmd.dev.long"),

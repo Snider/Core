@@ -4,7 +4,6 @@ package ci
 import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // Style aliases from shared
@@ -30,39 +29,39 @@ var (
 	changelogToRef   string
 )
 
-var ciCmd = &cobra.Command{
+var ciCmd = &cli.Command{
 	Use:   "ci",
 	Short: i18n.T("cmd.ci.short"),
 	Long:  i18n.T("cmd.ci.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		dryRun := !ciGoForLaunch
 		return runCIPublish(dryRun, ciVersion, ciDraft, ciPrerelease)
 	},
 }
 
-var ciInitCmd = &cobra.Command{
+var ciInitCmd = &cli.Command{
 	Use:   "init",
 	Short: i18n.T("cmd.ci.init.short"),
 	Long:  i18n.T("cmd.ci.init.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return runCIReleaseInit()
 	},
 }
 
-var ciChangelogCmd = &cobra.Command{
+var ciChangelogCmd = &cli.Command{
 	Use:   "changelog",
 	Short: i18n.T("cmd.ci.changelog.short"),
 	Long:  i18n.T("cmd.ci.changelog.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return runChangelog(changelogFromRef, changelogToRef)
 	},
 }
 
-var ciVersionCmd = &cobra.Command{
+var ciVersionCmd = &cli.Command{
 	Use:   "version",
 	Short: i18n.T("cmd.ci.version.short"),
 	Long:  i18n.T("cmd.ci.version.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return runCIReleaseVersion()
 	},
 }

@@ -4,7 +4,6 @@ package php
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -13,6 +12,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // Service represents a managed development service.
@@ -75,12 +76,12 @@ func (s *baseService) Status() ServiceStatus {
 
 func (s *baseService) Logs(follow bool) (io.ReadCloser, error) {
 	if s.logPath == "" {
-		return nil, fmt.Errorf("no log file available for %s", s.name)
+		return nil, cli.Err("no log file available for %s", s.name)
 	}
 
 	file, err := os.Open(s.logPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open log file: %w", err)
+		return nil, cli.WrapVerb(err, "open", "log file")
 	}
 
 	if !follow {
@@ -96,19 +97,19 @@ func (s *baseService) startProcess(ctx context.Context, cmdName string, args []s
 	defer s.mu.Unlock()
 
 	if s.running {
-		return fmt.Errorf("%s is already running", s.name)
+		return cli.Err("%s is already running", s.name)
 	}
 
 	// Create log file
 	logDir := filepath.Join(s.dir, ".core", "logs")
 	if err := os.MkdirAll(logDir, 0755); err != nil {
-		return fmt.Errorf("failed to create log directory: %w", err)
+		return cli.WrapVerb(err, "create", "log directory")
 	}
 
-	s.logPath = filepath.Join(logDir, fmt.Sprintf("%s.log", strings.ToLower(s.name)))
+	s.logPath = filepath.Join(logDir, cli.Sprintf("%s.log", strings.ToLower(s.name)))
 	logFile, err := os.OpenFile(s.logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to create log file: %w", err)
+		return cli.WrapVerb(err, "create", "log file")
 	}
 	s.logFile = logFile
 
@@ -127,7 +128,7 @@ func (s *baseService) startProcess(ctx context.Context, cmdName string, args []s
 	if err := s.cmd.Start(); err != nil {
 		logFile.Close()
 		s.lastError = err
-		return fmt.Errorf("failed to start %s: %w", s.name, err)
+		return cli.WrapVerb(err, "start", s.name)
 	}
 
 	s.running = true
@@ -192,10 +193,10 @@ func (s *baseService) stopProcess() error {
 // FrankenPHPService manages the FrankenPHP/Octane server.
 type FrankenPHPService struct {
 	baseService
-	https    bool
+	https     bool
 	httpsPort int
-	certFile string
-	keyFile  string
+	certFile  string
+	keyFile   string
 }
 
 // NewFrankenPHPService creates a new FrankenPHP service.
@@ -235,15 +236,15 @@ func (s *FrankenPHPService) Start(ctx context.Context) error {
 	args := []string{
 		"artisan", "octane:start",
 		"--server=frankenphp",
-		fmt.Sprintf("--port=%d", s.port),
+		cli.Sprintf("--port=%d", s.port),
 		"--no-interaction",
 	}
 
 	if s.https && s.certFile != "" && s.keyFile != "" {
 		args = append(args,
-			fmt.Sprintf("--https-port=%d", s.httpsPort),
-			fmt.Sprintf("--https-certificate=%s", s.certFile),
-			fmt.Sprintf("--https-certificate-key=%s", s.keyFile),
+			cli.Sprintf("--https-port=%d", s.httpsPort),
+			cli.Sprintf("--https-certificate=%s", s.certFile),
+			cli.Sprintf("--https-certificate-key=%s", s.keyFile),
 		)
 	}
 
@@ -372,7 +373,7 @@ type ReverbOptions struct {
 func (s *ReverbService) Start(ctx context.Context) error {
 	args := []string{
 		"artisan", "reverb:start",
-		fmt.Sprintf("--port=%d", s.port),
+		cli.Sprintf("--port=%d", s.port),
 	}
 
 	return s.startProcess(ctx, "php", args, nil)
@@ -413,13 +414,13 @@ type RedisOptions struct {
 
 func (s *RedisService) Start(ctx context.Context) error {
 	args := []string{
-		"--port", fmt.Sprintf("%d", s.port),
+		"--port", cli.Sprintf("%d", s.port),
 		"--daemonize", "no",
 	}
 
 	if s.configFile != "" {
 		args = []string{s.configFile}
-		args = append(args, "--port", fmt.Sprintf("%d", s.port), "--daemonize", "no")
+		args = append(args, "--port", cli.Sprintf("%d", s.port), "--daemonize", "no")
 	}
 
 	return s.startProcess(ctx, "redis-server", args, nil)
@@ -427,7 +428,7 @@ func (s *RedisService) Start(ctx context.Context) error {
 
 func (s *RedisService) Stop() error {
 	// Try graceful shutdown via redis-cli
-	cmd := exec.Command("redis-cli", "-p", fmt.Sprintf("%d", s.port), "shutdown", "nosave")
+	cmd := exec.Command("redis-cli", "-p", cli.Sprintf("%d", s.port), "shutdown", "nosave")
 	cmd.Run() // Ignore errors
 
 	return s.stopProcess()

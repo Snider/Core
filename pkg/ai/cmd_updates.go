@@ -4,12 +4,11 @@ package ai
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // task:update command flags
@@ -26,21 +25,21 @@ var (
 	taskCompleteErrorMsg string
 )
 
-var taskUpdateCmd = &cobra.Command{
+var taskUpdateCmd = &cli.Command{
 	Use:   "task:update [task-id]",
 	Short: i18n.T("cmd.ai.task_update.short"),
 	Long:  i18n.T("cmd.ai.task_update.long"),
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Args:  cli.ExactArgs(1),
+	RunE: func(cmd *cli.Command, args []string) error {
 		taskID := args[0]
 
 		if taskUpdateStatus == "" && taskUpdateProgress == 0 && taskUpdateNotes == "" {
-			return fmt.Errorf("%s", i18n.T("cmd.ai.task_update.flag_required"))
+			return cli.Err(i18n.T("cmd.ai.task_update.flag_required"))
 		}
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+			return cli.WrapVerb(err, "load", "config")
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -57,25 +56,25 @@ var taskUpdateCmd = &cobra.Command{
 		}
 
 		if err := client.UpdateTask(ctx, taskID, update); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.update", "task"), err)
+			return cli.WrapVerb(err, "update", "task")
 		}
 
-		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.update", "task"))
+		cli.Print("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.update", "task"))
 		return nil
 	},
 }
 
-var taskCompleteCmd = &cobra.Command{
+var taskCompleteCmd = &cli.Command{
 	Use:   "task:complete [task-id]",
 	Short: i18n.T("cmd.ai.task_complete.short"),
 	Long:  i18n.T("cmd.ai.task_complete.long"),
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Args:  cli.ExactArgs(1),
+	RunE: func(cmd *cli.Command, args []string) error {
 		taskID := args[0]
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+			return cli.WrapVerb(err, "load", "config")
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -90,13 +89,13 @@ var taskCompleteCmd = &cobra.Command{
 		}
 
 		if err := client.CompleteTask(ctx, taskID, result); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.complete", "task"), err)
+			return cli.WrapVerb(err, "complete", "task")
 		}
 
 		if taskCompleteFailed {
-			fmt.Printf("%s %s\n", errorStyle.Render(">>"), i18n.T("cmd.ai.task_complete.failed", map[string]interface{}{"ID": taskID}))
+			cli.Print("%s %s\n", errorStyle.Render(">>"), i18n.T("cmd.ai.task_complete.failed", map[string]interface{}{"ID": taskID}))
 		} else {
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.complete", "task"))
+			cli.Print("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.complete", "task"))
 		}
 		return nil
 	},
@@ -114,11 +113,11 @@ func initUpdatesFlags() {
 	taskCompleteCmd.Flags().StringVar(&taskCompleteErrorMsg, "error", "", i18n.T("cmd.ai.task_complete.flag.error"))
 }
 
-func addTaskUpdateCommand(parent *cobra.Command) {
+func addTaskUpdateCommand(parent *cli.Command) {
 	initUpdatesFlags()
 	parent.AddCommand(taskUpdateCmd)
 }
 
-func addTaskCompleteCommand(parent *cobra.Command) {
+func addTaskCompleteCommand(parent *cli.Command) {
 	parent.AddCommand(taskCompleteCmd)
 }

@@ -2,12 +2,12 @@ package php
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/process"
@@ -32,12 +32,12 @@ func NewQARunner(dir string, fix bool) (*QARunner, error) {
 		framework.WithName("process", process.NewService(process.Options{})),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create process service: %w", err)
+		return nil, cli.WrapVerb(err, "create", "process service")
 	}
 
 	svc, err := framework.ServiceFor[*process.Service](core, "process")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get process service: %w", err)
+		return nil, cli.WrapVerb(err, "get", "process service")
 	}
 
 	runner := &QARunner{

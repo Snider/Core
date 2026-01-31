@@ -2,11 +2,12 @@ package php
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // Options configures the development server.
@@ -69,7 +70,7 @@ func (d *DevServer) Start(ctx context.Context, opts Options) error {
 	defer d.mu.Unlock()
 
 	if d.running {
-		return fmt.Errorf("dev server is already running")
+		return cli.Err("dev server is already running")
 	}
 
 	// Merge options
@@ -79,14 +80,14 @@ func (d *DevServer) Start(ctx context.Context, opts Options) error {
 	if d.opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		d.opts.Dir = cwd
 	}
 
 	// Verify this is a Laravel project
 	if !IsLaravelProject(d.opts.Dir) {
-		return fmt.Errorf("not a Laravel project: %s", d.opts.Dir)
+		return cli.Err("not a Laravel project: %s", d.opts.Dir)
 	}
 
 	// Create cancellable context
@@ -119,7 +120,7 @@ func (d *DevServer) Start(ctx context.Context, opts Options) error {
 		var err error
 		certFile, keyFile, err = SetupSSLIfNeeded(domain, SSLOptions{})
 		if err != nil {
-			return fmt.Errorf("failed to setup SSL: %w", err)
+			return cli.WrapVerb(err, "setup", "SSL")
 		}
 	}
 
@@ -187,7 +188,7 @@ func (d *DevServer) Start(ctx context.Context, opts Options) error {
 	var startErrors []error
 	for _, svc := range d.services {
 		if err := svc.Start(d.ctx); err != nil {
-			startErrors = append(startErrors, fmt.Errorf("%s: %w", svc.Name(), err))
+			startErrors = append(startErrors, cli.Err("%s: %v", svc.Name(), err))
 		}
 	}
 
@@ -196,7 +197,7 @@ func (d *DevServer) Start(ctx context.Context, opts Options) error {
 		for _, svc := range d.services {
 			svc.Stop()
 		}
-		return fmt.Errorf("failed to start services: %v", startErrors)
+		return cli.Err("failed to start services: %v", startErrors)
 	}
 
 	d.running = true
@@ -252,14 +253,14 @@ func (d *DevServer) Stop() error {
 	for i := len(d.services) - 1; i >= 0; i-- {
 		svc := d.services[i]
 		if err := svc.Stop(); err != nil {
-			stopErrors = append(stopErrors, fmt.Errorf("%s: %w", svc.Name(), err))
+			stopErrors = append(stopErrors, cli.Err("%s: %v", svc.Name(), err))
 		}
 	}
 
 	d.running = false
 
 	if len(stopErrors) > 0 {
-		return fmt.Errorf("errors stopping services: %v", stopErrors)
+		return cli.Err("errors stopping services: %v", stopErrors)
 	}
 
 	return nil
@@ -283,7 +284,7 @@ func (d *DevServer) Logs(service string, follow bool) (io.ReadCloser, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("service not found: %s", service)
+	return nil, cli.Err("service not found: %s", service)
 }
 
 // unifiedLogs creates a reader that combines logs from all services.
@@ -297,7 +298,7 @@ func (d *DevServer) unifiedLogs(follow bool) (io.ReadCloser, error) {
 			for _, r := range readers {
 				r.Close()
 			}
-			return nil, fmt.Errorf("failed to get logs for %s: %w", svc.Name(), err)
+			return nil, cli.Err("failed to get logs for %s: %v", svc.Name(), err)
 		}
 		readers = append(readers, reader)
 	}
@@ -363,7 +364,7 @@ func (m *multiServiceReader) Read(p []byte) (n int, err error) {
 		n, err := reader.Read(buf)
 		if n > 0 {
 			// Prefix with service name
-			prefix := fmt.Sprintf("[%s] ", m.services[i].Name())
+			prefix := cli.Sprintf("[%s] ", m.services[i].Name())
 			copy(p, prefix)
 			copy(p[len(prefix):], buf[:n])
 			return n + len(prefix), nil

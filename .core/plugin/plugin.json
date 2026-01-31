@@ -98,12 +98,5 @@
         "description": "Warn about uncommitted work after git commit"
       }
     ]
-  },
-  "mcp": {
-    "core": {
-      "command": "core",
-      "args": ["mcp", "serve"],
-      "description": "Core CLI MCP server for multi-repo operations"
-    }
   }
 }

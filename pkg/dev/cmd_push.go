@@ -2,7 +2,6 @@ package dev
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Push command flags
@@ -20,12 +18,12 @@ var (
 )
 
 // addPushCommand adds the 'push' command to the given parent command.
-func addPushCommand(parent *cobra.Command) {
-	pushCmd := &cobra.Command{
+func addPushCommand(parent *cli.Command) {
+	pushCmd := &cli.Command{
 		Use:   "push",
 		Short: i18n.T("cmd.dev.push.short"),
 		Long:  i18n.T("cmd.dev.push.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runPush(pushRegistryPath, pushForce)
 		},
 	}
@@ -52,24 +50,24 @@ func runPush(registryPath string, force bool) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		} else {
 			// Fallback: scan current directory for repos
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 		}
 	}
 
@@ -85,7 +83,7 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
+		cli.Text(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -104,15 +102,15 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	if len(aheadRepos) == 0 {
-		fmt.Println(i18n.T("cmd.dev.push.all_up_to_date"))
+		cli.Text(i18n.T("cmd.dev.push.all_up_to_date"))
 		return nil
 	}
 
 	// Show repos to push
-	fmt.Printf("\n%s\n\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
+	cli.Print("\n%s\n\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	totalCommits := 0
 	for _, s := range aheadRepos {
-		fmt.Printf("  %s: %s\n",
+		cli.Print("  %s: %s\n",
 			repoNameStyle.Render(s.Name),
 			aheadStyle.Render(i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead})),
 		)
@@ -121,14 +119,14 @@ func runPush(registryPath string, force bool) error {
 
 	// Confirm unless --force
 	if !force {
-		fmt.Println()
+		cli.Line("")
 		if !cli.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": totalCommits, "Repos": len(aheadRepos)})) {
-			fmt.Println(i18n.T("cli.aborted"))
+			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	fmt.Println()
+	cli.Line("")
 
 	// Push sequentially (SSH passphrase needs interaction)
 	var pushPaths []string
@@ -143,15 +141,15 @@ func runPush(registryPath string, force bool) error {
 
 	for _, r := range results {
 		if r.Success {
-			fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
+			cli.Print("  %s %s\n", successStyle.Render("v"), r.Name)
 			succeeded++
 		} else {
 			// Check if this is a non-fast-forward error (diverged branch)
 			if git.IsNonFastForward(r.Error) {
-				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), r.Name, i18n.T("cmd.dev.push.diverged"))
+				cli.Print("  %s %s: %s\n", warningStyle.Render("!"), r.Name, i18n.T("cmd.dev.push.diverged"))
 				divergedRepos = append(divergedRepos, r)
 			} else {
-				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
+				cli.Print("  %s %s: %s\n", errorStyle.Render("x"), r.Name, r.Error)
 			}
 			failed++
 		}
@@ -159,22 +157,22 @@ func runPush(registryPath string, force bool) error {
 
 	// Handle diverged repos - offer to pull and retry
 	if len(divergedRepos) > 0 {
-		fmt.Println()
-		fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
+		cli.Line("")
+		cli.Print("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 		if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
-			fmt.Println()
+			cli.Line("")
 			for _, r := range divergedRepos {
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), r.Name)
+				cli.Print("  %s %s...\n", dimStyle.Render("↓"), r.Name)
 				if err := git.Pull(ctx, r.Path); err != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
+					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
 					continue
 				}
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), r.Name)
+				cli.Print("  %s %s...\n", dimStyle.Render("↑"), r.Name)
 				if err := git.Push(ctx, r.Path); err != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
+					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), r.Name, err)
 					continue
 				}
-				fmt.Printf("  %s %s\n", successStyle.Render("v"), r.Name)
+				cli.Print("  %s %s\n", successStyle.Render("v"), r.Name)
 				succeeded++
 				failed--
 			}
@@ -182,12 +180,12 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	// Summary
-	fmt.Println()
-	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.push.done_pushed", map[string]interface{}{"Count": succeeded})))
+	cli.Line("")
+	cli.Print("%s", successStyle.Render(i18n.T("cmd.dev.push.done_pushed", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
+		cli.Print(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
-	fmt.Println()
+	cli.Line("")
 
 	return nil
 }
@@ -203,7 +201,7 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 	})
 
 	if len(statuses) == 0 {
-		return fmt.Errorf("failed to get repo status")
+		return cli.Err("failed to get repo status")
 	}
 
 	s := statuses[0]
@@ -214,20 +212,20 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 	if !s.HasUnpushed() {
 		// Check if there are uncommitted changes
 		if s.IsDirty() {
-			fmt.Printf("%s: ", repoNameStyle.Render(s.Name))
+			cli.Print("%s: ", repoNameStyle.Render(s.Name))
 			if s.Modified > 0 {
-				fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
+				cli.Print("%s ", dirtyStyle.Render(i18n.T("cmd.dev.modified", map[string]interface{}{"Count": s.Modified})))
 			}
 			if s.Untracked > 0 {
-				fmt.Printf("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
+				cli.Print("%s ", dirtyStyle.Render(i18n.T("cmd.dev.untracked", map[string]interface{}{"Count": s.Untracked})))
 			}
 			if s.Staged > 0 {
-				fmt.Printf("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
+				cli.Print("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
 			}
-			fmt.Println()
-			fmt.Println()
+			cli.Line("")
+			cli.Line("")
 			if cli.Confirm(i18n.T("cmd.dev.push.uncommitted_changes_commit")) {
-				fmt.Println()
+				cli.Line("")
 				// Use edit-enabled commit if only untracked files (may need .gitignore fix)
 				var err error
 				if s.Modified == 0 && s.Staged == 0 && s.Untracked > 0 {
@@ -249,52 +247,52 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 			}
 			return nil
 		}
-		fmt.Println(i18n.T("cmd.dev.push.all_up_to_date"))
+		cli.Text(i18n.T("cmd.dev.push.all_up_to_date"))
 		return nil
 	}
 
 	// Show commits to push
-	fmt.Printf("%s: %s\n", repoNameStyle.Render(s.Name),
+	cli.Print("%s: %s\n", repoNameStyle.Render(s.Name),
 		aheadStyle.Render(i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead})))
 
 	// Confirm unless --force
 	if !force {
-		fmt.Println()
+		cli.Line("")
 		if !cli.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": s.Ahead, "Repos": 1})) {
-			fmt.Println(i18n.T("cli.aborted"))
+			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	fmt.Println()
+	cli.Line("")
 
 	// Push
 	err := git.Push(ctx, repoPath)
 	if err != nil {
 		if git.IsNonFastForward(err) {
-			fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), repoName, i18n.T("cmd.dev.push.diverged"))
-			fmt.Println()
-			fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
+			cli.Print("  %s %s: %s\n", warningStyle.Render("!"), repoName, i18n.T("cmd.dev.push.diverged"))
+			cli.Line("")
+			cli.Print("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 			if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
-				fmt.Println()
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), repoName)
+				cli.Line("")
+				cli.Print("  %s %s...\n", dimStyle.Render("↓"), repoName)
 				if pullErr := git.Pull(ctx, repoPath); pullErr != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), repoName, pullErr)
+					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), repoName, pullErr)
 					return pullErr
 				}
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), repoName)
+				cli.Print("  %s %s...\n", dimStyle.Render("↑"), repoName)
 				if pushErr := git.Push(ctx, repoPath); pushErr != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), repoName, pushErr)
+					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), repoName, pushErr)
 					return pushErr
 				}
-				fmt.Printf("  %s %s\n", successStyle.Render("v"), repoName)
+				cli.Print("  %s %s\n", successStyle.Render("v"), repoName)
 				return nil
 			}
 		}
-		fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), repoName, err)
+		cli.Print("  %s %s: %s\n", errorStyle.Render("x"), repoName, err)
 		return err
 	}
 
-	fmt.Printf("  %s %s\n", successStyle.Render("v"), repoName)
+	cli.Print("  %s %s\n", successStyle.Render("v"), repoName)
 	return nil
 }

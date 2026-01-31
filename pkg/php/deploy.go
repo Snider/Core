@@ -2,8 +2,9 @@ package php
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // Environment represents a deployment environment.
@@ -120,13 +121,13 @@ func Deploy(ctx context.Context, opts DeployOptions) (*DeploymentStatus, error) 
 	// Load config
 	config, err := LoadCoolifyConfig(opts.Dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load Coolify config: %w", err)
+		return nil, cli.WrapVerb(err, "load", "Coolify config")
 	}
 
 	// Get app ID for environment
 	appID := getAppIDForEnvironment(config, opts.Environment)
 	if appID == "" {
-		return nil, fmt.Errorf("no app ID configured for %s environment", opts.Environment)
+		return nil, cli.Err("no app ID configured for %s environment", opts.Environment)
 	}
 
 	// Create client
@@ -135,7 +136,7 @@ func Deploy(ctx context.Context, opts DeployOptions) (*DeploymentStatus, error) 
 	// Trigger deployment
 	deployment, err := client.TriggerDeploy(ctx, appID, opts.Force)
 	if err != nil {
-		return nil, fmt.Errorf("failed to trigger deployment: %w", err)
+		return nil, cli.WrapVerb(err, "trigger", "deployment")
 	}
 
 	status := convertDeployment(deployment)
@@ -169,13 +170,13 @@ func DeployStatus(ctx context.Context, opts StatusOptions) (*DeploymentStatus, e
 	// Load config
 	config, err := LoadCoolifyConfig(opts.Dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load Coolify config: %w", err)
+		return nil, cli.WrapVerb(err, "load", "Coolify config")
 	}
 
 	// Get app ID for environment
 	appID := getAppIDForEnvironment(config, opts.Environment)
 	if appID == "" {
-		return nil, fmt.Errorf("no app ID configured for %s environment", opts.Environment)
+		return nil, cli.Err("no app ID configured for %s environment", opts.Environment)
 	}
 
 	// Create client
@@ -187,16 +188,16 @@ func DeployStatus(ctx context.Context, opts StatusOptions) (*DeploymentStatus, e
 		// Get specific deployment
 		deployment, err = client.GetDeployment(ctx, appID, opts.DeploymentID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get deployment: %w", err)
+			return nil, cli.WrapVerb(err, "get", "deployment")
 		}
 	} else {
 		// Get latest deployment
 		deployments, err := client.ListDeployments(ctx, appID, 1)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list deployments: %w", err)
+			return nil, cli.WrapVerb(err, "list", "deployments")
 		}
 		if len(deployments) == 0 {
-			return nil, fmt.Errorf("no deployments found")
+			return nil, cli.Err("no deployments found")
 		}
 		deployment = &deployments[0]
 	}
@@ -227,13 +228,13 @@ func Rollback(ctx context.Context, opts RollbackOptions) (*DeploymentStatus, err
 	// Load config
 	config, err := LoadCoolifyConfig(opts.Dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load Coolify config: %w", err)
+		return nil, cli.WrapVerb(err, "load", "Coolify config")
 	}
 
 	// Get app ID for environment
 	appID := getAppIDForEnvironment(config, opts.Environment)
 	if appID == "" {
-		return nil, fmt.Errorf("no app ID configured for %s environment", opts.Environment)
+		return nil, cli.Err("no app ID configured for %s environment", opts.Environment)
 	}
 
 	// Create client
@@ -245,7 +246,7 @@ func Rollback(ctx context.Context, opts RollbackOptions) (*DeploymentStatus, err
 		// Find previous successful deployment
 		deployments, err := client.ListDeployments(ctx, appID, 10)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list deployments: %w", err)
+			return nil, cli.WrapVerb(err, "list", "deployments")
 		}
 
 		// Skip the first (current) deployment, find the last successful one
@@ -260,14 +261,14 @@ func Rollback(ctx context.Context, opts RollbackOptions) (*DeploymentStatus, err
 		}
 
 		if deploymentID == "" {
-			return nil, fmt.Errorf("no previous successful deployment found to rollback to")
+			return nil, cli.Err("no previous successful deployment found to rollback to")
 		}
 	}
 
 	// Trigger rollback
 	deployment, err := client.Rollback(ctx, appID, deploymentID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to trigger rollback: %w", err)
+		return nil, cli.WrapVerb(err, "trigger", "rollback")
 	}
 
 	status := convertDeployment(deployment)
@@ -298,13 +299,13 @@ func ListDeployments(ctx context.Context, dir string, env Environment, limit int
 	// Load config
 	config, err := LoadCoolifyConfig(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load Coolify config: %w", err)
+		return nil, cli.WrapVerb(err, "load", "Coolify config")
 	}
 
 	// Get app ID for environment
 	appID := getAppIDForEnvironment(config, env)
 	if appID == "" {
-		return nil, fmt.Errorf("no app ID configured for %s environment", env)
+		return nil, cli.Err("no app ID configured for %s environment", env)
 	}
 
 	// Create client
@@ -312,7 +313,7 @@ func ListDeployments(ctx context.Context, dir string, env Environment, limit int
 
 	deployments, err := client.ListDeployments(ctx, appID, limit)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list deployments: %w", err)
+		return nil, cli.WrapVerb(err, "list", "deployments")
 	}
 
 	result := make([]DeploymentStatus, len(deployments))
@@ -364,7 +365,7 @@ func waitForDeployment(ctx context.Context, client *CoolifyClient, appID, deploy
 
 		deployment, err := client.GetDeployment(ctx, appID, deploymentID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get deployment status: %w", err)
+			return nil, cli.WrapVerb(err, "get", "deployment status")
 		}
 
 		status := convertDeployment(deployment)
@@ -374,9 +375,9 @@ func waitForDeployment(ctx context.Context, client *CoolifyClient, appID, deploy
 		case "finished", "success":
 			return status, nil
 		case "failed", "error":
-			return status, fmt.Errorf("deployment failed: %s", deployment.Status)
+			return status, cli.Err("deployment failed: %s", deployment.Status)
 		case "cancelled":
-			return status, fmt.Errorf("deployment was cancelled")
+			return status, cli.Err("deployment was cancelled")
 		}
 
 		// Still in progress, wait and retry
@@ -387,7 +388,7 @@ func waitForDeployment(ctx context.Context, client *CoolifyClient, appID, deploy
 		}
 	}
 
-	return nil, fmt.Errorf("deployment timed out after %v", timeout)
+	return nil, cli.Err("deployment timed out after %v", timeout)
 }
 
 // IsDeploymentComplete returns true if the status indicates completion.

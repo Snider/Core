@@ -4,8 +4,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -14,12 +14,12 @@ var (
 	fmtCheck bool
 )
 
-func addGoFmtCommand(parent *cobra.Command) {
-	fmtCmd := &cobra.Command{
+func addGoFmtCommand(parent *cli.Command) {
+	fmtCmd := &cli.Command{
 		Use:   "fmt",
 		Short: "Format Go code",
 		Long:  "Format Go code using goimports or gofmt",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			fmtArgs := []string{}
 			if fmtFix {
 				fmtArgs = append(fmtArgs, "-w")
@@ -55,12 +55,12 @@ func addGoFmtCommand(parent *cobra.Command) {
 
 var lintFix bool
 
-func addGoLintCommand(parent *cobra.Command) {
-	lintCmd := &cobra.Command{
+func addGoLintCommand(parent *cli.Command) {
+	lintCmd := &cli.Command{
 		Use:   "lint",
 		Short: "Run golangci-lint",
 		Long:  "Run golangci-lint for comprehensive static analysis",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			lintArgs := []string{"run"}
 			if lintFix {
 				lintArgs = append(lintArgs, "--fix")

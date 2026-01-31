@@ -4,15 +4,14 @@ package ai
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // tasks command flags
@@ -31,11 +30,11 @@ var (
 	taskShowContext bool
 )
 
-var tasksCmd = &cobra.Command{
+var tasksCmd = &cli.Command{
 	Use:   "tasks",
 	Short: i18n.T("cmd.ai.tasks.short"),
 	Long:  i18n.T("cmd.ai.tasks.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		limit := tasksLimit
 		if limit == 0 {
 			limit = 20
@@ -43,7 +42,7 @@ var tasksCmd = &cobra.Command{
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+			return cli.WrapVerb(err, "load", "config")
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -68,11 +67,11 @@ var tasksCmd = &cobra.Command{
 
 		tasks, err := client.ListTasks(ctx, opts)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.list", "tasks"), err)
+			return cli.WrapVerb(err, "list", "tasks")
 		}
 
 		if len(tasks) == 0 {
-			fmt.Println(i18n.T("cmd.ai.tasks.none_found"))
+			cli.Text(i18n.T("cmd.ai.tasks.none_found"))
 			return nil
 		}
 
@@ -81,14 +80,14 @@ var tasksCmd = &cobra.Command{
 	},
 }
 
-var taskCmd = &cobra.Command{
+var taskCmd = &cli.Command{
 	Use:   "task [task-id]",
 	Short: i18n.T("cmd.ai.task.short"),
 	Long:  i18n.T("cmd.ai.task.long"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+			return cli.WrapVerb(err, "load", "config")
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -111,11 +110,11 @@ var taskCmd = &cobra.Command{
 				Limit:  50,
 			})
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.list", "tasks"), err)
+				return cli.WrapVerb(err, "list", "tasks")
 			}
 
 			if len(tasks) == 0 {
-				fmt.Println(i18n.T("cmd.ai.task.no_pending"))
+				cli.Text(i18n.T("cmd.ai.task.no_pending"))
 				return nil
 			}
 
@@ -135,12 +134,12 @@ var taskCmd = &cobra.Command{
 			taskClaim = true // Auto-select implies claiming
 		} else {
 			if taskID == "" {
-				return fmt.Errorf("%s", i18n.T("cmd.ai.task.id_required"))
+				return cli.Err(i18n.T("cmd.ai.task.id_required"))
 			}
 
 			task, err = client.GetTask(ctx, taskID)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "task"), err)
+				return cli.WrapVerb(err, "get", "task")
 			}
 		}
 
@@ -149,25 +148,25 @@ var taskCmd = &cobra.Command{
 			cwd, _ := os.Getwd()
 			taskCtx, err := agentic.BuildTaskContext(task, cwd)
 			if err != nil {
-				fmt.Printf("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("i18n.fail.build", "context"), err)
+				cli.Print("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("i18n.fail.build", "context"), err)
 			} else {
-				fmt.Println(taskCtx.FormatContext())
+				cli.Text(taskCtx.FormatContext())
 			}
 		} else {
 			printTaskDetails(task)
 		}
 
 		if taskClaim && task.Status == agentic.StatusPending {
-			fmt.Println()
-			fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task.claiming"))
+			cli.Line("")
+			cli.Print("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task.claiming"))
 
 			claimedTask, err := client.ClaimTask(ctx, task.ID)
 			if err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.claim", "task"), err)
+				return cli.WrapVerb(err, "claim", "task")
 			}
 
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.claim", "task"))
-			fmt.Printf("   %s %s\n", i18n.Label("status"), formatTaskStatus(claimedTask.Status))
+			cli.Print("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.claim", "task"))
+			cli.Print("   %s %s\n", i18n.Label("status"), formatTaskStatus(claimedTask.Status))
 		}
 
 		return nil
@@ -188,17 +187,17 @@ func initTasksFlags() {
 	taskCmd.Flags().BoolVar(&taskShowContext, "context", false, i18n.T("cmd.ai.task.flag.context"))
 }
 
-func addTasksCommand(parent *cobra.Command) {
+func addTasksCommand(parent *cli.Command) {
 	initTasksFlags()
 	parent.AddCommand(tasksCmd)
 }
 
-func addTaskCommand(parent *cobra.Command) {
+func addTaskCommand(parent *cli.Command) {
 	parent.AddCommand(taskCmd)
 }
 
 func printTaskList(tasks []agentic.Task) {
-	fmt.Printf("\n%s\n\n", i18n.T("cmd.ai.tasks.found", map[string]interface{}{"Count": len(tasks)}))
+	cli.Print("\n%s\n\n", i18n.T("cmd.ai.tasks.found", map[string]interface{}{"Count": len(tasks)}))
 
 	for _, task := range tasks {
 		id := taskIDStyle.Render(task.ID)
@@ -206,56 +205,56 @@ func printTaskList(tasks []agentic.Task) {
 		priority := formatTaskPriority(task.Priority)
 		status := formatTaskStatus(task.Status)
 
-		line := fmt.Sprintf("  %s  %s  %s  %s", id, priority, status, title)
+		line := cli.Sprintf("  %s  %s  %s  %s", id, priority, status, title)
 
 		if len(task.Labels) > 0 {
 			labels := taskLabelStyle.Render("[" + strings.Join(task.Labels, ", ") + "]")
 			line += " " + labels
 		}
 
-		fmt.Println(line)
+		cli.Text(line)
 	}
 
-	fmt.Println()
-	fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.ai.tasks.hint")))
+	cli.Line("")
+	cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.ai.tasks.hint")))
 }
 
 func printTaskDetails(task *agentic.Task) {
-	fmt.Println()
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.id")), taskIDStyle.Render(task.ID))
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.title")), taskTitleStyle.Render(task.Title))
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.priority")), formatTaskPriority(task.Priority))
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("status")), formatTaskStatus(task.Status))
+	cli.Line("")
+	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.id")), taskIDStyle.Render(task.ID))
+	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.title")), taskTitleStyle.Render(task.Title))
+	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.priority")), formatTaskPriority(task.Priority))
+	cli.Print("%s %s\n", dimStyle.Render(i18n.Label("status")), formatTaskStatus(task.Status))
 
 	if task.Project != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("project")), task.Project)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("project")), task.Project)
 	}
 
 	if len(task.Labels) > 0 {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.labels")), taskLabelStyle.Render(strings.Join(task.Labels, ", ")))
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.labels")), taskLabelStyle.Render(strings.Join(task.Labels, ", ")))
 	}
 
 	if task.ClaimedBy != "" {
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.claimed_by")), task.ClaimedBy)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.claimed_by")), task.ClaimedBy)
 	}
 
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.created")), formatAge(task.CreatedAt))
+	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.created")), formatAge(task.CreatedAt))
 
-	fmt.Println()
-	fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.description")))
-	fmt.Println(task.Description)
+	cli.Line("")
+	cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.description")))
+	cli.Text(task.Description)
 
 	if len(task.Files) > 0 {
-		fmt.Println()
-		fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.related_files")))
+		cli.Line("")
+		cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.related_files")))
 		for _, f := range task.Files {
-			fmt.Printf("  - %s\n", f)
+			cli.Print("  - %s\n", f)
 		}
 	}
 
 	if len(task.Dependencies) > 0 {
-		fmt.Println()
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.blocked_by")), strings.Join(task.Dependencies, ", "))
+		cli.Line("")
+		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.blocked_by")), strings.Join(task.Dependencies, ", "))
 	}
 }
 

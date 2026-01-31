@@ -1,10 +1,9 @@
 package ci
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/release"
 )
 
@@ -12,21 +11,21 @@ import (
 func runChangelog(fromRef, toRef string) error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+		return cli.WrapVerb(err, "get", "working directory")
 	}
 
 	// Load config for changelog settings
 	cfg, err := release.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+		return cli.WrapVerb(err, "load", "config")
 	}
 
 	// Generate changelog
 	changelog, err := release.GenerateWithConfig(projectDir, fromRef, toRef, &cfg.Changelog)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.generate", "changelog"), err)
+		return cli.WrapVerb(err, "generate", "changelog")
 	}
 
-	fmt.Println(changelog)
+	cli.Text(changelog)
 	return nil
 }

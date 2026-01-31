@@ -11,7 +11,6 @@ package ci
 
 import (
 	"github.com/host-uk/core/pkg/cli"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -19,6 +18,6 @@ func init() {
 }
 
 // AddCICommands registers the 'ci' command and all subcommands.
-func AddCICommands(root *cobra.Command) {
+func AddCICommands(root *cli.Command) {
 	root.AddCommand(ciCmd)
 }

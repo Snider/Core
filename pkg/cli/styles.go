@@ -20,23 +20,23 @@ import (
 
 // Tailwind colours for consistent theming across the CLI.
 const (
-	ColourBlue50    = lipgloss.Color("#eff6ff")
-	ColourBlue100   = lipgloss.Color("#dbeafe")
-	ColourBlue200   = lipgloss.Color("#bfdbfe")
-	ColourBlue300   = lipgloss.Color("#93c5fd")
-	ColourBlue400   = lipgloss.Color("#60a5fa")
-	ColourBlue500   = lipgloss.Color("#3b82f6")
-	ColourBlue600   = lipgloss.Color("#2563eb")
-	ColourBlue700   = lipgloss.Color("#1d4ed8")
-	ColourGreen400  = lipgloss.Color("#4ade80")
-	ColourGreen500  = lipgloss.Color("#22c55e")
-	ColourGreen600  = lipgloss.Color("#16a34a")
-	ColourRed400    = lipgloss.Color("#f87171")
-	ColourRed500    = lipgloss.Color("#ef4444")
-	ColourRed600    = lipgloss.Color("#dc2626")
-	ColourAmber400  = lipgloss.Color("#fbbf24")
-	ColourAmber500  = lipgloss.Color("#f59e0b")
-	ColourAmber600  = lipgloss.Color("#d97706")
+	ColourBlue50     = lipgloss.Color("#eff6ff")
+	ColourBlue100    = lipgloss.Color("#dbeafe")
+	ColourBlue200    = lipgloss.Color("#bfdbfe")
+	ColourBlue300    = lipgloss.Color("#93c5fd")
+	ColourBlue400    = lipgloss.Color("#60a5fa")
+	ColourBlue500    = lipgloss.Color("#3b82f6")
+	ColourBlue600    = lipgloss.Color("#2563eb")
+	ColourBlue700    = lipgloss.Color("#1d4ed8")
+	ColourGreen400   = lipgloss.Color("#4ade80")
+	ColourGreen500   = lipgloss.Color("#22c55e")
+	ColourGreen600   = lipgloss.Color("#16a34a")
+	ColourRed400     = lipgloss.Color("#f87171")
+	ColourRed500     = lipgloss.Color("#ef4444")
+	ColourRed600     = lipgloss.Color("#dc2626")
+	ColourAmber400   = lipgloss.Color("#fbbf24")
+	ColourAmber500   = lipgloss.Color("#f59e0b")
+	ColourAmber600   = lipgloss.Color("#d97706")
 	ColourOrange500  = lipgloss.Color("#f97316")
 	ColourYellow500  = lipgloss.Color("#eab308")
 	ColourEmerald500 = lipgloss.Color("#10b981")
@@ -45,16 +45,16 @@ const (
 	ColourViolet500  = lipgloss.Color("#8b5cf6")
 	ColourIndigo500  = lipgloss.Color("#6366f1")
 	ColourCyan500    = lipgloss.Color("#06b6d4")
-	ColourGray50    = lipgloss.Color("#f9fafb")
-	ColourGray100   = lipgloss.Color("#f3f4f6")
-	ColourGray200   = lipgloss.Color("#e5e7eb")
-	ColourGray300   = lipgloss.Color("#d1d5db")
-	ColourGray400   = lipgloss.Color("#9ca3af")
-	ColourGray500   = lipgloss.Color("#6b7280")
-	ColourGray600   = lipgloss.Color("#4b5563")
-	ColourGray700   = lipgloss.Color("#374151")
-	ColourGray800   = lipgloss.Color("#1f2937")
-	ColourGray900   = lipgloss.Color("#111827")
+	ColourGray50     = lipgloss.Color("#f9fafb")
+	ColourGray100    = lipgloss.Color("#f3f4f6")
+	ColourGray200    = lipgloss.Color("#e5e7eb")
+	ColourGray300    = lipgloss.Color("#d1d5db")
+	ColourGray400    = lipgloss.Color("#9ca3af")
+	ColourGray500    = lipgloss.Color("#6b7280")
+	ColourGray600    = lipgloss.Color("#4b5563")
+	ColourGray700    = lipgloss.Color("#374151")
+	ColourGray800    = lipgloss.Color("#1f2937")
+	ColourGray900    = lipgloss.Color("#111827")
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -489,8 +489,8 @@ func Path(p string) string {
 	return CodeStyle.Render(p)
 }
 
-// Command renders a command in code style.
-func Command(cmd string) string {
+// CommandStr renders a command string in code style.
+func CommandStr(cmd string) string {
 	return CodeStyle.Render(cmd)
 }
 

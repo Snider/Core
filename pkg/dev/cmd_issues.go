@@ -3,7 +3,6 @@ package dev
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Issue-specific styles (aliases to shared)
@@ -59,12 +57,12 @@ var (
 )
 
 // addIssuesCommand adds the 'issues' command to the given parent command.
-func addIssuesCommand(parent *cobra.Command) {
-	issuesCmd := &cobra.Command{
+func addIssuesCommand(parent *cli.Command) {
+	issuesCmd := &cli.Command{
 		Use:   "issues",
 		Short: i18n.T("cmd.dev.issues.short"),
 		Long:  i18n.T("cmd.dev.issues.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			limit := issuesLimit
 			if limit == 0 {
 				limit = 10
@@ -93,21 +91,21 @@ func runIssues(registryPath string, limit int, assignee string) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
 		}
 	}
@@ -118,17 +116,17 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	repoList := reg.List()
 	for i, repo := range repoList {
-		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.fetch")), i+1, len(repoList), repo.Name)
+		repoFullName := cli.Sprintf("%s/%s", reg.Org, repo.Name)
+		cli.Print("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.fetch")), i+1, len(repoList), repo.Name)
 
 		issues, err := fetchIssues(repoFullName, repo.Name, limit, assignee)
 		if err != nil {
-			fetchErrors = append(fetchErrors, fmt.Errorf("%s: %w", repo.Name, err))
+			fetchErrors = append(fetchErrors, cli.Wrap(err, repo.Name))
 			continue
 		}
 		allIssues = append(allIssues, issues...)
 	}
-	fmt.Print("\033[2K\r") // Clear progress line
+	cli.Print("\033[2K\r") // Clear progress line
 
 	// Sort by created date (newest first)
 	sort.Slice(allIssues, func(i, j int) bool {
@@ -137,11 +135,11 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	// Print issues
 	if len(allIssues) == 0 {
-		fmt.Println(i18n.T("cmd.dev.issues.no_issues"))
+		cli.Text(i18n.T("cmd.dev.issues.no_issues"))
 		return nil
 	}
 
-	fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.issues.open_issues", map[string]interface{}{"Count": len(allIssues)}))
+	cli.Print("\n%s\n\n", i18n.T("cmd.dev.issues.open_issues", map[string]interface{}{"Count": len(allIssues)}))
 
 	for _, issue := range allIssues {
 		printIssue(issue)
@@ -149,9 +147,9 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	// Print any errors
 	if len(fetchErrors) > 0 {
-		fmt.Println()
+		cli.Line("")
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
+			cli.Print("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}
 	}
 
@@ -163,7 +161,7 @@ func fetchIssues(repoFullName, repoName string, limit int, assignee string) ([]G
 		"issue", "list",
 		"--repo", repoFullName,
 		"--state", "open",
-		"--limit", fmt.Sprintf("%d", limit),
+		"--limit", cli.Sprintf("%d", limit),
 		"--json", "number,title,state,createdAt,author,assignees,labels,url",
 	}
 
@@ -180,7 +178,7 @@ func fetchIssues(repoFullName, repoName string, limit int, assignee string) ([]G
 			if strings.Contains(stderr, "no issues") || strings.Contains(stderr, "Could not resolve") {
 				return nil, nil
 			}
-			return nil, fmt.Errorf("%s", stderr)
+			return nil, cli.Err("%s", stderr)
 		}
 		return nil, err
 	}
@@ -200,11 +198,11 @@ func fetchIssues(repoFullName, repoName string, limit int, assignee string) ([]G
 
 func printIssue(issue GitHubIssue) {
 	// #42 [core-bio] Fix avatar upload
-	num := issueNumberStyle.Render(fmt.Sprintf("#%d", issue.Number))
-	repo := issueRepoStyle.Render(fmt.Sprintf("[%s]", issue.RepoName))
+	num := issueNumberStyle.Render(cli.Sprintf("#%d", issue.Number))
+	repo := issueRepoStyle.Render(cli.Sprintf("[%s]", issue.RepoName))
 	title := issueTitleStyle.Render(cli.Truncate(issue.Title, 60))
 
-	line := fmt.Sprintf("  %s %s %s", num, repo, title)
+	line := cli.Sprintf("  %s %s %s", num, repo, title)
 
 	// Add labels if any
 	if len(issue.Labels.Nodes) > 0 {
@@ -228,5 +226,5 @@ func printIssue(issue GitHubIssue) {
 	age := cli.FormatAge(issue.CreatedAt)
 	line += " " + issueAgeStyle.Render(age)
 
-	fmt.Println(line)
+	cli.Text(line)
 }

@@ -2,7 +2,6 @@ package dev
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Work command flags
@@ -24,12 +22,12 @@ var (
 )
 
 // addWorkCommand adds the 'work' command to the given parent command.
-func addWorkCommand(parent *cobra.Command) {
-	workCmd := &cobra.Command{
+func addWorkCommand(parent *cli.Command) {
+	workCmd := &cli.Command{
 		Use:   "work",
 		Short: i18n.T("cmd.dev.work.short"),
 		Long:  i18n.T("cmd.dev.work.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runWork(workRegistryPath, workStatusOnly, workAutoCommit)
 		},
 	}
@@ -65,7 +63,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
+		cli.Text(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -75,7 +73,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 		Names: names,
 	})
 	if !handled {
-		return fmt.Errorf("git service not available")
+		return cli.Err("git service not available")
 	}
 	if err != nil {
 		return err
@@ -108,9 +106,9 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 	// Auto-commit dirty repos if requested
 	if autoCommit && len(dirtyRepos) > 0 {
-		fmt.Println()
-		fmt.Printf("%s\n", cli.TitleStyle.Render(i18n.T("cmd.dev.commit.committing")))
-		fmt.Println()
+		cli.Line("")
+		cli.Print("%s\n", cli.TitleStyle.Render(i18n.T("cmd.dev.commit.committing")))
+		cli.Line("")
 
 		for _, s := range dirtyRepos {
 			// PERFORM commit via agentic service
@@ -119,13 +117,13 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 				Name: s.Name,
 			})
 			if !handled {
-				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), s.Name, "agentic service not available")
+				cli.Print("  %s %s: %s\n", warningStyle.Render("!"), s.Name, "agentic service not available")
 				continue
 			}
 			if err != nil {
-				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
+				cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 			} else {
-				fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
+				cli.Print("  %s %s\n", successStyle.Render("v"), s.Name)
 			}
 		}
 
@@ -148,32 +146,32 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// If status only, we're done
 	if statusOnly {
 		if len(dirtyRepos) > 0 && !autoCommit {
-			fmt.Println()
-			fmt.Printf("%s\n", dimStyle.Render(i18n.T("cmd.dev.work.use_commit_flag")))
+			cli.Line("")
+			cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.dev.work.use_commit_flag")))
 		}
 		return nil
 	}
 
 	// Push repos with unpushed commits
 	if len(aheadRepos) == 0 {
-		fmt.Println()
-		fmt.Println(i18n.T("cmd.dev.work.all_up_to_date"))
+		cli.Line("")
+		cli.Text(i18n.T("cmd.dev.work.all_up_to_date"))
 		return nil
 	}
 
-	fmt.Println()
-	fmt.Printf("%s\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
+	cli.Line("")
+	cli.Print("%s\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	for _, s := range aheadRepos {
-		fmt.Printf("  %s: %s\n", s.Name, i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead}))
+		cli.Print("  %s: %s\n", s.Name, i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead}))
 	}
 
-	fmt.Println()
+	cli.Line("")
 	if !cli.Confirm(i18n.T("cmd.dev.push.confirm")) {
-		fmt.Println(i18n.T("cli.aborted"))
+		cli.Text(i18n.T("cli.aborted"))
 		return nil
 	}
 
-	fmt.Println()
+	cli.Line("")
 
 	// PERFORM push for each repo
 	var divergedRepos []git.RepoStatus
@@ -184,47 +182,47 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 			Name: s.Name,
 		})
 		if !handled {
-			fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, "git service not available")
+			cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, "git service not available")
 			continue
 		}
 		if err != nil {
 			if git.IsNonFastForward(err) {
-				fmt.Printf("  %s %s: %s\n", warningStyle.Render("!"), s.Name, i18n.T("cmd.dev.push.diverged"))
+				cli.Print("  %s %s: %s\n", warningStyle.Render("!"), s.Name, i18n.T("cmd.dev.push.diverged"))
 				divergedRepos = append(divergedRepos, s)
 			} else {
-				fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
+				cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 			}
 		} else {
-			fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
+			cli.Print("  %s %s\n", successStyle.Render("v"), s.Name)
 		}
 	}
 
 	// Handle diverged repos - offer to pull and retry
 	if len(divergedRepos) > 0 {
-		fmt.Println()
-		fmt.Printf("%s\n", i18n.T("cmd.dev.push.diverged_help"))
+		cli.Line("")
+		cli.Print("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 		if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
-			fmt.Println()
+			cli.Line("")
 			for _, s := range divergedRepos {
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↓"), s.Name)
+				cli.Print("  %s %s...\n", dimStyle.Render("↓"), s.Name)
 
 				// PERFORM pull
 				_, _, err := bundle.Core.PERFORM(git.TaskPull{Path: s.Path, Name: s.Name})
 				if err != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
+					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 					continue
 				}
 
-				fmt.Printf("  %s %s...\n", dimStyle.Render("↑"), s.Name)
+				cli.Print("  %s %s...\n", dimStyle.Render("↑"), s.Name)
 
 				// PERFORM push
 				_, _, err = bundle.Core.PERFORM(git.TaskPush{Path: s.Path, Name: s.Name})
 				if err != nil {
-					fmt.Printf("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
+					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 					continue
 				}
 
-				fmt.Printf("  %s %s\n", successStyle.Render("v"), s.Name)
+				cli.Print("  %s %s\n", successStyle.Render("v"), s.Name)
 			}
 		}
 	}
@@ -242,7 +240,7 @@ func printStatusTable(statuses []git.RepoStatus) {
 	}
 
 	// Print header with fixed-width formatting
-	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
+	cli.Print("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth,
 		cli.TitleStyle.Render(i18n.Label("repo")),
 		cli.TitleStyle.Render(i18n.T("cmd.dev.work.table_modified")),
@@ -252,13 +250,13 @@ func printStatusTable(statuses []git.RepoStatus) {
 	)
 
 	// Print separator
-	fmt.Println(strings.Repeat("-", nameWidth+2+10+11+8+7))
+	cli.Text(strings.Repeat("-", nameWidth+2+10+11+8+7))
 
 	// Print rows
 	for _, s := range statuses {
 		if s.Error != nil {
-			paddedName := fmt.Sprintf("%-*s", nameWidth, s.Name)
-			fmt.Printf("%s  %s\n",
+			paddedName := cli.Sprintf("%-*s", nameWidth, s.Name)
+			cli.Print("%s  %s\n",
 				repoNameStyle.Render(paddedName),
 				errorStyle.Render(i18n.T("cmd.dev.work.error_prefix")+" "+s.Error.Error()),
 			)
@@ -266,28 +264,28 @@ func printStatusTable(statuses []git.RepoStatus) {
 		}
 
 		// Style numbers based on values
-		modStr := fmt.Sprintf("%d", s.Modified)
+		modStr := cli.Sprintf("%d", s.Modified)
 		if s.Modified > 0 {
 			modStr = dirtyStyle.Render(modStr)
 		} else {
 			modStr = cleanStyle.Render(modStr)
 		}
 
-		untrackedStr := fmt.Sprintf("%d", s.Untracked)
+		untrackedStr := cli.Sprintf("%d", s.Untracked)
 		if s.Untracked > 0 {
 			untrackedStr = dirtyStyle.Render(untrackedStr)
 		} else {
 			untrackedStr = cleanStyle.Render(untrackedStr)
 		}
 
-		stagedStr := fmt.Sprintf("%d", s.Staged)
+		stagedStr := cli.Sprintf("%d", s.Staged)
 		if s.Staged > 0 {
 			stagedStr = aheadStyle.Render(stagedStr)
 		} else {
 			stagedStr = cleanStyle.Render(stagedStr)
 		}
 
-		aheadStr := fmt.Sprintf("%d", s.Ahead)
+		aheadStr := cli.Sprintf("%d", s.Ahead)
 		if s.Ahead > 0 {
 			aheadStr = aheadStyle.Render(aheadStr)
 		} else {
@@ -295,8 +293,8 @@ func printStatusTable(statuses []git.RepoStatus) {
 		}
 
 		// Pad name before styling to avoid ANSI code length issues
-		paddedName := fmt.Sprintf("%-*s", nameWidth, s.Name)
-		fmt.Printf("%s  %8s  %9s  %6s  %5s\n",
+		paddedName := cli.Sprintf("%-*s", nameWidth, s.Name)
+		cli.Print("%s  %8s  %9s  %6s  %5s\n",
 			repoNameStyle.Render(paddedName),
 			modStr,
 			untrackedStr,
@@ -339,25 +337,25 @@ func loadRegistry(registryPath string) ([]string, map[string]string, error) {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to load registry: %w", err)
+			return nil, nil, cli.Wrap(err, "failed to load registry")
 		}
-		fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+		cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to load registry: %w", err)
+				return nil, nil, cli.Wrap(err, "failed to load registry")
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+			cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to scan directory: %w", err)
+				return nil, nil, cli.Wrap(err, "failed to scan directory")
 			}
-			fmt.Printf("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
+			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 		}
 	}
 

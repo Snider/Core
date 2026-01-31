@@ -2,7 +2,6 @@ package dev
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sort"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Health command flags
@@ -20,12 +18,12 @@ var (
 )
 
 // addHealthCommand adds the 'health' command to the given parent command.
-func addHealthCommand(parent *cobra.Command) {
-	healthCmd := &cobra.Command{
+func addHealthCommand(parent *cli.Command) {
+	healthCmd := &cli.Command{
 		Use:   "health",
 		Short: i18n.T("cmd.dev.health.short"),
 		Long:  i18n.T("cmd.dev.health.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runHealth(healthRegistryPath, healthVerbose)
 		},
 	}
@@ -46,21 +44,21 @@ func runHealth(registryPath string, verbose bool) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
 		}
 	}
@@ -77,7 +75,7 @@ func runHealth(registryPath string, verbose bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
+		cli.Text(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -118,25 +116,25 @@ func runHealth(registryPath string, verbose bool) error {
 	}
 
 	// Print summary line
-	fmt.Println()
+	cli.Line("")
 	printHealthSummary(totalRepos, dirtyRepos, aheadRepos, behindRepos, errorRepos)
-	fmt.Println()
+	cli.Line("")
 
 	// Verbose output
 	if verbose {
 		if len(dirtyRepos) > 0 {
-			fmt.Printf("%s %s\n", warningStyle.Render(i18n.T("cmd.dev.health.dirty_label")), formatRepoList(dirtyRepos))
+			cli.Print("%s %s\n", warningStyle.Render(i18n.T("cmd.dev.health.dirty_label")), formatRepoList(dirtyRepos))
 		}
 		if len(aheadRepos) > 0 {
-			fmt.Printf("%s %s\n", successStyle.Render(i18n.T("cmd.dev.health.ahead_label")), formatRepoList(aheadRepos))
+			cli.Print("%s %s\n", successStyle.Render(i18n.T("cmd.dev.health.ahead_label")), formatRepoList(aheadRepos))
 		}
 		if len(behindRepos) > 0 {
-			fmt.Printf("%s %s\n", warningStyle.Render(i18n.T("cmd.dev.health.behind_label")), formatRepoList(behindRepos))
+			cli.Print("%s %s\n", warningStyle.Render(i18n.T("cmd.dev.health.behind_label")), formatRepoList(behindRepos))
 		}
 		if len(errorRepos) > 0 {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.health.errors_label")), formatRepoList(errorRepos))
+			cli.Print("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.health.errors_label")), formatRepoList(errorRepos))
 		}
-		fmt.Println()
+		cli.Line("")
 	}
 
 	return nil
@@ -173,7 +171,7 @@ func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
 		parts = append(parts, cli.StatusPart(len(errors), i18n.T("cmd.dev.health.errors"), cli.ErrorStyle))
 	}
 
-	fmt.Println(cli.StatusLine(parts...))
+	cli.Text(cli.StatusLine(parts...))
 }
 
 func formatRepoList(reposList []string) string {

@@ -2,11 +2,11 @@ package ci
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/release"
 )
@@ -15,34 +15,34 @@ import (
 func runCIReleaseInit() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+		return cli.WrapVerb(err, "get", "working directory")
 	}
 
 	// Check if config already exists
 	if release.ConfigExists(projectDir) {
-		fmt.Printf("%s %s %s\n",
+		cli.Print("%s %s %s\n",
 			releaseDimStyle.Render(i18n.Label("note")),
 			i18n.T("cmd.ci.init.config_exists"),
 			release.ConfigPath(projectDir))
 
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Print(i18n.T("cmd.ci.init.overwrite_prompt"))
+		cli.Print("%s", i18n.T("cmd.ci.init.overwrite_prompt"))
 		response, _ := reader.ReadString('\n')
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println(i18n.T("common.prompt.abort"))
+			cli.Text(i18n.T("common.prompt.abort"))
 			return nil
 		}
 	}
 
-	fmt.Printf("%s %s\n", releaseHeaderStyle.Render(i18n.T("cmd.ci.label.init")), i18n.T("cmd.ci.init.creating"))
-	fmt.Println()
+	cli.Print("%s %s\n", releaseHeaderStyle.Render(i18n.T("cmd.ci.label.init")), i18n.T("cmd.ci.init.creating"))
+	cli.Line("")
 
 	reader := bufio.NewReader(os.Stdin)
 
 	// Project name
 	defaultName := filepath.Base(projectDir)
-	fmt.Printf("%s [%s]: ", i18n.T("cmd.ci.init.project_name"), defaultName)
+	cli.Print("%s [%s]: ", i18n.T("cmd.ci.init.project_name"), defaultName)
 	name, _ := reader.ReadString('\n')
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -50,7 +50,7 @@ func runCIReleaseInit() error {
 	}
 
 	// Repository
-	fmt.Printf("%s ", i18n.T("cmd.ci.init.github_repo"))
+	cli.Print("%s ", i18n.T("cmd.ci.init.github_repo"))
 	repo, _ := reader.ReadString('\n')
 	repo = strings.TrimSpace(repo)
 
@@ -61,11 +61,11 @@ func runCIReleaseInit() error {
 
 	// Write config
 	if err := release.WriteConfig(cfg, projectDir); err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.write", "config"), err)
+		return cli.WrapVerb(err, "write", "config")
 	}
 
-	fmt.Println()
-	fmt.Printf("%s %s %s\n",
+	cli.Line("")
+	cli.Print("%s %s %s\n",
 		releaseSuccessStyle.Render(i18n.T("i18n.done.pass")),
 		i18n.T("cmd.ci.init.config_written"),
 		release.ConfigPath(projectDir))

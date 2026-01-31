@@ -5,15 +5,14 @@ package ai
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // task:commit command flags
@@ -31,21 +30,21 @@ var (
 	taskPRBase   string
 )
 
-var taskCommitCmd = &cobra.Command{
+var taskCommitCmd = &cli.Command{
 	Use:   "task:commit [task-id]",
 	Short: i18n.T("cmd.ai.task_commit.short"),
 	Long:  i18n.T("cmd.ai.task_commit.long"),
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Args:  cli.ExactArgs(1),
+	RunE: func(cmd *cli.Command, args []string) error {
 		taskID := args[0]
 
 		if taskCommitMessage == "" {
-			return fmt.Errorf("commit message required")
+			return cli.Err("commit message required")
 		}
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+			return cli.WrapVerb(err, "load", "config")
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -56,67 +55,67 @@ var taskCommitCmd = &cobra.Command{
 		// Get task details
 		task, err := client.GetTask(ctx, taskID)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "task"), err)
+			return cli.WrapVerb(err, "get", "task")
 		}
 
 		// Build commit message with optional scope
 		commitType := inferCommitType(task.Labels)
 		var fullMessage string
 		if taskCommitScope != "" {
-			fullMessage = fmt.Sprintf("%s(%s): %s", commitType, taskCommitScope, taskCommitMessage)
+			fullMessage = cli.Sprintf("%s(%s): %s", commitType, taskCommitScope, taskCommitMessage)
 		} else {
-			fullMessage = fmt.Sprintf("%s: %s", commitType, taskCommitMessage)
+			fullMessage = cli.Sprintf("%s: %s", commitType, taskCommitMessage)
 		}
 
 		// Get current directory
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 
 		// Check for uncommitted changes
 		hasChanges, err := agentic.HasUncommittedChanges(ctx, cwd)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.check", "git status"), err)
+			return cli.WrapVerb(err, "check", "git status")
 		}
 
 		if !hasChanges {
-			fmt.Println("No changes to commit")
+			cli.Text("No changes to commit")
 			return nil
 		}
 
 		// Create commit
-		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("create", "commit for "+taskID))
+		cli.Print("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("create", "commit for "+taskID))
 		if err := agentic.AutoCommit(ctx, task, cwd, fullMessage); err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.commit"), err)
+			return cli.WrapAction(err, "commit")
 		}
 
-		fmt.Printf("%s %s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.commit")+":", fullMessage)
+		cli.Print("%s %s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.commit")+":", fullMessage)
 
 		// Push if requested
 		if taskCommitPush {
-			fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.Progress("push"))
+			cli.Print("%s %s\n", dimStyle.Render(">>"), i18n.Progress("push"))
 			if err := agentic.PushChanges(ctx, cwd); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.push"), err)
+				return cli.WrapAction(err, "push")
 			}
-			fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.push", "changes"))
+			cli.Print("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.push", "changes"))
 		}
 
 		return nil
 	},
 }
 
-var taskPRCmd = &cobra.Command{
+var taskPRCmd = &cli.Command{
 	Use:   "task:pr [task-id]",
 	Short: i18n.T("cmd.ai.task_pr.short"),
 	Long:  i18n.T("cmd.ai.task_pr.long"),
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Args:  cli.ExactArgs(1),
+	RunE: func(cmd *cli.Command, args []string) error {
 		taskID := args[0]
 
 		cfg, err := agentic.LoadConfig("")
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+			return cli.WrapVerb(err, "load", "config")
 		}
 
 		client := agentic.NewClientFromConfig(cfg)
@@ -127,31 +126,31 @@ var taskPRCmd = &cobra.Command{
 		// Get task details
 		task, err := client.GetTask(ctx, taskID)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "task"), err)
+			return cli.WrapVerb(err, "get", "task")
 		}
 
 		// Get current directory
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 
 		// Check current branch
 		branch, err := agentic.GetCurrentBranch(ctx, cwd)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "branch"), err)
+			return cli.WrapVerb(err, "get", "branch")
 		}
 
 		if branch == "main" || branch == "master" {
-			return fmt.Errorf("cannot create PR from %s branch", branch)
+			return cli.Err("cannot create PR from %s branch", branch)
 		}
 
 		// Push current branch
-		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("push", branch))
+		cli.Print("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("push", branch))
 		if err := agentic.PushChanges(ctx, cwd); err != nil {
 			// Try setting upstream
 			if _, err := runGitCommand(cwd, "push", "-u", "origin", branch); err != nil {
-				return fmt.Errorf("%s: %w", i18n.T("i18n.fail.push", "branch"), err)
+				return cli.WrapVerb(err, "push", "branch")
 			}
 		}
 
@@ -167,14 +166,14 @@ var taskPRCmd = &cobra.Command{
 		}
 
 		// Create PR
-		fmt.Printf("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("create", "PR"))
+		cli.Print("%s %s\n", dimStyle.Render(">>"), i18n.ProgressSubject("create", "PR"))
 		prURL, err := agentic.CreatePR(ctx, task, cwd, opts)
 		if err != nil {
-			return fmt.Errorf("%s: %w", i18n.T("i18n.fail.create", "PR"), err)
+			return cli.WrapVerb(err, "create", "PR")
 		}
 
-		fmt.Printf("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.create", "PR"))
-		fmt.Printf("   %s %s\n", i18n.Label("url"), prURL)
+		cli.Print("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.create", "PR"))
+		cli.Print("   %s %s\n", i18n.Label("url"), prURL)
 
 		return nil
 	},
@@ -193,12 +192,12 @@ func initGitFlags() {
 	taskPRCmd.Flags().StringVar(&taskPRBase, "base", "", i18n.T("cmd.ai.task_pr.flag.base"))
 }
 
-func addTaskCommitCommand(parent *cobra.Command) {
+func addTaskCommitCommand(parent *cli.Command) {
 	initGitFlags()
 	parent.AddCommand(taskCommitCmd)
 }
 
-func addTaskPRCommand(parent *cobra.Command) {
+func addTaskPRCommand(parent *cli.Command) {
 	parent.AddCommand(taskPRCmd)
 }
 
@@ -240,7 +239,7 @@ func runGitCommand(dir string, args ...string) (string, error) {
 
 	if err := cmd.Run(); err != nil {
 		if stderr.Len() > 0 {
-			return "", fmt.Errorf("%w: %s", err, stderr.String())
+			return "", cli.Wrap(err, stderr.String())
 		}
 		return "", err
 	}

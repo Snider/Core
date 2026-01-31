@@ -4,7 +4,6 @@ package docs
 import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // Style and utility aliases from shared
@@ -20,7 +19,7 @@ var (
 	docsFileStyle    = cli.InfoStyle
 )
 
-var docsCmd = &cobra.Command{
+var docsCmd = &cli.Command{
 	Use:   "docs",
 	Short: i18n.T("cmd.docs.short"),
 	Long:  i18n.T("cmd.docs.long"),

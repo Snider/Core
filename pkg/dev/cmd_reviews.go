@@ -3,7 +3,6 @@ package dev
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // PR-specific styles (aliases to shared)
@@ -60,12 +58,12 @@ var (
 )
 
 // addReviewsCommand adds the 'reviews' command to the given parent command.
-func addReviewsCommand(parent *cobra.Command) {
-	reviewsCmd := &cobra.Command{
+func addReviewsCommand(parent *cli.Command) {
+	reviewsCmd := &cli.Command{
 		Use:   "reviews",
 		Short: i18n.T("cmd.dev.reviews.short"),
 		Long:  i18n.T("cmd.dev.reviews.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runReviews(reviewsRegistryPath, reviewsAuthor, reviewsShowAll)
 		},
 	}
@@ -90,21 +88,21 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
 		}
 	}
@@ -115,12 +113,12 @@ func runReviews(registryPath string, author string, showAll bool) error {
 
 	repoList := reg.List()
 	for i, repo := range repoList {
-		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.fetch")), i+1, len(repoList), repo.Name)
+		repoFullName := cli.Sprintf("%s/%s", reg.Org, repo.Name)
+		cli.Print("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.fetch")), i+1, len(repoList), repo.Name)
 
 		prs, err := fetchPRs(repoFullName, repo.Name, author)
 		if err != nil {
-			fetchErrors = append(fetchErrors, fmt.Errorf("%s: %w", repo.Name, err))
+			fetchErrors = append(fetchErrors, cli.Wrap(err, repo.Name))
 			continue
 		}
 
@@ -132,7 +130,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 			allPRs = append(allPRs, pr)
 		}
 	}
-	fmt.Print("\033[2K\r") // Clear progress line
+	cli.Print("\033[2K\r") // Clear progress line
 
 	// Sort: pending review first, then by date
 	sort.Slice(allPRs, func(i, j int) bool {
@@ -147,7 +145,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 
 	// Print PRs
 	if len(allPRs) == 0 {
-		fmt.Println(i18n.T("cmd.dev.reviews.no_prs"))
+		cli.Text(i18n.T("cmd.dev.reviews.no_prs"))
 		return nil
 	}
 
@@ -164,19 +162,19 @@ func runReviews(registryPath string, author string, showAll bool) error {
 		}
 	}
 
-	fmt.Println()
-	fmt.Printf("%s", i18n.T("cmd.dev.reviews.open_prs", map[string]interface{}{"Count": len(allPRs)}))
+	cli.Line("")
+	cli.Print("%s", i18n.T("cmd.dev.reviews.open_prs", map[string]interface{}{"Count": len(allPRs)}))
 	if pending > 0 {
-		fmt.Printf(" * %s", prPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
+		cli.Print(" * %s", prPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
 	}
 	if approved > 0 {
-		fmt.Printf(" * %s", prApprovedStyle.Render(i18n.T("cmd.dev.reviews.approved", map[string]interface{}{"Count": approved})))
+		cli.Print(" * %s", prApprovedStyle.Render(i18n.T("cmd.dev.reviews.approved", map[string]interface{}{"Count": approved})))
 	}
 	if changesRequested > 0 {
-		fmt.Printf(" * %s", prChangesStyle.Render(i18n.T("cmd.dev.reviews.changes_requested", map[string]interface{}{"Count": changesRequested})))
+		cli.Print(" * %s", prChangesStyle.Render(i18n.T("cmd.dev.reviews.changes_requested", map[string]interface{}{"Count": changesRequested})))
 	}
-	fmt.Println()
-	fmt.Println()
+	cli.Line("")
+	cli.Line("")
 
 	for _, pr := range allPRs {
 		printPR(pr)
@@ -184,9 +182,9 @@ func runReviews(registryPath string, author string, showAll bool) error {
 
 	// Print any errors
 	if len(fetchErrors) > 0 {
-		fmt.Println()
+		cli.Line("")
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
+			cli.Print("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}
 	}
 
@@ -213,7 +211,7 @@ func fetchPRs(repoFullName, repoName string, author string) ([]GitHubPR, error) 
 			if strings.Contains(stderr, "no pull requests") || strings.Contains(stderr, "Could not resolve") {
 				return nil, nil
 			}
-			return nil, fmt.Errorf("%s", stderr)
+			return nil, cli.Err("%s", stderr)
 		}
 		return nil, err
 	}
@@ -233,8 +231,8 @@ func fetchPRs(repoFullName, repoName string, author string) ([]GitHubPR, error) 
 
 func printPR(pr GitHubPR) {
 	// #12 [core-php] Webhook validation
-	num := prNumberStyle.Render(fmt.Sprintf("#%d", pr.Number))
-	repo := issueRepoStyle.Render(fmt.Sprintf("[%s]", pr.RepoName))
+	num := prNumberStyle.Render(cli.Sprintf("#%d", pr.Number))
+	repo := issueRepoStyle.Render(cli.Sprintf("[%s]", pr.RepoName))
 	title := prTitleStyle.Render(cli.Truncate(pr.Title, 50))
 	author := prAuthorStyle.Render("@" + pr.Author.Login)
 
@@ -257,5 +255,5 @@ func printPR(pr GitHubPR) {
 
 	age := cli.FormatAge(pr.CreatedAt)
 
-	fmt.Printf("  %s %s %s%s %s  %s  %s\n", num, repo, title, draft, author, status, issueAgeStyle.Render(age))
+	cli.Print("  %s %s %s%s %s  %s  %s\n", num, repo, title, draft, author, status, issueAgeStyle.Render(age))
 }

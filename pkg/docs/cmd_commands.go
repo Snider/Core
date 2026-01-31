@@ -8,16 +8,13 @@
 // to a central location for unified documentation builds.
 package docs
 
-import (
-	"github.com/host-uk/core/pkg/cli"
-	"github.com/spf13/cobra"
-)
+import "github.com/host-uk/core/pkg/cli"
 
 func init() {
 	cli.RegisterCommands(AddDocsCommands)
 }
 
 // AddDocsCommands registers the 'docs' command and all subcommands.
-func AddDocsCommands(root *cobra.Command) {
+func AddDocsCommands(root *cli.Command) {
 	root.AddCommand(docsCmd)
 }

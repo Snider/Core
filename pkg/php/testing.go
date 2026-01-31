@@ -2,11 +2,12 @@ package php
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // TestOptions configures PHP test execution.
@@ -58,7 +59,7 @@ func RunTests(ctx context.Context, opts TestOptions) error {
 	if opts.Dir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.Dir = cwd
 	}

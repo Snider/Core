@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // CoolifyClient is an HTTP client for the Coolify API.
@@ -89,13 +90,13 @@ func LoadCoolifyConfigFromFile(path string) (*CoolifyConfig, error) {
 			// No .env file, just use env vars
 			return validateCoolifyConfig(config)
 		}
-		return nil, fmt.Errorf("failed to open .env file: %w", err)
+		return nil, cli.WrapVerb(err, "open", ".env file")
 	}
 	defer file.Close()
 
 	content, err := io.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read .env file: %w", err)
+		return nil, cli.WrapVerb(err, "read", ".env file")
 	}
 
 	// Parse .env file
@@ -143,17 +144,17 @@ func LoadCoolifyConfigFromFile(path string) (*CoolifyConfig, error) {
 // validateCoolifyConfig checks that required fields are set.
 func validateCoolifyConfig(config *CoolifyConfig) (*CoolifyConfig, error) {
 	if config.URL == "" {
-		return nil, fmt.Errorf("COOLIFY_URL is not set")
+		return nil, cli.Err("COOLIFY_URL is not set")
 	}
 	if config.Token == "" {
-		return nil, fmt.Errorf("COOLIFY_TOKEN is not set")
+		return nil, cli.Err("COOLIFY_TOKEN is not set")
 	}
 	return config, nil
 }
 
 // TriggerDeploy triggers a deployment for the specified application.
 func (c *CoolifyClient) TriggerDeploy(ctx context.Context, appID string, force bool) (*CoolifyDeployment, error) {
-	endpoint := fmt.Sprintf("%s/api/v1/applications/%s/deploy", c.BaseURL, appID)
+	endpoint := cli.Sprintf("%s/api/v1/applications/%s/deploy", c.BaseURL, appID)
 
 	payload := map[string]interface{}{}
 	if force {
@@ -162,19 +163,19 @@ func (c *CoolifyClient) TriggerDeploy(ctx context.Context, appID string, force b
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, cli.WrapVerb(err, "marshal", "request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, cli.WrapVerb(err, "create", "request")
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, cli.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 
@@ -196,18 +197,18 @@ func (c *CoolifyClient) TriggerDeploy(ctx context.Context, appID string, force b
 
 // GetDeployment retrieves a specific deployment by ID.
 func (c *CoolifyClient) GetDeployment(ctx context.Context, appID, deploymentID string) (*CoolifyDeployment, error) {
-	endpoint := fmt.Sprintf("%s/api/v1/applications/%s/deployments/%s", c.BaseURL, appID, deploymentID)
+	endpoint := cli.Sprintf("%s/api/v1/applications/%s/deployments/%s", c.BaseURL, appID, deploymentID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, cli.WrapVerb(err, "create", "request")
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, cli.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 
@@ -217,7 +218,7 @@ func (c *CoolifyClient) GetDeployment(ctx context.Context, appID, deploymentID s
 
 	var deployment CoolifyDeployment
 	if err := json.NewDecoder(resp.Body).Decode(&deployment); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, cli.WrapVerb(err, "decode", "response")
 	}
 
 	return &deployment, nil
@@ -225,21 +226,21 @@ func (c *CoolifyClient) GetDeployment(ctx context.Context, appID, deploymentID s
 
 // ListDeployments retrieves deployments for an application.
 func (c *CoolifyClient) ListDeployments(ctx context.Context, appID string, limit int) ([]CoolifyDeployment, error) {
-	endpoint := fmt.Sprintf("%s/api/v1/applications/%s/deployments", c.BaseURL, appID)
+	endpoint := cli.Sprintf("%s/api/v1/applications/%s/deployments", c.BaseURL, appID)
 	if limit > 0 {
-		endpoint = fmt.Sprintf("%s?limit=%d", endpoint, limit)
+		endpoint = cli.Sprintf("%s?limit=%d", endpoint, limit)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, cli.WrapVerb(err, "create", "request")
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, cli.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 
@@ -249,7 +250,7 @@ func (c *CoolifyClient) ListDeployments(ctx context.Context, appID string, limit
 
 	var deployments []CoolifyDeployment
 	if err := json.NewDecoder(resp.Body).Decode(&deployments); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, cli.WrapVerb(err, "decode", "response")
 	}
 
 	return deployments, nil
@@ -257,7 +258,7 @@ func (c *CoolifyClient) ListDeployments(ctx context.Context, appID string, limit
 
 // Rollback triggers a rollback to a previous deployment.
 func (c *CoolifyClient) Rollback(ctx context.Context, appID, deploymentID string) (*CoolifyDeployment, error) {
-	endpoint := fmt.Sprintf("%s/api/v1/applications/%s/rollback", c.BaseURL, appID)
+	endpoint := cli.Sprintf("%s/api/v1/applications/%s/rollback", c.BaseURL, appID)
 
 	payload := map[string]interface{}{
 		"deployment_id": deploymentID,
@@ -265,19 +266,19 @@ func (c *CoolifyClient) Rollback(ctx context.Context, appID, deploymentID string
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, cli.WrapVerb(err, "marshal", "request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, cli.WrapVerb(err, "create", "request")
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, cli.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 
@@ -298,18 +299,18 @@ func (c *CoolifyClient) Rollback(ctx context.Context, appID, deploymentID string
 
 // GetApp retrieves application details.
 func (c *CoolifyClient) GetApp(ctx context.Context, appID string) (*CoolifyApp, error) {
-	endpoint := fmt.Sprintf("%s/api/v1/applications/%s", c.BaseURL, appID)
+	endpoint := cli.Sprintf("%s/api/v1/applications/%s", c.BaseURL, appID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, cli.WrapVerb(err, "create", "request")
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, cli.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 
@@ -319,7 +320,7 @@ func (c *CoolifyClient) GetApp(ctx context.Context, appID string) (*CoolifyApp, 
 
 	var app CoolifyApp
 	if err := json.NewDecoder(resp.Body).Decode(&app); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, cli.WrapVerb(err, "decode", "response")
 	}
 
 	return &app, nil
@@ -343,12 +344,12 @@ func (c *CoolifyClient) parseError(resp *http.Response) error {
 
 	if err := json.Unmarshal(body, &errResp); err == nil {
 		if errResp.Message != "" {
-			return fmt.Errorf("API error (%d): %s", resp.StatusCode, errResp.Message)
+			return cli.Err("API error (%d): %s", resp.StatusCode, errResp.Message)
 		}
 		if errResp.Error != "" {
-			return fmt.Errorf("API error (%d): %s", resp.StatusCode, errResp.Error)
+			return cli.Err("API error (%d): %s", resp.StatusCode, errResp.Error)
 		}
 	}
 
-	return fmt.Errorf("API error (%d): %s", resp.StatusCode, string(body))
+	return cli.Err("API error (%d): %s", resp.StatusCode, string(body))
 }

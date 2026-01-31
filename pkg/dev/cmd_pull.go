@@ -2,14 +2,13 @@ package dev
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Pull command flags
@@ -19,12 +18,12 @@ var (
 )
 
 // addPullCommand adds the 'pull' command to the given parent command.
-func addPullCommand(parent *cobra.Command) {
-	pullCmd := &cobra.Command{
+func addPullCommand(parent *cli.Command) {
+	pullCmd := &cli.Command{
 		Use:   "pull",
 		Short: i18n.T("cmd.dev.pull.short"),
 		Long:  i18n.T("cmd.dev.pull.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runPull(pullRegistryPath, pullAll)
 		},
 	}
@@ -45,25 +44,25 @@ func runPull(registryPath string, all bool) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
-		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
 		}
 	}
 
@@ -79,7 +78,7 @@ func runPull(registryPath string, all bool) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println(i18n.T("cmd.dev.no_git_repos"))
+		cli.Text(i18n.T("cmd.dev.no_git_repos"))
 		return nil
 	}
 
@@ -101,46 +100,46 @@ func runPull(registryPath string, all bool) error {
 	}
 
 	if len(toPull) == 0 {
-		fmt.Println(i18n.T("cmd.dev.pull.all_up_to_date"))
+		cli.Text(i18n.T("cmd.dev.pull.all_up_to_date"))
 		return nil
 	}
 
 	// Show what we're pulling
 	if all {
-		fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.pull.pulling_repos", map[string]interface{}{"Count": len(toPull)}))
+		cli.Print("\n%s\n\n", i18n.T("cmd.dev.pull.pulling_repos", map[string]interface{}{"Count": len(toPull)}))
 	} else {
-		fmt.Printf("\n%s\n\n", i18n.T("cmd.dev.pull.repos_behind", map[string]interface{}{"Count": len(toPull)}))
+		cli.Print("\n%s\n\n", i18n.T("cmd.dev.pull.repos_behind", map[string]interface{}{"Count": len(toPull)}))
 		for _, s := range toPull {
-			fmt.Printf("  %s: %s\n",
+			cli.Print("  %s: %s\n",
 				repoNameStyle.Render(s.Name),
 				dimStyle.Render(i18n.T("cmd.dev.pull.commits_behind", map[string]interface{}{"Count": s.Behind})),
 			)
 		}
-		fmt.Println()
+		cli.Line("")
 	}
 
 	// Pull each repo
 	var succeeded, failed int
 	for _, s := range toPull {
-		fmt.Printf("  %s %s... ", dimStyle.Render(i18n.T("cmd.dev.pull.pulling")), s.Name)
+		cli.Print("  %s %s... ", dimStyle.Render(i18n.T("cmd.dev.pull.pulling")), s.Name)
 
 		err := gitPull(ctx, s.Path)
 		if err != nil {
-			fmt.Printf("%s\n", errorStyle.Render("x "+err.Error()))
+			cli.Print("%s\n", errorStyle.Render("x "+err.Error()))
 			failed++
 		} else {
-			fmt.Printf("%s\n", successStyle.Render("v"))
+			cli.Print("%s\n", successStyle.Render("v"))
 			succeeded++
 		}
 	}
 
 	// Summary
-	fmt.Println()
-	fmt.Printf("%s", successStyle.Render(i18n.T("cmd.dev.pull.done_pulled", map[string]interface{}{"Count": succeeded})))
+	cli.Line("")
+	cli.Print("%s", successStyle.Render(i18n.T("cmd.dev.pull.done_pulled", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
-		fmt.Printf(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
+		cli.Print(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
-	fmt.Println()
+	cli.Line("")
 
 	return nil
 }
@@ -150,7 +149,7 @@ func gitPull(ctx context.Context, path string) error {
 	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s", string(output))
+		return cli.Err("%s", string(output))
 	}
 	return nil
 }

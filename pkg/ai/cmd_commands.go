@@ -13,37 +13,36 @@ package ai
 import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 func init() {
 	cli.RegisterCommands(AddAICommands)
 }
 
-var aiCmd = &cobra.Command{
+var aiCmd = &cli.Command{
 	Use:   "ai",
 	Short: i18n.T("cmd.ai.short"),
 	Long:  i18n.T("cmd.ai.long"),
 }
 
-var claudeCmd = &cobra.Command{
+var claudeCmd = &cli.Command{
 	Use:   "claude",
 	Short: i18n.T("cmd.ai.claude.short"),
 	Long:  i18n.T("cmd.ai.claude.long"),
 }
 
-var claudeRunCmd = &cobra.Command{
+var claudeRunCmd = &cli.Command{
 	Use:   "run",
 	Short: i18n.T("cmd.ai.claude.run.short"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return runClaudeCode()
 	},
 }
 
-var claudeConfigCmd = &cobra.Command{
+var claudeConfigCmd = &cli.Command{
 	Use:   "config",
 	Short: i18n.T("cmd.ai.claude.config.short"),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cli.Command, args []string) error {
 		return showClaudeConfig()
 	},
 }
@@ -61,7 +60,7 @@ func initCommands() {
 }
 
 // AddAICommands registers the 'ai' command and all subcommands.
-func AddAICommands(root *cobra.Command) {
+func AddAICommands(root *cli.Command) {
 	initCommands()
 	root.AddCommand(aiCmd)
 }

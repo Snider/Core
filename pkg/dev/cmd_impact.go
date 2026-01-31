@@ -2,13 +2,11 @@ package dev
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // Impact-specific styles (aliases to shared)
@@ -22,13 +20,13 @@ var (
 var impactRegistryPath string
 
 // addImpactCommand adds the 'impact' command to the given parent command.
-func addImpactCommand(parent *cobra.Command) {
-	impactCmd := &cobra.Command{
+func addImpactCommand(parent *cli.Command) {
+	impactCmd := &cli.Command{
 		Use:   "impact <repo-name>",
 		Short: i18n.T("cmd.dev.impact.short"),
 		Long:  i18n.T("cmd.dev.impact.long"),
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cli.ExactArgs(1),
+		RunE: func(cmd *cli.Command, args []string) error {
 			return runImpact(impactRegistryPath, args[0])
 		},
 	}
@@ -46,14 +44,14 @@ func runImpact(registryPath string, repoName string) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
 		} else {
 			return errors.New(i18n.T("cmd.dev.impact.requires_registry"))
@@ -91,21 +89,21 @@ func runImpact(registryPath string, repoName string) error {
 	sort.Strings(indirect)
 
 	// Print results
-	fmt.Println()
-	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.impact.analysis_for")), repoNameStyle.Render(repoName))
+	cli.Line("")
+	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.impact.analysis_for")), repoNameStyle.Render(repoName))
 	if repo.Description != "" {
-		fmt.Printf("%s\n", dimStyle.Render(repo.Description))
+		cli.Print("%s\n", dimStyle.Render(repo.Description))
 	}
-	fmt.Println()
+	cli.Line("")
 
 	if len(allAffected) == 0 {
-		fmt.Printf("%s %s\n", impactSafeStyle.Render("v"), i18n.T("cmd.dev.impact.no_dependents", map[string]interface{}{"Name": repoName}))
+		cli.Print("%s %s\n", impactSafeStyle.Render("v"), i18n.T("cmd.dev.impact.no_dependents", map[string]interface{}{"Name": repoName}))
 		return nil
 	}
 
 	// Direct dependents
 	if len(direct) > 0 {
-		fmt.Printf("%s %s\n",
+		cli.Print("%s %s\n",
 			impactDirectStyle.Render("*"),
 			i18n.T("cmd.dev.impact.direct_dependents", map[string]interface{}{"Count": len(direct)}),
 		)
@@ -115,14 +113,14 @@ func runImpact(registryPath string, repoName string) error {
 			if r != nil && r.Description != "" {
 				desc = dimStyle.Render(" - " + cli.Truncate(r.Description, 40))
 			}
-			fmt.Printf("    %s%s\n", d, desc)
+			cli.Print("    %s%s\n", d, desc)
 		}
-		fmt.Println()
+		cli.Line("")
 	}
 
 	// Indirect dependents
 	if len(indirect) > 0 {
-		fmt.Printf("%s %s\n",
+		cli.Print("%s %s\n",
 			impactIndirectStyle.Render("o"),
 			i18n.T("cmd.dev.impact.transitive_dependents", map[string]interface{}{"Count": len(indirect)}),
 		)
@@ -132,13 +130,13 @@ func runImpact(registryPath string, repoName string) error {
 			if r != nil && r.Description != "" {
 				desc = dimStyle.Render(" - " + cli.Truncate(r.Description, 40))
 			}
-			fmt.Printf("    %s%s\n", d, desc)
+			cli.Print("    %s%s\n", d, desc)
 		}
-		fmt.Println()
+		cli.Line("")
 	}
 
 	// Summary
-	fmt.Printf("%s %s\n",
+	cli.Print("%s %s\n",
 		dimStyle.Render(i18n.Label("summary")),
 		i18n.T("cmd.dev.impact.changes_affect", map[string]interface{}{
 			"Repo":     repoNameStyle.Render(repoName),

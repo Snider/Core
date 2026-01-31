@@ -2,12 +2,13 @@ package php
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // DockerBuildOptions configures Docker image building for PHP projects.
@@ -94,14 +95,14 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 	if opts.ProjectDir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.ProjectDir = cwd
 	}
 
 	// Validate project directory
 	if !IsPHPProject(opts.ProjectDir) {
-		return fmt.Errorf("not a PHP project: %s (missing composer.json)", opts.ProjectDir)
+		return cli.Err("not a PHP project: %s (missing composer.json)", opts.ProjectDir)
 	}
 
 	// Set defaults
@@ -123,13 +124,13 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 		// Generate Dockerfile
 		content, err := GenerateDockerfile(opts.ProjectDir)
 		if err != nil {
-			return fmt.Errorf("failed to generate Dockerfile: %w", err)
+			return cli.WrapVerb(err, "generate", "Dockerfile")
 		}
 
 		// Write to temporary file
 		tempDockerfile = filepath.Join(opts.ProjectDir, "Dockerfile.core-generated")
 		if err := os.WriteFile(tempDockerfile, []byte(content), 0644); err != nil {
-			return fmt.Errorf("failed to write Dockerfile: %w", err)
+			return cli.WrapVerb(err, "write", "Dockerfile")
 		}
 		defer os.Remove(tempDockerfile)
 
@@ -137,7 +138,7 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 	}
 
 	// Build Docker image
-	imageRef := fmt.Sprintf("%s:%s", opts.ImageName, opts.Tag)
+	imageRef := cli.Sprintf("%s:%s", opts.ImageName, opts.Tag)
 
 	args := []string{"build", "-t", imageRef, "-f", dockerfilePath}
 
@@ -150,7 +151,7 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 	}
 
 	for key, value := range opts.BuildArgs {
-		args = append(args, "--build-arg", fmt.Sprintf("%s=%s", key, value))
+		args = append(args, "--build-arg", cli.Sprintf("%s=%s", key, value))
 	}
 
 	args = append(args, opts.ProjectDir)
@@ -161,7 +162,7 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 	cmd.Stderr = opts.Output
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("docker build failed: %w", err)
+		return cli.Wrap(err, "docker build failed")
 	}
 
 	return nil
@@ -172,14 +173,14 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	if opts.ProjectDir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get working directory: %w", err)
+			return cli.WrapVerb(err, "get", "working directory")
 		}
 		opts.ProjectDir = cwd
 	}
 
 	// Validate project directory
 	if !IsPHPProject(opts.ProjectDir) {
-		return fmt.Errorf("not a PHP project: %s (missing composer.json)", opts.ProjectDir)
+		return cli.Err("not a PHP project: %s (missing composer.json)", opts.ProjectDir)
 	}
 
 	// Set defaults
@@ -199,7 +200,7 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	// Ensure output directory exists
 	outputDir := filepath.Dir(opts.OutputPath)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
+		return cli.WrapVerb(err, "create", "output directory")
 	}
 
 	// Find linuxkit binary
@@ -211,7 +212,7 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	// Get template content
 	templateContent, err := getLinuxKitTemplate(opts.Template)
 	if err != nil {
-		return fmt.Errorf("failed to get template: %w", err)
+		return cli.WrapVerb(err, "get", "template")
 	}
 
 	// Apply variables
@@ -224,13 +225,13 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 
 	content, err := applyTemplateVariables(templateContent, opts.Variables)
 	if err != nil {
-		return fmt.Errorf("failed to apply template variables: %w", err)
+		return cli.WrapVerb(err, "apply", "template variables")
 	}
 
 	// Write template to temp file
 	tempYAML := filepath.Join(opts.ProjectDir, ".core-linuxkit.yml")
 	if err := os.WriteFile(tempYAML, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write template: %w", err)
+		return cli.WrapVerb(err, "write", "template")
 	}
 	defer os.Remove(tempYAML)
 
@@ -248,7 +249,7 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	cmd.Stderr = opts.Output
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("linuxkit build failed: %w", err)
+		return cli.Wrap(err, "linuxkit build failed")
 	}
 
 	return nil
@@ -257,7 +258,7 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 // ServeProduction runs a production PHP container.
 func ServeProduction(ctx context.Context, opts ServeOptions) error {
 	if opts.ImageName == "" {
-		return fmt.Errorf("image name is required")
+		return cli.Err("image name is required")
 	}
 
 	// Set defaults
@@ -274,7 +275,7 @@ func ServeProduction(ctx context.Context, opts ServeOptions) error {
 		opts.Output = os.Stdout
 	}
 
-	imageRef := fmt.Sprintf("%s:%s", opts.ImageName, opts.Tag)
+	imageRef := cli.Sprintf("%s:%s", opts.ImageName, opts.Tag)
 
 	args := []string{"run"}
 
@@ -289,8 +290,8 @@ func ServeProduction(ctx context.Context, opts ServeOptions) error {
 	}
 
 	// Port mappings
-	args = append(args, "-p", fmt.Sprintf("%d:80", opts.Port))
-	args = append(args, "-p", fmt.Sprintf("%d:443", opts.HTTPSPort))
+	args = append(args, "-p", cli.Sprintf("%d:80", opts.Port))
+	args = append(args, "-p", cli.Sprintf("%d:443", opts.HTTPSPort))
 
 	// Environment file
 	if opts.EnvFile != "" {
@@ -299,7 +300,7 @@ func ServeProduction(ctx context.Context, opts ServeOptions) error {
 
 	// Volume mounts
 	for hostPath, containerPath := range opts.Volumes {
-		args = append(args, "-v", fmt.Sprintf("%s:%s", hostPath, containerPath))
+		args = append(args, "-v", cli.Sprintf("%s:%s", hostPath, containerPath))
 	}
 
 	args = append(args, imageRef)
@@ -311,10 +312,10 @@ func ServeProduction(ctx context.Context, opts ServeOptions) error {
 	if opts.Detach {
 		output, err := cmd.Output()
 		if err != nil {
-			return fmt.Errorf("failed to start container: %w", err)
+			return cli.WrapVerb(err, "start", "container")
 		}
 		containerID := strings.TrimSpace(string(output))
-		fmt.Fprintf(opts.Output, "Container started: %s\n", containerID[:12])
+		cli.Print("Container started: %s\n", containerID[:12])
 		return nil
 	}
 
@@ -324,7 +325,7 @@ func ServeProduction(ctx context.Context, opts ServeOptions) error {
 // Shell opens a shell in a running container.
 func Shell(ctx context.Context, containerID string) error {
 	if containerID == "" {
-		return fmt.Errorf("container ID is required")
+		return cli.Err("container ID is required")
 	}
 
 	// Resolve partial container ID
@@ -367,7 +368,7 @@ func lookupLinuxKit() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("linuxkit not found. Install with: brew install linuxkit (macOS) or see https://github.com/linuxkit/linuxkit")
+	return "", cli.Err("linuxkit not found. Install with: brew install linuxkit (macOS) or see https://github.com/linuxkit/linuxkit")
 }
 
 // getLinuxKitTemplate retrieves a LinuxKit template by name.
@@ -379,7 +380,7 @@ func getLinuxKitTemplate(name string) (string, error) {
 
 	// Try to load from container package templates
 	// This would integrate with github.com/host-uk/core/pkg/container
-	return "", fmt.Errorf("template not found: %s", name)
+	return "", cli.Err("template not found: %s", name)
 }
 
 // applyTemplateVariables applies variable substitution to template content.
@@ -397,7 +398,7 @@ func resolveDockerContainerID(ctx context.Context, partialID string) (string, er
 	cmd := exec.CommandContext(ctx, "docker", "ps", "-a", "--no-trunc", "--format", "{{.ID}}")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to list containers: %w", err)
+		return "", cli.WrapVerb(err, "list", "containers")
 	}
 
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
@@ -411,11 +412,11 @@ func resolveDockerContainerID(ctx context.Context, partialID string) (string, er
 
 	switch len(matches) {
 	case 0:
-		return "", fmt.Errorf("no container found matching: %s", partialID)
+		return "", cli.Err("no container found matching: %s", partialID)
 	case 1:
 		return matches[0], nil
 	default:
-		return "", fmt.Errorf("multiple containers match '%s', be more specific", partialID)
+		return "", cli.Err("multiple containers match '%s', be more specific", partialID)
 	}
 }
 

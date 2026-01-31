@@ -3,9 +3,9 @@ package ci
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/release"
 )
@@ -18,13 +18,13 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Get current directory
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+		return cli.WrapVerb(err, "get", "working directory")
 	}
 
 	// Load configuration
 	cfg, err := release.LoadConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "config"), err)
+		return cli.WrapVerb(err, "load", "config")
 	}
 
 	// Apply CLI overrides
@@ -45,13 +45,13 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	}
 
 	// Print header
-	fmt.Printf("%s %s\n", releaseHeaderStyle.Render(i18n.T("cmd.ci.label.ci")), i18n.T("cmd.ci.publishing"))
+	cli.Print("%s %s\n", releaseHeaderStyle.Render(i18n.T("cmd.ci.label.ci")), i18n.T("cmd.ci.publishing"))
 	if dryRun {
-		fmt.Printf("  %s\n", releaseDimStyle.Render(i18n.T("cmd.ci.dry_run_hint")))
+		cli.Print("  %s\n", releaseDimStyle.Render(i18n.T("cmd.ci.dry_run_hint")))
 	} else {
-		fmt.Printf("  %s\n", releaseSuccessStyle.Render(i18n.T("cmd.ci.go_for_launch")))
+		cli.Print("  %s\n", releaseSuccessStyle.Render(i18n.T("cmd.ci.go_for_launch")))
 	}
-	fmt.Println()
+	cli.Line("")
 
 	// Check for publishers
 	if len(cfg.Publishers) == 0 {
@@ -61,19 +61,19 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	// Publish pre-built artifacts
 	rel, err := release.Publish(ctx, cfg, dryRun)
 	if err != nil {
-		fmt.Printf("%s %v\n", releaseErrorStyle.Render(i18n.Label("error")), err)
+		cli.Print("%s %v\n", releaseErrorStyle.Render(i18n.Label("error")), err)
 		return err
 	}
 
 	// Print summary
-	fmt.Println()
-	fmt.Printf("%s %s\n", releaseSuccessStyle.Render(i18n.T("i18n.done.pass")), i18n.T("cmd.ci.publish_completed"))
-	fmt.Printf("  %s   %s\n", i18n.Label("version"), releaseValueStyle.Render(rel.Version))
-	fmt.Printf("  %s %d\n", i18n.T("cmd.ci.label.artifacts"), len(rel.Artifacts))
+	cli.Line("")
+	cli.Print("%s %s\n", releaseSuccessStyle.Render(i18n.T("i18n.done.pass")), i18n.T("cmd.ci.publish_completed"))
+	cli.Print("  %s   %s\n", i18n.Label("version"), releaseValueStyle.Render(rel.Version))
+	cli.Print("  %s %d\n", i18n.T("cmd.ci.label.artifacts"), len(rel.Artifacts))
 
 	if !dryRun {
 		for _, pub := range cfg.Publishers {
-			fmt.Printf("  %s %s\n", i18n.T("cmd.ci.label.published"), releaseValueStyle.Render(pub.Type))
+			cli.Print("  %s %s\n", i18n.T("cmd.ci.label.published"), releaseValueStyle.Render(pub.Type))
 		}
 	}
 

@@ -3,7 +3,6 @@ package dev
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/spf13/cobra"
 )
 
 // CI-specific styles (aliases to shared)
@@ -45,12 +43,12 @@ var (
 )
 
 // addCICommand adds the 'ci' command to the given parent command.
-func addCICommand(parent *cobra.Command) {
-	ciCmd := &cobra.Command{
+func addCICommand(parent *cli.Command) {
+	ciCmd := &cli.Command{
 		Use:   "ci",
 		Short: i18n.T("cmd.dev.ci.short"),
 		Long:  i18n.T("cmd.dev.ci.long"),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			branch := ciBranch
 			if branch == "" {
 				branch = "main"
@@ -79,20 +77,20 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return fmt.Errorf("failed to load registry: %w", err)
+			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return fmt.Errorf("failed to load registry: %w", err)
+				return cli.Wrap(err, "failed to load registry")
 			}
 		} else {
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return fmt.Errorf("failed to scan directory: %w", err)
+				return cli.Wrap(err, "failed to scan directory")
 			}
 		}
 	}
@@ -104,15 +102,15 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 
 	repoList := reg.List()
 	for i, repo := range repoList {
-		repoFullName := fmt.Sprintf("%s/%s", reg.Org, repo.Name)
-		fmt.Printf("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.check")), i+1, len(repoList), repo.Name)
+		repoFullName := cli.Sprintf("%s/%s", reg.Org, repo.Name)
+		cli.Print("\033[2K\r%s %d/%d %s", dimStyle.Render(i18n.T("i18n.progress.check")), i+1, len(repoList), repo.Name)
 
 		runs, err := fetchWorkflowRuns(repoFullName, repo.Name, branch)
 		if err != nil {
 			if strings.Contains(err.Error(), "no workflows") {
 				noCI = append(noCI, repo.Name)
 			} else {
-				fetchErrors = append(fetchErrors, fmt.Errorf("%s: %w", repo.Name, err))
+				fetchErrors = append(fetchErrors, cli.Wrap(err, repo.Name))
 			}
 			continue
 		}
@@ -124,7 +122,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 			noCI = append(noCI, repo.Name)
 		}
 	}
-	fmt.Print("\033[2K\r") // Clear progress line
+	cli.Print("\033[2K\r") // Clear progress line
 
 	// Count by status
 	var success, failed, pending, other int
@@ -146,22 +144,22 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	}
 
 	// Print summary
-	fmt.Println()
-	fmt.Printf("%s", i18n.T("cmd.dev.ci.repos_checked", map[string]interface{}{"Count": len(repoList)}))
+	cli.Line("")
+	cli.Print("%s", i18n.T("cmd.dev.ci.repos_checked", map[string]interface{}{"Count": len(repoList)}))
 	if success > 0 {
-		fmt.Printf(" * %s", ciSuccessStyle.Render(i18n.T("cmd.dev.ci.passing", map[string]interface{}{"Count": success})))
+		cli.Print(" * %s", ciSuccessStyle.Render(i18n.T("cmd.dev.ci.passing", map[string]interface{}{"Count": success})))
 	}
 	if failed > 0 {
-		fmt.Printf(" * %s", ciFailureStyle.Render(i18n.T("cmd.dev.ci.failing", map[string]interface{}{"Count": failed})))
+		cli.Print(" * %s", ciFailureStyle.Render(i18n.T("cmd.dev.ci.failing", map[string]interface{}{"Count": failed})))
 	}
 	if pending > 0 {
-		fmt.Printf(" * %s", ciPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
+		cli.Print(" * %s", ciPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
 	}
 	if len(noCI) > 0 {
-		fmt.Printf(" * %s", ciSkippedStyle.Render(i18n.T("cmd.dev.ci.no_ci", map[string]interface{}{"Count": len(noCI)})))
+		cli.Print(" * %s", ciSkippedStyle.Render(i18n.T("cmd.dev.ci.no_ci", map[string]interface{}{"Count": len(noCI)})))
 	}
-	fmt.Println()
-	fmt.Println()
+	cli.Line("")
+	cli.Line("")
 
 	// Filter if needed
 	displayRuns := allRuns
@@ -181,9 +179,9 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 
 	// Print errors
 	if len(fetchErrors) > 0 {
-		fmt.Println()
+		cli.Line("")
 		for _, err := range fetchErrors {
-			fmt.Printf("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
+			cli.Print("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}
 	}
 
@@ -204,7 +202,7 @@ func fetchWorkflowRuns(repoFullName, repoName string, branch string) ([]Workflow
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			stderr := string(exitErr.Stderr)
-			return nil, fmt.Errorf("%s", strings.TrimSpace(stderr))
+			return nil, cli.Err("%s", strings.TrimSpace(stderr))
 		}
 		return nil, err
 	}
@@ -252,7 +250,7 @@ func printWorkflowRun(run WorkflowRun) {
 	// Age
 	age := cli.FormatAge(run.UpdatedAt)
 
-	fmt.Printf("  %s %-18s %-22s %s\n",
+	cli.Print("  %s %-18s %-22s %s\n",
 		status,
 		repoNameStyle.Render(run.RepoName),
 		dimStyle.Render(workflowName),

@@ -2,10 +2,11 @@ package php
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/host-uk/core/pkg/cli"
 )
 
 // LinkedPackage represents a linked local package.
@@ -27,12 +28,12 @@ func readComposerJSON(dir string) (map[string]json.RawMessage, error) {
 	composerPath := filepath.Join(dir, "composer.json")
 	data, err := os.ReadFile(composerPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read composer.json: %w", err)
+		return nil, cli.WrapVerb(err, "read", "composer.json")
 	}
 
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, fmt.Errorf("failed to parse composer.json: %w", err)
+		return nil, cli.WrapVerb(err, "parse", "composer.json")
 	}
 
 	return raw, nil
@@ -44,14 +45,14 @@ func writeComposerJSON(dir string, raw map[string]json.RawMessage) error {
 
 	data, err := json.MarshalIndent(raw, "", "    ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal composer.json: %w", err)
+		return cli.WrapVerb(err, "marshal", "composer.json")
 	}
 
 	// Add trailing newline
 	data = append(data, '\n')
 
 	if err := os.WriteFile(composerPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write composer.json: %w", err)
+		return cli.WrapVerb(err, "write", "composer.json")
 	}
 
 	return nil
@@ -66,7 +67,7 @@ func getRepositories(raw map[string]json.RawMessage) ([]composerRepository, erro
 
 	var repos []composerRepository
 	if err := json.Unmarshal(reposRaw, &repos); err != nil {
-		return nil, fmt.Errorf("failed to parse repositories: %w", err)
+		return nil, cli.WrapVerb(err, "parse", "repositories")
 	}
 
 	return repos, nil
@@ -81,7 +82,7 @@ func setRepositories(raw map[string]json.RawMessage, repos []composerRepository)
 
 	reposData, err := json.Marshal(repos)
 	if err != nil {
-		return fmt.Errorf("failed to marshal repositories: %w", err)
+		return cli.WrapVerb(err, "marshal", "repositories")
 	}
 
 	raw["repositories"] = reposData
@@ -93,7 +94,7 @@ func getPackageInfo(packagePath string) (name, version string, err error) {
 	composerPath := filepath.Join(packagePath, "composer.json")
 	data, err := os.ReadFile(composerPath)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to read package composer.json: %w", err)
+		return "", "", cli.WrapVerb(err, "read", "package composer.json")
 	}
 
 	var pkg struct {
@@ -102,11 +103,11 @@ func getPackageInfo(packagePath string) (name, version string, err error) {
 	}
 
 	if err := json.Unmarshal(data, &pkg); err != nil {
-		return "", "", fmt.Errorf("failed to parse package composer.json: %w", err)
+		return "", "", cli.WrapVerb(err, "parse", "package composer.json")
 	}
 
 	if pkg.Name == "" {
-		return "", "", fmt.Errorf("package name not found in composer.json")
+		return "", "", cli.Err("package name not found in composer.json")
 	}
 
 	return pkg.Name, pkg.Version, nil
@@ -115,7 +116,7 @@ func getPackageInfo(packagePath string) (name, version string, err error) {
 // LinkPackages adds path repositories to composer.json for local package development.
 func LinkPackages(dir string, packages []string) error {
 	if !IsPHPProject(dir) {
-		return fmt.Errorf("not a PHP project (missing composer.json)")
+		return cli.Err("not a PHP project (missing composer.json)")
 	}
 
 	raw, err := readComposerJSON(dir)
@@ -132,18 +133,18 @@ func LinkPackages(dir string, packages []string) error {
 		// Resolve absolute path
 		absPath, err := filepath.Abs(packagePath)
 		if err != nil {
-			return fmt.Errorf("failed to resolve path %s: %w", packagePath, err)
+			return cli.Err("failed to resolve path %s: %w", packagePath, err)
 		}
 
 		// Verify the path exists and has a composer.json
 		if !IsPHPProject(absPath) {
-			return fmt.Errorf("not a PHP package (missing composer.json): %s", absPath)
+			return cli.Err("not a PHP package (missing composer.json): %s", absPath)
 		}
 
 		// Get package name for validation
 		pkgName, _, err := getPackageInfo(absPath)
 		if err != nil {
-			return fmt.Errorf("failed to get package info from %s: %w", absPath, err)
+			return cli.Err("failed to get package info from %s: %w", absPath, err)
 		}
 
 		// Check if already linked
@@ -168,7 +169,7 @@ func LinkPackages(dir string, packages []string) error {
 			},
 		})
 
-		fmt.Printf("Linked: %s -> %s\n", pkgName, absPath)
+		cli.Print("Linked: %s -> %s\n", pkgName, absPath)
 	}
 
 	if err := setRepositories(raw, repos); err != nil {
@@ -181,7 +182,7 @@ func LinkPackages(dir string, packages []string) error {
 // UnlinkPackages removes path repositories from composer.json.
 func UnlinkPackages(dir string, packages []string) error {
 	if !IsPHPProject(dir) {
-		return fmt.Errorf("not a PHP project (missing composer.json)")
+		return cli.Err("not a PHP project (missing composer.json)")
 	}
 
 	raw, err := readComposerJSON(dir)
@@ -216,7 +217,7 @@ func UnlinkPackages(dir string, packages []string) error {
 			pkgName, _, err := getPackageInfo(repo.URL)
 			if err == nil && toUnlink[pkgName] {
 				shouldUnlink = true
-				fmt.Printf("Unlinked: %s\n", pkgName)
+				cli.Print("Unlinked: %s\n", pkgName)
 			}
 		}
 
@@ -224,7 +225,7 @@ func UnlinkPackages(dir string, packages []string) error {
 		for pkg := range toUnlink {
 			if repo.URL == pkg || filepath.Base(repo.URL) == pkg {
 				shouldUnlink = true
-				fmt.Printf("Unlinked: %s\n", repo.URL)
+				cli.Print("Unlinked: %s\n", repo.URL)
 				break
 			}
 		}
@@ -244,7 +245,7 @@ func UnlinkPackages(dir string, packages []string) error {
 // UpdatePackages runs composer update for specific packages.
 func UpdatePackages(dir string, packages []string) error {
 	if !IsPHPProject(dir) {
-		return fmt.Errorf("not a PHP project (missing composer.json)")
+		return cli.Err("not a PHP project (missing composer.json)")
 	}
 
 	args := []string{"update"}
@@ -261,7 +262,7 @@ func UpdatePackages(dir string, packages []string) error {
 // ListLinkedPackages returns all path repositories from composer.json.
 func ListLinkedPackages(dir string) ([]LinkedPackage, error) {
 	if !IsPHPProject(dir) {
-		return nil, fmt.Errorf("not a PHP project (missing composer.json)")
+		return nil, cli.Err("not a PHP project (missing composer.json)")
 	}
 
 	raw, err := readComposerJSON(dir)

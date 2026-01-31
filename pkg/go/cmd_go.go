@@ -6,7 +6,6 @@ package gocmd
 import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 // Style aliases for shared styles
@@ -17,8 +16,8 @@ var (
 )
 
 // AddGoCommands adds Go development commands.
-func AddGoCommands(root *cobra.Command) {
-	goCmd := &cobra.Command{
+func AddGoCommands(root *cli.Command) {
+	goCmd := &cli.Command{
 		Use:   "go",
 		Short: i18n.T("cmd.go.short"),
 		Long:  i18n.T("cmd.go.long"),

@@ -1,9 +1,9 @@
 package ci
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/release"
 )
@@ -12,14 +12,14 @@ import (
 func runCIReleaseVersion() error {
 	projectDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
+		return cli.WrapVerb(err, "get", "working directory")
 	}
 
 	version, err := release.DetermineVersion(projectDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.determine", "version"), err)
+		return cli.WrapVerb(err, "determine", "version")
 	}
 
-	fmt.Printf("%s %s\n", i18n.Label("version"), releaseValueStyle.Render(version))
+	cli.Print("%s %s\n", i18n.Label("version"), releaseValueStyle.Render(version))
 	return nil
 }

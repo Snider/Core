@@ -2,13 +2,12 @@ package gocmd
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -16,12 +15,12 @@ var (
 	installNoCgo   bool
 )
 
-func addGoInstallCommand(parent *cobra.Command) {
-	installCmd := &cobra.Command{
+func addGoInstallCommand(parent *cli.Command) {
+	installCmd := &cli.Command{
 		Use:   "install [path]",
 		Short: "Install Go binary",
 		Long:  "Install Go binary to $GOPATH/bin",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			// Get install path from args or default to current dir
 			installPath := "./..."
 			if len(args) > 0 {
@@ -39,10 +38,10 @@ func addGoInstallCommand(parent *cobra.Command) {
 				}
 			}
 
-			fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("install")), i18n.Progress("install"))
-			fmt.Printf("  %s %s\n", dimStyle.Render(i18n.Label("path")), installPath)
+			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("install")), i18n.Progress("install"))
+			cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("path")), installPath)
 			if installNoCgo {
-				fmt.Printf("  %s %s\n", dimStyle.Render(i18n.Label("cgo")), "disabled")
+				cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("cgo")), "disabled")
 			}
 
 			cmdArgs := []string{"install"}
@@ -59,7 +58,7 @@ func addGoInstallCommand(parent *cobra.Command) {
 			execCmd.Stderr = os.Stderr
 
 			if err := execCmd.Run(); err != nil {
-				fmt.Printf("\n%s\n", errorStyle.Render(i18n.T("i18n.fail.install", "binary")))
+				cli.Print("\n%s\n", errorStyle.Render(i18n.T("i18n.fail.install", "binary")))
 				return err
 			}
 
@@ -71,7 +70,7 @@ func addGoInstallCommand(parent *cobra.Command) {
 			}
 			binDir := filepath.Join(gopath, "bin")
 
-			fmt.Printf("\n%s %s\n", successStyle.Render(i18n.T("i18n.done.install")), binDir)
+			cli.Print("\n%s %s\n", successStyle.Render(i18n.T("i18n.done.install")), binDir)
 			return nil
 		},
 	}
@@ -82,18 +81,18 @@ func addGoInstallCommand(parent *cobra.Command) {
 	parent.AddCommand(installCmd)
 }
 
-func addGoModCommand(parent *cobra.Command) {
-	modCmd := &cobra.Command{
+func addGoModCommand(parent *cli.Command) {
+	modCmd := &cli.Command{
 		Use:   "mod",
 		Short: "Module management",
 		Long:  "Go module management commands",
 	}
 
 	// tidy
-	tidyCmd := &cobra.Command{
+	tidyCmd := &cli.Command{
 		Use:   "tidy",
 		Short: "Run go mod tidy",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "tidy")
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -102,10 +101,10 @@ func addGoModCommand(parent *cobra.Command) {
 	}
 
 	// download
-	downloadCmd := &cobra.Command{
+	downloadCmd := &cli.Command{
 		Use:   "download",
 		Short: "Download module dependencies",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "download")
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -114,10 +113,10 @@ func addGoModCommand(parent *cobra.Command) {
 	}
 
 	// verify
-	verifyCmd := &cobra.Command{
+	verifyCmd := &cli.Command{
 		Use:   "verify",
 		Short: "Verify module checksums",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "verify")
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -126,10 +125,10 @@ func addGoModCommand(parent *cobra.Command) {
 	}
 
 	// graph
-	graphCmd := &cobra.Command{
+	graphCmd := &cli.Command{
 		Use:   "graph",
 		Short: "Print module dependency graph",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			execCmd := exec.Command("go", "mod", "graph")
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -144,18 +143,18 @@ func addGoModCommand(parent *cobra.Command) {
 	parent.AddCommand(modCmd)
 }
 
-func addGoWorkCommand(parent *cobra.Command) {
-	workCmd := &cobra.Command{
+func addGoWorkCommand(parent *cli.Command) {
+	workCmd := &cli.Command{
 		Use:   "work",
 		Short: "Workspace management",
 		Long:  "Go workspace management commands",
 	}
 
 	// sync
-	syncCmd := &cobra.Command{
+	syncCmd := &cli.Command{
 		Use:   "sync",
 		Short: "Sync workspace modules",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			execCmd := exec.Command("go", "work", "sync")
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -164,10 +163,10 @@ func addGoWorkCommand(parent *cobra.Command) {
 	}
 
 	// init
-	initCmd := &cobra.Command{
+	initCmd := &cli.Command{
 		Use:   "init",
 		Short: "Initialise a new workspace",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			execCmd := exec.Command("go", "work", "init")
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -186,10 +185,10 @@ func addGoWorkCommand(parent *cobra.Command) {
 	}
 
 	// use
-	useCmd := &cobra.Command{
+	useCmd := &cli.Command{
 		Use:   "use [modules...]",
 		Short: "Add modules to workspace",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cli.Command, args []string) error {
 			if len(args) == 0 {
 				// Auto-detect modules
 				modules := findGoModules(".")
@@ -203,7 +202,7 @@ func addGoWorkCommand(parent *cobra.Command) {
 					if err := execCmd.Run(); err != nil {
 						return err
 					}
-					fmt.Printf("%s %s\n", successStyle.Render(i18n.T("i18n.done.add")), mod)
+					cli.Print("%s %s\n", successStyle.Render(i18n.T("i18n.done.add")), mod)
 				}
 				return nil
 			}

@@ -2,12 +2,12 @@ package dev
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/repos"
@@ -73,7 +73,7 @@ func (s *Service) runWork(task TaskWork) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("No git repositories found")
+		cli.Text("No git repositories found")
 		return nil
 	}
 
@@ -83,7 +83,7 @@ func (s *Service) runWork(task TaskWork) error {
 		Names: names,
 	})
 	if !handled {
-		return fmt.Errorf("git service not available")
+		return cli.Err("git service not available")
 	}
 	if err != nil {
 		return err
@@ -116,9 +116,9 @@ func (s *Service) runWork(task TaskWork) error {
 
 	// Auto-commit dirty repos if requested
 	if task.AutoCommit && len(dirtyRepos) > 0 {
-		fmt.Println()
-		fmt.Println("Committing changes...")
-		fmt.Println()
+		cli.Line("")
+		cli.Text("Committing changes...")
+		cli.Line("")
 
 		for _, repo := range dirtyRepos {
 			_, handled, err := s.Core().PERFORM(agentic.TaskCommit{
@@ -127,13 +127,13 @@ func (s *Service) runWork(task TaskWork) error {
 			})
 			if !handled {
 				// Agentic service not available - skip silently
-				fmt.Printf("  - %s: agentic service not available\n", repo.Name)
+				cli.Print("  - %s: agentic service not available\n", repo.Name)
 				continue
 			}
 			if err != nil {
-				fmt.Printf("  x %s: %s\n", repo.Name, err)
+				cli.Print("  x %s: %s\n", repo.Name, err)
 			} else {
-				fmt.Printf("  v %s\n", repo.Name)
+				cli.Print("  v %s\n", repo.Name)
 			}
 		}
 
@@ -156,35 +156,35 @@ func (s *Service) runWork(task TaskWork) error {
 	// If status only, we're done
 	if task.StatusOnly {
 		if len(dirtyRepos) > 0 && !task.AutoCommit {
-			fmt.Println()
-			fmt.Println("Use --commit flag to auto-commit dirty repos")
+			cli.Line("")
+			cli.Text("Use --commit flag to auto-commit dirty repos")
 		}
 		return nil
 	}
 
 	// Push repos with unpushed commits
 	if len(aheadRepos) == 0 {
-		fmt.Println()
-		fmt.Println("All repositories are up to date")
+		cli.Line("")
+		cli.Text("All repositories are up to date")
 		return nil
 	}
 
-	fmt.Println()
-	fmt.Printf("%d repos with unpushed commits:\n", len(aheadRepos))
+	cli.Line("")
+	cli.Print("%d repos with unpushed commits:\n", len(aheadRepos))
 	for _, st := range aheadRepos {
-		fmt.Printf("  %s: %d commits\n", st.Name, st.Ahead)
+		cli.Print("  %s: %d commits\n", st.Name, st.Ahead)
 	}
 
-	fmt.Println()
-	fmt.Print("Push all? [y/N] ")
+	cli.Line("")
+	cli.Print("Push all? [y/N] ")
 	var answer string
-	fmt.Scanln(&answer)
+	cli.Scanln(&answer)
 	if strings.ToLower(answer) != "y" {
-		fmt.Println("Aborted")
+		cli.Text("Aborted")
 		return nil
 	}
 
-	fmt.Println()
+	cli.Line("")
 
 	// Push each repo
 	for _, st := range aheadRepos {
@@ -193,17 +193,17 @@ func (s *Service) runWork(task TaskWork) error {
 			Name: st.Name,
 		})
 		if !handled {
-			fmt.Printf("  x %s: git service not available\n", st.Name)
+			cli.Print("  x %s: git service not available\n", st.Name)
 			continue
 		}
 		if err != nil {
 			if git.IsNonFastForward(err) {
-				fmt.Printf("  ! %s: branch has diverged\n", st.Name)
+				cli.Print("  ! %s: branch has diverged\n", st.Name)
 			} else {
-				fmt.Printf("  x %s: %s\n", st.Name, err)
+				cli.Print("  x %s: %s\n", st.Name, err)
 			}
 		} else {
-			fmt.Printf("  v %s\n", st.Name)
+			cli.Print("  v %s\n", st.Name)
 		}
 	}
 
@@ -217,7 +217,7 @@ func (s *Service) runStatus(task TaskStatus) error {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("No git repositories found")
+		cli.Text("No git repositories found")
 		return nil
 	}
 
@@ -226,7 +226,7 @@ func (s *Service) runStatus(task TaskStatus) error {
 		Names: names,
 	})
 	if !handled {
-		return fmt.Errorf("git service not available")
+		return cli.Err("git service not available")
 	}
 	if err != nil {
 		return err
@@ -248,25 +248,25 @@ func (s *Service) loadRegistry(registryPath string) ([]string, map[string]string
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to load registry: %w", err)
+			return nil, nil, cli.Wrap(err, "failed to load registry")
 		}
-		fmt.Printf("Registry: %s\n\n", registryPath)
+		cli.Print("Registry: %s\n\n", registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
 			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to load registry: %w", err)
+				return nil, nil, cli.Wrap(err, "failed to load registry")
 			}
-			fmt.Printf("Registry: %s\n\n", registryPath)
+			cli.Print("Registry: %s\n\n", registryPath)
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to scan directory: %w", err)
+				return nil, nil, cli.Wrap(err, "failed to scan directory")
 			}
-			fmt.Printf("Scanning: %s\n\n", cwd)
+			cli.Print("Scanning: %s\n\n", cwd)
 		}
 	}
 
@@ -293,20 +293,20 @@ func (s *Service) printStatusTable(statuses []git.RepoStatus) {
 	}
 
 	// Print header
-	fmt.Printf("%-*s  %8s  %9s  %6s  %5s\n",
+	cli.Print("%-*s  %8s  %9s  %6s  %5s\n",
 		nameWidth, "Repo", "Modified", "Untracked", "Staged", "Ahead")
 
 	// Print separator
-	fmt.Println(strings.Repeat("-", nameWidth+2+10+11+8+7))
+	cli.Text(strings.Repeat("-", nameWidth+2+10+11+8+7))
 
 	// Print rows
 	for _, st := range statuses {
 		if st.Error != nil {
-			fmt.Printf("%-*s  error: %s\n", nameWidth, st.Name, st.Error)
+			cli.Print("%-*s  error: %s\n", nameWidth, st.Name, st.Error)
 			continue
 		}
 
-		fmt.Printf("%-*s  %8d  %9d  %6d  %5d\n",
+		cli.Print("%-*s  %8d  %9d  %6d  %5d\n",
 			nameWidth, st.Name,
 			st.Modified, st.Untracked, st.Staged, st.Ahead)
 	}
