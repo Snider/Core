@@ -9,7 +9,7 @@ import (
 
 // Style aliases from shared package
 var (
-	repoNameStyle = cli.RepoNameStyle
+	repoNameStyle = cli.RepoStyle
 	successStyle  = cli.SuccessStyle
 	errorStyle    = cli.ErrorStyle
 	dimStyle      = cli.DimStyle
