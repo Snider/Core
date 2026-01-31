@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
 )
@@ -98,4 +99,63 @@ func Label(word, value string) {
 // Scanln reads from stdin.
 func Scanln(a ...any) (int, error) {
 	return fmt.Scanln(a...)
+}
+
+// Task prints a task header: "[label] message"
+//
+//	cli.Task("php", "Running tests...")  // [php] Running tests...
+//	cli.Task("go", i18n.Progress("build"))  // [go] Building...
+func Task(label, message string) {
+	fmt.Printf("%s %s\n\n", DimStyle.Render("["+label+"]"), message)
+}
+
+// Section prints a section header: "── SECTION ──"
+//
+//	cli.Section("audit")  // ── AUDIT ──
+func Section(name string) {
+	header := "── " + strings.ToUpper(name) + " ──"
+	fmt.Println(AccentStyle.Render(header))
+}
+
+// Hint prints a labelled hint: "label: message"
+//
+//	cli.Hint("install", "composer require vimeo/psalm")
+//	cli.Hint("fix", "core php fmt --fix")
+func Hint(label, message string) {
+	fmt.Printf("  %s %s\n", DimStyle.Render(label+":"), message)
+}
+
+// Severity prints a severity-styled message.
+//
+//	cli.Severity("critical", "SQL injection")  // red, bold
+//	cli.Severity("high", "XSS vulnerability")  // orange
+//	cli.Severity("medium", "Missing CSRF")     // amber
+//	cli.Severity("low", "Debug enabled")       // gray
+func Severity(level, message string) {
+	var style *AnsiStyle
+	switch strings.ToLower(level) {
+	case "critical":
+		style = NewStyle().Bold().Foreground(ColourRed500)
+	case "high":
+		style = NewStyle().Bold().Foreground(ColourOrange500)
+	case "medium":
+		style = NewStyle().Foreground(ColourAmber500)
+	case "low":
+		style = NewStyle().Foreground(ColourGray500)
+	default:
+		style = DimStyle
+	}
+	fmt.Printf("  %s %s\n", style.Render("["+level+"]"), message)
+}
+
+// Result prints a result line: "✓ message" or "✗ message"
+//
+//	cli.Result(passed, "All tests passed")
+//	cli.Result(false, "3 tests failed")
+func Result(passed bool, message string) {
+	if passed {
+		Success(message)
+	} else {
+		Error(message)
+	}
 }
