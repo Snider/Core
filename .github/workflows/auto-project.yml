@@ -6,6 +6,7 @@ on:
 
 permissions:
   issues: read
+  repository-projects: write
 
 jobs:
   add-to-project:
@@ -16,18 +17,18 @@ jobs:
         uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/orgs/host-uk/projects/2
-          github-token: ${{ secrets.PROJECT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add to Core.GO (lang:go label)
         if: contains(github.event.issue.labels.*.name, 'lang:go')
         uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/orgs/host-uk/projects/4
-          github-token: ${{ secrets.PROJECT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add to Core.Framework (scope:arch label)
         if: contains(github.event.issue.labels.*.name, 'scope:arch')
         uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/orgs/host-uk/projects/1
-          github-token: ${{ secrets.PROJECT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
