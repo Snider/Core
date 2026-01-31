@@ -2,8 +2,10 @@ package dev
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
@@ -116,9 +118,9 @@ func runHealth(registryPath string, verbose bool) error {
 	}
 
 	// Print summary line
-	cli.Line("")
+	cli.Blank()
 	printHealthSummary(totalRepos, dirtyRepos, aheadRepos, behindRepos, errorRepos)
-	cli.Line("")
+	cli.Blank()
 
 	// Verbose output
 	if verbose {
@@ -134,7 +136,7 @@ func runHealth(registryPath string, verbose bool) error {
 		if len(errorRepos) > 0 {
 			cli.Print("%s %s\n", errorStyle.Render(i18n.T("cmd.dev.health.errors_label")), formatRepoList(errorRepos))
 		}
-		cli.Line("")
+		cli.Blank()
 	}
 
 	return nil
@@ -142,36 +144,36 @@ func runHealth(registryPath string, verbose bool) error {
 
 func printHealthSummary(total int, dirty, ahead, behind, errors []string) {
 	parts := []string{
-		cli.StatusPart(total, i18n.T("cmd.dev.health.repos"), cli.ValueStyle),
+		statusPart(total, i18n.T("cmd.dev.health.repos"), cli.ValueStyle),
 	}
 
 	// Dirty status
 	if len(dirty) > 0 {
-		parts = append(parts, cli.StatusPart(len(dirty), i18n.T("common.status.dirty"), cli.WarningStyle))
+		parts = append(parts, statusPart(len(dirty), i18n.T("common.status.dirty"), cli.WarningStyle))
 	} else {
-		parts = append(parts, cli.StatusText(i18n.T("cmd.dev.status.clean"), cli.SuccessStyle))
+		parts = append(parts, statusText(i18n.T("cmd.dev.status.clean"), cli.SuccessStyle))
 	}
 
 	// Push status
 	if len(ahead) > 0 {
-		parts = append(parts, cli.StatusPart(len(ahead), i18n.T("cmd.dev.health.to_push"), cli.ValueStyle))
+		parts = append(parts, statusPart(len(ahead), i18n.T("cmd.dev.health.to_push"), cli.ValueStyle))
 	} else {
-		parts = append(parts, cli.StatusText(i18n.T("common.status.synced"), cli.SuccessStyle))
+		parts = append(parts, statusText(i18n.T("common.status.synced"), cli.SuccessStyle))
 	}
 
 	// Pull status
 	if len(behind) > 0 {
-		parts = append(parts, cli.StatusPart(len(behind), i18n.T("cmd.dev.health.to_pull"), cli.WarningStyle))
+		parts = append(parts, statusPart(len(behind), i18n.T("cmd.dev.health.to_pull"), cli.WarningStyle))
 	} else {
-		parts = append(parts, cli.StatusText(i18n.T("common.status.up_to_date"), cli.SuccessStyle))
+		parts = append(parts, statusText(i18n.T("common.status.up_to_date"), cli.SuccessStyle))
 	}
 
 	// Errors (only if any)
 	if len(errors) > 0 {
-		parts = append(parts, cli.StatusPart(len(errors), i18n.T("cmd.dev.health.errors"), cli.ErrorStyle))
+		parts = append(parts, statusPart(len(errors), i18n.T("cmd.dev.health.errors"), cli.ErrorStyle))
 	}
 
-	cli.Text(cli.StatusLine(parts...))
+	cli.Text(statusLine(parts...))
 }
 
 func formatRepoList(reposList []string) string {
@@ -190,4 +192,16 @@ func joinRepos(reposList []string) string {
 		result += r
 	}
 	return result
+}
+
+func statusPart(count int, label string, style *cli.AnsiStyle) string {
+	return style.Render(fmt.Sprintf("%d %s", count, label))
+}
+
+func statusText(text string, style *cli.AnsiStyle) string {
+	return style.Render(text)
+}
+
+func statusLine(parts ...string) string {
+	return strings.Join(parts, " | ")
 }

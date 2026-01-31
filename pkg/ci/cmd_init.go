@@ -1,74 +1,43 @@
 package ci
 
 import (
-	"bufio"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/release"
 )
 
-// runCIReleaseInit creates a release configuration interactively.
 func runCIReleaseInit() error {
-	projectDir, err := os.Getwd()
+	cwd, err := os.Getwd()
 	if err != nil {
-		return cli.WrapVerb(err, "get", "working directory")
+		return cli.Err("%s: %w", i18n.T("i18n.fail.get", "working directory"), err)
 	}
 
-	// Check if config already exists
-	if release.ConfigExists(projectDir) {
-		cli.Print("%s %s %s\n",
-			releaseDimStyle.Render(i18n.Label("note")),
-			i18n.T("cmd.ci.init.config_exists"),
-			release.ConfigPath(projectDir))
+	cli.Print("%s %s\n\n", releaseDimStyle.Render(i18n.Label("init")), i18n.T("cmd.ci.init.initializing"))
 
-		reader := bufio.NewReader(os.Stdin)
-		cli.Print("%s", i18n.T("cmd.ci.init.overwrite_prompt"))
-		response, _ := reader.ReadString('\n')
-		response = strings.TrimSpace(strings.ToLower(response))
-		if response != "y" && response != "yes" {
-			cli.Text(i18n.T("common.prompt.abort"))
-			return nil
-		}
+	// Check if already initialized
+	if release.ConfigExists(cwd) {
+		cli.Text(i18n.T("cmd.ci.init.already_initialized"))
+		return nil
 	}
 
-	cli.Print("%s %s\n", releaseHeaderStyle.Render(i18n.T("cmd.ci.label.init")), i18n.T("cmd.ci.init.creating"))
-	cli.Line("")
-
-	reader := bufio.NewReader(os.Stdin)
-
-	// Project name
-	defaultName := filepath.Base(projectDir)
-	cli.Print("%s [%s]: ", i18n.T("cmd.ci.init.project_name"), defaultName)
-	name, _ := reader.ReadString('\n')
-	name = strings.TrimSpace(name)
-	if name == "" {
-		name = defaultName
-	}
-
-	// Repository
-	cli.Print("%s ", i18n.T("cmd.ci.init.github_repo"))
-	repo, _ := reader.ReadString('\n')
-	repo = strings.TrimSpace(repo)
-
-	// Create config
+	// Create release config
 	cfg := release.DefaultConfig()
-	cfg.Project.Name = name
-	cfg.Project.Repository = repo
-
-	// Write config
-	if err := release.WriteConfig(cfg, projectDir); err != nil {
-		return cli.WrapVerb(err, "write", "config")
+	if err := release.WriteConfig(cfg, cwd); err != nil {
+		return cli.Err("%s: %w", i18n.T("i18n.fail.create", "config"), err)
 	}
 
-	cli.Line("")
-	cli.Print("%s %s %s\n",
-		releaseSuccessStyle.Render(i18n.T("i18n.done.pass")),
-		i18n.T("cmd.ci.init.config_written"),
-		release.ConfigPath(projectDir))
+	cli.Blank()
+	cli.Print("%s %s\n", releaseSuccessStyle.Render("v"), i18n.T("cmd.ci.init.created_config"))
+
+	// Templates init removed as functionality not exposed
+
+	cli.Blank()
+
+	cli.Text(i18n.T("cmd.ci.init.next_steps"))
+	cli.Print("  %s\n", i18n.T("cmd.ci.init.edit_config"))
+	cli.Print("  %s\n", i18n.T("cmd.ci.init.run_ci"))
 
 	return nil
 }

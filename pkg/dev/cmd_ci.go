@@ -17,7 +17,7 @@ import (
 var (
 	ciSuccessStyle = cli.SuccessStyle
 	ciFailureStyle = cli.ErrorStyle
-	ciPendingStyle = cli.StatusWarningStyle
+	ciPendingStyle = cli.WarningStyle
 	ciSkippedStyle = cli.DimStyle
 )
 
@@ -144,7 +144,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	}
 
 	// Print summary
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s", i18n.T("cmd.dev.ci.repos_checked", map[string]interface{}{"Count": len(repoList)}))
 	if success > 0 {
 		cli.Print(" * %s", ciSuccessStyle.Render(i18n.T("cmd.dev.ci.passing", map[string]interface{}{"Count": success})))
@@ -158,8 +158,8 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	if len(noCI) > 0 {
 		cli.Print(" * %s", ciSkippedStyle.Render(i18n.T("cmd.dev.ci.no_ci", map[string]interface{}{"Count": len(noCI)})))
 	}
-	cli.Line("")
-	cli.Line("")
+	cli.Blank()
+	cli.Blank()
 
 	// Filter if needed
 	displayRuns := allRuns
@@ -179,7 +179,7 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 
 	// Print errors
 	if len(fetchErrors) > 0 {
-		cli.Line("")
+		cli.Blank()
 		for _, err := range fetchErrors {
 			cli.Print("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}

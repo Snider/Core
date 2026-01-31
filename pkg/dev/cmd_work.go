@@ -106,9 +106,9 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 	// Auto-commit dirty repos if requested
 	if autoCommit && len(dirtyRepos) > 0 {
-		cli.Line("")
+		cli.Blank()
 		cli.Print("%s\n", cli.TitleStyle.Render(i18n.T("cmd.dev.commit.committing")))
-		cli.Line("")
+		cli.Blank()
 
 		for _, s := range dirtyRepos {
 			// PERFORM commit via agentic service
@@ -146,7 +146,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	// If status only, we're done
 	if statusOnly {
 		if len(dirtyRepos) > 0 && !autoCommit {
-			cli.Line("")
+			cli.Blank()
 			cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.dev.work.use_commit_flag")))
 		}
 		return nil
@@ -154,24 +154,24 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 	// Push repos with unpushed commits
 	if len(aheadRepos) == 0 {
-		cli.Line("")
+		cli.Blank()
 		cli.Text(i18n.T("cmd.dev.work.all_up_to_date"))
 		return nil
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s\n", i18n.T("common.count.repos_unpushed", map[string]interface{}{"Count": len(aheadRepos)}))
 	for _, s := range aheadRepos {
 		cli.Print("  %s: %s\n", s.Name, i18n.T("common.count.commits", map[string]interface{}{"Count": s.Ahead}))
 	}
 
-	cli.Line("")
+	cli.Blank()
 	if !cli.Confirm(i18n.T("cmd.dev.push.confirm")) {
 		cli.Text(i18n.T("cli.aborted"))
 		return nil
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// PERFORM push for each repo
 	var divergedRepos []git.RepoStatus
@@ -199,10 +199,10 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 	// Handle diverged repos - offer to pull and retry
 	if len(divergedRepos) > 0 {
-		cli.Line("")
+		cli.Blank()
 		cli.Print("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 		if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
-			cli.Line("")
+			cli.Blank()
 			for _, s := range divergedRepos {
 				cli.Print("  %s %s...\n", dimStyle.Render("↓"), s.Name)
 

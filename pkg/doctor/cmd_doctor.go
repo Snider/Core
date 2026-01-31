@@ -44,13 +44,13 @@ func runDoctor(verbose bool) error {
 		ok, version := runCheck(c)
 		if ok {
 			if verbose {
-				fmt.Println(cli.CheckResult(true, c.name, version))
+				fmt.Println(formatCheckResult(true, c.name, version))
 			} else {
-				fmt.Println(cli.CheckResult(true, c.name, ""))
+				fmt.Println(formatCheckResult(true, c.name, ""))
 			}
 			passed++
 		} else {
-			fmt.Printf("  %s %s - %s\n", errorStyle.Render(cli.SymbolCross), c.name, c.description)
+			fmt.Printf("  %s %s - %s\n", errorStyle.Render(cli.Glyph(":cross:")), c.name, c.description)
 			failed++
 		}
 	}
@@ -61,13 +61,13 @@ func runDoctor(verbose bool) error {
 		ok, version := runCheck(c)
 		if ok {
 			if verbose {
-				fmt.Println(cli.CheckResult(true, c.name, version))
+				fmt.Println(formatCheckResult(true, c.name, version))
 			} else {
-				fmt.Println(cli.CheckResult(true, c.name, ""))
+				fmt.Println(formatCheckResult(true, c.name, ""))
 			}
 			passed++
 		} else {
-			fmt.Printf("  %s %s - %s\n", dimStyle.Render(cli.SymbolSkip), c.name, dimStyle.Render(c.description))
+			fmt.Printf("  %s %s - %s\n", dimStyle.Render(cli.Glyph(":skip:")), c.name, dimStyle.Render(c.description))
 			optional++
 		}
 	}
@@ -75,16 +75,16 @@ func runDoctor(verbose bool) error {
 	// Check GitHub access
 	fmt.Printf("\n%s\n", i18n.T("cmd.doctor.github"))
 	if checkGitHubSSH() {
-		fmt.Println(cli.CheckResult(true, i18n.T("cmd.doctor.ssh_found"), ""))
+		fmt.Println(formatCheckResult(true, i18n.T("cmd.doctor.ssh_found"), ""))
 	} else {
-		fmt.Printf("  %s %s\n", errorStyle.Render(cli.SymbolCross), i18n.T("cmd.doctor.ssh_missing"))
+		fmt.Printf("  %s %s\n", errorStyle.Render(cli.Glyph(":cross:")), i18n.T("cmd.doctor.ssh_missing"))
 		failed++
 	}
 
 	if checkGitHubCLI() {
-		fmt.Println(cli.CheckResult(true, i18n.T("cmd.doctor.cli_auth"), ""))
+		fmt.Println(formatCheckResult(true, i18n.T("cmd.doctor.cli_auth"), ""))
 	} else {
-		fmt.Printf("  %s %s\n", errorStyle.Render(cli.SymbolCross), i18n.T("cmd.doctor.cli_auth_missing"))
+		fmt.Printf("  %s %s\n", errorStyle.Render(cli.Glyph(":cross:")), i18n.T("cmd.doctor.cli_auth_missing"))
 		failed++
 	}
 
@@ -103,4 +103,19 @@ func runDoctor(verbose bool) error {
 
 	cli.Success(i18n.T("cmd.doctor.ready"))
 	return nil
+}
+
+func formatCheckResult(ok bool, name, detail string) string {
+	check := cli.Check(name)
+	if ok {
+		check.Pass()
+	} else {
+		check.Fail()
+	}
+	if detail != "" {
+		check.Message(detail)
+	} else {
+		check.Message("")
+	}
+	return check.String()
 }

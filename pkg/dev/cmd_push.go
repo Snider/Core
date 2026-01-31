@@ -119,14 +119,14 @@ func runPush(registryPath string, force bool) error {
 
 	// Confirm unless --force
 	if !force {
-		cli.Line("")
+		cli.Blank()
 		if !cli.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": totalCommits, "Repos": len(aheadRepos)})) {
 			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// Push sequentially (SSH passphrase needs interaction)
 	var pushPaths []string
@@ -157,10 +157,10 @@ func runPush(registryPath string, force bool) error {
 
 	// Handle diverged repos - offer to pull and retry
 	if len(divergedRepos) > 0 {
-		cli.Line("")
+		cli.Blank()
 		cli.Print("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 		if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
-			cli.Line("")
+			cli.Blank()
 			for _, r := range divergedRepos {
 				cli.Print("  %s %s...\n", dimStyle.Render("↓"), r.Name)
 				if err := git.Pull(ctx, r.Path); err != nil {
@@ -180,12 +180,12 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	// Summary
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s", successStyle.Render(i18n.T("cmd.dev.push.done_pushed", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
 		cli.Print(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	return nil
 }
@@ -222,10 +222,10 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 			if s.Staged > 0 {
 				cli.Print("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
 			}
-			cli.Line("")
-			cli.Line("")
+			cli.Blank()
+			cli.Blank()
 			if cli.Confirm(i18n.T("cmd.dev.push.uncommitted_changes_commit")) {
-				cli.Line("")
+				cli.Blank()
 				// Use edit-enabled commit if only untracked files (may need .gitignore fix)
 				var err error
 				if s.Modified == 0 && s.Staged == 0 && s.Untracked > 0 {
@@ -257,24 +257,24 @@ func runPushSingleRepo(ctx context.Context, repoPath string, force bool) error {
 
 	// Confirm unless --force
 	if !force {
-		cli.Line("")
+		cli.Blank()
 		if !cli.Confirm(i18n.T("cmd.dev.push.confirm_push", map[string]interface{}{"Commits": s.Ahead, "Repos": 1})) {
 			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// Push
 	err := git.Push(ctx, repoPath)
 	if err != nil {
 		if git.IsNonFastForward(err) {
 			cli.Print("  %s %s: %s\n", warningStyle.Render("!"), repoName, i18n.T("cmd.dev.push.diverged"))
-			cli.Line("")
+			cli.Blank()
 			cli.Print("%s\n", i18n.T("cmd.dev.push.diverged_help"))
 			if cli.Confirm(i18n.T("cmd.dev.push.pull_and_retry")) {
-				cli.Line("")
+				cli.Blank()
 				cli.Print("  %s %s...\n", dimStyle.Render("↓"), repoName)
 				if pullErr := git.Pull(ctx, repoPath); pullErr != nil {
 					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), repoName, pullErr)

@@ -8,7 +8,7 @@ import (
 
 // Style aliases from shared
 var (
-	releaseHeaderStyle  = cli.RepoNameStyle
+	releaseHeaderStyle  = cli.RepoStyle
 	releaseSuccessStyle = cli.SuccessStyle
 	releaseErrorStyle   = cli.ErrorStyle
 	releaseDimStyle     = cli.DimStyle

@@ -73,7 +73,7 @@ func (s *Service) runWork(task TaskWork) error {
 	}
 
 	if len(paths) == 0 {
-		cli.Text("No git repositories found")
+		cli.Println("No git repositories found")
 		return nil
 	}
 
@@ -116,9 +116,9 @@ func (s *Service) runWork(task TaskWork) error {
 
 	// Auto-commit dirty repos if requested
 	if task.AutoCommit && len(dirtyRepos) > 0 {
-		cli.Line("")
-		cli.Text("Committing changes...")
-		cli.Line("")
+		cli.Blank()
+		cli.Println("Committing changes...")
+		cli.Blank()
 
 		for _, repo := range dirtyRepos {
 			_, handled, err := s.Core().PERFORM(agentic.TaskCommit{
@@ -156,35 +156,35 @@ func (s *Service) runWork(task TaskWork) error {
 	// If status only, we're done
 	if task.StatusOnly {
 		if len(dirtyRepos) > 0 && !task.AutoCommit {
-			cli.Line("")
-			cli.Text("Use --commit flag to auto-commit dirty repos")
+			cli.Blank()
+			cli.Println("Use --commit flag to auto-commit dirty repos")
 		}
 		return nil
 	}
 
 	// Push repos with unpushed commits
 	if len(aheadRepos) == 0 {
-		cli.Line("")
-		cli.Text("All repositories are up to date")
+		cli.Blank()
+		cli.Println("All repositories are up to date")
 		return nil
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%d repos with unpushed commits:\n", len(aheadRepos))
 	for _, st := range aheadRepos {
 		cli.Print("  %s: %d commits\n", st.Name, st.Ahead)
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("Push all? [y/N] ")
 	var answer string
 	cli.Scanln(&answer)
 	if strings.ToLower(answer) != "y" {
-		cli.Text("Aborted")
+		cli.Println("Aborted")
 		return nil
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// Push each repo
 	for _, st := range aheadRepos {
@@ -217,7 +217,7 @@ func (s *Service) runStatus(task TaskStatus) error {
 	}
 
 	if len(paths) == 0 {
-		cli.Text("No git repositories found")
+		cli.Println("No git repositories found")
 		return nil
 	}
 

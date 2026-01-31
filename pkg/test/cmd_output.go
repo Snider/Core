@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/host-uk/core/pkg/cli"
+
 	"github.com/host-uk/core/pkg/i18n"
 )
 
@@ -153,7 +153,13 @@ func printCoverageSummary(results testResults) {
 }
 
 func formatCoverage(cov float64) string {
-	return cli.FormatCoverage(cov)
+	s := fmt.Sprintf("%.1f%%", cov)
+	if cov >= 80 {
+		return testCovHighStyle.Render(s)
+	} else if cov >= 50 {
+		return testCovMedStyle.Render(s)
+	}
+	return testCovLowStyle.Render(s)
 }
 
 func shortenPackageName(name string) string {

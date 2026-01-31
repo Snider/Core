@@ -34,7 +34,7 @@ var taskUpdateCmd = &cli.Command{
 		taskID := args[0]
 
 		if taskUpdateStatus == "" && taskUpdateProgress == 0 && taskUpdateNotes == "" {
-			return cli.Err(i18n.T("cmd.ai.task_update.flag_required"))
+			return cli.Err("%s", i18n.T("cmd.ai.task_update.flag_required"))
 		}
 
 		cfg, err := agentic.LoadConfig("")

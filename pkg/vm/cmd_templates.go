@@ -221,10 +221,10 @@ func buildLinuxKitImage(yamlPath, outputPath string) error {
 	}
 
 	// Build the image
-	// linuxkit build -format iso-bios -name <output> <yaml>
+	// linuxkit build --format iso-bios --name <output> <yaml>
 	cmd := exec.Command(lkPath, "build",
-		"-format", "iso-bios",
-		"-name", outputPath,
+		"--format", "iso-bios",
+		"--name", outputPath,
 		yamlPath)
 
 	cmd.Stdout = os.Stdout

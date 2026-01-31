@@ -51,7 +51,7 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	} else {
 		cli.Print("  %s\n", releaseSuccessStyle.Render(i18n.T("cmd.ci.go_for_launch")))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	// Check for publishers
 	if len(cfg.Publishers) == 0 {
@@ -66,7 +66,7 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	}
 
 	// Print summary
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s %s\n", releaseSuccessStyle.Render(i18n.T("i18n.done.pass")), i18n.T("cmd.ci.publish_completed"))
 	cli.Print("  %s   %s\n", i18n.Label("version"), releaseValueStyle.Render(rel.Version))
 	cli.Print("  %s %d\n", i18n.T("cmd.ci.label.artifacts"), len(rel.Artifacts))

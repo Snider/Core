@@ -47,15 +47,15 @@ func runVMInstall() error {
 
 	if d.IsInstalled() {
 		cli.Text(successStyle.Render(i18n.T("cmd.dev.vm.already_installed")))
-		cli.Line("")
+		cli.Blank()
 		cli.Text(i18n.T("cmd.dev.vm.check_updates", map[string]interface{}{"Command": dimStyle.Render("core dev update")}))
 		return nil
 	}
 
 	cli.Print("%s %s\n", dimStyle.Render(i18n.Label("image")), devops.ImageName())
-	cli.Line("")
+	cli.Blank()
 	cli.Text(i18n.T("cmd.dev.vm.downloading"))
-	cli.Line("")
+	cli.Blank()
 
 	ctx := context.Background()
 	start := time.Now()
@@ -71,16 +71,16 @@ func runVMInstall() error {
 		}
 	})
 
-	cli.Line("") // Clear progress line
+	cli.Blank() // Clear progress line
 
 	if err != nil {
 		return cli.Wrap(err, "install failed")
 	}
 
 	elapsed := time.Since(start).Round(time.Second)
-	cli.Line("")
+	cli.Blank()
 	cli.Text(i18n.T("cmd.dev.vm.installed_in", map[string]interface{}{"Duration": elapsed}))
-	cli.Line("")
+	cli.Blank()
 	cli.Text(i18n.T("cmd.dev.vm.start_with", map[string]interface{}{"Command": dimStyle.Render("core dev boot")}))
 
 	return nil
@@ -131,7 +131,7 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 	opts.Fresh = fresh
 
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.config_label")), i18n.T("cmd.dev.vm.config_value", map[string]interface{}{"Memory": opts.Memory, "CPUs": opts.CPUs}))
-	cli.Line("")
+	cli.Blank()
 	cli.Text(i18n.T("cmd.dev.vm.booting"))
 
 	ctx := context.Background()
@@ -139,9 +139,9 @@ func runVMBoot(memory, cpus int, fresh bool) error {
 		return err
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Text(successStyle.Render(i18n.T("cmd.dev.vm.running")))
-	cli.Line("")
+	cli.Blank()
 	cli.Text(i18n.T("cmd.dev.vm.connect_with", map[string]interface{}{"Command": dimStyle.Render("core dev shell")}))
 	cli.Print("%s %s\n", i18n.T("cmd.dev.vm.ssh_port"), dimStyle.Render("2222"))
 
@@ -216,7 +216,7 @@ func runVMStatus() error {
 	}
 
 	cli.Text(headerStyle.Render(i18n.T("cmd.dev.vm.status_title")))
-	cli.Line("")
+	cli.Blank()
 
 	// Installation status
 	if status.Installed {
@@ -226,12 +226,12 @@ func runVMStatus() error {
 		}
 	} else {
 		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.installed_label")), errorStyle.Render(i18n.T("cmd.dev.vm.installed_no")))
-		cli.Line("")
+		cli.Blank()
 		cli.Text(i18n.T("cmd.dev.vm.install_with", map[string]interface{}{"Command": dimStyle.Render("core dev install")}))
 		return nil
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// Running status
 	if status.Running {
@@ -243,7 +243,7 @@ func runVMStatus() error {
 		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.uptime_label")), formatVMUptime(status.Uptime))
 	} else {
 		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("status")), dimStyle.Render(i18n.T("common.status.stopped")))
-		cli.Line("")
+		cli.Blank()
 		cli.Text(i18n.T("cmd.dev.vm.start_with", map[string]interface{}{"Command": dimStyle.Render("core dev boot")}))
 	}
 
@@ -453,7 +453,7 @@ func runVMUpdate(apply bool) error {
 	ctx := context.Background()
 
 	cli.Text(i18n.T("common.progress.checking_updates"))
-	cli.Line("")
+	cli.Blank()
 
 	current, latest, hasUpdate, err := d.CheckUpdate(ctx)
 	if err != nil {
@@ -462,7 +462,7 @@ func runVMUpdate(apply bool) error {
 
 	cli.Print("%s %s\n", dimStyle.Render(i18n.Label("current")), valueStyle.Render(current))
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.vm.latest_label")), valueStyle.Render(latest))
-	cli.Line("")
+	cli.Blank()
 
 	if !hasUpdate {
 		cli.Text(successStyle.Render(i18n.T("cmd.dev.vm.up_to_date")))
@@ -470,7 +470,7 @@ func runVMUpdate(apply bool) error {
 	}
 
 	cli.Text(warningStyle.Render(i18n.T("cmd.dev.vm.update_available")))
-	cli.Line("")
+	cli.Blank()
 
 	if !apply {
 		cli.Text(i18n.T("cmd.dev.vm.run_to_update", map[string]interface{}{"Command": dimStyle.Render("core dev update --apply")}))
@@ -485,7 +485,7 @@ func runVMUpdate(apply bool) error {
 	}
 
 	cli.Text(i18n.T("cmd.dev.vm.downloading_update"))
-	cli.Line("")
+	cli.Blank()
 
 	start := time.Now()
 	err = d.Install(ctx, func(downloaded, total int64) {
@@ -495,14 +495,14 @@ func runVMUpdate(apply bool) error {
 		}
 	})
 
-	cli.Line("")
+	cli.Blank()
 
 	if err != nil {
 		return cli.Wrap(err, "update failed")
 	}
 
 	elapsed := time.Since(start).Round(time.Second)
-	cli.Line("")
+	cli.Blank()
 	cli.Text(i18n.T("cmd.dev.vm.updated_in", map[string]interface{}{"Duration": elapsed}))
 
 	return nil

@@ -11,14 +11,14 @@ import (
 
 // Style aliases from shared
 var (
-	testHeaderStyle  = cli.RepoNameStyle
+	testHeaderStyle  = cli.RepoStyle
 	testPassStyle    = cli.SuccessStyle
 	testFailStyle    = cli.ErrorStyle
 	testSkipStyle    = cli.WarningStyle
 	testDimStyle     = cli.DimStyle
-	testCovHighStyle = cli.CoverageHighStyle
-	testCovMedStyle  = cli.CoverageMedStyle
-	testCovLowStyle  = cli.CoverageLowStyle
+	testCovHighStyle = cli.NewStyle().Foreground(cli.ColourGreen500)
+	testCovMedStyle  = cli.NewStyle().Foreground(cli.ColourAmber500)
+	testCovLowStyle  = cli.NewStyle().Foreground(cli.ColourRed500)
 )
 
 // Flag variables for test command

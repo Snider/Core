@@ -75,7 +75,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	if !jsonOut {
 		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("test")), i18n.ProgressSubject("run", "tests"))
 		cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("package")), pkg)
-		cli.Line("")
+		cli.Blank()
 	}
 
 	cmd := exec.Command("go", args...)
@@ -102,7 +102,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	if jsonOut {
 		cli.Print(`{"passed":%d,"failed":%d,"skipped":%d,"coverage":%.1f,"exit_code":%d}`,
 			passed, failed, skipped, cov, cmd.ProcessState.ExitCode())
-		cli.Line("")
+		cli.Blank()
 		return err
 	}
 
@@ -113,15 +113,15 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 
 	// Summary
 	if err == nil {
-		cli.Print("  %s %s\n", successStyle.Render(cli.SymbolCheck), i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"))
+		cli.Print("  %s %s\n", successStyle.Render(cli.Glyph(":check:")), i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"))
 	} else {
-		cli.Print("  %s %s, %s\n", errorStyle.Render(cli.SymbolCross),
+		cli.Print("  %s %s, %s\n", errorStyle.Render(cli.Glyph(":cross:")),
 			i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"),
 			i18n.T("i18n.count.test", failed)+" "+i18n.T("i18n.done.fail"))
 	}
 
 	if cov > 0 {
-		cli.Print("\n  %s %s\n", cli.ProgressLabel(i18n.Label("coverage")), cli.FormatCoverage(cov))
+		cli.Print("\n  %s %s\n", cli.KeyStyle.Render(i18n.Label("coverage")), formatCoverage(cov))
 	}
 
 	if err == nil {
@@ -202,7 +202,7 @@ func addGoCovCommand(parent *cli.Command) {
 				displayPkg = displayPkg[:57] + "..."
 			}
 			cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("package")), displayPkg)
-			cli.Line("")
+			cli.Blank()
 
 			// Run tests with coverage
 			// We need to split pkg into individual arguments if it contains spaces
@@ -242,8 +242,8 @@ func addGoCovCommand(parent *cli.Command) {
 			}
 
 			// Print coverage summary
-			cli.Line("")
-			cli.Print("  %s %s\n", cli.ProgressLabel(i18n.Label("total")), cli.FormatCoverage(totalCov))
+			cli.Blank()
+			cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("total")), formatCoverage(totalCov))
 
 			// Generate HTML if requested
 			if covHTML || covOpen {
@@ -318,4 +318,14 @@ func findTestPackages(root string) ([]string, error) {
 		pkgs = append(pkgs, pkg)
 	}
 	return pkgs, nil
+}
+
+func formatCoverage(cov float64) string {
+	s := fmt.Sprintf("%.1f%%", cov)
+	if cov >= 80 {
+		return cli.SuccessStyle.Render(s)
+	} else if cov >= 50 {
+		return cli.WarningStyle.Render(s)
+	}
+	return cli.ErrorStyle.Render(s)
 }

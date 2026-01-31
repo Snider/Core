@@ -16,7 +16,7 @@ import (
 
 // PR-specific styles (aliases to shared)
 var (
-	prNumberStyle   = cli.PrNumberStyle
+	prNumberStyle   = cli.NumberStyle
 	prTitleStyle    = cli.ValueStyle
 	prAuthorStyle   = cli.InfoStyle
 	prApprovedStyle = cli.SuccessStyle
@@ -162,7 +162,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 		}
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s", i18n.T("cmd.dev.reviews.open_prs", map[string]interface{}{"Count": len(allPRs)}))
 	if pending > 0 {
 		cli.Print(" * %s", prPendingStyle.Render(i18n.T("common.count.pending", map[string]interface{}{"Count": pending})))
@@ -173,8 +173,8 @@ func runReviews(registryPath string, author string, showAll bool) error {
 	if changesRequested > 0 {
 		cli.Print(" * %s", prChangesStyle.Render(i18n.T("cmd.dev.reviews.changes_requested", map[string]interface{}{"Count": changesRequested})))
 	}
-	cli.Line("")
-	cli.Line("")
+	cli.Blank()
+	cli.Blank()
 
 	for _, pr := range allPRs {
 		printPR(pr)
@@ -182,7 +182,7 @@ func runReviews(registryPath string, author string, showAll bool) error {
 
 	// Print any errors
 	if len(fetchErrors) > 0 {
-		cli.Line("")
+		cli.Blank()
 		for _, err := range fetchErrors {
 			cli.Print("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}

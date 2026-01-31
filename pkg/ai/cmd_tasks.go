@@ -134,7 +134,7 @@ var taskCmd = &cli.Command{
 			taskClaim = true // Auto-select implies claiming
 		} else {
 			if taskID == "" {
-				return cli.Err(i18n.T("cmd.ai.task.id_required"))
+				return cli.Err("%s", i18n.T("cmd.ai.task.id_required"))
 			}
 
 			task, err = client.GetTask(ctx, taskID)
@@ -157,7 +157,7 @@ var taskCmd = &cli.Command{
 		}
 
 		if taskClaim && task.Status == agentic.StatusPending {
-			cli.Line("")
+			cli.Blank()
 			cli.Print("%s %s\n", dimStyle.Render(">>"), i18n.T("cmd.ai.task.claiming"))
 
 			claimedTask, err := client.ClaimTask(ctx, task.ID)
@@ -215,12 +215,12 @@ func printTaskList(tasks []agentic.Task) {
 		cli.Text(line)
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.ai.tasks.hint")))
 }
 
 func printTaskDetails(task *agentic.Task) {
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.id")), taskIDStyle.Render(task.ID))
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.title")), taskTitleStyle.Render(task.Title))
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.priority")), formatTaskPriority(task.Priority))
@@ -240,12 +240,12 @@ func printTaskDetails(task *agentic.Task) {
 
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.created")), formatAge(task.CreatedAt))
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.description")))
 	cli.Text(task.Description)
 
 	if len(task.Files) > 0 {
-		cli.Line("")
+		cli.Blank()
 		cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.ai.label.related_files")))
 		for _, f := range task.Files {
 			cli.Print("  - %s\n", f)
@@ -253,7 +253,7 @@ func printTaskDetails(task *agentic.Task) {
 	}
 
 	if len(task.Dependencies) > 0 {
-		cli.Line("")
+		cli.Blank()
 		cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.ai.label.blocked_by")), strings.Join(task.Dependencies, ", "))
 	}
 }

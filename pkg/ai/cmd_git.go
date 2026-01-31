@@ -80,7 +80,7 @@ var taskCommitCmd = &cli.Command{
 		}
 
 		if !hasChanges {
-			cli.Text("No changes to commit")
+			cli.Println("No changes to commit")
 			return nil
 		}
 

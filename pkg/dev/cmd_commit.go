@@ -120,19 +120,19 @@ func runCommit(registryPath string, all bool) error {
 		if s.Staged > 0 {
 			cli.Print("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
 		}
-		cli.Line("")
+		cli.Blank()
 	}
 
 	// Confirm unless --all
 	if !all {
-		cli.Line("")
+		cli.Blank()
 		if !cli.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
 			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// Commit each dirty repo
 	var succeeded, failed int
@@ -146,7 +146,7 @@ func runCommit(registryPath string, all bool) error {
 			cli.Print("  %s %s\n", successStyle.Render("v"), i18n.T("cmd.dev.committed"))
 			succeeded++
 		}
-		cli.Line("")
+		cli.Blank()
 	}
 
 	// Summary
@@ -154,7 +154,7 @@ func runCommit(registryPath string, all bool) error {
 	if failed > 0 {
 		cli.Print(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	return nil
 }
@@ -200,18 +200,18 @@ func runCommitSingleRepo(ctx context.Context, repoPath string, all bool) error {
 	if s.Staged > 0 {
 		cli.Print("%s ", aheadStyle.Render(i18n.T("cmd.dev.staged", map[string]interface{}{"Count": s.Staged})))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	// Confirm unless --all
 	if !all {
-		cli.Line("")
+		cli.Blank()
 		if !cli.Confirm(i18n.T("cmd.dev.confirm_claude_commit")) {
 			cli.Text(i18n.T("cli.aborted"))
 			return nil
 		}
 	}
 
-	cli.Line("")
+	cli.Blank()
 
 	// Commit
 	if err := claudeCommit(ctx, repoPath, repoName, ""); err != nil {

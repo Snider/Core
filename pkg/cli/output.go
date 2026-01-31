@@ -30,6 +30,11 @@ func Println(format string, args ...any) {
 	fmt.Println(compileGlyphs(fmt.Sprintf(format, args...)))
 }
 
+// Text prints arguments like fmt.Println, but handling glyphs.
+func Text(args ...any) {
+	fmt.Println(compileGlyphs(fmt.Sprint(args...)))
+}
+
 // Success prints a success message with checkmark (green).
 func Success(msg string) {
 	fmt.Println(SuccessStyle.Render(Glyph(":check:") + " " + msg))

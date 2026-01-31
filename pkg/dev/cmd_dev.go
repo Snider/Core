@@ -45,14 +45,14 @@ var (
 	dimStyle      = cli.DimStyle
 	valueStyle    = cli.ValueStyle
 	headerStyle   = cli.HeaderStyle
-	repoNameStyle = cli.RepoNameStyle
+	repoNameStyle = cli.RepoStyle
 )
 
 // Table styles for status display (extends shared styles with cell padding)
 var (
-	dirtyStyle = cli.GitDirtyStyle.Padding(0, 1)
-	aheadStyle = cli.GitAheadStyle.Padding(0, 1)
-	cleanStyle = cli.GitCleanStyle.Padding(0, 1)
+	dirtyStyle = cli.NewStyle().Foreground(cli.ColourRed500)
+	aheadStyle = cli.NewStyle().Foreground(cli.ColourAmber500)
+	cleanStyle = cli.NewStyle().Foreground(cli.ColourGreen500)
 )
 
 // AddDevCommands registers the 'dev' command and all subcommands.

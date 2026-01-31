@@ -113,14 +113,14 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 	}
 
 	// Confirm
-	cli.Line("")
+	cli.Blank()
 	if !confirm(i18n.T("cmd.docs.sync.confirm")) {
 		cli.Text(i18n.T("common.prompt.abort"))
 		return nil
 	}
 
 	// Sync docs
-	cli.Line("")
+	cli.Blank()
 	var synced int
 	for _, info := range docsInfo {
 		outName := packageOutputName(info.Name)

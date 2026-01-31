@@ -42,11 +42,11 @@ func runDocsList(registryPath string) error {
 	for _, repo := range reg.List() {
 		info := scanRepoDocs(repo)
 
-		readme := cli.CheckMark(info.Readme != "")
-		claude := cli.CheckMark(info.ClaudeMd != "")
-		changelog := cli.CheckMark(info.Changelog != "")
+		readme := checkMark(info.Readme != "")
+		claude := checkMark(info.ClaudeMd != "")
+		changelog := checkMark(info.Changelog != "")
 
-		docsDir := cli.CheckMark(false)
+		docsDir := checkMark(false)
 		if len(info.DocsFiles) > 0 {
 			docsDir = docsFoundStyle.Render(i18n.T("common.count.files", map[string]interface{}{"Count": len(info.DocsFiles)}))
 		}
@@ -66,11 +66,18 @@ func runDocsList(registryPath string) error {
 		}
 	}
 
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s %s\n",
-		cli.Label(i18n.Label("coverage")),
+		cli.KeyStyle.Render(i18n.Label("coverage")),
 		i18n.T("cmd.docs.list.coverage_summary", map[string]interface{}{"WithDocs": withDocs, "WithoutDocs": withoutDocs}),
 	)
 
 	return nil
+}
+
+func checkMark(ok bool) string {
+	if ok {
+		return cli.Glyph(":check:")
+	}
+	return cli.Glyph(":cross:")
 }

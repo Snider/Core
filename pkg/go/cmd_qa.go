@@ -118,21 +118,21 @@ func runQAChecks(checkNames []string) error {
 		cli.Print("%s %s\n", cli.DimStyle.Render("→"), i18n.Progress(check.Name))
 
 		if err := runCheck(ctx, cwd, check); err != nil {
-			cli.Print("  %s %s\n", cli.ErrorStyle.Render(cli.SymbolCross), err.Error())
+			cli.Print("  %s %s\n", cli.ErrorStyle.Render(cli.Glyph(":cross:")), err.Error())
 			failed++
 		} else {
-			cli.Print("  %s %s\n", cli.SuccessStyle.Render(cli.SymbolCheck), i18n.T("i18n.done.pass"))
+			cli.Print("  %s %s\n", cli.SuccessStyle.Render(cli.Glyph(":check:")), i18n.T("i18n.done.pass"))
 			passed++
 		}
 	}
 
 	// Summary
-	cli.Line("")
+	cli.Blank()
 	duration := time.Since(startTime).Round(time.Millisecond)
 
 	if failed > 0 {
 		cli.Print("%s %s, %s (%s)\n",
-			cli.ErrorStyle.Render(cli.SymbolCross),
+			cli.ErrorStyle.Render(cli.Glyph(":cross:")),
 			i18n.T("i18n.count.check", passed)+" "+i18n.T("i18n.done.pass"),
 			i18n.T("i18n.count.check", failed)+" "+i18n.T("i18n.done.fail"),
 			duration)
@@ -140,7 +140,7 @@ func runQAChecks(checkNames []string) error {
 	}
 
 	cli.Print("%s %s (%s)\n",
-		cli.SuccessStyle.Render(cli.SymbolCheck),
+		cli.SuccessStyle.Render(cli.Glyph(":check:")),
 		i18n.T("i18n.count.check", passed)+" "+i18n.T("i18n.done.pass"),
 		duration)
 
@@ -228,7 +228,7 @@ func runCheck(ctx context.Context, dir string, check QACheck) error {
 		}
 		if len(output) > 0 {
 			// Show files that need formatting
-			cli.Print(string(output))
+			cli.Text(string(output))
 			return cli.Err("%s (use --fix)", i18n.T("i18n.fail.format", i18n.T("i18n.count.file", len(output))))
 		}
 		return nil

@@ -17,20 +17,20 @@ var (
 
 // Task priority/status styles from shared
 var (
-	taskPriorityHighStyle     = cli.PriorityHighStyle
-	taskPriorityMediumStyle   = cli.PriorityMediumStyle
-	taskPriorityLowStyle      = cli.PriorityLowStyle
-	taskStatusPendingStyle    = cli.StatusPendingStyle
-	taskStatusInProgressStyle = cli.StatusRunningStyle
-	taskStatusCompletedStyle  = cli.StatusSuccessStyle
-	taskStatusBlockedStyle    = cli.StatusErrorStyle
+	taskPriorityHighStyle     = cli.NewStyle().Foreground(cli.ColourRed500)
+	taskPriorityMediumStyle   = cli.NewStyle().Foreground(cli.ColourAmber500)
+	taskPriorityLowStyle      = cli.NewStyle().Foreground(cli.ColourBlue400)
+	taskStatusPendingStyle    = cli.DimStyle
+	taskStatusInProgressStyle = cli.NewStyle().Foreground(cli.ColourBlue500)
+	taskStatusCompletedStyle  = cli.SuccessStyle
+	taskStatusBlockedStyle    = cli.ErrorStyle
 )
 
 // Task-specific styles (aliases to shared where possible)
 var (
 	taskIDStyle    = cli.TitleStyle       // Bold + blue
 	taskTitleStyle = cli.ValueStyle       // Light gray
-	taskLabelStyle = cli.AccentLabelStyle // Violet for labels
+	taskLabelStyle = cli.NewStyle().Foreground(cli.ColourViolet500) // Violet for labels
 )
 
 // AddAgenticCommands adds the agentic task management commands to the ai command.

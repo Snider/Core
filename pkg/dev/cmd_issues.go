@@ -20,7 +20,7 @@ var (
 	issueNumberStyle   = cli.TitleStyle
 	issueTitleStyle    = cli.ValueStyle
 	issueLabelStyle    = cli.WarningStyle
-	issueAssigneeStyle = cli.StatusSuccessStyle
+	issueAssigneeStyle = cli.SuccessStyle
 	issueAgeStyle      = cli.DimStyle
 )
 
@@ -135,7 +135,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	// Print issues
 	if len(allIssues) == 0 {
-		cli.Text(i18n.T("cmd.dev.issues.no_issues"))
+				cli.Text(i18n.T("cmd.dev.issues.no_issues"))
 		return nil
 	}
 
@@ -147,7 +147,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	// Print any errors
 	if len(fetchErrors) > 0 {
-		cli.Line("")
+		cli.Blank()
 		for _, err := range fetchErrors {
 			cli.Print("%s %s\n", errorStyle.Render(i18n.Label("error")), err)
 		}
@@ -226,5 +226,5 @@ func printIssue(issue GitHubIssue) {
 	age := cli.FormatAge(issue.CreatedAt)
 	line += " " + issueAgeStyle.Render(age)
 
-	cli.Text(line)
+			cli.Text(line)
 }

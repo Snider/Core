@@ -115,7 +115,7 @@ func runPull(registryPath string, all bool) error {
 				dimStyle.Render(i18n.T("cmd.dev.pull.commits_behind", map[string]interface{}{"Count": s.Behind})),
 			)
 		}
-		cli.Line("")
+		cli.Blank()
 	}
 
 	// Pull each repo
@@ -134,12 +134,12 @@ func runPull(registryPath string, all bool) error {
 	}
 
 	// Summary
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s", successStyle.Render(i18n.T("cmd.dev.pull.done_pulled", map[string]interface{}{"Count": succeeded})))
 	if failed > 0 {
 		cli.Print(", %s", errorStyle.Render(i18n.T("common.count.failed", map[string]interface{}{"Count": failed})))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	return nil
 }

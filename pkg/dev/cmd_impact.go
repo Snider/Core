@@ -12,8 +12,8 @@ import (
 // Impact-specific styles (aliases to shared)
 var (
 	impactDirectStyle   = cli.ErrorStyle
-	impactIndirectStyle = cli.StatusWarningStyle
-	impactSafeStyle     = cli.StatusSuccessStyle
+	impactIndirectStyle = cli.WarningStyle
+	impactSafeStyle     = cli.SuccessStyle
 )
 
 // Impact command flags
@@ -89,12 +89,12 @@ func runImpact(registryPath string, repoName string) error {
 	sort.Strings(indirect)
 
 	// Print results
-	cli.Line("")
+	cli.Blank()
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.impact.analysis_for")), repoNameStyle.Render(repoName))
 	if repo.Description != "" {
 		cli.Print("%s\n", dimStyle.Render(repo.Description))
 	}
-	cli.Line("")
+	cli.Blank()
 
 	if len(allAffected) == 0 {
 		cli.Print("%s %s\n", impactSafeStyle.Render("v"), i18n.T("cmd.dev.impact.no_dependents", map[string]interface{}{"Name": repoName}))
@@ -115,7 +115,7 @@ func runImpact(registryPath string, repoName string) error {
 			}
 			cli.Print("    %s%s\n", d, desc)
 		}
-		cli.Line("")
+		cli.Blank()
 	}
 
 	// Indirect dependents
@@ -132,7 +132,7 @@ func runImpact(registryPath string, repoName string) error {
 			}
 			cli.Print("    %s%s\n", d, desc)
 		}
-		cli.Line("")
+		cli.Blank()
 	}
 
 	// Summary
