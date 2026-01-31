@@ -33,14 +33,23 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.T("cmd.setup.org_label")), reg.Org)
 
+	registryDir := filepath.Dir(registryPath)
+
 	// Determine base path for cloning
 	basePath := reg.BasePath
 	if basePath == "" {
-		basePath = "./packages"
+		// Load workspace config to see if packages_dir is set
+		wsConfig, _ := repos.LoadWorkspaceConfig(registryDir)
+		if wsConfig.PackagesDir != "" {
+			basePath = wsConfig.PackagesDir
+		} else {
+			basePath = "./packages"
+		}
 	}
+
 	// Resolve relative to registry location
 	if !filepath.IsAbs(basePath) {
-		basePath = filepath.Join(filepath.Dir(registryPath), basePath)
+		basePath = filepath.Join(registryDir, basePath)
 	}
 	// Expand ~
 	if strings.HasPrefix(basePath, "~/") {
