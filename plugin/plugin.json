@@ -1,0 +1,109 @@
+{
+  "name": "core",
+  "version": "1.0.0",
+  "description": "Host UK unified framework - Go CLI, PHP framework, multi-repo management",
+  "dependencies": [
+    "superpowers@claude-plugins-official"
+  ],
+  "skills": [
+    {
+      "name": "core",
+      "path": "skills/core.md",
+      "description": "Use when working in host-uk repositories. Provides core CLI command reference."
+    },
+    {
+      "name": "core-php",
+      "path": "skills/php.md",
+      "description": "Use when creating PHP modules, services, or actions in core-* packages."
+    },
+    {
+      "name": "core-go",
+      "path": "skills/go.md",
+      "description": "Use when creating Go packages or extending the core CLI."
+    }
+  ],
+  "commands": [
+    {
+      "name": "remember",
+      "path": "commands/remember.md",
+      "description": "Save a fact or decision to context"
+    }
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "script": "scripts/session-start.sh",
+        "description": "Check for recent session state on startup"
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "script": "scripts/pre-compact.sh",
+        "description": "Save state before auto-compact to prevent amnesia"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "script": "hooks/prefer-core.sh",
+        "description": "Suggest core CLI instead of raw go/php commands"
+      },
+      {
+        "matcher": "Write",
+        "script": "scripts/block-docs.sh",
+        "description": "Block random .md files, keep docs consolidated"
+      },
+      {
+        "matcher": "Edit",
+        "script": "scripts/suggest-compact.sh",
+        "description": "Suggest /compact at logical intervals"
+      },
+      {
+        "matcher": "Write",
+        "script": "scripts/suggest-compact.sh",
+        "description": "Suggest /compact at logical intervals"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "script": "scripts/php-format.sh",
+        "description": "Auto-format PHP files after edits"
+      },
+      {
+        "matcher": "Edit",
+        "script": "scripts/go-format.sh",
+        "description": "Auto-format Go files after edits"
+      },
+      {
+        "matcher": "Edit",
+        "script": "scripts/check-debug.sh",
+        "description": "Warn about debug statements (dd, dump, fmt.Println)"
+      },
+      {
+        "matcher": "Bash",
+        "script": "scripts/pr-created.sh",
+        "description": "Log PR URL after creation"
+      },
+      {
+        "matcher": "Bash",
+        "script": "scripts/extract-actionables.sh",
+        "description": "Extract actionables from core CLI output"
+      },
+      {
+        "matcher": "Bash",
+        "script": "scripts/post-commit-check.sh",
+        "description": "Warn about uncommitted work after git commit"
+      }
+    ]
+  },
+  "mcp": {
+    "core": {
+      "command": "core",
+      "args": ["mcp", "serve"],
+      "description": "Core CLI MCP server for multi-repo operations"
+    }
+  }
+}
