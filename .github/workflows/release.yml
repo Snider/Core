@@ -20,7 +20,7 @@ jobs:
           go-version: '1.25'
           check-latest: true
       - name: Set up Node (for GUI builds if needed)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
       - name: Install Wails (optional)
