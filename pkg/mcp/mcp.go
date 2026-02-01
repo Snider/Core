@@ -15,11 +15,35 @@ import (
 // Service provides a lightweight MCP server with file operations only.
 // For full GUI features, use the core-gui package.
 type Service struct {
-	server *mcp.Server
+	server        *mcp.Server
+	workspaceRoot string // Root directory for file operations (empty = unrestricted)
+}
+
+// Option configures a Service.
+type Option func(*Service)
+
+// WithWorkspaceRoot restricts file operations to the given directory.
+// All paths are validated to be within this directory.
+// An empty string disables the restriction (not recommended).
+func WithWorkspaceRoot(root string) Option {
+	return func(s *Service) {
+		if root == "" {
+			// Explicitly disable restriction
+			s.workspaceRoot = ""
+			return
+		}
+		// Resolve to absolute path
+		abs, err := filepath.Abs(root)
+		if err == nil {
+			s.workspaceRoot = abs
+		}
+	}
 }
 
 // New creates a new MCP service with file operations.
-func New() *Service {
+// By default, restricts file access to the current working directory.
+// Use WithWorkspaceRoot("") to disable restrictions (not recommended).
+func New(opts ...Option) *Service {
 	impl := &mcp.Implementation{
 		Name:    "core-cli",
 		Version: "0.1.0",
@@ -27,6 +51,17 @@ func New() *Service {
 
 	server := mcp.NewServer(impl, nil)
 	s := &Service{server: server}
+
+	// Default to current working directory
+	if cwd, err := os.Getwd(); err == nil {
+		s.workspaceRoot = cwd
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(s)
+	}
+
 	s.registerTools()
 	return s
 }
@@ -223,31 +258,43 @@ type EditDiffOutput struct {
 // Tool handlers
 
 func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input ReadFileInput) (*mcp.CallToolResult, ReadFileOutput, error) {
-	content, err := os.ReadFile(input.Path)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, ReadFileOutput{}, err
+	}
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, ReadFileOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 	return nil, ReadFileOutput{
 		Content:  string(content),
-		Language: detectLanguageFromPath(input.Path),
-		Path:     input.Path,
+		Language: detectLanguageFromPath(path),
+		Path:     path,
 	}, nil
 }
 
 func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input WriteFileInput) (*mcp.CallToolResult, WriteFileOutput, error) {
-	dir := filepath.Dir(input.Path)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, WriteFileOutput{}, err
+	}
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, WriteFileOutput{}, fmt.Errorf("failed to create directory: %w", err)
 	}
-	err := os.WriteFile(input.Path, []byte(input.Content), 0644)
+	err = os.WriteFile(path, []byte(input.Content), 0644)
 	if err != nil {
 		return nil, WriteFileOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
-	return nil, WriteFileOutput{Success: true, Path: input.Path}, nil
+	return nil, WriteFileOutput{Success: true, Path: path}, nil
 }
 
 func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, input ListDirectoryInput) (*mcp.CallToolResult, ListDirectoryOutput, error) {
-	entries, err := os.ReadDir(input.Path)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, ListDirectoryOutput{}, err
+	}
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, ListDirectoryOutput{}, fmt.Errorf("failed to list directory: %w", err)
 	}
@@ -260,52 +307,76 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 		}
 		result = append(result, DirectoryEntry{
 			Name:  e.Name(),
-			Path:  filepath.Join(input.Path, e.Name()),
+			Path:  filepath.Join(path, e.Name()),
 			IsDir: e.IsDir(),
 			Size:  size,
 		})
 	}
-	return nil, ListDirectoryOutput{Entries: result, Path: input.Path}, nil
+	return nil, ListDirectoryOutput{Entries: result, Path: path}, nil
 }
 
 func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest, input CreateDirectoryInput) (*mcp.CallToolResult, CreateDirectoryOutput, error) {
-	err := os.MkdirAll(input.Path, 0755)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, CreateDirectoryOutput{}, err
+	}
+	err = os.MkdirAll(path, 0755)
 	if err != nil {
 		return nil, CreateDirectoryOutput{}, fmt.Errorf("failed to create directory: %w", err)
 	}
-	return nil, CreateDirectoryOutput{Success: true, Path: input.Path}, nil
+	return nil, CreateDirectoryOutput{Success: true, Path: path}, nil
 }
 
 func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, input DeleteFileInput) (*mcp.CallToolResult, DeleteFileOutput, error) {
-	err := os.Remove(input.Path)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, DeleteFileOutput{}, err
+	}
+	err = os.Remove(path)
 	if err != nil {
 		return nil, DeleteFileOutput{}, fmt.Errorf("failed to delete file: %w", err)
 	}
-	return nil, DeleteFileOutput{Success: true, Path: input.Path}, nil
+	return nil, DeleteFileOutput{Success: true, Path: path}, nil
 }
 
 func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, input RenameFileInput) (*mcp.CallToolResult, RenameFileOutput, error) {
-	err := os.Rename(input.OldPath, input.NewPath)
+	oldPath, err := s.validatePath(input.OldPath)
+	if err != nil {
+		return nil, RenameFileOutput{}, err
+	}
+	newPath, err := s.validatePath(input.NewPath)
+	if err != nil {
+		return nil, RenameFileOutput{}, err
+	}
+	err = os.Rename(oldPath, newPath)
 	if err != nil {
 		return nil, RenameFileOutput{}, fmt.Errorf("failed to rename file: %w", err)
 	}
-	return nil, RenameFileOutput{Success: true, OldPath: input.OldPath, NewPath: input.NewPath}, nil
+	return nil, RenameFileOutput{Success: true, OldPath: oldPath, NewPath: newPath}, nil
 }
 
 func (s *Service) fileExists(ctx context.Context, req *mcp.CallToolRequest, input FileExistsInput) (*mcp.CallToolResult, FileExistsOutput, error) {
-	info, err := os.Stat(input.Path)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, FileExistsOutput{}, err
+	}
+	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return nil, FileExistsOutput{Exists: false, IsDir: false, Path: input.Path}, nil
+		return nil, FileExistsOutput{Exists: false, IsDir: false, Path: path}, nil
 	}
 	if err != nil {
 		return nil, FileExistsOutput{}, fmt.Errorf("failed to check file: %w", err)
 	}
-	return nil, FileExistsOutput{Exists: true, IsDir: info.IsDir(), Path: input.Path}, nil
+	return nil, FileExistsOutput{Exists: true, IsDir: info.IsDir(), Path: path}, nil
 }
 
 func (s *Service) detectLanguage(ctx context.Context, req *mcp.CallToolRequest, input DetectLanguageInput) (*mcp.CallToolResult, DetectLanguageOutput, error) {
-	lang := detectLanguageFromPath(input.Path)
-	return nil, DetectLanguageOutput{Language: lang, Path: input.Path}, nil
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, DetectLanguageOutput{}, err
+	}
+	lang := detectLanguageFromPath(path)
+	return nil, DetectLanguageOutput{Language: lang, Path: path}, nil
 }
 
 func (s *Service) getSupportedLanguages(ctx context.Context, req *mcp.CallToolRequest, input GetSupportedLanguagesInput) (*mcp.CallToolResult, GetSupportedLanguagesOutput, error) {
@@ -334,7 +405,12 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 		return nil, EditDiffOutput{}, fmt.Errorf("old_string cannot be empty")
 	}
 
-	content, err := os.ReadFile(input.Path)
+	path, err := s.validatePath(input.Path)
+	if err != nil {
+		return nil, EditDiffOutput{}, err
+	}
+
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
@@ -356,16 +432,49 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 		count = 1
 	}
 
-	err = os.WriteFile(input.Path, []byte(fileContent), 0644)
+	err = os.WriteFile(path, []byte(fileContent), 0644)
 	if err != nil {
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 
 	return nil, EditDiffOutput{
-		Path:         input.Path,
+		Path:         path,
 		Success:      true,
 		Replacements: count,
 	}, nil
+}
+
+// validatePath checks if a path is within the workspace root.
+// Returns the cleaned absolute path or an error if the path is outside the workspace.
+func (s *Service) validatePath(path string) (string, error) {
+	if s.workspaceRoot == "" {
+		// No restriction - just clean and return absolute path
+		return filepath.Abs(path)
+	}
+
+	// Resolve to absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("invalid path: %w", err)
+	}
+
+	// Clean both paths for consistent comparison
+	absPath = filepath.Clean(absPath)
+	root := filepath.Clean(s.workspaceRoot)
+
+	// Check if the path is within the workspace root
+	// Use filepath.Rel to check - if result starts with "..", it's outside
+	rel, err := filepath.Rel(root, absPath)
+	if err != nil {
+		return "", fmt.Errorf("path outside workspace: %s", path)
+	}
+
+	// Check for directory traversal
+	if strings.HasPrefix(rel, "..") || rel == ".." {
+		return "", fmt.Errorf("path outside workspace: %s", path)
+	}
+
+	return absPath, nil
 }
 
 // detectLanguageFromPath maps file extensions to language IDs.
