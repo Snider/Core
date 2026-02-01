@@ -22,7 +22,7 @@ func TestGetSSLDir_Bad(t *testing.T) {
 		opts := SSLOptions{Dir: "/dev/null/cannot/create"}
 		_, err := GetSSLDir(opts)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to create SSL directory")
+		assert.Contains(t, err.Error(), "Failed to create SSL directory")
 	})
 }
 

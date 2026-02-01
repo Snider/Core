@@ -349,6 +349,12 @@ func IsPHPProject(dir string) bool {
 	return err == nil
 }
 
+// commonLinuxKitPaths defines default search locations for linuxkit.
+var commonLinuxKitPaths = []string{
+	"/usr/local/bin/linuxkit",
+	"/opt/homebrew/bin/linuxkit",
+}
+
 // lookupLinuxKit finds the linuxkit binary.
 func lookupLinuxKit() (string, error) {
 	// Check PATH first
@@ -356,13 +362,7 @@ func lookupLinuxKit() (string, error) {
 		return path, nil
 	}
 
-	// Check common locations
-	paths := []string{
-		"/usr/local/bin/linuxkit",
-		"/opt/homebrew/bin/linuxkit",
-	}
-
-	for _, p := range paths {
+	for _, p := range commonLinuxKitPaths {
 		if _, err := os.Stat(p); err == nil {
 			return p, nil
 		}
