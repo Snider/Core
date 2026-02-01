@@ -27,6 +27,7 @@ jobs:
 
     - name: Build CLI
       run: |
+        go generate ./pkg/updater/...
         task cli:build
         echo "$(pwd)/bin" >> $GITHUB_PATH
 
