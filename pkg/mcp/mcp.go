@@ -446,6 +446,7 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 
 // validatePath checks if a path is within the workspace root.
 // Returns the cleaned absolute path or an error if the path is outside the workspace.
+// Resolves symlinks to prevent bypass attacks.
 func (s *Service) validatePath(path string) (string, error) {
 	if s.workspaceRoot == "" {
 		// No restriction - just clean and return absolute path
@@ -458,13 +459,24 @@ func (s *Service) validatePath(path string) (string, error) {
 		return "", fmt.Errorf("invalid path: %w", err)
 	}
 
-	// Clean both paths for consistent comparison
-	absPath = filepath.Clean(absPath)
-	root := filepath.Clean(s.workspaceRoot)
+	// Resolve symlinks in workspace root
+	root, err := filepath.EvalSymlinks(s.workspaceRoot)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve workspace root: %w", err)
+	}
+	root = filepath.Clean(root)
 
-	// Check if the path is within the workspace root
+	// Resolve symlinks in the path, handling non-existent paths by
+	// resolving the nearest existing ancestor and appending the rest
+	resolvedPath, err := resolvePathWithSymlinks(absPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve path: %w", err)
+	}
+	resolvedPath = filepath.Clean(resolvedPath)
+
+	// Check if the resolved path is within the workspace root
 	// Use filepath.Rel to check - if result starts with "..", it's outside
-	rel, err := filepath.Rel(root, absPath)
+	rel, err := filepath.Rel(root, resolvedPath)
 	if err != nil {
 		return "", fmt.Errorf("path outside workspace: %s", path)
 	}
@@ -474,7 +486,41 @@ func (s *Service) validatePath(path string) (string, error) {
 		return "", fmt.Errorf("path outside workspace: %s", path)
 	}
 
-	return absPath, nil
+	return resolvedPath, nil
+}
+
+// resolvePathWithSymlinks resolves symlinks in a path, even if the path doesn't exist.
+// It walks up the directory tree to find the nearest existing ancestor,
+// resolves symlinks for that ancestor, then appends the remaining path components.
+func resolvePathWithSymlinks(path string) (string, error) {
+	// If the path exists, just resolve it directly
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		return resolved, nil
+	}
+
+	// Path doesn't exist - walk up to find existing ancestor
+	current := path
+	var remainder []string
+
+	for {
+		parent := filepath.Dir(current)
+		if parent == current {
+			// Reached root, nothing more to resolve
+			break
+		}
+
+		remainder = append([]string{filepath.Base(current)}, remainder...)
+		current = parent
+
+		// Try to resolve this ancestor
+		if resolved, err := filepath.EvalSymlinks(current); err == nil {
+			// Found existing ancestor, build full path
+			return filepath.Join(append([]string{resolved}, remainder...)...), nil
+		}
+	}
+
+	// No existing ancestor found, return original path
+	return path, nil
 }
 
 // detectLanguageFromPath maps file extensions to language IDs.

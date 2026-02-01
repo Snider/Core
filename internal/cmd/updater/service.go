@@ -1,4 +1,4 @@
-//go:generate go run github.com/host-uk/core/pkg/updater/build
+//go:generate go run github.com/host-uk/core/internal/cmd/updater/build
 
 // Package updater provides functionality for self-updating Go applications.
 // It supports updates from GitHub releases and generic HTTP endpoints.

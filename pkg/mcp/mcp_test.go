@@ -10,6 +10,12 @@ func TestValidatePath_Good(t *testing.T) {
 	// Create a temp directory as workspace root
 	tmpDir := t.TempDir()
 
+	// Resolve symlinks for comparison (macOS /var -> /private/var)
+	realTmpDir, err := filepath.EvalSymlinks(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to resolve symlinks: %v", err)
+	}
+
 	s := New(WithWorkspaceRoot(tmpDir))
 
 	// Test valid path within workspace
@@ -18,18 +24,20 @@ func TestValidatePath_Good(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error for valid path, got: %v", err)
 	}
-	if result != validPath {
-		t.Errorf("Expected path %s, got %s", validPath, result)
+	expectedPath := filepath.Join(realTmpDir, "test.txt")
+	if result != expectedPath {
+		t.Errorf("Expected path %s, got %s", expectedPath, result)
 	}
 
-	// Test nested path within workspace
+	// Test nested path within workspace (parent doesn't exist, but should still validate)
 	nestedPath := filepath.Join(tmpDir, "subdir", "test.txt")
 	result, err = s.validatePath(nestedPath)
 	if err != nil {
 		t.Errorf("Expected no error for nested path, got: %v", err)
 	}
-	if result != nestedPath {
-		t.Errorf("Expected path %s, got %s", nestedPath, result)
+	expectedNested := filepath.Join(realTmpDir, "subdir", "test.txt")
+	if result != expectedNested {
+		t.Errorf("Expected path %s, got %s", expectedNested, result)
 	}
 }
 
@@ -58,6 +66,32 @@ func TestValidatePath_Bad_DirectoryTraversal(t *testing.T) {
 	_, err = s.validatePath(outsidePath)
 	if err == nil {
 		t.Error("Expected error for path outside workspace")
+	}
+}
+
+func TestValidatePath_Bad_SymlinkTraversal(t *testing.T) {
+	// Create a temp directory as workspace root
+	tmpDir := t.TempDir()
+
+	// Create a target file outside workspace
+	outsideDir := t.TempDir()
+	targetFile := filepath.Join(outsideDir, "secret.txt")
+	if err := os.WriteFile(targetFile, []byte("secret"), 0644); err != nil {
+		t.Fatalf("Failed to create target file: %v", err)
+	}
+
+	// Create symlink inside workspace pointing outside
+	symlinkPath := filepath.Join(tmpDir, "evil-link")
+	if err := os.Symlink(targetFile, symlinkPath); err != nil {
+		t.Skipf("Symlinks not supported: %v", err)
+	}
+
+	s := New(WithWorkspaceRoot(tmpDir))
+
+	// Symlink traversal should be blocked
+	_, err := s.validatePath(symlinkPath)
+	if err == nil {
+		t.Error("Expected error for symlink pointing outside workspace")
 	}
 }
 

@@ -14,7 +14,7 @@ package gitcmd
 
 import (
 	"github.com/host-uk/core/pkg/cli"
-	"github.com/host-uk/core/pkg/dev"
+	"github.com/host-uk/core/internal/cmd/dev"
 	"github.com/host-uk/core/pkg/i18n"
 )
 

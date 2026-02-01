@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/sdk"
+	"github.com/host-uk/core/internal/cmd/sdk"
 )
 
 // runBuildSDK handles the `core build sdk` command.

@@ -14,6 +14,6 @@ package variants
 
 import (
 	// Commands via self-registration
-	_ "github.com/host-uk/core/pkg/doctor"
-	_ "github.com/host-uk/core/pkg/php"
+	_ "github.com/host-uk/core/internal/cmd/doctor"
+	_ "github.com/host-uk/core/internal/cmd/php"
 )

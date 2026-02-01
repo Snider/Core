@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/host-uk/core/pkg/updater"
+	"github.com/host-uk/core/internal/cmd/updater"
 )
 
 func ExampleNewUpdateService() {

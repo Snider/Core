@@ -15,7 +15,7 @@ import (
 
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/host-uk/core/pkg/workspace"
+	"github.com/host-uk/core/internal/cmd/workspace"
 )
 
 // runSetupOrchestrator decides between registry mode and bootstrap mode.

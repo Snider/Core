@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/host-uk/core/pkg/sdk/generators"
+	"github.com/host-uk/core/internal/cmd/sdk/generators"
 )
 
 // Config holds SDK generation configuration from .core/release.yaml.
