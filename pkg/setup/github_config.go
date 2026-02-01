@@ -8,6 +8,7 @@ package setup
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -132,10 +133,10 @@ func FindGitHubConfig(registryDir, specifiedPath string) (string, error) {
 		return "", fmt.Errorf("config file not found: %s", specifiedPath)
 	}
 
-	// Search in common locations
+	// Search in common locations (using filepath.Join for OS-portable paths)
 	candidates := []string{
-		registryDir + "/.core/github.yaml",
-		registryDir + "/github.yaml",
+		filepath.Join(registryDir, ".core", "github.yaml"),
+		filepath.Join(registryDir, "github.yaml"),
 	}
 
 	for _, path := range candidates {

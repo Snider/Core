@@ -167,9 +167,7 @@ func runGitHubSetup() error {
 				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
-			for _, c := range labelChanges.Changes {
-				changes.Changes = append(changes.Changes, c)
-			}
+			changes.Changes = append(changes.Changes, labelChanges.Changes...)
 		}
 
 		// Sync webhooks
@@ -181,9 +179,7 @@ func runGitHubSetup() error {
 				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
-			for _, c := range webhookChanges.Changes {
-				changes.Changes = append(changes.Changes, c)
-			}
+			changes.Changes = append(changes.Changes, webhookChanges.Changes...)
 		}
 
 		// Sync branch protection
@@ -195,9 +191,7 @@ func runGitHubSetup() error {
 				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
-			for _, c := range protectionChanges.Changes {
-				changes.Changes = append(changes.Changes, c)
-			}
+			changes.Changes = append(changes.Changes, protectionChanges.Changes...)
 		}
 
 		// Sync security settings
@@ -209,9 +203,7 @@ func runGitHubSetup() error {
 				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
-			for _, c := range securityChanges.Changes {
-				changes.Changes = append(changes.Changes, c)
-			}
+			changes.Changes = append(changes.Changes, securityChanges.Changes...)
 		}
 
 		aggregate.Add(changes)

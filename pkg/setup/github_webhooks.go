@@ -236,16 +236,26 @@ func SyncWebhooks(repoFullName string, config *GitHubConfig, dryRun bool) (*Chan
 }
 
 // stringSliceEqual compares two string slices for equality (order-independent).
+// Uses frequency counting to properly handle duplicates.
 func stringSliceEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	aSet := make(map[string]bool)
+	// Count frequencies in slice a
+	counts := make(map[string]int)
 	for _, s := range a {
-		aSet[s] = true
+		counts[s]++
 	}
+	// Decrement for each element in slice b
 	for _, s := range b {
-		if !aSet[s] {
+		counts[s]--
+		if counts[s] < 0 {
+			return false
+		}
+	}
+	// All counts should be zero if slices are equal
+	for _, count := range counts {
+		if count != 0 {
 			return false
 		}
 	}
