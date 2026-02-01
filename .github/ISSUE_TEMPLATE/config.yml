@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Host UK Documentation
+    url: https://github.com/host-uk/core-devops
+    about: Setup guides and workspace documentation
+  - name: Discussions
+    url: https://github.com/orgs/host-uk/discussions
+    about: Ask questions and share ideas

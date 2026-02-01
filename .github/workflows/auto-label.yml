@@ -1,0 +1,85 @@
+name: Auto Label Issues
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-label based on content
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+            const content = title + ' ' + body;
+
+            const labelsToAdd = [];
+
+            // Type labels based on title prefix
+            if (title.includes('[bug]')) {
+              labelsToAdd.push('bug');
+            } else if (title.includes('[feature]') || title.includes('feat(') || title.includes('feat:')) {
+              labelsToAdd.push('enhancement');
+            } else if (title.includes('[docs]') || title.includes('docs(') || title.includes('docs:')) {
+              labelsToAdd.push('documentation');
+            }
+
+            // Project labels based on content
+            if (content.includes('core dev') || content.includes('core work') || content.includes('core commit') || content.includes('core push')) {
+              labelsToAdd.push('project:core-cli');
+            }
+            if (content.includes('core php') || content.includes('composer') || content.includes('pest') || content.includes('phpstan')) {
+              labelsToAdd.push('project:core-php');
+            }
+
+            // Language labels
+            if (content.includes('.go') || content.includes('golang') || content.includes('go mod')) {
+              labelsToAdd.push('go');
+            }
+            if (content.includes('.php') || content.includes('laravel') || content.includes('composer')) {
+              // Skip - already handled by project:core-php
+            }
+
+            // Priority detection
+            if (content.includes('critical') || content.includes('urgent') || content.includes('breaking')) {
+              labelsToAdd.push('priority:high');
+            }
+
+            // Agent labels
+            if (content.includes('agent') || content.includes('ai ') || content.includes('claude') || content.includes('agentic')) {
+              labelsToAdd.push('agentic');
+            }
+
+            // Complexity hints
+            if (content.includes('simple') || content.includes('quick fix') || content.includes('typo')) {
+              labelsToAdd.push('good first issue');
+            }
+
+            // Apply labels if any detected
+            if (labelsToAdd.length > 0) {
+              // Filter to only existing labels
+              const existingLabels = await github.rest.issues.listLabelsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+              const validLabels = existingLabels.data.map(l => l.name);
+              const filteredLabels = labelsToAdd.filter(l => validLabels.includes(l));
+
+              if (filteredLabels.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: filteredLabels
+                });
+                console.log(`Added labels: ${filteredLabels.join(', ')}`);
+              }
+            }
