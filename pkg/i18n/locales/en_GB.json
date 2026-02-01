@@ -286,32 +286,8 @@
 			"review.your_prs": "Your PRs",
 			"review.review_requested": "Review Requested",
 			"review.no_prs": "No open PRs",
-			"review.no_reviews": "No reviews requested"
-		},
-		"qa": {
-			"short": "Quality assurance workflows",
-			"long": "Quality assurance commands for verifying work - CI status, reviews, issues.",
-			"watch.short": "Watch GitHub Actions after a push",
-			"watch.long": "Monitor GitHub Actions workflow runs triggered by a commit, showing live progress and actionable failure details.",
-			"watch.flag.repo": "Repository to watch (default: current)",
-			"watch.flag.commit": "Commit SHA to watch (default: HEAD)",
-			"watch.flag.timeout": "Timeout duration (default: 10m)",
-			"watch.commit": "Commit:",
-			"watch.waiting_for_workflows": "Waiting for workflows to start...",
-			"watch.timeout": "Timeout after {{.Duration}} waiting for workflows",
-			"watch.workflows_failed": "{{.Count}} workflow(s) failed",
-			"watch.all_passed": "All workflows passed",
-			"watch.error.not_git_repo": "Not in a git repository",
-			"watch.error.repo_format": "Invalid repo format. Use --repo org/name or run from a git repo",
-			"review.short": "Check PR review status",
-			"review.long": "Show PR review status with actionable next steps. Answers: What do I need to do to get my PRs merged? What reviews am I blocking?",
-			"review.flag.mine": "Show only your open PRs",
-			"review.flag.requested": "Show only PRs where your review is requested",
-			"review.flag.repo": "Specific repository (default: current)",
-			"review.your_prs": "Your PRs",
-			"review.review_requested": "Review Requested",
-			"review.no_prs": "No open PRs",
-			"review.no_reviews": "No reviews requested"
+			"review.no_reviews": "No reviews requested",
+			"review.error.no_repo": "Not in a git repository. Use --repo to specify one"
 		},
 		"test": {
 			"short": "Run Go tests with coverage"

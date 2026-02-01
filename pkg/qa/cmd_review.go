@@ -114,8 +114,7 @@ func runReview() error {
 		var err error
 		repoFullName, err = detectRepoFromGit()
 		if err != nil {
-			// If not in a repo and no --repo specified, show all
-			repoFullName = ""
+			return errors.E("qa.review", i18n.T("cmd.qa.review.error.no_repo"), nil)
 		}
 	}
 
@@ -145,7 +144,7 @@ func runReview() error {
 func showMyPRs(ctx context.Context, repo string) error {
 	prs, err := fetchPRs(ctx, repo, "author:@me")
 	if err != nil {
-		return errors.Wrap(err, "qa.review", "failed to fetch your PRs")
+		return errors.E("qa.review", "failed to fetch your PRs", err)
 	}
 
 	if len(prs) == 0 {
@@ -166,7 +165,7 @@ func showMyPRs(ctx context.Context, repo string) error {
 func showRequestedReviews(ctx context.Context, repo string) error {
 	prs, err := fetchPRs(ctx, repo, "review-requested:@me")
 	if err != nil {
-		return errors.Wrap(err, "qa.review", "failed to fetch review requests")
+		return errors.E("qa.review", "failed to fetch review requests", err)
 	}
 
 	if len(prs) == 0 {
