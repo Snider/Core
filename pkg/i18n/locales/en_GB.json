@@ -227,7 +227,14 @@
 			"deploy.short": "Deploy to Coolify",
 			"serve.short": "Run production container",
 			"ssl.short": "Setup SSL certificates with mkcert",
-			"packages.short": "Manage local PHP packages"
+			"packages.short": "Manage local PHP packages",
+			"ci.short": "Run CI/CD pipeline with combined reporting",
+			"ci.long": "Run all QA checks in optimal order and generate combined reports in JSON, markdown, or SARIF format for CI/CD integration.",
+			"ci.flag.json": "Output combined JSON report",
+			"ci.flag.summary": "Output markdown summary (for PR comments)",
+			"ci.flag.sarif": "Generate SARIF files for static analysis",
+			"ci.flag.upload_sarif": "Upload SARIF to GitHub Security tab",
+			"ci.flag.fail_on": "Severity level to fail on (critical, high, warning)"
 		},
 		"pkg": {
 			"short": "Package management for core-* repos",

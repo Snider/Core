@@ -131,6 +131,9 @@ func AddPHPCommands(root *cobra.Command) {
 	addPHPRectorCommand(phpCmd)
 	addPHPInfectionCommand(phpCmd)
 
+	// CI/CD Integration
+	addPHPCICommand(phpCmd)
+
 	// Package Management
 	addPHPPackagesCommands(phpCmd)
 
