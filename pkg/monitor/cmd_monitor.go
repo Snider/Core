@@ -107,7 +107,7 @@ type SecretScanningAlert struct {
 func runMonitor() error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return errors.E("monitor", i18n.T("error.gh_not_found"), nil)
+		return errors.E("monitor", i18n.T("error.gh_not_found"), err)
 	}
 
 	// Determine repos to scan
@@ -120,15 +120,17 @@ func runMonitor() error {
 		return errors.E("monitor", i18n.T("cmd.monitor.error.no_repos"), nil)
 	}
 
-	// Collect all findings
+	// Collect all findings and errors
 	var allFindings []Finding
+	var fetchErrors []string
 	for _, repo := range repoList {
 		if !monitorJSON {
 			cli.Print("\033[2K\r%s %s...", dimStyle.Render(i18n.T("cmd.monitor.scanning")), repo)
 		}
 
-		findings := fetchRepoFindings(repo)
+		findings, errs := fetchRepoFindings(repo)
 		allFindings = append(allFindings, findings...)
+		fetchErrors = append(fetchErrors, errs...)
 	}
 
 	// Filter by severity if specified
@@ -144,9 +146,16 @@ func runMonitor() error {
 		return outputJSON(allFindings)
 	}
 
-	if !monitorJSON {
-		cli.Print("\033[2K\r") // Clear scanning line
+	cli.Print("\033[2K\r") // Clear scanning line
+
+	// Show any fetch errors as warnings
+	if len(fetchErrors) > 0 {
+		for _, e := range fetchErrors {
+			cli.Print("%s %s\n", warningStyle.Render("!"), e)
+		}
+		cli.Blank()
 	}
+
 	return outputTable(allFindings)
 }
 
@@ -170,12 +179,12 @@ func resolveRepos() ([]string, error) {
 		// All repos from registry
 		registry, err := repos.FindRegistry()
 		if err != nil {
-			return nil, errors.Wrap(err, "monitor", "failed to find registry")
+			return nil, errors.E("monitor", "failed to find registry", err)
 		}
 
 		loaded, err := repos.LoadRegistry(registry)
 		if err != nil {
-			return nil, errors.Wrap(err, "monitor", "failed to load registry")
+			return nil, errors.E("monitor", "failed to load registry", err)
 		}
 
 		var repoList []string
@@ -194,26 +203,38 @@ func resolveRepos() ([]string, error) {
 }
 
 // fetchRepoFindings fetches all security findings for a repo
-func fetchRepoFindings(repoFullName string) []Finding {
+// Returns findings and any errors encountered (errors don't stop other fetches)
+func fetchRepoFindings(repoFullName string) ([]Finding, []string) {
 	var findings []Finding
+	var errs []string
+	repoName := strings.Split(repoFullName, "/")[1]
 
 	// Fetch code scanning alerts
-	codeFindings := fetchCodeScanningAlerts(repoFullName)
+	codeFindings, err := fetchCodeScanningAlerts(repoFullName)
+	if err != nil {
+		errs = append(errs, fmt.Sprintf("%s: code-scanning: %s", repoName, err))
+	}
 	findings = append(findings, codeFindings...)
 
 	// Fetch Dependabot alerts
-	depFindings := fetchDependabotAlerts(repoFullName)
+	depFindings, err := fetchDependabotAlerts(repoFullName)
+	if err != nil {
+		errs = append(errs, fmt.Sprintf("%s: dependabot: %s", repoName, err))
+	}
 	findings = append(findings, depFindings...)
 
 	// Fetch secret scanning alerts
-	secretFindings := fetchSecretScanningAlerts(repoFullName)
+	secretFindings, err := fetchSecretScanningAlerts(repoFullName)
+	if err != nil {
+		errs = append(errs, fmt.Sprintf("%s: secret-scanning: %s", repoName, err))
+	}
 	findings = append(findings, secretFindings...)
 
-	return findings
+	return findings, errs
 }
 
 // fetchCodeScanningAlerts fetches code scanning alerts
-func fetchCodeScanningAlerts(repoFullName string) []Finding {
+func fetchCodeScanningAlerts(repoFullName string) ([]Finding, error) {
 	args := []string{
 		"api",
 		fmt.Sprintf("repos/%s/code-scanning/alerts", repoFullName),
@@ -222,13 +243,22 @@ func fetchCodeScanningAlerts(repoFullName string) []Finding {
 	cmd := exec.Command("gh", args...)
 	output, err := cmd.Output()
 	if err != nil {
-		// May not have code scanning enabled or no permissions
-		return nil
+		// Check for expected "not enabled" responses vs actual errors
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			stderr := string(exitErr.Stderr)
+			// These are expected conditions, not errors
+			if strings.Contains(stderr, "Advanced Security must be enabled") ||
+				strings.Contains(stderr, "no analysis found") ||
+				strings.Contains(stderr, "Not Found") {
+				return nil, nil
+			}
+		}
+		return nil, errors.E("monitor.fetchCodeScanning", "API request failed", err)
 	}
 
 	var alerts []CodeScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil
+		return nil, errors.E("monitor.fetchCodeScanning", "failed to parse response", err)
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -256,11 +286,11 @@ func fetchCodeScanningAlerts(repoFullName string) []Finding {
 		findings = append(findings, f)
 	}
 
-	return findings
+	return findings, nil
 }
 
 // fetchDependabotAlerts fetches Dependabot alerts
-func fetchDependabotAlerts(repoFullName string) []Finding {
+func fetchDependabotAlerts(repoFullName string) ([]Finding, error) {
 	args := []string{
 		"api",
 		fmt.Sprintf("repos/%s/dependabot/alerts", repoFullName),
@@ -269,12 +299,20 @@ func fetchDependabotAlerts(repoFullName string) []Finding {
 	cmd := exec.Command("gh", args...)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			stderr := string(exitErr.Stderr)
+			// Dependabot not enabled is expected
+			if strings.Contains(stderr, "Dependabot alerts are not enabled") ||
+				strings.Contains(stderr, "Not Found") {
+				return nil, nil
+			}
+		}
+		return nil, errors.E("monitor.fetchDependabot", "API request failed", err)
 	}
 
 	var alerts []DependabotAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil
+		return nil, errors.E("monitor.fetchDependabot", "failed to parse response", err)
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -299,11 +337,11 @@ func fetchDependabotAlerts(repoFullName string) []Finding {
 		findings = append(findings, f)
 	}
 
-	return findings
+	return findings, nil
 }
 
 // fetchSecretScanningAlerts fetches secret scanning alerts
-func fetchSecretScanningAlerts(repoFullName string) []Finding {
+func fetchSecretScanningAlerts(repoFullName string) ([]Finding, error) {
 	args := []string{
 		"api",
 		fmt.Sprintf("repos/%s/secret-scanning/alerts", repoFullName),
@@ -312,12 +350,20 @@ func fetchSecretScanningAlerts(repoFullName string) []Finding {
 	cmd := exec.Command("gh", args...)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			stderr := string(exitErr.Stderr)
+			// Secret scanning not enabled is expected
+			if strings.Contains(stderr, "Secret scanning is disabled") ||
+				strings.Contains(stderr, "Not Found") {
+				return nil, nil
+			}
+		}
+		return nil, errors.E("monitor.fetchSecretScanning", "API request failed", err)
 	}
 
 	var alerts []SecretScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil
+		return nil, errors.E("monitor.fetchSecretScanning", "failed to parse response", err)
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -342,7 +388,7 @@ func fetchSecretScanningAlerts(repoFullName string) []Finding {
 		findings = append(findings, f)
 	}
 
-	return findings
+	return findings, nil
 }
 
 // normalizeSeverity normalizes severity strings to standard values
@@ -401,7 +447,7 @@ func sortBySeverity(findings []Finding) {
 func outputJSON(findings []Finding) error {
 	data, err := json.MarshalIndent(findings, "", "  ")
 	if err != nil {
-		return errors.Wrap(err, "monitor", "failed to marshal findings")
+		return errors.E("monitor", "failed to marshal findings", err)
 	}
 	cli.Print("%s\n", string(data))
 	return nil
@@ -501,7 +547,7 @@ func detectRepoFromGit() (string, error) {
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", errors.E("monitor", i18n.T("cmd.monitor.error.not_git_repo"), nil)
+		return "", errors.E("monitor", i18n.T("cmd.monitor.error.not_git_repo"), err)
 	}
 
 	url := strings.TrimSpace(string(output))
