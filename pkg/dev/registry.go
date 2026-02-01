@@ -44,8 +44,8 @@ func loadRegistryWithConfig(registryPath string) (*repos.Registry, string, error
 			registryDir = cwd
 		}
 	}
-	// Load workspace config to respect packages_dir
-	if wsConfig, err := workspace.LoadConfig(registryDir); err == nil {
+	// Load workspace config to respect packages_dir (only if config exists)
+	if wsConfig, err := workspace.LoadConfig(registryDir); err == nil && wsConfig != nil {
 		if wsConfig.PackagesDir != "" {
 			pkgDir := wsConfig.PackagesDir
 			// Expand ~

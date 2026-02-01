@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
+	"github.com/host-uk/core/pkg/workspace"
 )
 
 // runSetupOrchestrator decides between registry mode and bootstrap mode.
@@ -132,6 +134,13 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 
 	// Override base path to target directory
 	reg.BasePath = targetDir
+
+	// Check workspace config for default_only if no filter specified
+	if only == "" {
+		if wsConfig, err := workspace.LoadConfig(devopsPath); err == nil && wsConfig != nil && len(wsConfig.DefaultOnly) > 0 {
+			only = strings.Join(wsConfig.DefaultOnly, ",")
+		}
+	}
 
 	// Now run the regular setup with the loaded registry
 	return runRegistrySetupWithReg(ctx, reg, registryPath, only, dryRun, all, runBuild)
