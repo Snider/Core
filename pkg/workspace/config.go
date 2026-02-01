@@ -25,6 +25,7 @@ func DefaultConfig() *WorkspaceConfig {
 }
 
 // LoadConfig tries to load workspace.yaml from the given directory's .core subfolder.
+// Returns nil if no config file exists (caller should check for nil).
 func LoadConfig(dir string) (*WorkspaceConfig, error) {
 	path := filepath.Join(dir, ".core", "workspace.yaml")
 	data, err := os.ReadFile(path)
@@ -35,7 +36,8 @@ func LoadConfig(dir string) (*WorkspaceConfig, error) {
 			if parent != dir {
 				return LoadConfig(parent)
 			}
-			return DefaultConfig(), nil
+			// No workspace.yaml found anywhere - return nil to indicate no config
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to read workspace config: %w", err)
 	}

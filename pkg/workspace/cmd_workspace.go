@@ -60,7 +60,7 @@ func runWorkspaceActive(cmd *cobra.Command, args []string) error {
 			cli.Println("No active package set")
 			return nil
 		}
-		cli.Println(config.Active)
+		cli.Text(config.Active)
 		return nil
 	}
 

@@ -157,6 +157,18 @@
 			"no_git_repos": "No git repositories found.",
 			"confirm_claude_commit": "Have Claude commit these repos?",
 			"health.short": "Quick health check across all repos",
+			"health.long": "Shows a summary of repository health across all repos in the workspace.",
+			"health.flag.verbose": "Show detailed breakdown",
+			"health.repos": "repos",
+			"health.to_push": "to push",
+			"health.to_pull": "to pull",
+			"health.errors": "errors",
+			"health.more": "+{{.Count}} more",
+			"health.dirty_label": "Dirty:",
+			"health.ahead_label": "Ahead:",
+			"health.behind_label": "Behind:",
+			"health.errors_label": "Errors:",
+			"status.clean": "clean",
 			"commit.short": "Claude-assisted commits across repos",
 			"push.short": "Push commits across all repos",
 			"push.diverged": "branch has diverged from remote",
@@ -293,6 +305,12 @@
 		}
 	},
 	"common": {
+		"status": {
+			"dirty": "dirty",
+			"clean": "clean",
+			"synced": "synced",
+			"up_to_date": "up to date"
+		},
 		"label": {
 			"done": "Done",
 			"error": "Error",
@@ -309,7 +327,8 @@
 			"fix": "Auto-fix issues where possible",
 			"diff": "Show diff of changes",
 			"json": "Output as JSON",
-			"verbose": "Show detailed output"
+			"verbose": "Show detailed output",
+			"registry": "Path to repos.yaml registry file"
 		},
 		"progress": {
 			"running": "Running {{.Task}}...",
