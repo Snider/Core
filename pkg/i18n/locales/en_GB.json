@@ -263,6 +263,22 @@
 			"github.error.config_not_found": "GitHub config file not found",
 			"github.error.conflicting_flags": "Cannot use --repo and --all together"
 		},
+		"qa": {
+			"short": "Quality assurance workflows",
+			"long": "Quality assurance commands for verifying work - CI status, reviews, issues.",
+			"watch.short": "Watch GitHub Actions after a push",
+			"watch.long": "Monitor GitHub Actions workflow runs triggered by a commit, showing live progress and actionable failure details.",
+			"watch.flag.repo": "Repository to watch (default: current)",
+			"watch.flag.commit": "Commit SHA to watch (default: HEAD)",
+			"watch.flag.timeout": "Timeout duration (default: 10m)",
+			"watch.commit": "Commit:",
+			"watch.waiting_for_workflows": "Waiting for workflows to start...",
+			"watch.timeout": "Timeout after {{.Duration}} waiting for workflows",
+			"watch.workflows_failed": "{{.Count}} workflow(s) failed",
+			"watch.all_passed": "All workflows passed",
+			"watch.error.not_git_repo": "Not in a git repository",
+			"watch.error.repo_format": "Invalid repo format. Use --repo org/name or run from a git repo"
+		},
 		"test": {
 			"short": "Run Go tests with coverage"
 		},
