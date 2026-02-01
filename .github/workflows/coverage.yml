@@ -33,7 +33,7 @@ jobs:
           core --version
 
       - name: Generate code
-        run: go generate ./pkg/updater/...
+        run: go generate ./internal/cmd/updater/...
 
       - name: Run coverage
         run: core go cov

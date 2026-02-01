@@ -16,8 +16,8 @@ package variants
 
 import (
 	// Commands via self-registration
+	_ "github.com/host-uk/core/internal/cmd/ci"
+	_ "github.com/host-uk/core/internal/cmd/doctor"
+	_ "github.com/host-uk/core/internal/cmd/sdk"
 	_ "github.com/host-uk/core/pkg/build/buildcmd"
-	_ "github.com/host-uk/core/pkg/ci"
-	_ "github.com/host-uk/core/pkg/doctor"
-	_ "github.com/host-uk/core/pkg/sdk"
 )

@@ -8,14 +8,6 @@ import (
 	"strings"
 )
 
-// Sentinel errors for path validation.
-var (
-	// ErrPathTraversal indicates an attempt to access paths outside the root.
-	ErrPathTraversal = errors.New("path traversal attempt detected")
-	// ErrSymlinkTraversal indicates a symlink points outside the root.
-	ErrSymlinkTraversal = errors.New("symlink points outside workspace")
-)
-
 // Medium is a local filesystem storage backend.
 type Medium struct {
 	root string
@@ -40,76 +32,73 @@ func New(root string) (*Medium, error) {
 
 // path sanitizes and joins the relative path with the root directory.
 // Returns an error if a path traversal attempt is detected.
-// Resolves symlinks to prevent bypass attacks.
+// Uses filepath.EvalSymlinks to prevent symlink-based bypass attacks.
 func (m *Medium) path(relativePath string) (string, error) {
 	// Clean the path to remove any .. or . components
 	cleanPath := filepath.Clean(relativePath)
 
-	// Check for obvious path traversal attempts
+	// Check for path traversal attempts in the raw path
 	if strings.HasPrefix(cleanPath, "..") || strings.Contains(cleanPath, string(filepath.Separator)+"..") {
-		return "", ErrPathTraversal
+		return "", errors.New("path traversal attempt detected")
+	}
+
+	// Reject absolute paths - they bypass the sandbox
+	if filepath.IsAbs(cleanPath) {
+		return "", errors.New("path traversal attempt detected")
 	}
 
 	fullPath := filepath.Join(m.root, cleanPath)
 
-	// Verify the resulting path is still within root (before symlink resolution)
-	if !strings.HasPrefix(fullPath, m.root) {
-		return "", ErrPathTraversal
+	// Verify the resulting path is still within root (boundary-aware check)
+	// Must use separator to prevent /tmp/root matching /tmp/root2
+	rootWithSep := m.root
+	if !strings.HasSuffix(rootWithSep, string(filepath.Separator)) {
+		rootWithSep += string(filepath.Separator)
+	}
+	if fullPath != m.root && !strings.HasPrefix(fullPath, rootWithSep) {
+		return "", errors.New("path traversal attempt detected")
 	}
 
-	// Resolve symlinks to get the real path
-	// First resolve the root to handle any symlinks in the root path
-	realRoot, err := filepath.EvalSymlinks(m.root)
+	// Resolve symlinks to prevent bypass attacks
+	// We need to resolve both the root and full path to handle symlinked roots
+	resolvedRoot, err := filepath.EvalSymlinks(m.root)
 	if err != nil {
 		return "", err
 	}
 
-	// Try to resolve the full path - this may fail if path doesn't exist yet
-	realPath, err := resolvePathWithSymlinks(fullPath)
-	if err != nil {
-		return "", err
+	// Build boundary-aware prefix for resolved root
+	resolvedRootWithSep := resolvedRoot
+	if !strings.HasSuffix(resolvedRootWithSep, string(filepath.Separator)) {
+		resolvedRootWithSep += string(filepath.Separator)
 	}
 
-	// Verify resolved path is within resolved root
-	if !strings.HasPrefix(realPath, realRoot) && realPath != realRoot {
-		return "", ErrSymlinkTraversal
+	// For the full path, resolve as much as exists
+	// Use Lstat first to check if the path exists
+	if _, err := os.Lstat(fullPath); err == nil {
+		resolvedPath, err := filepath.EvalSymlinks(fullPath)
+		if err != nil {
+			return "", err
+		}
+		// Verify resolved path is still within resolved root (boundary-aware)
+		if resolvedPath != resolvedRoot && !strings.HasPrefix(resolvedPath, resolvedRootWithSep) {
+			return "", errors.New("path traversal attempt detected via symlink")
+		}
+		return resolvedPath, nil
+	}
+
+	// Path doesn't exist yet - verify parent directory
+	parentDir := filepath.Dir(fullPath)
+	if _, err := os.Lstat(parentDir); err == nil {
+		resolvedParent, err := filepath.EvalSymlinks(parentDir)
+		if err != nil {
+			return "", err
+		}
+		if resolvedParent != resolvedRoot && !strings.HasPrefix(resolvedParent, resolvedRootWithSep) {
+			return "", errors.New("path traversal attempt detected via symlink")
+		}
 	}
 
 	return fullPath, nil
-}
-
-// resolvePathWithSymlinks resolves symlinks in a path, even if the path doesn't exist.
-// It walks up the directory tree to find the nearest existing ancestor,
-// resolves symlinks for that ancestor, then appends the remaining path components.
-func resolvePathWithSymlinks(path string) (string, error) {
-	// If the path exists, just resolve it directly
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved, nil
-	}
-
-	// Path doesn't exist - walk up to find existing ancestor
-	current := path
-	var remainder []string
-
-	for {
-		parent := filepath.Dir(current)
-		if parent == current {
-			// Reached root, nothing more to resolve
-			break
-		}
-
-		remainder = append([]string{filepath.Base(current)}, remainder...)
-		current = parent
-
-		// Try to resolve this ancestor
-		if resolved, err := filepath.EvalSymlinks(current); err == nil {
-			// Found existing ancestor, build full path
-			return filepath.Join(append([]string{resolved}, remainder...)...), nil
-		}
-	}
-
-	// No existing ancestor found, return original path
-	return path, nil
 }
 
 // Read retrieves the content of a file as a string.
@@ -177,76 +166,4 @@ func (m *Medium) FileGet(relativePath string) (string, error) {
 // FileSet is a convenience function that writes a file to the medium.
 func (m *Medium) FileSet(relativePath, content string) error {
 	return m.Write(relativePath, content)
-}
-
-// Delete removes a file or empty directory.
-func (m *Medium) Delete(relativePath string) error {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return err
-	}
-	return os.Remove(fullPath)
-}
-
-// DeleteAll removes a path and all its contents recursively.
-func (m *Medium) DeleteAll(relativePath string) error {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return err
-	}
-	return os.RemoveAll(fullPath)
-}
-
-// Rename moves or renames a file or directory.
-func (m *Medium) Rename(oldPath, newPath string) error {
-	fullOldPath, err := m.path(oldPath)
-	if err != nil {
-		return err
-	}
-	fullNewPath, err := m.path(newPath)
-	if err != nil {
-		return err
-	}
-	return os.Rename(fullOldPath, fullNewPath)
-}
-
-// Exists checks if a path exists (file or directory).
-func (m *Medium) Exists(relativePath string) bool {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return false
-	}
-	_, err = os.Stat(fullPath)
-	return err == nil
-}
-
-// IsDir checks if a path exists and is a directory.
-func (m *Medium) IsDir(relativePath string) bool {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return false
-	}
-	info, err := os.Stat(fullPath)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
-}
-
-// List returns the contents of a directory as os.DirEntry slices.
-func (m *Medium) List(relativePath string) ([]os.DirEntry, error) {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return nil, err
-	}
-	return os.ReadDir(fullPath)
-}
-
-// Stat returns file information for a path.
-func (m *Medium) Stat(relativePath string) (os.FileInfo, error) {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return nil, err
-	}
-	return os.Stat(fullPath)
 }

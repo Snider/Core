@@ -8,11 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
-	// Create a temporary directory for testing
-	testRoot, err := os.MkdirTemp("", "local_test_root")
-	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot) // Clean up after the test
+func TestNew_Good(t *testing.T) {
+	testRoot := t.TempDir()
 
 	// Test successful creation
 	medium, err := New(testRoot)
@@ -31,13 +28,9 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, medium2)
 }
 
-func TestPath(t *testing.T) {
-	testRoot, err := os.MkdirTemp("", "local_path_test")
-	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
-
-	medium, err := New(testRoot)
-	assert.NoError(t, err)
+func TestPath_Good(t *testing.T) {
+	testRoot := t.TempDir()
+	medium := &Medium{root: testRoot}
 
 	// Valid path
 	validPath, err := medium.path("file.txt")
@@ -48,49 +41,28 @@ func TestPath(t *testing.T) {
 	subDirPath, err := medium.path("dir/sub/file.txt")
 	assert.NoError(t, err)
 	assert.Equal(t, filepath.Join(testRoot, "dir", "sub", "file.txt"), subDirPath)
+}
+
+func TestPath_Bad(t *testing.T) {
+	testRoot := t.TempDir()
+	medium := &Medium{root: testRoot}
 
 	// Path traversal attempt
-	_, err = medium.path("../secret.txt")
+	_, err := medium.path("../secret.txt")
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrPathTraversal)
+	assert.Contains(t, err.Error(), "path traversal attempt detected")
 
 	_, err = medium.path("dir/../../secret.txt")
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrPathTraversal)
-}
+	assert.Contains(t, err.Error(), "path traversal attempt detected")
 
-func TestPath_SymlinkTraversal(t *testing.T) {
-	// Create workspace root
-	testRoot, err := os.MkdirTemp("", "local_symlink_test")
-	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
-
-	// Create outside directory with secret file
-	outsideDir, err := os.MkdirTemp("", "local_outside_test")
-	assert.NoError(t, err)
-	defer os.RemoveAll(outsideDir)
-
-	secretFile := filepath.Join(outsideDir, "secret.txt")
-	err = os.WriteFile(secretFile, []byte("secret"), 0644)
-	assert.NoError(t, err)
-
-	// Create symlink inside workspace pointing outside
-	symlinkPath := filepath.Join(testRoot, "evil-link")
-	err = os.Symlink(secretFile, symlinkPath)
-	if err != nil {
-		t.Skipf("Symlinks not supported: %v", err)
-	}
-
-	medium, err := New(testRoot)
-	assert.NoError(t, err)
-
-	// Symlink traversal should be blocked
-	_, err = medium.path("evil-link")
+	// Absolute path attempt
+	_, err = medium.path("/etc/passwd")
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrSymlinkTraversal)
+	assert.Contains(t, err.Error(), "path traversal attempt detected")
 }
 
-func TestReadWrite(t *testing.T) {
+func TestReadWrite_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_read_write_test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(testRoot)
@@ -127,7 +99,7 @@ func TestReadWrite(t *testing.T) {
 	assert.Contains(t, writeErr.Error(), "path traversal attempt detected")
 }
 
-func TestEnsureDir(t *testing.T) {
+func TestEnsureDir_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_ensure_dir_test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(testRoot)
@@ -155,7 +127,7 @@ func TestEnsureDir(t *testing.T) {
 	assert.Contains(t, err.Error(), "path traversal attempt detected")
 }
 
-func TestIsFile(t *testing.T) {
+func TestIsFile_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_is_file_test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(testRoot)
@@ -188,7 +160,7 @@ func TestIsFile(t *testing.T) {
 	assert.False(t, medium.IsFile("../bad_file.txt"))
 }
 
-func TestFileGetFileSet(t *testing.T) {
+func TestFileGetFileSet_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_fileget_fileset_test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(testRoot)

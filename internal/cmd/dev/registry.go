@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/internal/cmd/workspace"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
-	"github.com/host-uk/core/pkg/workspace"
 )
 
 // loadRegistryWithConfig loads the registry and applies workspace configuration.

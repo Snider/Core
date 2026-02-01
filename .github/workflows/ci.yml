@@ -33,7 +33,7 @@ jobs:
           core --version
 
       - name: Generate code
-        run: go generate ./pkg/updater/...
+        run: go generate ./internal/cmd/updater/...
 
       - name: Run QA
         # Skip lint until golangci-lint supports Go 1.25
