@@ -50,7 +50,7 @@ func TestReadComposerJSON_Bad(t *testing.T) {
 		dir := t.TempDir()
 		_, err := readComposerJSON(dir)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to read composer.json")
+		assert.Contains(t, err.Error(), "Failed to read composer.json")
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestReadComposerJSON_Bad(t *testing.T) {
 
 		_, err = readComposerJSON(dir)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to parse composer.json")
+		assert.Contains(t, err.Error(), "Failed to parse composer.json")
 	})
 }
 
@@ -104,10 +104,9 @@ func TestWriteComposerJSON_Bad(t *testing.T) {
 
 		err := writeComposerJSON("/non/existent/path", raw)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to write composer.json")
+		assert.Contains(t, err.Error(), "Failed to write composer.json")
 	})
 }
-
 func TestGetRepositories_Good(t *testing.T) {
 	t.Run("returns empty slice when no repositories", func(t *testing.T) {
 		raw := make(map[string]json.RawMessage)
@@ -149,7 +148,7 @@ func TestGetRepositories_Bad(t *testing.T) {
 
 		_, err := getRepositories(raw)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to parse repositories")
+		assert.Contains(t, err.Error(), "Failed to parse repositories")
 	})
 }
 
@@ -212,17 +211,17 @@ func TestGetPackageInfo_Bad(t *testing.T) {
 		dir := t.TempDir()
 		_, _, err := getPackageInfo(dir)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to read package composer.json")
+		assert.Contains(t, err.Error(), "Failed to read package composer.json")
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
 		dir := t.TempDir()
-		err := os.WriteFile(filepath.Join(dir, "composer.json"), []byte("invalid{"), 0644)
+		err := os.WriteFile(filepath.Join(dir, "composer.json"), []byte("not json{"), 0644)
 		require.NoError(t, err)
 
 		_, _, err = getPackageInfo(dir)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to parse package composer.json")
+		assert.Contains(t, err.Error(), "Failed to parse package composer.json")
 	})
 
 	t.Run("missing name", func(t *testing.T) {

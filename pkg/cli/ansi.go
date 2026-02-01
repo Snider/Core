@@ -100,17 +100,19 @@ func (s *AnsiStyle) Render(text string) string {
 	return strings.Join(codes, "") + text + ansiReset
 }
 
-// Hex color support
+// fgColorHex converts a hex string to an ANSI foreground color code.
 func fgColorHex(hex string) string {
 	r, g, b := hexToRGB(hex)
 	return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
 }
 
+// bgColorHex converts a hex string to an ANSI background color code.
 func bgColorHex(hex string) string {
 	r, g, b := hexToRGB(hex)
 	return fmt.Sprintf("\033[48;2;%d;%d;%dm", r, g, b)
 }
 
+// hexToRGB converts a hex string to RGB values.
 func hexToRGB(hex string) (int, int, int) {
 	hex = strings.TrimPrefix(hex, "#")
 	if len(hex) != 6 {

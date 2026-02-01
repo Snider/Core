@@ -99,9 +99,8 @@ func TestBaseService_Logs_Bad(t *testing.T) {
 	t.Run("returns error when log file doesn't exist", func(t *testing.T) {
 		s := &baseService{logPath: "/nonexistent/path/log.log"}
 		_, err := s.Logs(false)
-
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to open log file")
+		assert.Contains(t, err.Error(), "Failed to open log file")
 	})
 }
 

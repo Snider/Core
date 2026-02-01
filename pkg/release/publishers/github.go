@@ -26,11 +26,6 @@ func (p *GitHubPublisher) Name() string {
 // Publish publishes the release to GitHub.
 // Uses the gh CLI for creating releases and uploading assets.
 func (p *GitHubPublisher) Publish(ctx context.Context, release *Release, pubCfg PublisherConfig, relCfg ReleaseConfig, dryRun bool) error {
-	// Validate gh CLI is available
-	if err := validateGhCli(); err != nil {
-		return err
-	}
-
 	// Determine repository
 	repo := ""
 	if relCfg != nil {
@@ -47,6 +42,11 @@ func (p *GitHubPublisher) Publish(ctx context.Context, release *Release, pubCfg 
 
 	if dryRun {
 		return p.dryRunPublish(release, pubCfg, repo)
+	}
+
+	// Validate gh CLI is available and authenticated for actual publish
+	if err := validateGhCli(); err != nil {
+		return err
 	}
 
 	return p.executePublish(ctx, release, pubCfg, repo)

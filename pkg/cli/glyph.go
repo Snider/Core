@@ -9,16 +9,24 @@ import (
 type GlyphTheme int
 
 const (
+	// ThemeUnicode uses standard Unicode symbols.
 	ThemeUnicode GlyphTheme = iota
+	// ThemeEmoji uses Emoji symbols.
 	ThemeEmoji
+	// ThemeASCII uses ASCII fallback symbols.
 	ThemeASCII
 )
 
 var currentTheme = ThemeUnicode
 
+// UseUnicode switches the glyph theme to Unicode.
 func UseUnicode() { currentTheme = ThemeUnicode }
-func UseEmoji()   { currentTheme = ThemeEmoji }
-func UseASCII()   { currentTheme = ThemeASCII }
+
+// UseEmoji switches the glyph theme to Emoji.
+func UseEmoji() { currentTheme = ThemeEmoji }
+
+// UseASCII switches the glyph theme to ASCII.
+func UseASCII() { currentTheme = ThemeASCII }
 
 func glyphMap() map[string]string {
 	switch currentTheme {
@@ -31,7 +39,7 @@ func glyphMap() map[string]string {
 	}
 }
 
-// Glyph converts a shortcode to its symbol.
+// Glyph converts a shortcode (e.g. ":check:") to its symbol based on the current theme.
 func Glyph(code string) string {
 	if sym, ok := glyphMap()[code]; ok {
 		return sym

@@ -25,14 +25,14 @@ type RepoDocInfo struct {
 func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 	var reg *repos.Registry
 	var err error
-	var basePath string
+	var registryDir string
 
 	if registryPath != "" {
 		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
 			return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "registry"))
 		}
-		basePath = filepath.Dir(registryPath)
+		registryDir = filepath.Dir(registryPath)
 	} else {
 		registryPath, err = repos.FindRegistry()
 		if err == nil {
@@ -40,14 +40,44 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 			if err != nil {
 				return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "registry"))
 			}
-			basePath = filepath.Dir(registryPath)
+			registryDir = filepath.Dir(registryPath)
 		} else {
 			cwd, _ := os.Getwd()
 			reg, err = repos.ScanDirectory(cwd)
 			if err != nil {
 				return nil, "", cli.Wrap(err, i18n.T("i18n.fail.scan", "directory"))
 			}
-			basePath = cwd
+			registryDir = cwd
+		}
+	}
+
+	// Load workspace config to respect packages_dir
+	wsConfig, err := repos.LoadWorkspaceConfig(registryDir)
+	if err != nil {
+		return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "workspace config"))
+	}
+
+	basePath := registryDir
+
+	if wsConfig.PackagesDir != "" {
+		pkgDir := wsConfig.PackagesDir
+		
+		// Expand ~
+		if strings.HasPrefix(pkgDir, "~/") {
+			home, _ := os.UserHomeDir()
+			pkgDir = filepath.Join(home, pkgDir[2:])
+		}
+
+		if !filepath.IsAbs(pkgDir) {
+			pkgDir = filepath.Join(registryDir, pkgDir)
+		}
+		basePath = pkgDir
+
+		// Update repo paths if they were relative to registry
+		// This ensures consistency when packages_dir overrides the default
+		reg.BasePath = basePath
+		for _, repo := range reg.Repos {
+			repo.Path = filepath.Join(basePath, repo.Name)
 		}
 	}
 

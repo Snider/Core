@@ -102,16 +102,22 @@ func TestIsPHPProject_Container_Bad(t *testing.T) {
 
 func TestLookupLinuxKit_Bad(t *testing.T) {
 	t.Run("returns error when linuxkit not found", func(t *testing.T) {
-		// Save original PATH and restore after test
+		// Save original PATH and paths
 		origPath := os.Getenv("PATH")
-		defer os.Setenv("PATH", origPath)
+		origCommonPaths := commonLinuxKitPaths
+		defer func() {
+			os.Setenv("PATH", origPath)
+			commonLinuxKitPaths = origCommonPaths
+		}()
 
-		// Set PATH to empty to ensure linuxkit isn't found
+		// Set PATH to empty and clear common paths
 		os.Setenv("PATH", "")
+		commonLinuxKitPaths = []string{}
 
 		_, err := lookupLinuxKit()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "linuxkit not found")
+		if assert.Error(t, err) {
+			assert.Contains(t, err.Error(), "linuxkit not found")
+		}
 	})
 }
 
