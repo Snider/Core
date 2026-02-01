@@ -219,6 +219,7 @@
 			"test.flag.coverage": "Generate code coverage report",
 			"test.flag.filter": "Filter tests by name pattern",
 			"test.flag.group": "Run only tests in specified group",
+			"test.flag.junit": "Output results in JUnit XML format",
 			"fmt.short": "Format PHP code with Laravel Pint",
 			"fmt.flag.fix": "Apply formatting fixes",
 			"analyse.short": "Run PHPStan static analysis",

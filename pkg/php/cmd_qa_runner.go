@@ -294,22 +294,22 @@ func (r *QARunner) GetCheckOutput(check string) []string {
 
 // QARunResult holds the results of running QA checks.
 type QARunResult struct {
-	Passed       bool
-	Duration     string
-	Results      []QACheckRunResult
-	PassedCount  int
-	FailedCount  int
-	SkippedCount int
+	Passed       bool               `json:"passed"`
+	Duration     string             `json:"duration"`
+	Results      []QACheckRunResult `json:"results"`
+	PassedCount  int                `json:"passed_count"`
+	FailedCount  int                `json:"failed_count"`
+	SkippedCount int                `json:"skipped_count"`
 }
 
 // QACheckRunResult holds the result of a single QA check.
 type QACheckRunResult struct {
-	Name     string
-	Passed   bool
-	Skipped  bool
-	ExitCode int
-	Duration string
-	Output   string
+	Name     string `json:"name"`
+	Passed   bool   `json:"passed"`
+	Skipped  bool   `json:"skipped"`
+	ExitCode int    `json:"exit_code"`
+	Duration string `json:"duration"`
+	Output   string `json:"output,omitempty"`
 }
 
 // GetIssueMessage returns an issue message for a check.

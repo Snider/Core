@@ -2,10 +2,10 @@ package php
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"strings"
-
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
@@ -66,7 +66,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("cmd.php.test.flag.coverage"))
 	testCmd.Flags().StringVar(&testFilter, "filter", "", i18n.T("cmd.php.test.flag.filter"))
 	testCmd.Flags().StringVar(&testGroup, "group", "", i18n.T("cmd.php.test.flag.group"))
-	testCmd.Flags().BoolVar(&testJSON, "json", false, i18n.T("common.flag.json"))
+	testCmd.Flags().BoolVar(&testJSON, "junit", false, i18n.T("cmd.php.test.flag.junit"))
 
 	parent.AddCommand(testCmd)
 }
@@ -603,7 +603,13 @@ func addPHPQACommand(parent *cobra.Command) {
 				return cli.Err("%s", i18n.T("i18n.fail.run", "QA pipeline"))
 			}
 
-			// JSON mode: return error status without display output
+			// JSON mode: output results as JSON
+			output, err := json.MarshalIndent(result, "", "  ")
+			if err != nil {
+				return cli.Wrap(err, "marshal JSON output")
+			}
+			cli.Text(string(output))
+
 			if !result.Passed {
 				return cli.Err("%s", i18n.T("i18n.fail.run", "QA pipeline"))
 			}
