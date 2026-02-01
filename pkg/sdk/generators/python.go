@@ -61,7 +61,9 @@ func (g *PythonGenerator) generateDocker(ctx context.Context, opts Options) erro
 	specDir := filepath.Dir(opts.SpecPath)
 	specName := filepath.Base(opts.SpecPath)
 
-	cmd := exec.CommandContext(ctx, "docker", "run", "--rm",
+	args := []string{"run", "--rm"}
+	args = append(args, dockerUserArgs()...)
+	args = append(args,
 		"-v", specDir+":/spec",
 		"-v", opts.OutputDir+":/out",
 		"openapitools/openapi-generator-cli", "generate",
@@ -70,6 +72,8 @@ func (g *PythonGenerator) generateDocker(ctx context.Context, opts Options) erro
 		"-o", "/out",
 		"--additional-properties=packageName="+opts.PackageName,
 	)
+
+	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

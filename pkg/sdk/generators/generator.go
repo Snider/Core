@@ -3,6 +3,9 @@ package generators
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"runtime"
 )
 
 // Options holds common generation options.
@@ -64,4 +67,13 @@ func (r *Registry) Languages() []string {
 		langs = append(langs, lang)
 	}
 	return langs
+}
+
+// dockerUserArgs returns Docker --user args for the current user on Unix systems.
+// On Windows, Docker handles permissions differently, so no args are returned.
+func dockerUserArgs() []string {
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+	return []string{"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())}
 }

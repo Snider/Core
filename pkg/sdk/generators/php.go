@@ -45,7 +45,9 @@ func (g *PHPGenerator) Generate(ctx context.Context, opts Options) error {
 	specDir := filepath.Dir(opts.SpecPath)
 	specName := filepath.Base(opts.SpecPath)
 
-	cmd := exec.CommandContext(ctx, "docker", "run", "--rm",
+	args := []string{"run", "--rm"}
+	args = append(args, dockerUserArgs()...)
+	args = append(args,
 		"-v", specDir+":/spec",
 		"-v", opts.OutputDir+":/out",
 		"openapitools/openapi-generator-cli", "generate",
@@ -54,6 +56,8 @@ func (g *PHPGenerator) Generate(ctx context.Context, opts Options) error {
 		"-o", "/out",
 		"--additional-properties=invokerPackage="+opts.PackageName,
 	)
+
+	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
