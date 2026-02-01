@@ -10,13 +10,13 @@ package qa
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/host-uk/core/pkg/cli"
+	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/i18n"
 )
 
@@ -78,7 +78,7 @@ func addWatchCommand(parent *cli.Command) {
 func runWatch() error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return errors.New(i18n.T("error.gh_not_found"))
+		return errors.E("qa.watch", i18n.T("error.gh_not_found"), nil)
 	}
 
 	// Determine repo
@@ -94,7 +94,12 @@ func runWatch() error {
 	}
 
 	cli.Print("%s %s\n", dimStyle.Render(i18n.Label("repo")), repoFullName)
-	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.qa.watch.commit")), commitSha[:8])
+	// Safe prefix for display - handle short SHAs gracefully
+	shaPrefix := commitSha
+	if len(commitSha) > 8 {
+		shaPrefix = commitSha[:8]
+	}
+	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.qa.watch.commit")), shaPrefix)
 	cli.Blank()
 
 	// Poll for workflow runs
@@ -105,7 +110,7 @@ func runWatch() error {
 	for time.Now().Before(deadline) {
 		runs, err := fetchWorkflowRunsForCommit(repoFullName, commitSha)
 		if err != nil {
-			return cli.Wrap(err, "failed to fetch workflow runs")
+			return errors.Wrap(err, "qa.watch", "failed to fetch workflow runs")
 		}
 
 		if len(runs) == 0 {
@@ -123,7 +128,9 @@ func runWatch() error {
 			case "completed":
 				if run.Conclusion == "success" {
 					success++
-				} else if run.Conclusion == "failure" {
+				} else {
+					// Count all non-success conclusions as failed
+					// (failure, cancelled, timed_out, action_required, stale, etc.)
 					failed++
 				}
 			default:
@@ -166,7 +173,7 @@ func runWatch() error {
 	}
 
 	cli.Blank()
-	return errors.New(i18n.T("cmd.qa.watch.timeout", map[string]interface{}{"Duration": watchTimeout}))
+	return errors.E("qa.watch", i18n.T("cmd.qa.watch.timeout", map[string]interface{}{"Duration": watchTimeout}), nil)
 }
 
 // resolveRepo determines the repo to watch
@@ -181,7 +188,7 @@ func resolveRepo(specified string) (string, error) {
 		if org != "" {
 			return org + "/" + specified, nil
 		}
-		return "", errors.New(i18n.T("cmd.qa.watch.error.repo_format"))
+		return "", errors.E("qa.watch", i18n.T("cmd.qa.watch.error.repo_format"), nil)
 	}
 
 	// Detect from current directory
@@ -198,7 +205,7 @@ func resolveCommit(specified string) (string, error) {
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", cli.Wrap(err, "failed to get HEAD commit")
+		return "", errors.Wrap(err, "qa.watch", "failed to get HEAD commit")
 	}
 
 	return strings.TrimSpace(string(output)), nil
@@ -209,7 +216,7 @@ func detectRepoFromGit() (string, error) {
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", errors.New(i18n.T("cmd.qa.watch.error.not_git_repo"))
+		return "", errors.E("qa.watch", i18n.T("cmd.qa.watch.error.not_git_repo"), nil)
 	}
 
 	url := strings.TrimSpace(string(output))
@@ -282,10 +289,11 @@ func printResults(repoFullName string, runs []WorkflowRun) error {
 	var successes []WorkflowRun
 
 	for _, run := range runs {
-		if run.Conclusion == "failure" {
-			failures = append(failures, run)
-		} else if run.Conclusion == "success" {
+		if run.Conclusion == "success" {
 			successes = append(successes, run)
+		} else {
+			// Treat all non-success as failures (failure, cancelled, timed_out, etc.)
+			failures = append(failures, run)
 		}
 	}
 
