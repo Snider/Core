@@ -43,9 +43,6 @@ jobs:
             if (content.includes('.go') || content.includes('golang') || content.includes('go mod')) {
               labelsToAdd.push('go');
             }
-            if (content.includes('.php') || content.includes('laravel') || content.includes('composer')) {
-              // Skip - already handled by project:core-php
-            }
 
             // Priority detection
             if (content.includes('critical') || content.includes('urgent') || content.includes('breaking')) {

@@ -30,8 +30,8 @@ type TestOptions struct {
 	// Groups runs only tests in the specified groups.
 	Groups []string
 
-	// JSON outputs results in JSON format.
-	JSON bool
+	// JUnit outputs results in JUnit XML format via --log-junit.
+	JUnit bool
 
 	// Output is the writer for test output (defaults to os.Stdout).
 	Output io.Writer
@@ -137,7 +137,7 @@ func buildPestCommand(opts TestOptions) (string, []string) {
 		args = append(args, "--group", group)
 	}
 
-	if opts.JSON {
+	if opts.JUnit {
 		args = append(args, "--log-junit", "test-results.xml")
 	}
 
@@ -182,7 +182,7 @@ func buildPHPUnitCommand(opts TestOptions) (string, []string) {
 		args = append(args, "--group", group)
 	}
 
-	if opts.JSON {
+	if opts.JUnit {
 		args = append(args, "--log-junit", "test-results.xml", "--testdox")
 	}
 

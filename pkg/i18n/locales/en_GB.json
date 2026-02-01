@@ -375,7 +375,8 @@
 			"completed": "{{.Action}} successfully"
 		},
 		"error": {
-			"failed": "Failed to {{.Action}}"
+			"failed": "Failed to {{.Action}}",
+			"json_sarif_exclusive": "--json and --sarif flags are mutually exclusive"
 		},
 		"hint": {
 			"fix_deps": "Update dependencies to fix vulnerabilities"
