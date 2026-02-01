@@ -236,17 +236,17 @@ func (p *LinuxKitPublisher) buildLinuxKitArgs(configPath, format, outputName, ou
 	args := []string{"build"}
 
 	// Output format
-	args = append(args, "-format", format)
+	args = append(args, "--format", format)
 
 	// Output name
-	args = append(args, "-name", outputName)
+	args = append(args, "--name", outputName)
 
 	// Output directory
-	args = append(args, "-dir", outputDir)
+	args = append(args, "--dir", outputDir)
 
 	// Architecture (if not amd64)
 	if arch != "amd64" {
-		args = append(args, "-arch", arch)
+		args = append(args, "--arch", arch)
 	}
 
 	// Config file

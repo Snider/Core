@@ -238,8 +238,8 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	// Build LinuxKit image
 	args := []string{
 		"build",
-		"-format", opts.Format,
-		"-name", opts.OutputPath,
+		"--format", opts.Format,
+		"--name", opts.OutputPath,
 		tempYAML,
 	}
 

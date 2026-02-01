@@ -66,21 +66,21 @@ func TestLinuxKitPublisher_BuildLinuxKitArgs_Good(t *testing.T) {
 		args := p.buildLinuxKitArgs("/config/server.yml", "iso", "linuxkit-1.0.0-amd64", "/output", "amd64")
 
 		assert.Contains(t, args, "build")
-		assert.Contains(t, args, "-format")
+		assert.Contains(t, args, "--format")
 		assert.Contains(t, args, "iso")
-		assert.Contains(t, args, "-name")
+		assert.Contains(t, args, "--name")
 		assert.Contains(t, args, "linuxkit-1.0.0-amd64")
-		assert.Contains(t, args, "-dir")
+		assert.Contains(t, args, "--dir")
 		assert.Contains(t, args, "/output")
 		assert.Contains(t, args, "/config/server.yml")
-		// Should not contain -arch for amd64 (default)
-		assert.NotContains(t, args, "-arch")
+		// Should not contain --arch for amd64 (default)
+		assert.NotContains(t, args, "--arch")
 	})
 
 	t.Run("builds args with arch for arm64", func(t *testing.T) {
 		args := p.buildLinuxKitArgs("/config/server.yml", "qcow2", "linuxkit-1.0.0-arm64", "/output", "arm64")
 
-		assert.Contains(t, args, "-arch")
+		assert.Contains(t, args, "--arch")
 		assert.Contains(t, args, "arm64")
 		assert.Contains(t, args, "qcow2")
 	})
@@ -604,7 +604,7 @@ func TestLinuxKitPublisher_GetFormatExtension_AllFormats_Good(t *testing.T) {
 		{"docker", ".docker.tar"},
 		{"tar", ".tar"},
 		{"kernel+initrd", "-initrd.img"},
-		{"custom-format", ".custom-format"},
+		{"custom--format", ".custom--format"},
 	}
 
 	for _, tc := range tests {
@@ -619,30 +619,30 @@ func TestLinuxKitPublisher_BuildLinuxKitArgs_AllArchitectures_Good(t *testing.T)
 	p := NewLinuxKitPublisher()
 
 	t.Run("amd64 does not include arch flag", func(t *testing.T) {
-		args := p.buildLinuxKitArgs("/config.yml", "iso", "output-name", "/output", "amd64")
+		args := p.buildLinuxKitArgs("/config.yml", "iso", "output--name", "/output", "amd64")
 
 		assert.Contains(t, args, "build")
-		assert.Contains(t, args, "-format")
+		assert.Contains(t, args, "--format")
 		assert.Contains(t, args, "iso")
-		assert.Contains(t, args, "-name")
-		assert.Contains(t, args, "output-name")
-		assert.Contains(t, args, "-dir")
+		assert.Contains(t, args, "--name")
+		assert.Contains(t, args, "output--name")
+		assert.Contains(t, args, "--dir")
 		assert.Contains(t, args, "/output")
 		assert.Contains(t, args, "/config.yml")
-		assert.NotContains(t, args, "-arch")
+		assert.NotContains(t, args, "--arch")
 	})
 
 	t.Run("arm64 includes arch flag", func(t *testing.T) {
-		args := p.buildLinuxKitArgs("/config.yml", "qcow2", "output-name", "/output", "arm64")
+		args := p.buildLinuxKitArgs("/config.yml", "qcow2", "output--name", "/output", "arm64")
 
-		assert.Contains(t, args, "-arch")
+		assert.Contains(t, args, "--arch")
 		assert.Contains(t, args, "arm64")
 	})
 
 	t.Run("other architectures include arch flag", func(t *testing.T) {
-		args := p.buildLinuxKitArgs("/config.yml", "raw", "output-name", "/output", "riscv64")
+		args := p.buildLinuxKitArgs("/config.yml", "raw", "output--name", "/output", "riscv64")
 
-		assert.Contains(t, args, "-arch")
+		assert.Contains(t, args, "--arch")
 		assert.Contains(t, args, "riscv64")
 	})
 }
