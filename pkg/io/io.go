@@ -3,6 +3,7 @@ package io
 import (
 	"errors"
 
+	coreerr "github.com/host-uk/core/pkg/framework/core"
 	"github.com/host-uk/core/pkg/io/local"
 )
 
@@ -75,9 +76,12 @@ func IsFile(m Medium, path string) bool {
 func Copy(src Medium, srcPath string, dst Medium, dstPath string) error {
 	content, err := src.Read(srcPath)
 	if err != nil {
-		return err
+		return coreerr.E("io.Copy", "read failed: "+srcPath, err)
 	}
-	return dst.Write(dstPath, content)
+	if err := dst.Write(dstPath, content); err != nil {
+		return coreerr.E("io.Copy", "write failed: "+dstPath, err)
+	}
+	return nil
 }
 
 // --- MockMedium ---
@@ -100,7 +104,7 @@ func NewMockMedium() *MockMedium {
 func (m *MockMedium) Read(path string) (string, error) {
 	content, ok := m.Files[path]
 	if !ok {
-		return "", errors.New("file not found: " + path)
+		return "", coreerr.E("io.MockMedium.Read", "file not found: "+path, errors.New("file not found"))
 	}
 	return content, nil
 }

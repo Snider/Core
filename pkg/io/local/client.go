@@ -32,20 +32,70 @@ func New(root string) (*Medium, error) {
 
 // path sanitizes and joins the relative path with the root directory.
 // Returns an error if a path traversal attempt is detected.
+// Uses filepath.EvalSymlinks to prevent symlink-based bypass attacks.
 func (m *Medium) path(relativePath string) (string, error) {
 	// Clean the path to remove any .. or . components
 	cleanPath := filepath.Clean(relativePath)
 
-	// Check for path traversal attempts
+	// Check for path traversal attempts in the raw path
 	if strings.HasPrefix(cleanPath, "..") || strings.Contains(cleanPath, string(filepath.Separator)+"..") {
+		return "", errors.New("path traversal attempt detected")
+	}
+
+	// Reject absolute paths - they bypass the sandbox
+	if filepath.IsAbs(cleanPath) {
 		return "", errors.New("path traversal attempt detected")
 	}
 
 	fullPath := filepath.Join(m.root, cleanPath)
 
-	// Verify the resulting path is still within root
-	if !strings.HasPrefix(fullPath, m.root) {
+	// Verify the resulting path is still within root (boundary-aware check)
+	// Must use separator to prevent /tmp/root matching /tmp/root2
+	rootWithSep := m.root
+	if !strings.HasSuffix(rootWithSep, string(filepath.Separator)) {
+		rootWithSep += string(filepath.Separator)
+	}
+	if fullPath != m.root && !strings.HasPrefix(fullPath, rootWithSep) {
 		return "", errors.New("path traversal attempt detected")
+	}
+
+	// Resolve symlinks to prevent bypass attacks
+	// We need to resolve both the root and full path to handle symlinked roots
+	resolvedRoot, err := filepath.EvalSymlinks(m.root)
+	if err != nil {
+		return "", err
+	}
+
+	// Build boundary-aware prefix for resolved root
+	resolvedRootWithSep := resolvedRoot
+	if !strings.HasSuffix(resolvedRootWithSep, string(filepath.Separator)) {
+		resolvedRootWithSep += string(filepath.Separator)
+	}
+
+	// For the full path, resolve as much as exists
+	// Use Lstat first to check if the path exists
+	if _, err := os.Lstat(fullPath); err == nil {
+		resolvedPath, err := filepath.EvalSymlinks(fullPath)
+		if err != nil {
+			return "", err
+		}
+		// Verify resolved path is still within resolved root (boundary-aware)
+		if resolvedPath != resolvedRoot && !strings.HasPrefix(resolvedPath, resolvedRootWithSep) {
+			return "", errors.New("path traversal attempt detected via symlink")
+		}
+		return resolvedPath, nil
+	}
+
+	// Path doesn't exist yet - verify parent directory
+	parentDir := filepath.Dir(fullPath)
+	if _, err := os.Lstat(parentDir); err == nil {
+		resolvedParent, err := filepath.EvalSymlinks(parentDir)
+		if err != nil {
+			return "", err
+		}
+		if resolvedParent != resolvedRoot && !strings.HasPrefix(resolvedParent, resolvedRootWithSep) {
+			return "", errors.New("path traversal attempt detected via symlink")
+		}
 	}
 
 	return fullPath, nil
