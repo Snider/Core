@@ -2,7 +2,6 @@ package dev
 
 import (
 	"context"
-	"os"
 	"sort"
 	"strings"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/git"
-	"github.com/host-uk/core/pkg/repos"
 )
 
 // Tasks for dev service
@@ -242,32 +240,9 @@ func (s *Service) runStatus(task TaskStatus) error {
 }
 
 func (s *Service) loadRegistry(registryPath string) ([]string, map[string]string, error) {
-	var reg *repos.Registry
-	var err error
-
-	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
-		if err != nil {
-			return nil, nil, cli.Wrap(err, "failed to load registry")
-		}
-		cli.Print("Registry: %s\n\n", registryPath)
-	} else {
-		registryPath, err = repos.FindRegistry()
-		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
-			if err != nil {
-				return nil, nil, cli.Wrap(err, "failed to load registry")
-			}
-			cli.Print("Registry: %s\n\n", registryPath)
-		} else {
-			// Fallback: scan current directory
-			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
-			if err != nil {
-				return nil, nil, cli.Wrap(err, "failed to scan directory")
-			}
-			cli.Print("Scanning: %s\n\n", cwd)
-		}
+	reg, _, err := loadRegistryWithConfig(registryPath)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var paths []string

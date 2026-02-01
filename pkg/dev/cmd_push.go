@@ -8,7 +8,6 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/repos"
 )
 
 // Push command flags
@@ -44,31 +43,9 @@ func runPush(registryPath string, force bool) error {
 	}
 
 	// Multi-repo mode: find or use provided registry
-	var reg *repos.Registry
-	var err error
-
-	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
-		if err != nil {
-			return cli.Wrap(err, "failed to load registry")
-		}
-		cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
-	} else {
-		registryPath, err = repos.FindRegistry()
-		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
-			if err != nil {
-				return cli.Wrap(err, "failed to load registry")
-			}
-			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("registry")), registryPath)
-		} else {
-			// Fallback: scan current directory for repos
-			reg, err = repos.ScanDirectory(cwd)
-			if err != nil {
-				return cli.Wrap(err, "failed to scan directory")
-			}
-			cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
-		}
+	reg, _, err := loadRegistryWithConfig(registryPath)
+	if err != nil {
+		return err
 	}
 
 	// Build paths and names for git operations

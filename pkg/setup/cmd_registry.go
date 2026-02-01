@@ -16,6 +16,7 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
+	"github.com/host-uk/core/pkg/workspace"
 )
 
 // runRegistrySetup loads a registry from path and runs setup.
@@ -39,7 +40,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	basePath := reg.BasePath
 	if basePath == "" {
 		// Load workspace config to see if packages_dir is set
-		wsConfig, err := repos.LoadWorkspaceConfig(registryDir)
+		wsConfig, err := workspace.LoadConfig(registryDir)
 		if err != nil {
 			return fmt.Errorf("failed to load workspace config: %w", err)
 		}

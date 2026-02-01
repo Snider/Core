@@ -11,7 +11,6 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/repos"
 )
 
 // Work command flags
@@ -57,7 +56,21 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	defer bundle.Stop(ctx)
 
 	// Load registry and get paths
-	paths, names, err := loadRegistry(registryPath)
+	paths, names, err := func() ([]string, map[string]string, error) {
+		reg, _, err := loadRegistryWithConfig(registryPath)
+		if err != nil {
+			return nil, nil, err
+		}
+		var paths []string
+		names := make(map[string]string)
+		for _, repo := range reg.List() {
+			if repo.IsGitRepo() {
+				paths = append(paths, repo.Path)
+				names[repo.Path] = repo.Name
+			}
+		}
+		return paths, names, nil
+	}()
 	if err != nil {
 		return err
 	}
@@ -330,44 +343,4 @@ func claudeEditCommit(ctx context.Context, repoPath, repoName, registryPath stri
 	return cmd.Run()
 }
 
-func loadRegistry(registryPath string) ([]string, map[string]string, error) {
-	var reg *repos.Registry
-	var err error
 
-	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
-		if err != nil {
-			return nil, nil, cli.Wrap(err, "failed to load registry")
-		}
-		cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
-	} else {
-		registryPath, err = repos.FindRegistry()
-		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
-			if err != nil {
-				return nil, nil, cli.Wrap(err, "failed to load registry")
-			}
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
-		} else {
-			// Fallback: scan current directory
-			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
-			if err != nil {
-				return nil, nil, cli.Wrap(err, "failed to scan directory")
-			}
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.dev.scanning_label")), cwd)
-		}
-	}
-
-	var paths []string
-	names := make(map[string]string)
-
-	for _, repo := range reg.List() {
-		if repo.IsGitRepo() {
-			paths = append(paths, repo.Path)
-			names[repo.Path] = repo.Name
-		}
-	}
-
-	return paths, names, nil
-}

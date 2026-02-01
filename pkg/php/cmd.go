@@ -1,9 +1,12 @@
-// Package php provides Laravel/PHP development commands.
 package php
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -57,8 +60,51 @@ func AddPHPCommands(root *cobra.Command) {
 		Use:   "php",
 		Short: i18n.T("cmd.php.short"),
 		Long:  i18n.T("cmd.php.long"),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Check if we are in a workspace root
+			wsRoot, err := workspace.FindWorkspaceRoot()
+			if err != nil {
+				return nil // Not in a workspace, regular behavior
+			}
+
+			// Load workspace config
+			config, err := workspace.LoadConfig(wsRoot)
+			if err != nil {
+				return nil // Failed to load, ignore
+			}
+
+			if config.Active == "" {
+				return nil // No active package
+			}
+
+			// Calculate package path
+			pkgDir := config.PackagesDir
+			if pkgDir == "" {
+				pkgDir = "./packages"
+			}
+			if !filepath.IsAbs(pkgDir) {
+				pkgDir = filepath.Join(wsRoot, pkgDir)
+			}
+
+			targetDir := filepath.Join(pkgDir, config.Active)
+
+			// Check if target directory exists
+			if _, err := os.Stat(targetDir); err != nil {
+				cli.Warnf("Active package directory not found: %s", targetDir)
+				return nil
+			}
+
+			// Change working directory
+			if err := os.Chdir(targetDir); err != nil {
+				return cli.Err("failed to change directory to active package: %w", err)
+			}
+
+			cli.Print("%s %s\n", dimStyle.Render("Workspace:"), config.Active)
+			return nil
+		},
 	}
 	root.AddCommand(phpCmd)
+
 
 	// Development
 	addPHPDevCommand(phpCmd)

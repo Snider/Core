@@ -9,6 +9,7 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
+	"github.com/host-uk/core/pkg/workspace"
 )
 
 // RepoDocInfo holds documentation info for a repo
@@ -52,14 +53,14 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 	}
 
 	// Load workspace config to respect packages_dir
-	wsConfig, err := repos.LoadWorkspaceConfig(registryDir)
+	wsConfig, err := workspace.LoadConfig(registryDir)
 	if err != nil {
 		return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "workspace config"))
 	}
 
 	basePath := registryDir
 
-	if wsConfig.PackagesDir != "" {
+	if wsConfig.PackagesDir != "" && wsConfig.PackagesDir != "./packages" {
 		pkgDir := wsConfig.PackagesDir
 		
 		// Expand ~
