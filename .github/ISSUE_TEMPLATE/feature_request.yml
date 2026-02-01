@@ -43,3 +43,16 @@ body:
     attributes:
       label: Alternatives considered
       description: Any other approaches you've thought about?
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated complexity
+      description: How much work do you think this requires?
+      options:
+        - "Small - Quick fix, single file, < 1 hour"
+        - "Medium - Multiple files, few hours to a day"
+        - "Large - Significant changes, multiple days"
+        - "Unknown - Not sure"
+    validations:
+      required: false
