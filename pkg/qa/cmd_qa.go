@@ -5,10 +5,10 @@
 //
 // Commands:
 //   - watch: Monitor GitHub Actions after a push, report actionable data
+//   - review: PR review status with actionable next steps
 //
 // Future commands:
 //   - issues: Intelligent issue triage
-//   - review: PR review status with actionable next steps
 //   - health: Aggregate CI health across all repos
 package qa
 
@@ -40,4 +40,5 @@ func AddQACommands(root *cli.Command) {
 
 	// Subcommands
 	addWatchCommand(qaCmd)
+	addReviewCommand(qaCmd)
 }
