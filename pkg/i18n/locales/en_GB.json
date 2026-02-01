@@ -346,6 +346,19 @@
 			"logs.short": "View VM logs",
 			"exec.short": "Execute a command in a VM",
 			"templates.short": "Manage LinuxKit templates"
+		},
+		"monitor": {
+			"short": "Aggregate security findings from GitHub",
+			"long": "Monitor GitHub Security Tab, Dependabot, and secret scanning for actionable findings. Aggregates results from free tier scanners (Semgrep, Trivy, Gitleaks, OSV-Scanner, Checkov, CodeQL).",
+			"flag.repo": "Specific repository to scan",
+			"flag.severity": "Filter by severity (critical, high, medium, low)",
+			"flag.json": "Output as JSON for piping to other tools",
+			"flag.all": "Scan all repos in registry",
+			"scanning": "Scanning",
+			"found": "Found",
+			"no_findings": "No security findings",
+			"error.no_repos": "No repositories to scan. Use --repo, --all, or run from a git repo",
+			"error.not_git_repo": "Not in a git repository. Use --repo to specify one"
 		}
 	},
 	"common": {
