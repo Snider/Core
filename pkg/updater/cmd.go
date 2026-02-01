@@ -2,7 +2,9 @@ package updater
 
 import (
 	"fmt"
+	"os"
 	"runtime"
+	"syscall"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/spf13/cobra"
@@ -115,9 +117,8 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	cli.Print("%s Updated to %s\n", cli.SuccessStyle.Render(cli.Glyph(":check:")), release.TagName)
-	cli.Print("Restart the CLI to use the new version.\n")
 
-	return nil
+	return restartBinary()
 }
 
 // handleDevUpdate handles updates from the dev release (rolling prerelease)
@@ -154,9 +155,8 @@ func handleDevUpdate(currentVersion string) error {
 	}
 
 	cli.Print("%s Updated to %s\n", cli.SuccessStyle.Render(cli.Glyph(":check:")), release.TagName)
-	cli.Print("Restart the CLI to use the new version.\n")
 
-	return nil
+	return restartBinary()
 }
 
 // handleDevTagUpdate fetches the dev release using the direct tag
@@ -185,7 +185,36 @@ func handleDevTagUpdate(currentVersion string) error {
 	}
 
 	cli.Print("%s Updated to latest dev build\n", cli.SuccessStyle.Render(cli.Glyph(":check:")))
-	cli.Print("Restart the CLI to use the new version.\n")
 
+	return restartBinary()
+}
+
+// restartBinary re-executes the current binary to load the new version.
+// On Unix systems, it uses syscall.Exec to replace the current process.
+// On Windows, it prints a message to restart manually.
+func restartBinary() error {
+	executable, err := os.Executable()
+	if err != nil {
+		cli.Print("Restart the CLI to use the new version.\n")
+		return nil
+	}
+
+	// On Windows, exec doesn't work the same way - just ask to restart
+	if runtime.GOOS == "windows" {
+		cli.Print("Restart the CLI to use the new version.\n")
+		return nil
+	}
+
+	cli.Print("\n%s Restarting...\n", cli.DimStyle.Render("→"))
+
+	// Re-exec with --version to confirm the update
+	err = syscall.Exec(executable, []string{executable, "--version"}, os.Environ())
+	if err != nil {
+		// If exec fails, just tell user to restart
+		cli.Print("Restart the CLI to use the new version.\n")
+		return nil
+	}
+
+	// This line is never reached if exec succeeds
 	return nil
 }
