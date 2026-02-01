@@ -1,7 +1,7 @@
 package io
 
 import (
-	"errors"
+	"os"
 
 	coreerr "github.com/host-uk/core/pkg/framework/core"
 	"github.com/host-uk/core/pkg/io/local"
@@ -104,7 +104,7 @@ func NewMockMedium() *MockMedium {
 func (m *MockMedium) Read(path string) (string, error) {
 	content, ok := m.Files[path]
 	if !ok {
-		return "", coreerr.E("io.MockMedium.Read", "file not found: "+path, errors.New("file not found"))
+		return "", coreerr.E("io.MockMedium.Read", "file not found: "+path, os.ErrNotExist)
 	}
 	return content, nil
 }
