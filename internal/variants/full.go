@@ -25,7 +25,6 @@ package variants
 import (
 	// Commands via self-registration
 	_ "github.com/host-uk/core/internal/cmd/ai"
-	_ "github.com/host-uk/core/pkg/build/buildcmd"
 	_ "github.com/host-uk/core/internal/cmd/ci"
 	_ "github.com/host-uk/core/internal/cmd/dev"
 	_ "github.com/host-uk/core/internal/cmd/docs"
@@ -42,4 +41,5 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/updater"
 	_ "github.com/host-uk/core/internal/cmd/vm"
 	_ "github.com/host-uk/core/internal/cmd/workspace"
+	_ "github.com/host-uk/core/pkg/build/buildcmd"
 )
