@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -106,12 +107,12 @@ func TestLookupLinuxKit_Bad(t *testing.T) {
 		origPath := os.Getenv("PATH")
 		origCommonPaths := commonLinuxKitPaths
 		defer func() {
-			os.Setenv("PATH", origPath)
+			_ = os.Setenv("PATH", origPath)
 			commonLinuxKitPaths = origCommonPaths
 		}()
 
 		// Set PATH to empty and clear common paths
-		os.Setenv("PATH", "")
+		_ = os.Setenv("PATH", "")
 		commonLinuxKitPaths = []string{}
 
 		_, err := lookupLinuxKit()
@@ -202,7 +203,7 @@ func TestBuildDocker_Bad(t *testing.T) {
 
 	t.Run("fails for non-PHP project", func(t *testing.T) {
 		dir := t.TempDir()
-		err := BuildDocker(nil, DockerBuildOptions{ProjectDir: dir})
+		err := BuildDocker(context.TODO(), DockerBuildOptions{ProjectDir: dir})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not a PHP project")
 	})
@@ -213,7 +214,7 @@ func TestBuildLinuxKit_Bad(t *testing.T) {
 
 	t.Run("fails for non-PHP project", func(t *testing.T) {
 		dir := t.TempDir()
-		err := BuildLinuxKit(nil, LinuxKitBuildOptions{ProjectDir: dir})
+		err := BuildLinuxKit(context.TODO(), LinuxKitBuildOptions{ProjectDir: dir})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not a PHP project")
 	})
@@ -221,7 +222,7 @@ func TestBuildLinuxKit_Bad(t *testing.T) {
 
 func TestServeProduction_Bad(t *testing.T) {
 	t.Run("fails without image name", func(t *testing.T) {
-		err := ServeProduction(nil, ServeOptions{})
+		err := ServeProduction(context.TODO(), ServeOptions{})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "image name is required")
 	})

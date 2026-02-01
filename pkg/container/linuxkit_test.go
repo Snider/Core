@@ -186,7 +186,7 @@ func TestLinuxKitManager_Stop_Good(t *testing.T) {
 		PID:       999999, // Non-existent PID
 		StartedAt: time.Now(),
 	}
-	manager.State().Add(container)
+	_ = manager.State().Add(container)
 
 	ctx := context.Background()
 	err := manager.Stop(ctx, "abc12345")
@@ -213,17 +213,18 @@ func TestLinuxKitManager_Stop_Bad_NotFound(t *testing.T) {
 func TestLinuxKitManager_Stop_Bad_NotRunning(t *testing.T) {
 	manager, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, _ := LoadState(statePath)
+	state, err := LoadState(statePath)
+	require.NoError(t, err)
 	manager = NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
 
 	container := &Container{
 		ID:     "abc12345",
 		Status: StatusStopped,
 	}
-	state.Add(container)
+	_ = state.Add(container)
 
 	ctx := context.Background()
-	err := manager.Stop(ctx, "abc12345")
+	err = manager.Stop(ctx, "abc12345")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not running")
@@ -232,11 +233,12 @@ func TestLinuxKitManager_Stop_Bad_NotRunning(t *testing.T) {
 func TestLinuxKitManager_List_Good(t *testing.T) {
 	manager, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, _ := LoadState(statePath)
+	state, err := LoadState(statePath)
+	require.NoError(t, err)
 	manager = NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
 
-	state.Add(&Container{ID: "aaa11111", Status: StatusStopped})
-	state.Add(&Container{ID: "bbb22222", Status: StatusStopped})
+	_ = state.Add(&Container{ID: "aaa11111", Status: StatusStopped})
+	_ = state.Add(&Container{ID: "bbb22222", Status: StatusStopped})
 
 	ctx := context.Background()
 	containers, err := manager.List(ctx)
@@ -248,11 +250,12 @@ func TestLinuxKitManager_List_Good(t *testing.T) {
 func TestLinuxKitManager_List_Good_VerifiesRunningStatus(t *testing.T) {
 	manager, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, _ := LoadState(statePath)
+	state, err := LoadState(statePath)
+	require.NoError(t, err)
 	manager = NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
 
 	// Add a "running" container with a fake PID that doesn't exist
-	state.Add(&Container{
+	_ = state.Add(&Container{
 		ID:     "abc12345",
 		Status: StatusRunning,
 		PID:    999999, // PID that almost certainly doesn't exist
@@ -272,17 +275,18 @@ func TestLinuxKitManager_Logs_Good(t *testing.T) {
 
 	// Create a log file manually
 	logsDir := filepath.Join(tmpDir, "logs")
-	os.MkdirAll(logsDir, 0755)
+	require.NoError(t, os.MkdirAll(logsDir, 0755))
 
 	container := &Container{ID: "abc12345"}
-	manager.State().Add(container)
+	_ = manager.State().Add(container)
 
 	// Override the default logs dir for testing by creating the log file
 	// at the expected location
 	logContent := "test log content\nline 2\n"
-	logPath, _ := LogPath("abc12345")
-	os.MkdirAll(filepath.Dir(logPath), 0755)
-	os.WriteFile(logPath, []byte(logContent), 0644)
+	logPath, err := LogPath("abc12345")
+	require.NoError(t, err)
+	require.NoError(t, os.MkdirAll(filepath.Dir(logPath), 0755))
+	require.NoError(t, os.WriteFile(logPath, []byte(logContent), 0644))
 
 	ctx := context.Background()
 	reader, err := manager.Logs(ctx, "abc12345", false)
@@ -309,9 +313,10 @@ func TestLinuxKitManager_Logs_Bad_NoLogFile(t *testing.T) {
 	manager, _, _ := newTestManager(t)
 
 	// Use a unique ID that won't have a log file
-	uniqueID, _ := GenerateID()
+	uniqueID, err := GenerateID()
+	require.NoError(t, err)
 	container := &Container{ID: uniqueID}
-	manager.State().Add(container)
+	_ = manager.State().Add(container)
 
 	ctx := context.Background()
 	reader, err := manager.Logs(ctx, uniqueID, false)
@@ -341,7 +346,7 @@ func TestLinuxKitManager_Exec_Bad_NotRunning(t *testing.T) {
 	manager, _, _ := newTestManager(t)
 
 	container := &Container{ID: "abc12345", Status: StatusStopped}
-	manager.State().Add(container)
+	_ = manager.State().Add(container)
 
 	ctx := context.Background()
 	err := manager.Exec(ctx, "abc12345", []string{"ls"})
@@ -420,19 +425,19 @@ func TestQemuHypervisor_BuildCommand_Good(t *testing.T) {
 	assert.Contains(t, args, "-nographic")
 }
 
-
 func TestLinuxKitManager_Logs_Good_Follow(t *testing.T) {
 	manager, _, _ := newTestManager(t)
 
 	// Create a unique container ID
-	uniqueID, _ := GenerateID()
+	uniqueID, err := GenerateID()
+	require.NoError(t, err)
 	container := &Container{ID: uniqueID}
-	manager.State().Add(container)
+	_ = manager.State().Add(container)
 
 	// Create a log file at the expected location
 	logPath, err := LogPath(uniqueID)
 	require.NoError(t, err)
-	os.MkdirAll(filepath.Dir(logPath), 0755)
+	require.NoError(t, os.MkdirAll(filepath.Dir(logPath), 0755))
 
 	// Write initial content
 	err = os.WriteFile(logPath, []byte("initial log content\n"), 0644)
@@ -455,8 +460,7 @@ func TestLinuxKitManager_Logs_Good_Follow(t *testing.T) {
 	assert.Equal(t, "EOF", readErr.Error())
 
 	// Close the reader
-	err = reader.Close()
-	assert.NoError(t, err)
+	assert.NoError(t, reader.Close())
 }
 
 func TestFollowReader_Read_Good_WithData(t *testing.T) {
@@ -480,7 +484,7 @@ func TestFollowReader_Read_Good_WithData(t *testing.T) {
 	require.NoError(t, err)
 	_, err = f.WriteString("new line\n")
 	require.NoError(t, err)
-	f.Close()
+	require.NoError(t, f.Close())
 
 	// Give the reader time to poll
 	time.Sleep(150 * time.Millisecond)
@@ -513,7 +517,7 @@ func TestFollowReader_Read_Good_ContextCancel(t *testing.T) {
 	_, readErr := reader.Read(buf)
 	assert.Equal(t, "EOF", readErr.Error())
 
-	reader.Close()
+	_ = reader.Close()
 }
 
 func TestFollowReader_Close_Good(t *testing.T) {
@@ -766,7 +770,7 @@ func TestLinuxKitManager_Stop_Good_ProcessExitedWhileRunning(t *testing.T) {
 		PID:       999999, // Non-existent PID
 		StartedAt: time.Now(),
 	}
-	manager.State().Add(container)
+	_ = manager.State().Add(container)
 
 	ctx := context.Background()
 	err := manager.Stop(ctx, "test1234")

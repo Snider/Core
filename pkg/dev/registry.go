@@ -56,7 +56,7 @@ func loadRegistryWithConfig(registryPath string) (*repos.Registry, string, error
 			if !filepath.IsAbs(pkgDir) {
 				pkgDir = filepath.Join(registryDir, pkgDir)
 			}
-			
+
 			// Update repo paths
 			for _, repo := range reg.Repos {
 				repo.Path = filepath.Join(pkgDir, repo.Name)

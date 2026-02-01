@@ -60,35 +60,6 @@ tasks:
 	return dir
 }
 
-// setupWailsTestProjectWithFrontend creates a Wails project with frontend directory.
-func setupWailsTestProjectWithFrontend(t *testing.T, lockFile string) string {
-	t.Helper()
-	dir := setupWailsTestProject(t)
-
-	// Create frontend directory
-	frontendDir := filepath.Join(dir, "frontend")
-	err := os.MkdirAll(frontendDir, 0755)
-	require.NoError(t, err)
-
-	// Create package.json
-	packageJSON := `{
-  "name": "frontend",
-  "scripts": {
-    "build": "echo building frontend"
-  }
-}`
-	err = os.WriteFile(filepath.Join(frontendDir, "package.json"), []byte(packageJSON), 0644)
-	require.NoError(t, err)
-
-	// Create lock file if specified
-	if lockFile != "" {
-		err = os.WriteFile(filepath.Join(frontendDir, lockFile), []byte(""), 0644)
-		require.NoError(t, err)
-	}
-
-	return dir
-}
-
 // setupWailsV2TestProject creates a Wails v2 project structure.
 func setupWailsV2TestProject(t *testing.T) string {
 	t.Helper()
@@ -178,15 +149,11 @@ func TestWailsBuilder_Build_V2_Good(t *testing.T) {
 			{OS: runtime.GOOS, Arch: runtime.GOARCH},
 		}
 
-		// This will likely fail in a real run because we can't easily mock the full wails v2 build process 
-		// (which needs a valid project with main.go etc). 
+		// This will likely fail in a real run because we can't easily mock the full wails v2 build process
+		// (which needs a valid project with main.go etc).
 		// But it validates we are trying to run the command.
-		// For now, we expect an error but check it's the *right* error (from wails CLI)
-		_, err := builder.Build(context.Background(), cfg, targets)
-		if err != nil {
-			// If it fails, it should be because wails build failed, not because logic was wrong
-			// assert.Contains(t, err.Error(), "wails build failed")
-		}
+		// For now, we just verify it attempts the build - error is expected
+		_, _ = builder.Build(context.Background(), cfg, targets)
 	})
 }
 

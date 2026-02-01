@@ -229,11 +229,12 @@ func printWorkflowRun(run WorkflowRun) {
 	case "failure":
 		status = ciFailureStyle.Render("x")
 	case "":
-		if run.Status == "in_progress" {
+		switch run.Status {
+		case "in_progress":
 			status = ciPendingStyle.Render("*")
-		} else if run.Status == "queued" {
+		case "queued":
 			status = ciPendingStyle.Render("o")
-		} else {
+		default:
 			status = ciSkippedStyle.Render("-")
 		}
 	case "skipped":

@@ -70,10 +70,7 @@ func (s *Service) OnStartup(ctx context.Context) error {
 func (s *Service) handleQuery(c *framework.Core, q framework.Query) (any, bool, error) {
 	switch m := q.(type) {
 	case QueryStatus:
-		statuses := Status(context.Background(), StatusOptions{
-			Paths: m.Paths,
-			Names: m.Names,
-		})
+		statuses := Status(context.Background(), StatusOptions(m))
 		s.lastStatus = statuses
 		return statuses, true, nil
 

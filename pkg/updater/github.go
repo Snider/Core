@@ -19,15 +19,15 @@ type Repo struct {
 
 // ReleaseAsset represents a single asset from a GitHub release.
 type ReleaseAsset struct {
-	Name        string `json:"name"`                  // The name of the asset.
+	Name        string `json:"name"`                 // The name of the asset.
 	DownloadURL string `json:"browser_download_url"` // The URL to download the asset.
 }
 
 // Release represents a GitHub release.
 type Release struct {
-	TagName    string         `json:"tag_name"`    // The name of the tag for the release.
-	PreRelease bool           `json:"prerelease"`  // Indicates if the release is a pre-release.
-	Assets     []ReleaseAsset `json:"assets"`      // A list of assets associated with the release.
+	TagName    string         `json:"tag_name"`   // The name of the tag for the release.
+	PreRelease bool           `json:"prerelease"` // Indicates if the release is a pre-release.
+	Assets     []ReleaseAsset `json:"assets"`     // A list of assets associated with the release.
 }
 
 // GithubClient defines the interface for interacting with the GitHub API.

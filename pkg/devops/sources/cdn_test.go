@@ -34,7 +34,7 @@ func TestCDNSource_LatestVersion_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/manifest.json" {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, `{"version": "1.2.3"}`)
+			_, _ = fmt.Fprint(w, `{"version": "1.2.3"}`)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -56,7 +56,7 @@ func TestCDNSource_Download_Good(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/test.img" {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, content)
+			_, _ = fmt.Fprint(w, content)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -151,7 +151,7 @@ func TestCDNSource_Download_Good_NoProgress(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(content)))
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, content)
+		_, _ = fmt.Fprint(w, content)
 	}))
 	defer server.Close()
 
@@ -180,7 +180,7 @@ func TestCDNSource_Download_Good_LargeFile(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(content)))
 		w.WriteHeader(http.StatusOK)
-		w.Write(content)
+		_, _ = w.Write(content)
 	}))
 	defer server.Close()
 
@@ -268,7 +268,7 @@ func TestCDNSource_Download_Good_CreatesDestDir(t *testing.T) {
 	content := "test content"
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, content)
+		_, _ = fmt.Fprint(w, content)
 	}))
 	defer server.Close()
 

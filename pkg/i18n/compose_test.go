@@ -797,4 +797,3 @@ func TestProgressSubjectMatchesExpected(t *testing.T) {
 		})
 	}
 }
-

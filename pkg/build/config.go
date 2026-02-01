@@ -162,7 +162,7 @@ func ConfigExists(dir string) bool {
 func (cfg *BuildConfig) ToTargets() []Target {
 	targets := make([]Target, len(cfg.Targets))
 	for i, t := range cfg.Targets {
-		targets[i] = Target{OS: t.OS, Arch: t.Arch}
+		targets[i] = Target(t)
 	}
 	return targets
 }

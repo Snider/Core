@@ -45,7 +45,7 @@ func (s *CDNSource) LatestVersion(ctx context.Context) (string, error) {
 	if err != nil || resp.StatusCode != 200 {
 		return "latest", nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// For now, just return latest - could parse manifest for version
 	return "latest", nil
@@ -64,7 +64,7 @@ func (s *CDNSource) Download(ctx context.Context, dest string, progress func(dow
 	if err != nil {
 		return fmt.Errorf("cdn.Download: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("cdn.Download: HTTP %d", resp.StatusCode)
@@ -81,7 +81,7 @@ func (s *CDNSource) Download(ctx context.Context, dest string, progress func(dow
 	if err != nil {
 		return fmt.Errorf("cdn.Download: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Copy with progress
 	total := resp.ContentLength

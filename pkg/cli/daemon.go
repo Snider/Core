@@ -100,7 +100,7 @@ func (p *PIDFile) Acquire() error {
 			}
 		}
 		// Stale PID file, remove it
-		os.Remove(p.path)
+		_ = os.Remove(p.path)
 	}
 
 	// Ensure directory exists
@@ -183,13 +183,13 @@ func (h *HealthServer) Start() error {
 		for _, check := range checks {
 			if err := check(); err != nil {
 				w.WriteHeader(http.StatusServiceUnavailable)
-				fmt.Fprintf(w, "unhealthy: %v\n", err)
+				_, _ = fmt.Fprintf(w, "unhealthy: %v\n", err)
 				return
 			}
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "ok")
+		_, _ = fmt.Fprintln(w, "ok")
 	})
 
 	mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
@@ -199,12 +199,12 @@ func (h *HealthServer) Start() error {
 
 		if !ready {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			fmt.Fprintln(w, "not ready")
+			_, _ = fmt.Fprintln(w, "not ready")
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "ready")
+		_, _ = fmt.Fprintln(w, "ready")
 	})
 
 	listener, err := net.Listen("tcp", h.addr)
@@ -322,7 +322,7 @@ func (d *Daemon) Start() error {
 	if d.health != nil {
 		if err := d.health.Start(); err != nil {
 			if d.pid != nil {
-				d.pid.Release()
+				_ = d.pid.Release()
 			}
 			return err
 		}

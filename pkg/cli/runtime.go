@@ -141,10 +141,8 @@ func Shutdown() {
 		return
 	}
 	instance.cancel()
-	instance.core.ServiceShutdown(instance.ctx)
+	_ = instance.core.ServiceShutdown(instance.ctx)
 }
-
-
 
 // --- Signal Service (internal) ---
 

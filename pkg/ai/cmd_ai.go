@@ -28,8 +28,8 @@ var (
 
 // Task-specific styles (aliases to shared where possible)
 var (
-	taskIDStyle    = cli.TitleStyle       // Bold + blue
-	taskTitleStyle = cli.ValueStyle       // Light gray
+	taskIDStyle    = cli.TitleStyle                                 // Bold + blue
+	taskTitleStyle = cli.ValueStyle                                 // Light gray
 	taskLabelStyle = cli.NewStyle().Foreground(cli.ColourViolet500) // Violet for labels
 )
 

@@ -105,7 +105,6 @@ func AddPHPCommands(root *cobra.Command) {
 	}
 	root.AddCommand(phpCmd)
 
-
 	// Development
 	addPHPDevCommand(phpCmd)
 	addPHPLogsCommand(phpCmd)

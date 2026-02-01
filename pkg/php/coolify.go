@@ -92,7 +92,7 @@ func LoadCoolifyConfigFromFile(path string) (*CoolifyConfig, error) {
 		}
 		return nil, cli.WrapVerb(err, "open", ".env file")
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	content, err := io.ReadAll(file)
 	if err != nil {
@@ -177,7 +177,7 @@ func (c *CoolifyClient) TriggerDeploy(ctx context.Context, appID string, force b
 	if err != nil {
 		return nil, cli.Wrap(err, "request failed")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusAccepted {
 		return nil, c.parseError(resp)
@@ -210,7 +210,7 @@ func (c *CoolifyClient) GetDeployment(ctx context.Context, appID, deploymentID s
 	if err != nil {
 		return nil, cli.Wrap(err, "request failed")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseError(resp)
@@ -242,7 +242,7 @@ func (c *CoolifyClient) ListDeployments(ctx context.Context, appID string, limit
 	if err != nil {
 		return nil, cli.Wrap(err, "request failed")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseError(resp)
@@ -280,7 +280,7 @@ func (c *CoolifyClient) Rollback(ctx context.Context, appID, deploymentID string
 	if err != nil {
 		return nil, cli.Wrap(err, "request failed")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusAccepted {
 		return nil, c.parseError(resp)
@@ -312,7 +312,7 @@ func (c *CoolifyClient) GetApp(ctx context.Context, appID string) (*CoolifyApp, 
 	if err != nil {
 		return nil, cli.Wrap(err, "request failed")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseError(resp)

@@ -39,11 +39,11 @@ type KeyUsage struct {
 
 // ValidationResult holds the results of validation.
 type ValidationResult struct {
-	TotalKeys    int
-	ValidKeys    int
-	MissingKeys  []KeyUsage
-	IntentKeys   int
-	MessageKeys  int
+	TotalKeys   int
+	ValidKeys   int
+	MissingKeys []KeyUsage
+	IntentKeys  int
+	MessageKeys int
 }
 
 func main() {
@@ -369,7 +369,8 @@ func scanFile(fset *token.FileSet, filename string, file *ast.File) []KeyUsage {
 		}
 
 		// Check for T(), C(), i18n.T(), i18n.C()
-		if funcName == "T" || funcName == "i18n.T" || funcName == "_" || funcName == "i18n._" {
+		switch funcName {
+		case "T", "i18n.T", "_", "i18n._":
 			if key := extractStringArg(call, 0); key != "" {
 				pos := fset.Position(call.Pos())
 				usages = append(usages, KeyUsage{
@@ -379,7 +380,7 @@ func scanFile(fset *token.FileSet, filename string, file *ast.File) []KeyUsage {
 					Function: "T",
 				})
 			}
-		} else if funcName == "C" || funcName == "i18n.C" {
+		case "C", "i18n.C":
 			if key := extractStringArg(call, 0); key != "" {
 				pos := fset.Position(call.Pos())
 				usages = append(usages, KeyUsage{
@@ -389,7 +390,7 @@ func scanFile(fset *token.FileSet, filename string, file *ast.File) []KeyUsage {
 					Function: "C",
 				})
 			}
-		} else if funcName == "I" || funcName == "i18n.I" {
+		case "I", "i18n.I":
 			if key := extractStringArg(call, 0); key != "" {
 				pos := fset.Position(call.Pos())
 				usages = append(usages, KeyUsage{

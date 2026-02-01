@@ -73,8 +73,6 @@ type Stoppable interface {
 
 // Core is the central application object that manages services, assets, and communication.
 type Core struct {
-	once           sync.Once
-	initErr        error
 	App            any // GUI runtime (e.g., Wails App) - set by WithApp option
 	assets         embed.FS
 	Features       *Features

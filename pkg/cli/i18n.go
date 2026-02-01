@@ -35,7 +35,7 @@ func NewI18nService(opts I18nOptions) func(*framework.Core) (any, error) {
 		}
 
 		if opts.Language != "" {
-			svc.SetLanguage(opts.Language)
+			_ = svc.SetLanguage(opts.Language)
 		}
 
 		// Set mode if specified
@@ -131,7 +131,7 @@ func (s *I18nService) T(key string, args ...map[string]any) string {
 
 // SetLanguage changes the current language.
 func (s *I18nService) SetLanguage(lang string) {
-	s.svc.SetLanguage(lang)
+	_ = s.svc.SetLanguage(lang)
 }
 
 // Language returns the current language.

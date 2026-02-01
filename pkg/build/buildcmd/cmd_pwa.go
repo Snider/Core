@@ -55,7 +55,7 @@ func downloadPWA(baseURL, destDir string) error {
 	if err != nil {
 		return fmt.Errorf("%s %s: %w", i18n.T("common.error.failed", map[string]any{"Action": "fetch URL"}), baseURL, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -152,7 +152,7 @@ func fetchManifest(manifestURL string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var manifest map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
@@ -195,7 +195,7 @@ func downloadAsset(assetURL, destDir string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	u, err := url.Parse(assetURL)
 	if err != nil {
@@ -211,7 +211,7 @@ func downloadAsset(assetURL, destDir string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	_, err = io.Copy(out, resp.Body)
 	return err
@@ -310,13 +310,13 @@ func copyDir(src, dst string) error {
 		if err != nil {
 			return err
 		}
-		defer srcFile.Close()
+		defer func() { _ = srcFile.Close() }()
 
 		dstFile, err := os.Create(dstPath)
 		if err != nil {
 			return err
 		}
-		defer dstFile.Close()
+		defer func() { _ = dstFile.Close() }()
 
 		_, err = io.Copy(dstFile, srcFile)
 		return err

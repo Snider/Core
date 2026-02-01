@@ -70,9 +70,9 @@ type CodeScanningAlert struct {
 	State           string `json:"state"`
 	DismissedReason string `json:"dismissed_reason"`
 	Rule            struct {
-		ID          string `json:"id"`
-		Severity    string `json:"severity"`
-		Description string `json:"description"`
+		ID          string   `json:"id"`
+		Severity    string   `json:"severity"`
+		Description string   `json:"description"`
 		Tags        []string `json:"tags"`
 	} `json:"rule"`
 	Tool struct {
@@ -93,12 +93,12 @@ type CodeScanningAlert struct {
 
 // SecretScanningAlert represents a secret scanning alert.
 type SecretScanningAlert struct {
-	Number       int    `json:"number"`
-	State        string `json:"state"`
-	SecretType   string `json:"secret_type"`
-	Secret       string `json:"secret"`
-	PushProtection bool `json:"push_protection_bypassed"`
-	Resolution   string `json:"resolution"`
+	Number         int    `json:"number"`
+	State          string `json:"state"`
+	SecretType     string `json:"secret_type"`
+	Secret         string `json:"secret"`
+	PushProtection bool   `json:"push_protection_bypassed"`
+	Resolution     string `json:"resolution"`
 }
 
 // loadRegistry loads the repository registry.
@@ -148,22 +148,6 @@ func runGHAPI(endpoint string) ([]byte, error) {
 		return nil, cli.Wrap(err, "run gh api")
 	}
 	return output, nil
-}
-
-// severityRank returns a numeric rank for severity (higher = more severe).
-func severityRank(severity string) int {
-	switch strings.ToLower(severity) {
-	case "critical":
-		return 4
-	case "high":
-		return 3
-	case "medium":
-		return 2
-	case "low":
-		return 1
-	default:
-		return 0
-	}
 }
 
 // severityStyle returns the appropriate style for a severity level.

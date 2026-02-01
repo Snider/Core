@@ -204,7 +204,7 @@ func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData,
 	}
 
 	// Create .npmrc with token
-	npmrc := fmt.Sprintf("//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n")
+	npmrc := "//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n"
 	if err := os.WriteFile(filepath.Join(tmpDir, ".npmrc"), []byte(npmrc), 0600); err != nil {
 		return fmt.Errorf("npm.Publish: failed to write .npmrc: %w", err)
 	}

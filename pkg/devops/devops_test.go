@@ -91,7 +91,7 @@ func TestIsInstalled_Good(t *testing.T) {
 
 type mockHypervisor struct{}
 
-func (m *mockHypervisor) Name() string { return "mock" }
+func (m *mockHypervisor) Name() string    { return "mock" }
 func (m *mockHypervisor) Available() bool { return true }
 func (m *mockHypervisor) BuildCommand(ctx context.Context, image string, opts *container.HypervisorOptions) (*exec.Cmd, error) {
 	return exec.Command("true"), nil

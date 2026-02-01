@@ -255,4 +255,3 @@ func TestService_Clear(t *testing.T) {
 		assert.Len(t, svc.List(), 0)
 	})
 }
-

@@ -295,12 +295,6 @@ func (c *Client) checkResponse(resp *http.Response) error {
 	}
 }
 
-// mustReadAll reads all bytes from a reader, returning empty slice on error.
-func mustReadAll(r io.Reader) []byte {
-	data, _ := io.ReadAll(r)
-	return data
-}
-
 // Ping tests the connection to the API server.
 func (c *Client) Ping(ctx context.Context) error {
 	const op = "agentic.Client.Ping"

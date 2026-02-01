@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/spf13/cobra"
@@ -157,7 +156,7 @@ func runPHPDev(opts phpDevOptions) error {
 	if err != nil {
 		cli.Print("%s %s\n", errorStyle.Render(i18n.Label("warning")), i18n.T("i18n.fail.get", "logs"))
 	} else {
-		defer logsReader.Close()
+		defer func() { _ = logsReader.Close() }()
 
 		scanner := bufio.NewScanner(logsReader)
 		for scanner.Scan() {
