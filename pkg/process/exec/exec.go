@@ -8,8 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/host-uk/core/pkg/cli"
 )
 
 // Options configuration for command execution
