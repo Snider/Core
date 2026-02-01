@@ -3,7 +3,7 @@ package io
 import (
 	"errors"
 
-	"github.com/host-uk/core-gui/pkg/io/local"
+	"github.com/host-uk/core/pkg/io/local"
 )
 
 // Medium defines the standard interface for a storage backend.
