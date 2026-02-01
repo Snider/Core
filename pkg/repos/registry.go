@@ -14,11 +14,11 @@ import (
 
 // Registry represents a collection of repositories defined in repos.yaml.
 type Registry struct {
-	Version  int                `yaml:"version"`
-	Org      string             `yaml:"org"`
-	BasePath string             `yaml:"base_path"`
-	Repos    map[string]*Repo   `yaml:"repos"`
-	Defaults RegistryDefaults   `yaml:"defaults"`
+	Version  int              `yaml:"version"`
+	Org      string           `yaml:"org"`
+	BasePath string           `yaml:"base_path"`
+	Repos    map[string]*Repo `yaml:"repos"`
+	Defaults RegistryDefaults `yaml:"defaults"`
 }
 
 // RegistryDefaults contains default values applied to all repos.
@@ -31,11 +31,16 @@ type RegistryDefaults struct {
 // RepoType indicates the role of a repository in the ecosystem.
 type RepoType string
 
+// Repository type constants for ecosystem classification.
 const (
+	// RepoTypeFoundation indicates core foundation packages.
 	RepoTypeFoundation RepoType = "foundation"
-	RepoTypeModule     RepoType = "module"
-	RepoTypeProduct    RepoType = "product"
-	RepoTypeTemplate   RepoType = "template"
+	// RepoTypeModule indicates reusable module packages.
+	RepoTypeModule RepoType = "module"
+	// RepoTypeProduct indicates end-user product applications.
+	RepoTypeProduct RepoType = "product"
+	// RepoTypeTemplate indicates starter templates.
+	RepoTypeTemplate RepoType = "template"
 )
 
 // Repo represents a single repository in the registry.
@@ -219,7 +224,7 @@ func detectOrg(repoPath string) string {
 func (r *Registry) List() []*Repo {
 	repos := make([]*Repo, 0, len(r.Repos))
 	for _, repo := range r.Repos {
-		repos = repos
+
 		repos = append(repos, repo)
 	}
 	return repos

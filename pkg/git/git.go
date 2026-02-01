@@ -249,6 +249,7 @@ type GitError struct {
 	Stderr string
 }
 
+// Error returns the git error message, preferring stderr output.
 func (e *GitError) Error() string {
 	// Return just the stderr message, trimmed
 	msg := strings.TrimSpace(e.Stderr)
@@ -258,6 +259,7 @@ func (e *GitError) Error() string {
 	return e.Err.Error()
 }
 
+// Unwrap returns the underlying error for error chain inspection.
 func (e *GitError) Unwrap() error {
 	return e.Err
 }

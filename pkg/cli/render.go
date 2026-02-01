@@ -8,17 +8,26 @@ import (
 // RenderStyle controls how layouts are rendered.
 type RenderStyle int
 
+// Render style constants for layout output.
 const (
-	RenderFlat   RenderStyle = iota // No borders
-	RenderSimple                     // --- separators
-	RenderBoxed                      // Unicode box drawing
+	// RenderFlat uses no borders or decorations.
+	RenderFlat RenderStyle = iota
+	// RenderSimple uses --- separators between sections.
+	RenderSimple
+	// RenderBoxed uses Unicode box drawing characters.
+	RenderBoxed
 )
 
 var currentRenderStyle = RenderFlat
 
-func UseRenderFlat()   { currentRenderStyle = RenderFlat }
+// UseRenderFlat sets the render style to flat (no borders).
+func UseRenderFlat() { currentRenderStyle = RenderFlat }
+
+// UseRenderSimple sets the render style to simple (--- separators).
 func UseRenderSimple() { currentRenderStyle = RenderSimple }
-func UseRenderBoxed()  { currentRenderStyle = RenderBoxed }
+
+// UseRenderBoxed sets the render style to boxed (Unicode box drawing).
+func UseRenderBoxed() { currentRenderStyle = RenderBoxed }
 
 // Render outputs the layout to terminal.
 func (c *Composite) Render() {

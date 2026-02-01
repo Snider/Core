@@ -16,37 +16,37 @@ import (
 
 // Re-export core types for cleaner imports
 type (
-	Core           = core.Core
-	Option         = core.Option
-	Message        = core.Message
-	Query          = core.Query
-	Task           = core.Task
-	QueryHandler   = core.QueryHandler
-	TaskHandler    = core.TaskHandler
-	Startable      = core.Startable
-	Stoppable      = core.Stoppable
-	Config         = core.Config
-	Display        = core.Display
-	WindowOption   = core.WindowOption
-	Features       = core.Features
-	Contract       = core.Contract
-	Error          = core.Error
+	Core                  = core.Core
+	Option                = core.Option
+	Message               = core.Message
+	Query                 = core.Query
+	Task                  = core.Task
+	QueryHandler          = core.QueryHandler
+	TaskHandler           = core.TaskHandler
+	Startable             = core.Startable
+	Stoppable             = core.Stoppable
+	Config                = core.Config
+	Display               = core.Display
+	WindowOption          = core.WindowOption
+	Features              = core.Features
+	Contract              = core.Contract
+	Error                 = core.Error
 	ServiceRuntime[T any] = core.ServiceRuntime[T]
-	Runtime        = core.Runtime
-	ServiceFactory = core.ServiceFactory
+	Runtime               = core.Runtime
+	ServiceFactory        = core.ServiceFactory
 )
 
 // Re-export core functions
 var (
-	New             = core.New
-	WithService     = core.WithService
-	WithName        = core.WithName
-	WithApp         = core.WithApp
-	WithAssets      = core.WithAssets
-	WithServiceLock = core.WithServiceLock
-	App             = core.App
-	E               = core.E
-	NewRuntime      = core.NewRuntime
+	New              = core.New
+	WithService      = core.WithService
+	WithName         = core.WithName
+	WithApp          = core.WithApp
+	WithAssets       = core.WithAssets
+	WithServiceLock  = core.WithServiceLock
+	App              = core.App
+	E                = core.E
+	NewRuntime       = core.NewRuntime
 	NewWithFactories = core.NewWithFactories
 )
 
@@ -55,11 +55,12 @@ func NewServiceRuntime[T any](c *Core, opts T) *ServiceRuntime[T] {
 	return core.NewServiceRuntime(c, opts)
 }
 
-// Re-export generic functions
+// ServiceFor retrieves a typed service from the core container by name.
 func ServiceFor[T any](c *Core, name string) (T, error) {
 	return core.ServiceFor[T](c, name)
 }
 
+// MustServiceFor retrieves a typed service or panics if not found.
 func MustServiceFor[T any](c *Core, name string) T {
 	return core.MustServiceFor[T](c, name)
 }

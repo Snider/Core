@@ -40,8 +40,11 @@ type TestOptions struct {
 // TestRunner represents the detected test runner.
 type TestRunner string
 
+// Test runner type constants.
 const (
-	TestRunnerPest    TestRunner = "pest"
+	// TestRunnerPest indicates Pest testing framework.
+	TestRunnerPest TestRunner = "pest"
+	// TestRunnerPHPUnit indicates PHPUnit testing framework.
 	TestRunnerPHPUnit TestRunner = "phpunit"
 )
 

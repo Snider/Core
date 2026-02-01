@@ -127,6 +127,7 @@ type ServiceError struct {
 	msg string
 }
 
+// Error returns the service error message.
 func (e *ServiceError) Error() string {
 	return e.msg
 }

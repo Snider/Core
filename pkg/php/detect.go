@@ -11,12 +11,18 @@ import (
 // DetectedService represents a service that was detected in a Laravel project.
 type DetectedService string
 
+// Detected service constants for Laravel projects.
 const (
+	// ServiceFrankenPHP indicates FrankenPHP server is detected.
 	ServiceFrankenPHP DetectedService = "frankenphp"
-	ServiceVite       DetectedService = "vite"
-	ServiceHorizon    DetectedService = "horizon"
-	ServiceReverb     DetectedService = "reverb"
-	ServiceRedis      DetectedService = "redis"
+	// ServiceVite indicates Vite frontend bundler is detected.
+	ServiceVite DetectedService = "vite"
+	// ServiceHorizon indicates Laravel Horizon queue dashboard is detected.
+	ServiceHorizon DetectedService = "horizon"
+	// ServiceReverb indicates Laravel Reverb WebSocket server is detected.
+	ServiceReverb DetectedService = "reverb"
+	// ServiceRedis indicates Redis cache/queue backend is detected.
+	ServiceRedis DetectedService = "redis"
 )
 
 // IsLaravelProject checks if the given directory is a Laravel project.
