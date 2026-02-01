@@ -33,6 +33,9 @@ func runWorkspaceInfo(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if config == nil {
+		return cli.Err("workspace config not found")
+	}
 
 	cli.Print("Active:   %s\n", cli.ValueStyle.Render(config.Active))
 	cli.Print("Packages: %s\n", cli.DimStyle.Render(config.PackagesDir))
@@ -52,6 +55,9 @@ func runWorkspaceActive(cmd *cobra.Command, args []string) error {
 	config, err := LoadConfig(root)
 	if err != nil {
 		return err
+	}
+	if config == nil {
+		config = DefaultConfig()
 	}
 
 	// If no args, show active

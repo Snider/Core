@@ -60,7 +60,7 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 
 	basePath := registryDir
 
-	if wsConfig.PackagesDir != "" && wsConfig.PackagesDir != "./packages" {
+	if wsConfig != nil && wsConfig.PackagesDir != "" && wsConfig.PackagesDir != "./packages" {
 		pkgDir := wsConfig.PackagesDir
 		
 		// Expand ~

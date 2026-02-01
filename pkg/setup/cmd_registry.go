@@ -26,6 +26,14 @@ func runRegistrySetup(ctx context.Context, registryPath, only string, dryRun, al
 		return fmt.Errorf("failed to load registry: %w", err)
 	}
 
+	// Check workspace config for default_only if no filter specified
+	if only == "" {
+		registryDir := filepath.Dir(registryPath)
+		if wsConfig, err := workspace.LoadConfig(registryDir); err == nil && wsConfig != nil && len(wsConfig.DefaultOnly) > 0 {
+			only = strings.Join(wsConfig.DefaultOnly, ",")
+		}
+	}
+
 	return runRegistrySetupWithReg(ctx, reg, registryPath, only, dryRun, all, runBuild)
 }
 
@@ -44,7 +52,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		if err != nil {
 			return fmt.Errorf("failed to load workspace config: %w", err)
 		}
-		if wsConfig.PackagesDir != "" {
+		if wsConfig != nil && wsConfig.PackagesDir != "" {
 			basePath = wsConfig.PackagesDir
 		} else {
 			basePath = "./packages"

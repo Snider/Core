@@ -69,8 +69,8 @@ func AddPHPCommands(root *cobra.Command) {
 
 			// Load workspace config
 			config, err := workspace.LoadConfig(wsRoot)
-			if err != nil {
-				return nil // Failed to load, ignore
+			if err != nil || config == nil {
+				return nil // Failed to load or no config, ignore
 			}
 
 			if config.Active == "" {
