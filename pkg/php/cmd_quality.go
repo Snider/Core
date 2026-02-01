@@ -2,10 +2,10 @@ package php
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"strings"
-
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
@@ -17,6 +17,7 @@ var (
 	testCoverage bool
 	testFilter   string
 	testGroup    string
+	testJSON     bool
 )
 
 func addPHPTestCommand(parent *cobra.Command) {
@@ -34,7 +35,9 @@ func addPHPTestCommand(parent *cobra.Command) {
 				return errors.New(i18n.T("cmd.php.error.not_php"))
 			}
 
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "tests"))
+			if !testJSON {
+				cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "tests"))
+			}
 
 			ctx := context.Background()
 
@@ -43,6 +46,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 				Filter:   testFilter,
 				Parallel: testParallel,
 				Coverage: testCoverage,
+				JUnit:    testJSON,
 				Output:   os.Stdout,
 			}
 
@@ -62,6 +66,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("cmd.php.test.flag.coverage"))
 	testCmd.Flags().StringVar(&testFilter, "filter", "", i18n.T("cmd.php.test.flag.filter"))
 	testCmd.Flags().StringVar(&testGroup, "group", "", i18n.T("cmd.php.test.flag.group"))
+	testCmd.Flags().BoolVar(&testJSON, "junit", false, i18n.T("cmd.php.test.flag.junit"))
 
 	parent.AddCommand(testCmd)
 }
@@ -69,6 +74,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 var (
 	fmtFix  bool
 	fmtDiff bool
+	fmtJSON bool
 )
 
 func addPHPFmtCommand(parent *cobra.Command) {
@@ -92,13 +98,15 @@ func addPHPFmtCommand(parent *cobra.Command) {
 				return errors.New(i18n.T("cmd.php.fmt.no_formatter"))
 			}
 
-			var msg string
-			if fmtFix {
-				msg = i18n.T("cmd.php.fmt.formatting", map[string]interface{}{"Formatter": formatter})
-			} else {
-				msg = i18n.ProgressSubject("check", "code style")
+			if !fmtJSON {
+				var msg string
+				if fmtFix {
+					msg = i18n.T("cmd.php.fmt.formatting", map[string]interface{}{"Formatter": formatter})
+				} else {
+					msg = i18n.ProgressSubject("check", "code style")
+				}
+				cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), msg)
 			}
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), msg)
 
 			ctx := context.Background()
 
@@ -106,6 +114,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 				Dir:    cwd,
 				Fix:    fmtFix,
 				Diff:   fmtDiff,
+				JSON:   fmtJSON,
 				Output: os.Stdout,
 			}
 
@@ -121,10 +130,12 @@ func addPHPFmtCommand(parent *cobra.Command) {
 				return cli.Err("%s: %w", i18n.T("cmd.php.error.fmt_issues"), err)
 			}
 
-			if fmtFix {
-				cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Code formatted"}))
-			} else {
-				cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.fmt.no_issues"))
+			if !fmtJSON {
+				if fmtFix {
+					cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.success.completed", map[string]any{"Action": "Code formatted"}))
+				} else {
+					cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("cmd.php.fmt.no_issues"))
+				}
 			}
 
 			return nil
@@ -133,6 +144,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 
 	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, i18n.T("cmd.php.fmt.flag.fix"))
 	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("common.flag.diff"))
+	fmtCmd.Flags().BoolVar(&fmtJSON, "json", false, i18n.T("common.flag.json"))
 
 	parent.AddCommand(fmtCmd)
 }
@@ -140,6 +152,8 @@ func addPHPFmtCommand(parent *cobra.Command) {
 var (
 	stanLevel  int
 	stanMemory string
+	stanJSON   bool
+	stanSARIF  bool
 )
 
 func addPHPStanCommand(parent *cobra.Command) {
@@ -163,7 +177,13 @@ func addPHPStanCommand(parent *cobra.Command) {
 				return errors.New(i18n.T("cmd.php.analyse.no_analyser"))
 			}
 
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "static analysis"))
+			if stanJSON && stanSARIF {
+				return errors.New(i18n.T("common.error.json_sarif_exclusive"))
+			}
+
+			if !stanJSON && !stanSARIF {
+				cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.php")), i18n.ProgressSubject("run", "static analysis"))
+			}
 
 			ctx := context.Background()
 
@@ -171,6 +191,8 @@ func addPHPStanCommand(parent *cobra.Command) {
 				Dir:    cwd,
 				Level:  stanLevel,
 				Memory: stanMemory,
+				JSON:   stanJSON,
+				SARIF:  stanSARIF,
 				Output: os.Stdout,
 			}
 
@@ -183,13 +205,17 @@ func addPHPStanCommand(parent *cobra.Command) {
 				return cli.Err("%s: %w", i18n.T("cmd.php.error.analysis_issues"), err)
 			}
 
-			cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.result.no_issues"))
+			if !stanJSON && !stanSARIF {
+				cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.result.no_issues"))
+			}
 			return nil
 		},
 	}
 
 	stanCmd.Flags().IntVar(&stanLevel, "level", 0, i18n.T("cmd.php.analyse.flag.level"))
 	stanCmd.Flags().StringVar(&stanMemory, "memory", "", i18n.T("cmd.php.analyse.flag.memory"))
+	stanCmd.Flags().BoolVar(&stanJSON, "json", false, i18n.T("common.flag.json"))
+	stanCmd.Flags().BoolVar(&stanSARIF, "sarif", false, i18n.T("common.flag.sarif"))
 
 	parent.AddCommand(stanCmd)
 }
@@ -203,6 +229,8 @@ var (
 	psalmFix      bool
 	psalmBaseline bool
 	psalmShowInfo bool
+	psalmJSON     bool
+	psalmSARIF    bool
 )
 
 func addPHPPsalmCommand(parent *cobra.Command) {
@@ -229,13 +257,19 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 				return errors.New(i18n.T("cmd.php.error.psalm_not_installed"))
 			}
 
-			var msg string
-			if psalmFix {
-				msg = i18n.T("cmd.php.psalm.analysing_fixing")
-			} else {
-				msg = i18n.T("cmd.php.psalm.analysing")
+			if psalmJSON && psalmSARIF {
+				return errors.New(i18n.T("common.error.json_sarif_exclusive"))
 			}
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.psalm")), msg)
+
+			if !psalmJSON && !psalmSARIF {
+				var msg string
+				if psalmFix {
+					msg = i18n.T("cmd.php.psalm.analysing_fixing")
+				} else {
+					msg = i18n.T("cmd.php.psalm.analysing")
+				}
+				cli.Print("%s %s\n\n", dimStyle.Render(i18n.T("cmd.php.label.psalm")), msg)
+			}
 
 			ctx := context.Background()
 
@@ -245,6 +279,8 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 				Fix:      psalmFix,
 				Baseline: psalmBaseline,
 				ShowInfo: psalmShowInfo,
+				JSON:     psalmJSON,
+				SARIF:    psalmSARIF,
 				Output:   os.Stdout,
 			}
 
@@ -252,7 +288,9 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 				return cli.Err("%s: %w", i18n.T("cmd.php.error.psalm_issues"), err)
 			}
 
-			cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.result.no_issues"))
+			if !psalmJSON && !psalmSARIF {
+				cli.Print("\n%s %s\n", successStyle.Render(i18n.Label("done")), i18n.T("common.result.no_issues"))
+			}
 			return nil
 		},
 	}
@@ -261,6 +299,8 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 	psalmCmd.Flags().BoolVar(&psalmFix, "fix", false, i18n.T("common.flag.fix"))
 	psalmCmd.Flags().BoolVar(&psalmBaseline, "baseline", false, i18n.T("cmd.php.psalm.flag.baseline"))
 	psalmCmd.Flags().BoolVar(&psalmShowInfo, "show-info", false, i18n.T("cmd.php.psalm.flag.show_info"))
+	psalmCmd.Flags().BoolVar(&psalmJSON, "json", false, i18n.T("common.flag.json"))
+	psalmCmd.Flags().BoolVar(&psalmSARIF, "sarif", false, i18n.T("common.flag.sarif"))
 
 	parent.AddCommand(psalmCmd)
 }
@@ -459,6 +499,7 @@ var (
 	qaQuick bool
 	qaFull  bool
 	qaFix   bool
+	qaJSON  bool
 )
 
 func addPHPQACommand(parent *cobra.Command) {
@@ -482,11 +523,14 @@ func addPHPQACommand(parent *cobra.Command) {
 				Quick: qaQuick,
 				Full:  qaFull,
 				Fix:   qaFix,
+				JSON:  qaJSON,
 			}
 			stages := GetQAStages(opts)
 
 			// Print header
-			cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("qa")), i18n.ProgressSubject("run", "QA pipeline"))
+			if !qaJSON {
+				cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("qa")), i18n.ProgressSubject("run", "QA pipeline"))
+			}
 
 			ctx := context.Background()
 
@@ -502,66 +546,81 @@ func addPHPQACommand(parent *cobra.Command) {
 				return cli.Err("%s: %w", i18n.T("i18n.fail.run", "QA checks"), err)
 			}
 
-			// Display results by stage
-			currentStage := ""
-			for _, checkResult := range result.Results {
-				// Determine stage for this check
-				stage := getCheckStage(checkResult.Name, stages, cwd)
-				if stage != currentStage {
-					if currentStage != "" {
-						cli.Blank()
+			// Display results by stage (skip when JSON output is enabled)
+			if !qaJSON {
+				currentStage := ""
+				for _, checkResult := range result.Results {
+					// Determine stage for this check
+					stage := getCheckStage(checkResult.Name, stages, cwd)
+					if stage != currentStage {
+						if currentStage != "" {
+							cli.Blank()
+						}
+						currentStage = stage
+						cli.Print("%s\n", phpQAStageStyle.Render("── "+strings.ToUpper(stage)+" ──"))
 					}
-					currentStage = stage
-					cli.Print("%s\n", phpQAStageStyle.Render("── "+strings.ToUpper(stage)+" ──"))
+
+					icon := phpQAPassedStyle.Render("✓")
+					status := phpQAPassedStyle.Render(i18n.T("i18n.done.pass"))
+					if checkResult.Skipped {
+						icon = dimStyle.Render("-")
+						status = dimStyle.Render(i18n.T("i18n.done.skip"))
+					} else if !checkResult.Passed {
+						icon = phpQAFailedStyle.Render("✗")
+						status = phpQAFailedStyle.Render(i18n.T("i18n.done.fail"))
+					}
+
+					cli.Print("  %s %s %s %s\n", icon, checkResult.Name, status, dimStyle.Render(checkResult.Duration))
+				}
+				cli.Blank()
+
+				// Print summary
+				if result.Passed {
+					cli.Print("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("i18n.count.check", result.PassedCount)+" "+i18n.T("i18n.done.pass"))
+					cli.Print("%s %s\n", dimStyle.Render(i18n.T("i18n.label.duration")), result.Duration)
+					return nil
 				}
 
-				icon := phpQAPassedStyle.Render("✓")
-				status := phpQAPassedStyle.Render(i18n.T("i18n.done.pass"))
-				if checkResult.Skipped {
-					icon = dimStyle.Render("-")
-					status = dimStyle.Render(i18n.T("i18n.done.skip"))
-				} else if !checkResult.Passed {
-					icon = phpQAFailedStyle.Render("✗")
-					status = phpQAFailedStyle.Render(i18n.T("i18n.done.fail"))
+				cli.Print("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("i18n.count.check", result.PassedCount)+"/"+cli.Sprint(len(result.Results))+" "+i18n.T("i18n.done.pass"))
+
+				// Show what needs fixing
+				cli.Print("%s\n", dimStyle.Render(i18n.T("i18n.label.fix")))
+				for _, checkResult := range result.Results {
+					if checkResult.Passed || checkResult.Skipped {
+						continue
+					}
+					fixCmd := getQAFixCommand(checkResult.Name, qaFix)
+					issue := checkResult.GetIssueMessage()
+					if issue == "" {
+						issue = "issues found"
+					}
+					cli.Print("  %s %s\n", phpQAFailedStyle.Render("*"), checkResult.Name+": "+issue)
+					if fixCmd != "" {
+						cli.Print("    %s %s\n", dimStyle.Render("->"), fixCmd)
+					}
 				}
 
-				cli.Print("  %s %s %s %s\n", icon, checkResult.Name, status, dimStyle.Render(checkResult.Duration))
+				return cli.Err("%s", i18n.T("i18n.fail.run", "QA pipeline"))
 			}
-			cli.Blank()
 
-			// Print summary
-			if result.Passed {
-				cli.Print("%s %s\n", phpQAPassedStyle.Render("QA PASSED:"), i18n.T("i18n.count.check", result.PassedCount)+" "+i18n.T("i18n.done.pass"))
-				cli.Print("%s %s\n", dimStyle.Render(i18n.T("i18n.label.duration")), result.Duration)
-				return nil
+			// JSON mode: output results as JSON
+			output, err := json.MarshalIndent(result, "", "  ")
+			if err != nil {
+				return cli.Wrap(err, "marshal JSON output")
 			}
+			cli.Text(string(output))
 
-			cli.Print("%s %s\n\n", phpQAFailedStyle.Render("QA FAILED:"), i18n.T("i18n.count.check", result.PassedCount)+"/"+cli.Sprint(len(result.Results))+" "+i18n.T("i18n.done.pass"))
-
-			// Show what needs fixing
-			cli.Print("%s\n", dimStyle.Render(i18n.T("i18n.label.fix")))
-			for _, checkResult := range result.Results {
-				if checkResult.Passed || checkResult.Skipped {
-					continue
-				}
-				fixCmd := getQAFixCommand(checkResult.Name, qaFix)
-				issue := checkResult.GetIssueMessage()
-				if issue == "" {
-					issue = "issues found"
-				}
-				cli.Print("  %s %s\n", phpQAFailedStyle.Render("*"), checkResult.Name+": "+issue)
-				if fixCmd != "" {
-					cli.Print("    %s %s\n", dimStyle.Render("->"), fixCmd)
-				}
+			if !result.Passed {
+				return cli.Err("%s", i18n.T("i18n.fail.run", "QA pipeline"))
 			}
-
-			return cli.Err("%s", i18n.T("i18n.fail.run", "QA pipeline"))
+			return nil
 		},
 	}
 
-	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, "Run quick checks only (audit, fmt, stan)")
-	qaCmd.Flags().BoolVar(&qaFull, "full", false, "Run all stages including slow checks")
-	qaCmd.Flags().BoolVar(&qaFix, "fix", false, "Auto-fix issues where possible")
+	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, i18n.T("cmd.php.qa.flag.quick"))
+	qaCmd.Flags().BoolVar(&qaFull, "full", false, i18n.T("cmd.php.qa.flag.full"))
+	qaCmd.Flags().BoolVar(&qaFix, "fix", false, i18n.T("common.flag.fix"))
+	qaCmd.Flags().BoolVar(&qaJSON, "json", false, i18n.T("common.flag.json"))
 
 	parent.AddCommand(qaCmd)
 }
