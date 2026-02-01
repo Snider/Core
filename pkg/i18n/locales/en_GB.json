@@ -59,7 +59,12 @@
 			"dependency": { "one": "dependency", "other": "dependencies" },
 			"directory": { "one": "directory", "other": "directories" },
 			"category": { "one": "category", "other": "categories" },
-			"query": { "one": "query", "other": "queries" }
+			"query": { "one": "query", "other": "queries" },
+			"passed": { "one": "passed", "other": "passed" },
+			"failed": { "one": "failed", "other": "failed" },
+			"skipped": { "one": "skipped", "other": "skipped" },
+			"check": { "one": "check", "other": "checks" },
+			"test": { "one": "test", "other": "tests" }
 		},
 		"article": {
 			"indefinite": { "default": "a", "vowel": "an" },
@@ -89,7 +94,14 @@
 			"related_files": "related files",
 			"up_to_date": "up to date",
 			"dry_run": "dry run",
-			"go_mod": "go.mod"
+			"go_mod": "go.mod",
+			"test": "test",
+			"package": "package",
+			"filter": "filter",
+			"coverage": "coverage",
+			"passed": "passed",
+			"failed": "failed",
+			"skipped": "skipped"
 		},
 		"punct": {
 			"label": ":",
@@ -123,8 +135,16 @@
 	"cmd": {
 		"ai": {
 			"short": "AI agent task management",
+			"long": "AI agent task management for core-agentic integration. Provides commands to list, claim, update, and complete tasks from the agentic task queue.",
 			"claude.short": "Claude Code integration",
+			"claude.long": "Claude Code integration for AI-assisted development workflows.",
+			"claude.config.short": "Configure Claude Code settings",
+			"claude.run.short": "Run Claude Code on current directory",
 			"task.short": "Show task details or auto-select a task",
+			"task.long": "Show details of a specific task or auto-select the next available task from the queue.",
+			"task.flag.auto": "Auto-select the next available task",
+			"task.flag.claim": "Claim the task for yourself",
+			"task.flag.context": "Include full context in output",
 			"task.id_required": "task ID required (or use --auto)",
 			"task.no_pending": "No pending tasks available.",
 			"tasks.short": "List available tasks from core-agentic",
@@ -137,14 +157,36 @@
 		},
 		"build": {
 			"short": "Build projects with auto-detection and cross-compilation",
+			"long": "Build projects with automatic project type detection and cross-compilation support. Supports Go, Wails, Node.js, and PHP projects.",
+			"flag.archive": "Create archive (tar.gz/zip) of build output",
+			"flag.checksum": "Generate SHA256 checksums",
+			"flag.ci": "Run in CI mode (non-interactive)",
+			"flag.config": "Path to build configuration file",
+			"flag.format": "Output format (binary, docker, appimage)",
+			"flag.image": "Docker image name for container builds",
+			"flag.no_sign": "Skip code signing",
+			"flag.notarize": "Notarize macOS builds",
+			"flag.output": "Output directory for build artifacts",
+			"flag.push": "Push container image to registry",
+			"flag.targets": "Comma-separated build targets (e.g., linux/amd64,darwin/arm64)",
+			"flag.type": "Project type override (go, wails, node, php)",
 			"error.invalid_target": "invalid target format \"{{.Target}}\", expected OS/arch (e.g., linux/amd64)",
 			"error.no_project_type": "no supported project type detected in {{.Dir}}\nSupported types: go (go.mod), wails (wails.json), node (package.json), php (composer.json)",
 			"from_path.short": "Build from a local directory",
 			"pwa.short": "Build from a live PWA URL",
-			"sdk.short": "Generate API SDKs from OpenAPI spec"
+			"sdk.short": "Generate API SDKs from OpenAPI spec",
+			"sdk.long": "Generate API SDKs from an OpenAPI specification file. Supports multiple languages including TypeScript, Go, and PHP.",
+			"sdk.flag.dry_run": "Show what would be generated without writing files",
+			"sdk.flag.lang": "Target language (typescript, go, php)",
+			"sdk.flag.version": "SDK version to generate"
 		},
 		"ci": {
 			"short": "Publish releases (dry-run by default)",
+			"long": "Publish releases to GitHub with automatic changelog generation. Runs in dry-run mode by default for safety.",
+			"flag.draft": "Create as draft release",
+			"flag.prerelease": "Mark as pre-release",
+			"flag.version": "Version to release (e.g., v1.2.3)",
+			"flag.go_for_launch": "Actually publish the release (disables dry-run)",
 			"dry_run_hint": "(dry-run) use --we-are-go-for-launch to publish",
 			"go_for_launch": "GO FOR LAUNCH",
 			"init.short": "Initialize release configuration",
@@ -153,6 +195,21 @@
 		},
 		"dev": {
 			"short": "Multi-repo development workflow",
+			"long": "Multi-repo development workflow tools for managing federated monorepos. Provides health checks, commit assistance, push/pull operations, and CI status across all repositories.",
+			"api.short": "Start API development server",
+			"workflow.short": "Manage GitHub Actions workflows",
+			"workflow.long": "Manage GitHub Actions workflows across repositories. List, sync, and update workflow files.",
+			"workflow.list.short": "List workflows across repos",
+			"workflow.sync.short": "Sync workflow files across repos",
+			"vm.boot.short": "Boot development VM",
+			"vm.claude.short": "Run Claude in development VM",
+			"vm.install.short": "Install development VM",
+			"vm.serve.short": "Start services in development VM",
+			"vm.shell.short": "Open shell in development VM",
+			"vm.stop.short": "Stop development VM",
+			"vm.test.short": "Run tests in development VM",
+			"vm.update.short": "Update development VM",
+			"vm.status.short": "Show development VM status",
 			"no_changes": "No uncommitted changes found.",
 			"no_git_repos": "No git repositories found.",
 			"confirm_claude_commit": "Have Claude commit these repos?",
@@ -227,11 +284,14 @@
 		},
 		"docs": {
 			"short": "Documentation management",
+			"long": "Documentation management tools for listing and syncing documentation across repositories.",
 			"list.short": "List documentation across repos",
 			"sync.short": "Sync documentation to core-php/docs/packages/"
 		},
 		"doctor": {
 			"short": "Check development environment",
+			"long": "Check development environment for required tools and configuration. Verifies git, gh CLI, language runtimes, and SSH setup.",
+			"verbose_flag": "Show detailed check results",
 			"ready": "Doctor: Environment ready",
 			"no_repos_yaml": "No repos.yaml found (run from workspace directory)",
 			"install_missing": "Install missing tools:",
@@ -240,13 +300,15 @@
 		},
 		"go": {
 			"short": "Go development tools",
+			"long": "Go development tools including testing, formatting, linting, and module management.",
 			"test.short": "Run Go tests",
 			"cov.short": "Run tests with coverage report",
 			"fmt.short": "Format Go code",
 			"lint.short": "Run golangci-lint",
 			"install.short": "Install Go binary",
 			"mod.short": "Module management",
-			"work.short": "Workspace management"
+			"work.short": "Workspace management",
+			"qa.short": "Run QA checks (fmt, lint, test)"
 		},
 		"php": {
 			"short": "Laravel/PHP development tools",
@@ -287,9 +349,17 @@
 			"qa.flag.full": "Run all stages including slow checks",
 			"build.short": "Build Docker or LinuxKit image",
 			"deploy.short": "Deploy to Coolify",
+			"deploy_list.short": "List deployments",
+			"deploy_rollback.short": "Rollback to previous deployment",
+			"deploy_status.short": "Show deployment status",
 			"serve.short": "Run production container",
 			"ssl.short": "Setup SSL certificates with mkcert",
 			"packages.short": "Manage local PHP packages",
+			"logs.short": "View application logs",
+			"shell.short": "Open shell in container",
+			"status.short": "Show container status",
+			"stop.short": "Stop running containers",
+			"stan.short": "Run PHPStan static analysis",
 			"ci.short": "Run CI/CD pipeline with combined reporting",
 			"ci.long": "Run all QA checks in optimal order and generate combined reports in JSON, markdown, or SARIF format for CI/CD integration.",
 			"ci.flag.json": "Output combined JSON report",
@@ -300,6 +370,7 @@
 		},
 		"pkg": {
 			"short": "Package management for core-* repos",
+			"long": "Package management for core-* repositories. Clone, list, update, and search for packages.",
 			"install.short": "Clone a package from GitHub",
 			"list.short": "List installed packages",
 			"update.short": "Update installed packages",
@@ -309,11 +380,19 @@
 		},
 		"sdk": {
 			"short": "SDK validation and API compatibility tools",
+			"long": "SDK validation and API compatibility tools. Check for breaking changes and validate OpenAPI specifications.",
 			"diff.short": "Check for breaking API changes",
 			"validate.short": "Validate OpenAPI spec"
 		},
 		"setup": {
 			"short": "Bootstrap workspace or clone packages from registry",
+			"long": "Bootstrap a new workspace or clone packages from a repos.yaml registry. Interactive wizard for selecting packages to clone.",
+			"flag.all": "Clone all packages from registry",
+			"flag.build": "Build packages after cloning",
+			"flag.dry_run": "Show what would be cloned without cloning",
+			"flag.name": "Package name to clone",
+			"flag.only": "Only clone packages of this type",
+			"flag.registry": "Path to repos.yaml registry file",
 			"complete": "Setup complete",
 			"bootstrap_mode": "Bootstrap mode (no repos.yaml found)",
 			"nothing_to_clone": "Nothing to clone.",
@@ -421,10 +500,18 @@
 			"issues.hint.triage": "Add labels and assignee"
 		},
 		"test": {
-			"short": "Run Go tests with coverage"
+			"short": "Run Go tests with coverage",
+			"long": "Run Go tests with optional coverage reporting, race detection, and filtering.",
+			"flag.json": "Output results as JSON",
+			"flag.pkg": "Package to test (default: ./...)",
+			"flag.race": "Enable race detector",
+			"flag.run": "Run only tests matching pattern",
+			"flag.short": "Run only short tests",
+			"flag.verbose": "Verbose output"
 		},
 		"vm": {
 			"short": "LinuxKit VM management",
+			"long": "LinuxKit VM management for running isolated development environments. Create, run, and manage lightweight VMs.",
 			"run.short": "Run a LinuxKit image or template",
 			"ps.short": "List running VMs",
 			"stop.short": "Stop a running VM",
@@ -463,7 +550,10 @@
 			"summary": "Summary:",
 			"setup": "Setup:",
 			"config": "Config:",
-			"repo": "Repo:"
+			"repo": "Repo:",
+			"test": "Running tests...",
+			"package": "Package:",
+			"coverage": "Coverage:"
 		},
 		"flag": {
 			"fix": "Auto-fix issues where possible",
@@ -471,14 +561,17 @@
 			"json": "Output as JSON",
 			"sarif": "Output as SARIF for GitHub Security tab",
 			"verbose": "Show detailed output",
-			"registry": "Path to repos.yaml registry file"
+			"registry": "Path to repos.yaml registry file",
+			"coverage": "Generate coverage report",
+			"spec": "Path to OpenAPI specification file"
 		},
 		"progress": {
 			"running": "Running {{.Task}}...",
 			"checking": "Checking {{.Item}}..."
 		},
 		"result": {
-			"no_issues": "No issues found"
+			"no_issues": "No issues found",
+			"all_passed": "All tests passed"
 		},
 		"success": {
 			"completed": "{{.Action}} successfully"
@@ -493,7 +586,8 @@
 		"count": {
 			"succeeded": "{{.Count}} succeeded",
 			"failed": "{{.Count}} failed",
-			"skipped": "{{.Count}} skipped"
+			"skipped": "{{.Count}} skipped",
+			"passed": "{{.Count}} passed"
 		}
 	},
 	"error": {
@@ -507,5 +601,9 @@
 		"es": "Spanish",
 		"fr": "French",
 		"zh": "Chinese"
+	},
+	"cli": {
+		"pass": "PASS",
+		"fail": "FAIL"
 	}
 }

@@ -147,24 +147,29 @@ func flattenWithGrammar(prefix string, data map[string]any, out map[string]Messa
 				continue
 			}
 
-			// Check if this is a noun form object
-			if grammar != nil && isNounFormObject(v) {
+			// Check if this is a noun form object (under gram.noun.* path, or has gender field)
+			if grammar != nil && (strings.HasPrefix(fullKey, "gram.noun.") || isNounFormObject(v)) {
 				nounName := key
 				if strings.HasPrefix(fullKey, "gram.noun.") {
 					nounName = strings.TrimPrefix(fullKey, "gram.noun.")
 				}
-				forms := NounForms{}
-				if one, ok := v["one"].(string); ok {
-					forms.One = one
+				// Only process if it has one/other structure (noun pluralization)
+				_, hasOne := v["one"]
+				_, hasOther := v["other"]
+				if hasOne && hasOther {
+					forms := NounForms{}
+					if one, ok := v["one"].(string); ok {
+						forms.One = one
+					}
+					if other, ok := v["other"].(string); ok {
+						forms.Other = other
+					}
+					if gender, ok := v["gender"].(string); ok {
+						forms.Gender = gender
+					}
+					grammar.Nouns[strings.ToLower(nounName)] = forms
+					continue
 				}
-				if other, ok := v["other"].(string); ok {
-					forms.Other = other
-				}
-				if gender, ok := v["gender"].(string); ok {
-					forms.Gender = gender
-				}
-				grammar.Nouns[strings.ToLower(nounName)] = forms
-				continue
 			}
 
 			// Check if this is an article object
