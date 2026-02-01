@@ -1,6 +1,7 @@
 package security
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -124,7 +125,7 @@ func loadRegistry(registryPath string) (*repos.Registry, error) {
 // checkGH verifies gh CLI is available.
 func checkGH() error {
 	if _, err := exec.LookPath("gh"); err != nil {
-		return fmt.Errorf(i18n.T("error.gh_not_found"))
+		return errors.New(i18n.T("error.gh_not_found"))
 	}
 	return nil
 }

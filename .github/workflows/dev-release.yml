@@ -28,7 +28,7 @@ jobs:
             goarch: arm64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -48,7 +48,7 @@ jobs:
           go build -trimpath -ldflags="-s -w -X github.com/host-uk/core/pkg/cli.AppVersion=${VERSION}" -o core-${GOOS}-${GOARCH}${EXT} .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: core-${{ matrix.goos }}-${{ matrix.goarch }}
           path: core-*
@@ -57,7 +57,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
