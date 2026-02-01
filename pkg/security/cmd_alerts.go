@@ -130,7 +130,10 @@ func runAlerts() error {
 	}
 
 	if securityJSON {
-		output, _ := json.MarshalIndent(allAlerts, "", "  ")
+		output, err := json.MarshalIndent(allAlerts, "", "  ")
+		if err != nil {
+			return cli.Wrap(err, "marshal JSON output")
+		}
 		cli.Text(string(output))
 		return nil
 	}
