@@ -28,12 +28,11 @@ import (
 
 // CI command flags
 var (
-	ciJSON       bool
-	ciSummary    bool
-	ciSARIF      bool
+	ciJSON        bool
+	ciSummary     bool
+	ciSARIF       bool
 	ciUploadSARIF bool
-	ciFailOn     string
-	ciParallel   bool
+	ciFailOn      string
 )
 
 // CIResult represents the overall CI pipeline result
@@ -82,7 +81,6 @@ func addPHPCICommand(parent *cobra.Command) {
 	ciCmd.Flags().BoolVar(&ciSARIF, "sarif", false, i18n.T("cmd.php.ci.flag.sarif"))
 	ciCmd.Flags().BoolVar(&ciUploadSARIF, "upload-sarif", false, i18n.T("cmd.php.ci.flag.upload_sarif"))
 	ciCmd.Flags().StringVar(&ciFailOn, "fail-on", "error", i18n.T("cmd.php.ci.flag.fail_on"))
-	ciCmd.Flags().BoolVar(&ciParallel, "parallel", false, i18n.T("cmd.php.ci.flag.parallel"))
 
 	parent.AddCommand(ciCmd)
 }
@@ -187,11 +185,23 @@ func runPHPCI() error {
 
 	// Output based on flags
 	if ciJSON {
-		return outputCIJSON(result)
+		if err := outputCIJSON(result); err != nil {
+			return err
+		}
+		if !result.Passed {
+			os.Exit(result.ExitCode)
+		}
+		return nil
 	}
 
 	if ciSummary {
-		return outputCISummary(result)
+		if err := outputCISummary(result); err != nil {
+			return err
+		}
+		if !result.Passed {
+			return cli.Err("CI pipeline failed")
+		}
+		return nil
 	}
 
 	// Default table output
@@ -489,20 +499,40 @@ func generateSARIF(ctx context.Context, dir, checkName, outputFile string) error
 	cmd := exec.CommandContext(ctx, "php", args...)
 	cmd.Dir = dir
 
-	output, _ := cmd.Output() // Ignore error, we want the output even if there are issues
+	// Capture output - command may exit non-zero when issues are found
+	// but still produce valid SARIF output
+	output, err := cmd.CombinedOutput()
+	if len(output) == 0 {
+		if err != nil {
+			return fmt.Errorf("failed to generate SARIF: %w", err)
+		}
+		return fmt.Errorf("no SARIF output generated")
+	}
+
+	// Validate output is valid JSON
+	var js json.RawMessage
+	if err := json.Unmarshal(output, &js); err != nil {
+		return fmt.Errorf("invalid SARIF output: %w", err)
+	}
 
 	return os.WriteFile(outputFile, output, 0644)
 }
 
 // uploadSARIFToGitHub uploads a SARIF file to GitHub Security tab
 func uploadSARIFToGitHub(ctx context.Context, sarifFile string) error {
+	// Validate commit SHA before calling API
+	sha := getGitSHA()
+	if sha == "" {
+		return errors.New("cannot upload SARIF: git commit SHA not available (ensure you're in a git repository)")
+	}
+
 	// Use gh CLI to upload
 	cmd := exec.CommandContext(ctx, "gh", "api",
 		"repos/{owner}/{repo}/code-scanning/sarifs",
 		"-X", "POST",
 		"-F", "sarif=@"+sarifFile,
 		"-F", "ref="+getGitRef(),
-		"-F", "commit_sha="+getGitSHA(),
+		"-F", "commit_sha="+sha,
 	)
 
 	if output, err := cmd.CombinedOutput(); err != nil {

@@ -234,8 +234,7 @@
 			"ci.flag.summary": "Output markdown summary (for PR comments)",
 			"ci.flag.sarif": "Generate SARIF files for static analysis",
 			"ci.flag.upload_sarif": "Upload SARIF to GitHub Security tab",
-			"ci.flag.fail_on": "Severity level to fail on (critical, high, warning)",
-			"ci.flag.parallel": "Run independent checks in parallel"
+			"ci.flag.fail_on": "Severity level to fail on (critical, high, warning)"
 		},
 		"pkg": {
 			"short": "Package management for core-* repos",
