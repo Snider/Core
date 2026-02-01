@@ -49,8 +49,18 @@ func (m *MockHypervisor) BuildCommand(ctx context.Context, image string, opts *H
 }
 
 // newTestManager creates a LinuxKitManager with mock hypervisor for testing.
+// Uses manual temp directory management to avoid race conditions with t.TempDir cleanup.
 func newTestManager(t *testing.T) (*LinuxKitManager, *MockHypervisor, string) {
-	tmpDir := t.TempDir()
+	tmpDir, err := os.MkdirTemp("", "linuxkit-test-*")
+	require.NoError(t, err)
+
+	// Manual cleanup that handles race conditions with state file writes
+	t.Cleanup(func() {
+		// Give any pending file operations time to complete
+		time.Sleep(10 * time.Millisecond)
+		_ = os.RemoveAll(tmpDir)
+	})
+
 	statePath := filepath.Join(tmpDir, "containers.json")
 
 	state, err := LoadState(statePath)
