@@ -105,6 +105,29 @@ Some content here.
 	assert.Equal(t, content, body)
 }
 
+func TestExtractFrontmatter_Good_CRLF(t *testing.T) {
+	// Content with CRLF line endings (Windows-style)
+	content := "---\r\ntitle: CRLF Test\r\n---\r\n\r\n# Content"
+
+	fm, body := ExtractFrontmatter(content)
+
+	assert.NotNil(t, fm)
+	assert.Equal(t, "CRLF Test", fm.Title)
+	assert.Contains(t, body, "# Content")
+}
+
+func TestExtractFrontmatter_Good_Empty(t *testing.T) {
+	// Empty frontmatter block
+	content := "---\n---\n# Content"
+
+	fm, body := ExtractFrontmatter(content)
+
+	// Empty frontmatter should parse successfully
+	assert.NotNil(t, fm)
+	assert.Equal(t, "", fm.Title)
+	assert.Contains(t, body, "# Content")
+}
+
 func TestExtractFrontmatter_Bad_InvalidYAML(t *testing.T) {
 	content := `---
 title: [invalid yaml

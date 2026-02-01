@@ -1,6 +1,7 @@
 package help
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 	"unicode"
@@ -10,7 +11,8 @@ import (
 
 var (
 	// frontmatterRegex matches YAML frontmatter delimited by ---
-	frontmatterRegex = regexp.MustCompile(`(?s)^---\n(.+?)\n---\n?`)
+	// Supports both LF and CRLF line endings, and empty frontmatter blocks
+	frontmatterRegex = regexp.MustCompile(`(?s)^---\r?\n(.*?)(?:\r?\n)?---\r?\n?`)
 
 	// headingRegex matches markdown headings (# to ######)
 	headingRegex = regexp.MustCompile(`^(#{1,6})\s+(.+)$`)
@@ -148,13 +150,12 @@ func GenerateID(title string) string {
 // pathToTitle converts a file path to a title.
 // "getting-started.md" -> "Getting Started"
 func pathToTitle(path string) string {
-	// Get filename without directory
-	parts := strings.Split(path, "/")
-	filename := parts[len(parts)-1]
+	// Get filename without directory (cross-platform)
+	filename := filepath.Base(path)
 
 	// Remove extension
-	if idx := strings.LastIndex(filename, "."); idx != -1 {
-		filename = filename[:idx]
+	if ext := filepath.Ext(filename); ext != "" {
+		filename = strings.TrimSuffix(filename, ext)
 	}
 
 	// Replace hyphens/underscores with spaces
