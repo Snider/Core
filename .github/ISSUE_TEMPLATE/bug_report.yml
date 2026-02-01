@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report a problem with the core CLI
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill out the details below.
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Windows
+        - Linux (Ubuntu/Debian)
+        - Linux (Other)
+    validations:
+      required: true
+
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      description: Which command failed?
+      placeholder: "e.g., core dev work, core php test"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `core version`
+      placeholder: "e.g., core v0.1.0"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should have happened?
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error output
+      description: Paste any error messages
+      render: shell
