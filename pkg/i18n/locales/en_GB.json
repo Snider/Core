@@ -275,6 +275,22 @@
 			"github.error.config_not_found": "GitHub config file not found",
 			"github.error.conflicting_flags": "Cannot use --repo and --all together"
 		},
+		"security": {
+			"short": "Security alerts and vulnerability scanning",
+			"long": "View security alerts from Dependabot, code scanning, and secret scanning across repositories.",
+			"alerts.short": "List all security alerts across repos",
+			"alerts.long": "List security alerts from Dependabot, code scanning, and secret scanning. Aggregates alerts across all repos in the registry.",
+			"deps.short": "List Dependabot vulnerability alerts",
+			"deps.long": "List vulnerable dependencies detected by Dependabot with upgrade recommendations.",
+			"deps.flag.vulnerable": "Show only vulnerable dependencies",
+			"scan.short": "List code scanning alerts",
+			"scan.long": "List code scanning alerts from tools like CodeQL, Semgrep, etc.",
+			"scan.flag.tool": "Filter by tool name (e.g., codeql, semgrep)",
+			"secrets.short": "List exposed secrets",
+			"secrets.long": "List secrets detected by GitHub secret scanning.",
+			"flag.repo": "Specific repo to check",
+			"flag.severity": "Filter by severity (critical,high,medium,low)"
+		},
 		"qa": {
 			"short": "Quality assurance workflows",
 			"long": "Quality assurance commands for verifying work - CI status, reviews, issues.",

@@ -33,6 +33,7 @@ import (
 	_ "github.com/host-uk/core/pkg/php"
 	_ "github.com/host-uk/core/pkg/pkgcmd"
 	_ "github.com/host-uk/core/pkg/sdk"
+	_ "github.com/host-uk/core/pkg/security"
 	_ "github.com/host-uk/core/pkg/setup"
 	_ "github.com/host-uk/core/pkg/test"
 	_ "github.com/host-uk/core/pkg/vm"
