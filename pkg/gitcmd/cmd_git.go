@@ -1,7 +1,7 @@
 // Package gitcmd provides git workflow commands as a root-level command.
 //
 // Git Operations:
-//   - status: Show status across repos
+//   - health: Show status across repos
 //   - commit: Claude-assisted commit message generation
 //   - push: Push repos with unpushed commits
 //   - pull: Pull repos that are behind remote

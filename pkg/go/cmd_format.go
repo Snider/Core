@@ -58,6 +58,19 @@ func addGoFmtCommand(parent *cli.Command) {
 				execCmd = exec.Command("gofmt", fmtArgs...)
 			}
 
+			// For --check mode, capture output to detect unformatted files
+			if fmtCheck {
+				output, err := execCmd.Output()
+				if err != nil {
+					return err
+				}
+				if len(output) > 0 {
+					os.Stdout.Write(output)
+					return cli.Err("files need formatting (use --fix)")
+				}
+				return nil
+			}
+
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
 			return execCmd.Run()
@@ -119,18 +132,30 @@ func filterGoFiles(output string) []string {
 	return goFiles
 }
 
-var lintFix bool
+var (
+	lintFix bool
+	lintAll bool
+)
 
 func addGoLintCommand(parent *cli.Command) {
 	lintCmd := &cli.Command{
 		Use:   "lint",
 		Short: "Run golangci-lint",
-		Long:  "Run golangci-lint for comprehensive static analysis",
+		Long:  "Run golangci-lint for comprehensive static analysis. By default only lints changed files.",
 		RunE: func(cmd *cli.Command, args []string) error {
 			lintArgs := []string{"run"}
 			if lintFix {
 				lintArgs = append(lintArgs, "--fix")
 			}
+
+			if !lintAll {
+				// Use --new-from-rev=HEAD to only report issues in uncommitted changes
+				// This is golangci-lint's native way to handle incremental linting
+				lintArgs = append(lintArgs, "--new-from-rev=HEAD")
+			}
+
+			// Always lint all packages
+			lintArgs = append(lintArgs, "./...")
 
 			execCmd := exec.Command("golangci-lint", lintArgs...)
 			execCmd.Stdout = os.Stdout
@@ -140,6 +165,7 @@ func addGoLintCommand(parent *cli.Command) {
 	}
 
 	lintCmd.Flags().BoolVar(&lintFix, "fix", false, i18n.T("common.flag.fix"))
+	lintCmd.Flags().BoolVar(&lintAll, "all", false, i18n.T("cmd.go.lint.flag.all"))
 
 	parent.AddCommand(lintCmd)
 }
