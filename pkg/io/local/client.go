@@ -178,3 +178,75 @@ func (m *Medium) FileGet(relativePath string) (string, error) {
 func (m *Medium) FileSet(relativePath, content string) error {
 	return m.Write(relativePath, content)
 }
+
+// Delete removes a file or empty directory.
+func (m *Medium) Delete(relativePath string) error {
+	fullPath, err := m.path(relativePath)
+	if err != nil {
+		return err
+	}
+	return os.Remove(fullPath)
+}
+
+// DeleteAll removes a path and all its contents recursively.
+func (m *Medium) DeleteAll(relativePath string) error {
+	fullPath, err := m.path(relativePath)
+	if err != nil {
+		return err
+	}
+	return os.RemoveAll(fullPath)
+}
+
+// Rename moves or renames a file or directory.
+func (m *Medium) Rename(oldPath, newPath string) error {
+	fullOldPath, err := m.path(oldPath)
+	if err != nil {
+		return err
+	}
+	fullNewPath, err := m.path(newPath)
+	if err != nil {
+		return err
+	}
+	return os.Rename(fullOldPath, fullNewPath)
+}
+
+// Exists checks if a path exists (file or directory).
+func (m *Medium) Exists(relativePath string) bool {
+	fullPath, err := m.path(relativePath)
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(fullPath)
+	return err == nil
+}
+
+// IsDir checks if a path exists and is a directory.
+func (m *Medium) IsDir(relativePath string) bool {
+	fullPath, err := m.path(relativePath)
+	if err != nil {
+		return false
+	}
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
+}
+
+// List returns the contents of a directory as os.DirEntry slices.
+func (m *Medium) List(relativePath string) ([]os.DirEntry, error) {
+	fullPath, err := m.path(relativePath)
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadDir(fullPath)
+}
+
+// Stat returns file information for a path.
+func (m *Medium) Stat(relativePath string) (os.FileInfo, error) {
+	fullPath, err := m.path(relativePath)
+	if err != nil {
+		return nil, err
+	}
+	return os.Stat(fullPath)
+}
