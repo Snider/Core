@@ -13,6 +13,7 @@ coverage.html
 *.cache
 /coverage.txt
 bin/
+dist/
 tasks
 /core
 

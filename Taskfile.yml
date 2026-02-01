@@ -1,16 +1,21 @@
 version: '3'
 
+vars:
+  VERSION:
+    sh: git describe --tags --exact-match 2>/dev/null || echo "dev"
+  LDFLAGS: "-X github.com/host-uk/core/pkg/cli.AppVersion={{.VERSION}}"
+
 tasks:
   # --- CLI Management ---
   cli:build:
     desc: "Build core CLI to ./bin/core"
     cmds:
-      - go build -o ./bin/core .
+      - go build -ldflags '{{.LDFLAGS}}' -o ./bin/core .
 
   cli:install:
     desc: "Install core CLI to system PATH"
     cmds:
-      - go install .
+      - go install -ldflags '{{.LDFLAGS}}' .
 
   # --- Development ---
   test:
