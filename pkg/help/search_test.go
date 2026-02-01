@@ -1,7 +1,9 @@
 package help
 
 import (
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -220,6 +222,38 @@ Finally, some closing remarks about the configuration.`
 		snippet := extractSnippet("", []string{"test"})
 		assert.Empty(t, snippet)
 	})
+}
+
+func TestExtractSnippet_Good_UTF8(t *testing.T) {
+	// Content with multi-byte UTF-8 characters
+	content := "日本語のテキストです。This contains Japanese text. 検索機能をテストします。"
+
+	t.Run("handles multi-byte characters without corruption", func(t *testing.T) {
+		snippet := extractSnippet(content, []string{"japanese"})
+		// Should not panic or produce invalid UTF-8
+		assert.True(t, len(snippet) > 0)
+		// Verify the result is valid UTF-8
+		assert.True(t, isValidUTF8(snippet), "Snippet should be valid UTF-8")
+	})
+
+	t.Run("truncates multi-byte content safely", func(t *testing.T) {
+		// Long content that will be truncated
+		longContent := strings.Repeat("日本語", 100) // 300 characters
+		snippet := extractSnippet(longContent, nil)
+		assert.True(t, isValidUTF8(snippet), "Truncated snippet should be valid UTF-8")
+	})
+}
+
+// isValidUTF8 checks if a string is valid UTF-8
+func isValidUTF8(s string) bool {
+	for i := 0; i < len(s); {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		if r == utf8.RuneError && size == 1 {
+			return false
+		}
+		i += size
+	}
+	return true
 }
 
 func TestCountMatches_Good(t *testing.T) {

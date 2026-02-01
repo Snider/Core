@@ -208,6 +208,7 @@ func countMatches(text string, queryWords []string) int {
 }
 
 // extractSnippet extracts a short snippet around the first match.
+// Uses rune-based indexing to properly handle multi-byte UTF-8 characters.
 func extractSnippet(content string, queryWords []string) string {
 	if content == "" {
 		return ""
@@ -221,8 +222,9 @@ func extractSnippet(content string, queryWords []string) string {
 		for _, line := range lines {
 			line = strings.TrimSpace(line)
 			if line != "" && !strings.HasPrefix(line, "#") {
-				if len(line) > snippetLen {
-					return line[:snippetLen] + "..."
+				runes := []rune(line)
+				if len(runes) > snippetLen {
+					return string(runes[:snippetLen]) + "..."
 				}
 				return line
 			}
@@ -230,7 +232,7 @@ func extractSnippet(content string, queryWords []string) string {
 		return ""
 	}
 
-	// Find first match position
+	// Find first match position (byte-based for strings.Index)
 	contentLower := strings.ToLower(content)
 	matchPos := -1
 	for _, word := range queryWords {
@@ -240,26 +242,33 @@ func extractSnippet(content string, queryWords []string) string {
 		}
 	}
 
+	// Convert to runes for safe slicing
+	runes := []rune(content)
+	runeLen := len(runes)
+
 	if matchPos == -1 {
 		// No match found, return start of content
-		if len(content) > snippetLen {
-			return content[:snippetLen] + "..."
+		if runeLen > snippetLen {
+			return string(runes[:snippetLen]) + "..."
 		}
 		return content
 	}
 
-	// Extract snippet around match
-	start := matchPos - 50
+	// Convert byte position to rune position
+	matchRunePos := len([]rune(content[:matchPos]))
+
+	// Extract snippet around match (rune-based)
+	start := matchRunePos - 50
 	if start < 0 {
 		start = 0
 	}
 
 	end := start + snippetLen
-	if end > len(content) {
-		end = len(content)
+	if end > runeLen {
+		end = runeLen
 	}
 
-	snippet := content[start:end]
+	snippet := string(runes[start:end])
 
 	// Trim to word boundaries
 	if start > 0 {
@@ -267,7 +276,7 @@ func extractSnippet(content string, queryWords []string) string {
 			snippet = "..." + snippet[idx+1:]
 		}
 	}
-	if end < len(content) {
+	if end < runeLen {
 		if idx := strings.LastIndex(snippet, " "); idx != -1 {
 			snippet = snippet[:idx] + "..."
 		}
