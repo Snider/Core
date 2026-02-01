@@ -73,7 +73,7 @@ func (c *Cmd) WithStderr(w io.Writer) *Cmd {
 // It automatically logs the command execution at debug level.
 func (c *Cmd) Run() error {
 	c.prepare()
-	
+
 	// TODO: Use a proper logger interface when available in pkg/process
 	// For now using cli.Debug which might not be visible unless verbose
 	// cli.Debug("Executing: %s %s", c.name, strings.Join(c.args, " "))
@@ -119,7 +119,7 @@ func (c *Cmd) prepare() {
 	if len(c.opts.Env) > 0 {
 		c.cmd.Env = append(os.Environ(), c.opts.Env...)
 	}
-	
+
 	c.cmd.Stdin = c.opts.Stdin
 	c.cmd.Stdout = c.opts.Stdout
 	c.cmd.Stderr = c.opts.Stderr
