@@ -119,18 +119,12 @@ func runReview() error {
 		}
 	}
 
-	// Get current user
-	currentUser, err := getCurrentUser(ctx)
-	if err != nil {
-		return errors.Wrap(err, "qa.review", "failed to get current user")
-	}
-
 	// Default: show both mine and requested if neither flag is set
 	showMine := reviewMine || (!reviewMine && !reviewRequested)
 	showRequested := reviewRequested || (!reviewMine && !reviewRequested)
 
 	if showMine {
-		if err := showMyPRs(ctx, repoFullName, currentUser); err != nil {
+		if err := showMyPRs(ctx, repoFullName); err != nil {
 			return err
 		}
 	}
@@ -139,7 +133,7 @@ func runReview() error {
 		if showMine {
 			cli.Blank()
 		}
-		if err := showRequestedReviews(ctx, repoFullName, currentUser); err != nil {
+		if err := showRequestedReviews(ctx, repoFullName); err != nil {
 			return err
 		}
 	}
@@ -147,18 +141,8 @@ func runReview() error {
 	return nil
 }
 
-// getCurrentUser gets the authenticated GitHub user
-func getCurrentUser(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "gh", "api", "user", "--jq", ".login")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(output)), nil
-}
-
 // showMyPRs shows the user's open PRs with status
-func showMyPRs(ctx context.Context, repo, user string) error {
+func showMyPRs(ctx context.Context, repo string) error {
 	prs, err := fetchPRs(ctx, repo, "author:@me")
 	if err != nil {
 		return errors.Wrap(err, "qa.review", "failed to fetch your PRs")
@@ -179,7 +163,7 @@ func showMyPRs(ctx context.Context, repo, user string) error {
 }
 
 // showRequestedReviews shows PRs where user's review is requested
-func showRequestedReviews(ctx context.Context, repo, user string) error {
+func showRequestedReviews(ctx context.Context, repo string) error {
 	prs, err := fetchPRs(ctx, repo, "review-requested:@me")
 	if err != nil {
 		return errors.Wrap(err, "qa.review", "failed to fetch review requests")
@@ -329,10 +313,11 @@ func analyzePRStatus(pr PullRequest) (status string, style *cli.AnsiStyle, actio
 	return "◯", dimStyle, ""
 }
 
-// truncate shortens a string to max length
+// truncate shortens a string to max length (rune-safe for UTF-8)
 func truncate(s string, max int) string {
-	if len(s) <= max {
+	runes := []rune(s)
+	if len(runes) <= max {
 		return s
 	}
-	return s[:max-3] + "..."
+	return string(runes[:max-3]) + "..."
 }
