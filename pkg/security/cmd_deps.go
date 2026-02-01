@@ -28,15 +28,15 @@ func addDepsCommand(parent *cli.Command) {
 
 // DepAlert represents a dependency vulnerability for output.
 type DepAlert struct {
-	Repo         string `json:"repo"`
-	Severity     string `json:"severity"`
-	CVE          string `json:"cve"`
-	Package      string `json:"package"`
-	Ecosystem    string `json:"ecosystem"`
-	Vulnerable   string `json:"vulnerable_range"`
+	Repo           string `json:"repo"`
+	Severity       string `json:"severity"`
+	CVE            string `json:"cve"`
+	Package        string `json:"package"`
+	Ecosystem      string `json:"ecosystem"`
+	Vulnerable     string `json:"vulnerable_range"`
 	PatchedVersion string `json:"patched_version,omitempty"`
-	Manifest     string `json:"manifest"`
-	Summary      string `json:"summary"`
+	Manifest       string `json:"manifest"`
+	Summary        string `json:"summary"`
 }
 
 func runDeps() error {

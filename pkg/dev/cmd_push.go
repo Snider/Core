@@ -16,8 +16,8 @@ var (
 	pushForce        bool
 )
 
-// addPushCommand adds the 'push' command to the given parent command.
-func addPushCommand(parent *cli.Command) {
+// AddPushCommand adds the 'push' command to the given parent command.
+func AddPushCommand(parent *cli.Command) {
 	pushCmd := &cli.Command{
 		Use:   "push",
 		Short: i18n.T("cmd.dev.push.short"),

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 // FormatOptions configures PHP code formatting.
@@ -60,15 +61,20 @@ type AnalyseOptions struct {
 // FormatterType represents the detected formatter.
 type FormatterType string
 
+// Formatter type constants.
 const (
+	// FormatterPint indicates Laravel Pint code formatter.
 	FormatterPint FormatterType = "pint"
 )
 
 // AnalyserType represents the detected static analyser.
 type AnalyserType string
 
+// Static analyser type constants.
 const (
-	AnalyserPHPStan  AnalyserType = "phpstan"
+	// AnalyserPHPStan indicates standard PHPStan analyser.
+	AnalyserPHPStan AnalyserType = "phpstan"
+	// AnalyserLarastan indicates Laravel-specific Larastan analyser.
 	AnalyserLarastan AnalyserType = "larastan"
 )
 
@@ -279,7 +285,9 @@ type PsalmOptions struct {
 // PsalmType represents the detected Psalm configuration.
 type PsalmType string
 
+// Psalm configuration type constants.
 const (
+	// PsalmStandard indicates standard Psalm configuration.
 	PsalmStandard PsalmType = "psalm"
 )
 
@@ -695,10 +703,14 @@ type QAOptions struct {
 // QAStage represents a stage in the QA pipeline.
 type QAStage string
 
+// QA pipeline stage constants.
 const (
-	QAStageQuick    QAStage = "quick"
+	// QAStageQuick runs fast checks only (audit, fmt, stan).
+	QAStageQuick QAStage = "quick"
+	// QAStageStandard runs standard checks including tests.
 	QAStageStandard QAStage = "standard"
-	QAStageFull     QAStage = "full"
+	// QAStageFull runs all checks including slow security scans.
+	QAStageFull QAStage = "full"
 )
 
 // QACheckResult holds the result of a single QA check.
@@ -816,7 +828,7 @@ func RunSecurityChecks(ctx context.Context, opts SecurityOptions) (*SecurityResu
 	for _, audit := range auditResults {
 		check := SecurityCheck{
 			ID:          audit.Tool + "_audit",
-			Name:        strings.Title(audit.Tool) + " Security Audit",
+			Name:        i18n.Title(audit.Tool) + " Security Audit",
 			Description: "Check " + audit.Tool + " dependencies for vulnerabilities",
 			Severity:    "critical",
 			Passed:      audit.Vulnerabilities == 0 && audit.Error == nil,

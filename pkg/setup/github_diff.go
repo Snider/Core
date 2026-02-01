@@ -14,21 +14,31 @@ import (
 // ChangeType indicates the type of change being made.
 type ChangeType string
 
+// Change type constants for GitHub configuration diffs.
 const (
+	// ChangeCreate indicates a new resource to be created.
 	ChangeCreate ChangeType = "create"
+	// ChangeUpdate indicates an existing resource to be updated.
 	ChangeUpdate ChangeType = "update"
+	// ChangeDelete indicates a resource to be deleted.
 	ChangeDelete ChangeType = "delete"
-	ChangeSkip   ChangeType = "skip"
+	// ChangeSkip indicates a resource that requires no changes.
+	ChangeSkip ChangeType = "skip"
 )
 
 // ChangeCategory groups changes by type.
 type ChangeCategory string
 
+// Change category constants for grouping GitHub configuration changes.
 const (
-	CategoryLabel      ChangeCategory = "label"
-	CategoryWebhook    ChangeCategory = "webhook"
+	// CategoryLabel indicates label-related changes.
+	CategoryLabel ChangeCategory = "label"
+	// CategoryWebhook indicates webhook-related changes.
+	CategoryWebhook ChangeCategory = "webhook"
+	// CategoryProtection indicates branch protection changes.
 	CategoryProtection ChangeCategory = "protection"
-	CategorySecurity   ChangeCategory = "security"
+	// CategorySecurity indicates security settings changes.
+	CategorySecurity ChangeCategory = "security"
 )
 
 // Change represents a single change to be made.

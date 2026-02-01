@@ -8,11 +8,11 @@ import (
 
 func TestLoadCoolifyConfig_Good(t *testing.T) {
 	tests := []struct {
-		name     string
-		envContent string
-		wantURL    string
-		wantToken  string
-		wantAppID  string
+		name        string
+		envContent  string
+		wantURL     string
+		wantToken   string
+		wantAppID   string
 		wantStaging string
 	}{
 		{
@@ -139,9 +139,9 @@ func TestGetAppIDForEnvironment_Good(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		env     Environment
-		wantID  string
+		name   string
+		env    Environment
+		wantID string
 	}{
 		{
 			name:   "production environment",

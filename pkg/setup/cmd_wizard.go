@@ -41,7 +41,7 @@ func runPackageWizard(reg *repos.Registry, preselectedTypes []string) ([]string,
 
 	// Build options
 	var options []string
-	
+
 	// Sort by name
 	sort.Slice(allRepos, func(i, j int) bool {
 		return allRepos[i].Name < allRepos[j].Name

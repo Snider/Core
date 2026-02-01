@@ -32,24 +32,24 @@ var (
 
 // Finding represents a security finding from any source
 type Finding struct {
-	Source      string `json:"source"`      // semgrep, trivy, dependabot, secret-scanning, etc.
-	Severity    string `json:"severity"`    // critical, high, medium, low
-	Rule        string `json:"rule"`        // Rule ID or CVE
-	File        string `json:"file"`        // Affected file path
-	Line        int    `json:"line"`        // Line number (0 if N/A)
-	Message     string `json:"message"`     // Description
-	URL         string `json:"url"`         // Link to finding
-	State       string `json:"state"`       // open, dismissed, fixed
-	RepoName    string `json:"repo"`        // Repository name
-	CreatedAt   string `json:"created_at"`  // When found
-	Labels      []string `json:"suggested_labels,omitempty"`
+	Source    string   `json:"source"`     // semgrep, trivy, dependabot, secret-scanning, etc.
+	Severity  string   `json:"severity"`   // critical, high, medium, low
+	Rule      string   `json:"rule"`       // Rule ID or CVE
+	File      string   `json:"file"`       // Affected file path
+	Line      int      `json:"line"`       // Line number (0 if N/A)
+	Message   string   `json:"message"`    // Description
+	URL       string   `json:"url"`        // Link to finding
+	State     string   `json:"state"`      // open, dismissed, fixed
+	RepoName  string   `json:"repo"`       // Repository name
+	CreatedAt string   `json:"created_at"` // When found
+	Labels    []string `json:"suggested_labels,omitempty"`
 }
 
 // CodeScanningAlert represents a GitHub code scanning alert
 type CodeScanningAlert struct {
-	Number    int    `json:"number"`
-	State     string `json:"state"` // open, dismissed, fixed
-	Rule      struct {
+	Number int    `json:"number"`
+	State  string `json:"state"` // open, dismissed, fixed
+	Rule   struct {
 		ID          string `json:"id"`
 		Severity    string `json:"severity"`
 		Description string `json:"description"`
@@ -72,8 +72,8 @@ type CodeScanningAlert struct {
 
 // DependabotAlert represents a GitHub Dependabot alert
 type DependabotAlert struct {
-	Number    int    `json:"number"`
-	State     string `json:"state"` // open, dismissed, fixed
+	Number                int    `json:"number"`
+	State                 string `json:"state"` // open, dismissed, fixed
 	SecurityVulnerability struct {
 		Severity string `json:"severity"`
 		Package  struct {
@@ -373,17 +373,17 @@ func fetchSecretScanningAlerts(repoFullName string) ([]Finding, error) {
 			continue
 		}
 		f := Finding{
-			Source:   "secret-scanning",
-			Severity: "critical", // Secrets are always critical
-			Rule:     alert.SecretType,
-			File:     alert.LocationType,
-			Line:     0,
-			Message:  fmt.Sprintf("Exposed %s detected", alert.SecretType),
-			URL:      alert.HTMLURL,
-			State:    alert.State,
-			RepoName: repoName,
+			Source:    "secret-scanning",
+			Severity:  "critical", // Secrets are always critical
+			Rule:      alert.SecretType,
+			File:      alert.LocationType,
+			Line:      0,
+			Message:   fmt.Sprintf("Exposed %s detected", alert.SecretType),
+			URL:       alert.HTMLURL,
+			State:     alert.State,
+			RepoName:  repoName,
 			CreatedAt: alert.CreatedAt,
-			Labels:   []string{"type:security", "secrets"},
+			Labels:    []string{"type:security", "secrets"},
 		}
 		findings = append(findings, f)
 	}

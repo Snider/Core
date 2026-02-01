@@ -33,6 +33,7 @@ var (
 	outputDir  string
 	doArchive  bool
 	doChecksum bool
+	verbose    bool
 
 	// Docker/LinuxKit specific flags
 	configPath string
@@ -62,7 +63,7 @@ var buildCmd = &cobra.Command{
 	Short: i18n.T("cmd.build.short"),
 	Long:  i18n.T("cmd.build.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName, noSign, notarize)
+		return runProjectBuild(buildType, ciMode, targets, outputDir, doArchive, doChecksum, configPath, format, push, imageName, noSign, notarize, verbose)
 	},
 }
 
@@ -101,6 +102,7 @@ func initBuildFlags() {
 	// Main build command flags
 	buildCmd.Flags().StringVar(&buildType, "type", "", i18n.T("cmd.build.flag.type"))
 	buildCmd.Flags().BoolVar(&ciMode, "ci", false, i18n.T("cmd.build.flag.ci"))
+	buildCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, i18n.T("common.flag.verbose"))
 	buildCmd.Flags().StringVar(&targets, "targets", "", i18n.T("cmd.build.flag.targets"))
 	buildCmd.Flags().StringVar(&outputDir, "output", "", i18n.T("cmd.build.flag.output"))
 	buildCmd.Flags().BoolVar(&doArchive, "archive", true, i18n.T("cmd.build.flag.archive"))

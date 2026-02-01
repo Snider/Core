@@ -10,13 +10,21 @@ import (
 // ProjectType represents a detected project type.
 type ProjectType string
 
+// Project type constants for build detection.
 const (
-	ProjectTypeGo       ProjectType = "go"
-	ProjectTypeWails    ProjectType = "wails"
-	ProjectTypeNode     ProjectType = "node"
-	ProjectTypePHP      ProjectType = "php"
-	ProjectTypeDocker   ProjectType = "docker"
+	// ProjectTypeGo indicates a standard Go project with go.mod.
+	ProjectTypeGo ProjectType = "go"
+	// ProjectTypeWails indicates a Wails desktop application.
+	ProjectTypeWails ProjectType = "wails"
+	// ProjectTypeNode indicates a Node.js project with package.json.
+	ProjectTypeNode ProjectType = "node"
+	// ProjectTypePHP indicates a PHP/Laravel project with composer.json.
+	ProjectTypePHP ProjectType = "php"
+	// ProjectTypeDocker indicates a Docker-based project with Dockerfile.
+	ProjectTypeDocker ProjectType = "docker"
+	// ProjectTypeLinuxKit indicates a LinuxKit VM configuration.
 	ProjectTypeLinuxKit ProjectType = "linuxkit"
+	// ProjectTypeTaskfile indicates a project using Taskfile automation.
 	ProjectTypeTaskfile ProjectType = "taskfile"
 )
 

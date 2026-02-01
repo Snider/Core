@@ -53,7 +53,7 @@ func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []b
 		if detected, _ := taskBuilder.Detect(cfg.ProjectDir); detected {
 			return taskBuilder.Build(ctx, cfg, targets)
 		}
-		return nil, fmt.Errorf("Wails v3 projects require a Taskfile for building")
+		return nil, fmt.Errorf("wails v3 projects require a Taskfile for building")
 	}
 
 	// Wails v2 strategy: Use 'wails build'
@@ -102,10 +102,10 @@ func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, tar
 	args = append(args, "-platform", fmt.Sprintf("%s/%s", target.OS, target.Arch))
 
 	// Output (Wails v2 uses -o for the binary name, relative to build/bin usually, but we want to control it)
-	// Actually, Wails v2 is opinionated about output dir (build/bin). 
+	// Actually, Wails v2 is opinionated about output dir (build/bin).
 	// We might need to copy artifacts after build if we want them in cfg.OutputDir.
 	// For now, let's try to let Wails do its thing and find the artifact.
-	
+
 	// Create the command
 	cmd := exec.CommandContext(ctx, "wails", args...)
 	cmd.Dir = cfg.ProjectDir
@@ -118,10 +118,10 @@ func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, tar
 
 	// Wails v2 typically outputs to build/bin
 	// We need to move/copy it to our desired output dir
-	
+
 	// Construct the source path where Wails v2 puts the binary
 	wailsOutputDir := filepath.Join(cfg.ProjectDir, "build", "bin")
-	
+
 	// Find the artifact in Wails output dir
 	sourcePath, err := b.findArtifact(wailsOutputDir, binaryName, target)
 	if err != nil {
@@ -136,7 +136,7 @@ func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, tar
 	}
 
 	destPath := filepath.Join(platformDir, filepath.Base(sourcePath))
-	
+
 	// Simple copy
 	input, err := os.ReadFile(sourcePath)
 	if err != nil {
@@ -250,15 +250,6 @@ func fileExists(path string) bool {
 		return false
 	}
 	return !info.IsDir()
-}
-
-// dirExists checks if a directory exists.
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
 }
 
 // fileOrDirExists checks if a file or directory exists.

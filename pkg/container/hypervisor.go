@@ -180,8 +180,8 @@ func (h *HyperkitHypervisor) BuildCommand(ctx context.Context, image string, opt
 	args := []string{
 		"-m", fmt.Sprintf("%dM", opts.Memory),
 		"-c", fmt.Sprintf("%d", opts.CPUs),
-		"-A",              // ACPI
-		"-u",              // Unlimited console output
+		"-A", // ACPI
+		"-u", // Unlimited console output
 		"-s", "0:0,hostbridge",
 		"-s", "31,lpc",
 		"-l", "com1,stdio", // Serial console

@@ -41,4 +41,5 @@ func AddQACommands(root *cli.Command) {
 	addReviewCommand(qaCmd)
 	addHealthCommand(qaCmd)
 	addIssuesCommand(qaCmd)
+	addDocblockCommand(qaCmd)
 }

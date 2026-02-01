@@ -13,7 +13,7 @@ func init() {
 
 // Style and utility aliases
 var (
-		repoNameStyle = cli.RepoStyle
+	repoNameStyle   = cli.RepoStyle
 	successStyle    = cli.SuccessStyle
 	errorStyle      = cli.ErrorStyle
 	dimStyle        = cli.DimStyle

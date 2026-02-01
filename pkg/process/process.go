@@ -165,18 +165,3 @@ func (p *Process) CloseStdin() error {
 	p.stdin = nil
 	return err
 }
-
-// setStatus updates the process status (internal use).
-func (p *Process) setStatus(status Status) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.Status = status
-}
-
-// setExitCode sets the exit code and duration (internal use).
-func (p *Process) setExitCode(code int, duration time.Duration) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.ExitCode = code
-	p.Duration = duration
-}

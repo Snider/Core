@@ -37,13 +37,13 @@ var (
 
 // CIResult represents the overall CI pipeline result
 type CIResult struct {
-	Passed    bool          `json:"passed"`
-	ExitCode  int           `json:"exit_code"`
-	Duration  string        `json:"duration"`
-	StartedAt time.Time     `json:"started_at"`
+	Passed    bool            `json:"passed"`
+	ExitCode  int             `json:"exit_code"`
+	Duration  string          `json:"duration"`
+	StartedAt time.Time       `json:"started_at"`
 	Checks    []CICheckResult `json:"checks"`
-	Summary   CISummary     `json:"summary"`
-	Artifacts []string      `json:"artifacts,omitempty"`
+	Summary   CISummary       `json:"summary"`
+	Artifacts []string        `json:"artifacts,omitempty"`
 }
 
 // CICheckResult represents an individual check result
@@ -100,9 +100,9 @@ func runPHPCI() error {
 
 	// Define checks to run in order
 	checks := []struct {
-		name    string
-		run     func(context.Context, string) (CICheckResult, error)
-		sarif   bool // Whether this check can generate SARIF
+		name  string
+		run   func(context.Context, string) (CICheckResult, error)
+		sarif bool // Whether this check can generate SARIF
 	}{
 		{"test", runCITest, false},
 		{"stan", runCIStan, true},
@@ -135,8 +135,8 @@ func runPHPCI() error {
 		checkResult, err := check.run(ctx, cwd)
 		if err != nil {
 			checkResult = CICheckResult{
-				Name:   check.name,
-				Status: "failed",
+				Name:    check.name,
+				Status:  "failed",
 				Details: err.Error(),
 			}
 		}
@@ -244,8 +244,8 @@ func runCITest(ctx context.Context, dir string) (CICheckResult, error) {
 	result := CICheckResult{Name: "test", Status: "passed"}
 
 	opts := TestOptions{
-		Dir:      dir,
-		Output:   nil, // Suppress output
+		Dir:    dir,
+		Output: nil, // Suppress output
 	}
 
 	if err := RunTests(ctx, opts); err != nil {

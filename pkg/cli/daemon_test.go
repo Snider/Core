@@ -96,7 +96,7 @@ func TestHealthServer(t *testing.T) {
 
 		err := hs.Start()
 		require.NoError(t, err)
-		defer hs.Stop(context.Background())
+		defer func() { _ = hs.Stop(context.Background()) }()
 
 		addr := hs.Addr()
 		require.NotEmpty(t, addr)
@@ -135,7 +135,7 @@ func TestHealthServer(t *testing.T) {
 
 		err := hs.Start()
 		require.NoError(t, err)
-		defer hs.Stop(context.Background())
+		defer func() { _ = hs.Stop(context.Background()) }()
 
 		addr := hs.Addr()
 
@@ -193,7 +193,7 @@ func TestDaemon(t *testing.T) {
 
 		err := d.Start()
 		require.NoError(t, err)
-		defer d.Stop()
+		defer func() { _ = d.Stop() }()
 
 		err = d.Start()
 		assert.Error(t, err)
@@ -218,7 +218,7 @@ func TestDaemon(t *testing.T) {
 
 		err := d.Start()
 		require.NoError(t, err)
-		defer d.Stop()
+		defer func() { _ = d.Stop() }()
 
 		addr := d.HealthAddr()
 

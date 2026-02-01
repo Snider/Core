@@ -31,8 +31,8 @@ var (
 	fileSyncPush     bool
 )
 
-// addFileSyncCommand adds the 'sync' command to dev for file syncing.
-func addFileSyncCommand(parent *cli.Command) {
+// AddFileSyncCommand adds the 'sync' command to dev for file syncing.
+func AddFileSyncCommand(parent *cli.Command) {
 	syncCmd := &cli.Command{
 		Use:   "sync <file-or-dir>",
 		Short: i18n.T("cmd.dev.file_sync.short"),

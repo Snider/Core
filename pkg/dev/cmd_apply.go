@@ -23,19 +23,19 @@ import (
 
 // Apply command flags
 var (
-	applyCommand   string
-	applyScript    string
-	applyRepos     string
-	applyCommit    bool
-	applyMessage   string
-	applyCoAuthor  string
-	applyDryRun    bool
-	applyPush      bool
-	applyContinue  bool // Continue on error
+	applyCommand  string
+	applyScript   string
+	applyRepos    string
+	applyCommit   bool
+	applyMessage  string
+	applyCoAuthor string
+	applyDryRun   bool
+	applyPush     bool
+	applyContinue bool // Continue on error
 )
 
-// addApplyCommand adds the 'apply' command to dev.
-func addApplyCommand(parent *cli.Command) {
+// AddApplyCommand adds the 'apply' command to dev.
+func AddApplyCommand(parent *cli.Command) {
 	applyCmd := &cli.Command{
 		Use:   "apply",
 		Short: i18n.T("cmd.dev.apply.short"),

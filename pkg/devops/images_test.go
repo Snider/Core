@@ -39,7 +39,7 @@ func TestNewImageManager_Good(t *testing.T) {
 
 		cfg := DefaultConfig()
 		cfg.Images.Source = "cdn"
-		
+
 		mgr, err := NewImageManager(cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, mgr)
@@ -53,7 +53,7 @@ func TestNewImageManager_Good(t *testing.T) {
 
 		cfg := DefaultConfig()
 		cfg.Images.Source = "github"
-		
+
 		mgr, err := NewImageManager(cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, mgr)
@@ -65,24 +65,24 @@ func TestNewImageManager_Good(t *testing.T) {
 func TestManifest_Save(t *testing.T) {
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "manifest.json")
-	
+
 	m := &Manifest{
 		Images: make(map[string]ImageInfo),
 		path:   path,
 	}
-	
+
 	m.Images["test.img"] = ImageInfo{
 		Version: "1.0.0",
 		Source:  "test",
 	}
-	
+
 	err := m.Save()
 	assert.NoError(t, err)
-	
+
 	// Verify file exists and has content
 	_, err = os.Stat(path)
 	assert.NoError(t, err)
-	
+
 	// Reload
 	m2, err := loadManifest(path)
 	assert.NoError(t, err)
@@ -95,7 +95,7 @@ func TestLoadManifest_Bad(t *testing.T) {
 		path := filepath.Join(tmpDir, "manifest.json")
 		err := os.WriteFile(path, []byte("invalid json"), 0644)
 		require.NoError(t, err)
-		
+
 		_, err = loadManifest(path)
 		assert.Error(t, err)
 	})
@@ -269,7 +269,7 @@ type mockImageSource struct {
 	downloadErr   error
 }
 
-func (m *mockImageSource) Name() string { return m.name }
+func (m *mockImageSource) Name() string    { return m.name }
 func (m *mockImageSource) Available() bool { return m.available }
 func (m *mockImageSource) LatestVersion(ctx context.Context) (string, error) {
 	return m.latestVersion, m.latestErr

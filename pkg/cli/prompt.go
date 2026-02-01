@@ -30,8 +30,6 @@ func Prompt(label, defaultVal string) (string, error) {
 	return input, nil
 }
 
-
-
 // Select presents numbered options and returns the selected value.
 func Select(label string, options []string) (string, error) {
 	fmt.Println(label)

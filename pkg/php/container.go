@@ -132,7 +132,7 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 		if err := os.WriteFile(tempDockerfile, []byte(content), 0644); err != nil {
 			return cli.WrapVerb(err, "write", "Dockerfile")
 		}
-		defer os.Remove(tempDockerfile)
+		defer func() { _ = os.Remove(tempDockerfile) }()
 
 		dockerfilePath = tempDockerfile
 	}
@@ -233,7 +233,7 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	if err := os.WriteFile(tempYAML, []byte(content), 0644); err != nil {
 		return cli.WrapVerb(err, "write", "template")
 	}
-	defer os.Remove(tempYAML)
+	defer func() { _ = os.Remove(tempYAML) }()
 
 	// Build LinuxKit image
 	args := []string{

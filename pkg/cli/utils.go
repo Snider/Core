@@ -20,8 +20,6 @@ func GhAuthenticated() bool {
 	return strings.Contains(string(output), "Logged in")
 }
 
-
-
 // ConfirmOption configures Confirm behaviour.
 type ConfirmOption func(*confirmConfig)
 
@@ -472,8 +470,6 @@ func ChooseMultiAction[T any](verb, subject string, items []T, opts ...ChooseOpt
 	question := i18n.Title(verb) + " " + subject + ":"
 	return ChooseMulti(question, items, opts...)
 }
-
-
 
 // GitClone clones a GitHub repository to the specified path.
 // Prefers 'gh repo clone' if authenticated, falls back to SSH.

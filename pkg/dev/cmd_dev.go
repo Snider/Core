@@ -68,16 +68,16 @@ func AddDevCommands(root *cli.Command) {
 	}
 	root.AddCommand(devCmd)
 
-	// Git operations
-	addWorkCommand(devCmd)
-	addHealthCommand(devCmd)
-	addCommitCommand(devCmd)
-	addPushCommand(devCmd)
-	addPullCommand(devCmd)
+	// Git operations (also available under 'core git')
+	AddWorkCommand(devCmd)
+	AddHealthCommand(devCmd)
+	AddCommitCommand(devCmd)
+	AddPushCommand(devCmd)
+	AddPullCommand(devCmd)
 
-	// Safe git operations for AI agents
-	addFileSyncCommand(devCmd)
-	addApplyCommand(devCmd)
+	// Safe git operations for AI agents (also available under 'core git')
+	AddFileSyncCommand(devCmd)
+	AddApplyCommand(devCmd)
 
 	// GitHub integration
 	addIssuesCommand(devCmd)

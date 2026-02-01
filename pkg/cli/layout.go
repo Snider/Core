@@ -7,15 +7,15 @@ type Region rune
 
 const (
 	// RegionHeader is the top region of the layout.
-	RegionHeader  Region = 'H'
+	RegionHeader Region = 'H'
 	// RegionLeft is the left sidebar region.
-	RegionLeft    Region = 'L'
+	RegionLeft Region = 'L'
 	// RegionContent is the main content region.
 	RegionContent Region = 'C'
 	// RegionRight is the right sidebar region.
-	RegionRight   Region = 'R'
+	RegionRight Region = 'R'
 	// RegionFooter is the bottom region of the layout.
-	RegionFooter  Region = 'F'
+	RegionFooter Region = 'F'
 )
 
 // Composite represents an HLCRF layout node.
@@ -98,9 +98,10 @@ func isValidRegion(r Region) bool {
 func findMatchingBracket(s string, start int) int {
 	depth := 0
 	for i := start; i < len(s); i++ {
-		if s[i] == '[' {
+		switch s[i] {
+		case '[':
 			depth++
-		} else if s[i] == ']' {
+		case ']':
 			depth--
 			if depth == 0 {
 				return i

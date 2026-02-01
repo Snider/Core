@@ -87,37 +87,44 @@ func (s *Service) registerTools() {
 	}, s.getSupportedLanguages)
 }
 
-// Tool input/output types
+// Tool input/output types for MCP file operations.
 
+// ReadFileInput contains parameters for reading a file.
 type ReadFileInput struct {
 	Path string `json:"path"`
 }
 
+// ReadFileOutput contains the result of reading a file.
 type ReadFileOutput struct {
 	Content  string `json:"content"`
 	Language string `json:"language"`
 	Path     string `json:"path"`
 }
 
+// WriteFileInput contains parameters for writing a file.
 type WriteFileInput struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
 }
 
+// WriteFileOutput contains the result of writing a file.
 type WriteFileOutput struct {
 	Success bool   `json:"success"`
 	Path    string `json:"path"`
 }
 
+// ListDirectoryInput contains parameters for listing a directory.
 type ListDirectoryInput struct {
 	Path string `json:"path"`
 }
 
+// ListDirectoryOutput contains the result of listing a directory.
 type ListDirectoryOutput struct {
 	Entries []DirectoryEntry `json:"entries"`
 	Path    string           `json:"path"`
 }
 
+// DirectoryEntry represents a single entry in a directory listing.
 type DirectoryEntry struct {
 	Name  string `json:"name"`
 	Path  string `json:"path"`
@@ -125,66 +132,80 @@ type DirectoryEntry struct {
 	Size  int64  `json:"size"`
 }
 
+// CreateDirectoryInput contains parameters for creating a directory.
 type CreateDirectoryInput struct {
 	Path string `json:"path"`
 }
 
+// CreateDirectoryOutput contains the result of creating a directory.
 type CreateDirectoryOutput struct {
 	Success bool   `json:"success"`
 	Path    string `json:"path"`
 }
 
+// DeleteFileInput contains parameters for deleting a file.
 type DeleteFileInput struct {
 	Path string `json:"path"`
 }
 
+// DeleteFileOutput contains the result of deleting a file.
 type DeleteFileOutput struct {
 	Success bool   `json:"success"`
 	Path    string `json:"path"`
 }
 
+// RenameFileInput contains parameters for renaming a file.
 type RenameFileInput struct {
 	OldPath string `json:"oldPath"`
 	NewPath string `json:"newPath"`
 }
 
+// RenameFileOutput contains the result of renaming a file.
 type RenameFileOutput struct {
 	Success bool   `json:"success"`
 	OldPath string `json:"oldPath"`
 	NewPath string `json:"newPath"`
 }
 
+// FileExistsInput contains parameters for checking file existence.
 type FileExistsInput struct {
 	Path string `json:"path"`
 }
 
+// FileExistsOutput contains the result of checking file existence.
 type FileExistsOutput struct {
 	Exists bool   `json:"exists"`
 	IsDir  bool   `json:"isDir"`
 	Path   string `json:"path"`
 }
 
+// DetectLanguageInput contains parameters for detecting file language.
 type DetectLanguageInput struct {
 	Path string `json:"path"`
 }
 
+// DetectLanguageOutput contains the detected programming language.
 type DetectLanguageOutput struct {
 	Language string `json:"language"`
 	Path     string `json:"path"`
 }
 
+// GetSupportedLanguagesInput is an empty struct for the languages query.
 type GetSupportedLanguagesInput struct{}
 
+// GetSupportedLanguagesOutput contains the list of supported languages.
 type GetSupportedLanguagesOutput struct {
 	Languages []LanguageInfo `json:"languages"`
 }
 
+// LanguageInfo describes a supported programming language.
 type LanguageInfo struct {
 	ID         string   `json:"id"`
 	Name       string   `json:"name"`
 	Extensions []string `json:"extensions"`
 }
 
+// EditDiffInput contains parameters for editing a file via diff.
 type EditDiffInput struct {
 	Path       string `json:"path"`
 	OldString  string `json:"old_string"`
@@ -192,6 +213,7 @@ type EditDiffInput struct {
 	ReplaceAll bool   `json:"replace_all,omitempty"`
 }
 
+// EditDiffOutput contains the result of a diff-based edit operation.
 type EditDiffOutput struct {
 	Path         string `json:"path"`
 	Success      bool   `json:"success"`
@@ -308,6 +330,10 @@ func (s *Service) getSupportedLanguages(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input EditDiffInput) (*mcp.CallToolResult, EditDiffOutput, error) {
+	if input.OldString == "" {
+		return nil, EditDiffOutput{}, fmt.Errorf("old_string cannot be empty")
+	}
+
 	content, err := os.ReadFile(input.Path)
 	if err != nil {
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to read file: %w", err)

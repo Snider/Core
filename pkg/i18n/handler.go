@@ -11,10 +11,12 @@ import (
 // LabelHandler handles i18n.label.{word} → "Status:" patterns.
 type LabelHandler struct{}
 
+// Match returns true for keys starting with "i18n.label.".
 func (h LabelHandler) Match(key string) bool {
 	return strings.HasPrefix(key, "i18n.label.")
 }
 
+// Handle transforms label keys into formatted labels with colons.
 func (h LabelHandler) Handle(key string, args []any, next func() string) string {
 	word := strings.TrimPrefix(key, "i18n.label.")
 	return Label(word)
@@ -23,10 +25,12 @@ func (h LabelHandler) Handle(key string, args []any, next func() string) string 
 // ProgressHandler handles i18n.progress.{verb} → "Building..." patterns.
 type ProgressHandler struct{}
 
+// Match returns true for keys starting with "i18n.progress.".
 func (h ProgressHandler) Match(key string) bool {
 	return strings.HasPrefix(key, "i18n.progress.")
 }
 
+// Handle transforms progress keys into gerund phrases like "Building...".
 func (h ProgressHandler) Handle(key string, args []any, next func() string) string {
 	verb := strings.TrimPrefix(key, "i18n.progress.")
 	if len(args) > 0 {
@@ -40,10 +44,12 @@ func (h ProgressHandler) Handle(key string, args []any, next func() string) stri
 // CountHandler handles i18n.count.{noun} → "5 files" patterns.
 type CountHandler struct{}
 
+// Match returns true for keys starting with "i18n.count.".
 func (h CountHandler) Match(key string) bool {
 	return strings.HasPrefix(key, "i18n.count.")
 }
 
+// Handle transforms count keys into pluralized phrases like "5 files".
 func (h CountHandler) Handle(key string, args []any, next func() string) string {
 	noun := strings.TrimPrefix(key, "i18n.count.")
 	if len(args) > 0 {
@@ -56,10 +62,12 @@ func (h CountHandler) Handle(key string, args []any, next func() string) string 
 // DoneHandler handles i18n.done.{verb} → "File deleted" patterns.
 type DoneHandler struct{}
 
+// Match returns true for keys starting with "i18n.done.".
 func (h DoneHandler) Match(key string) bool {
 	return strings.HasPrefix(key, "i18n.done.")
 }
 
+// Handle transforms done keys into past-tense completion messages.
 func (h DoneHandler) Handle(key string, args []any, next func() string) string {
 	verb := strings.TrimPrefix(key, "i18n.done.")
 	if len(args) > 0 {
@@ -73,10 +81,12 @@ func (h DoneHandler) Handle(key string, args []any, next func() string) string {
 // FailHandler handles i18n.fail.{verb} → "Failed to delete file" patterns.
 type FailHandler struct{}
 
+// Match returns true for keys starting with "i18n.fail.".
 func (h FailHandler) Match(key string) bool {
 	return strings.HasPrefix(key, "i18n.fail.")
 }
 
+// Handle transforms fail keys into failure messages like "Failed to delete".
 func (h FailHandler) Handle(key string, args []any, next func() string) string {
 	verb := strings.TrimPrefix(key, "i18n.fail.")
 	if len(args) > 0 {
@@ -90,10 +100,12 @@ func (h FailHandler) Handle(key string, args []any, next func() string) string {
 // NumericHandler handles i18n.numeric.{format} → formatted numbers.
 type NumericHandler struct{}
 
+// Match returns true for keys starting with "i18n.numeric.".
 func (h NumericHandler) Match(key string) bool {
 	return strings.HasPrefix(key, "i18n.numeric.")
 }
 
+// Handle transforms numeric keys into locale-formatted numbers.
 func (h NumericHandler) Handle(key string, args []any, next func() string) string {
 	if len(args) == 0 {
 		return next()

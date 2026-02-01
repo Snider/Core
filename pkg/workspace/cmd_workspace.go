@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// AddWorkspaceCommands registers workspace management commands.
 func AddWorkspaceCommands(root *cobra.Command) {
 	wsCmd := &cobra.Command{
 		Use:   "workspace",

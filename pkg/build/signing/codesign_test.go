@@ -53,7 +53,7 @@ func TestMacOSSigner_Notarize_Bad(t *testing.T) {
 func TestMacOSSigner_ShouldNotarize(t *testing.T) {
 	s := NewMacOSSigner(MacOSConfig{Notarize: true})
 	assert.True(t, s.ShouldNotarize())
-	
+
 	s2 := NewMacOSSigner(MacOSConfig{Notarize: false})
 	assert.False(t, s2.ShouldNotarize())
 }

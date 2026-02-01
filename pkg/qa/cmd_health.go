@@ -36,10 +36,10 @@ type HealthWorkflowRun struct {
 
 // RepoHealth represents the CI health of a single repo
 type RepoHealth struct {
-	Name       string
-	Status     string // "passing", "failing", "pending", "no_ci", "disabled"
-	Message    string
-	URL        string
+	Name         string
+	Status       string // "passing", "failing", "pending", "no_ci", "disabled"
+	Message      string
+	URL          string
 	FailingSince string
 }
 

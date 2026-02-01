@@ -63,9 +63,7 @@ type StatusBundleOptions struct {
 // Includes: dev (orchestration), git services. No agentic - commits not available.
 func NewStatusBundle(opts StatusBundleOptions) (*StatusBundle, error) {
 	c, err := framework.New(
-		framework.WithService(NewService(ServiceOptions{
-			RegistryPath: opts.RegistryPath,
-		})),
+		framework.WithService(NewService(ServiceOptions(opts))),
 		framework.WithService(git.NewService(git.ServiceOptions{})),
 		// No agentic service - TaskCommit will be unhandled
 		framework.WithServiceLock(),

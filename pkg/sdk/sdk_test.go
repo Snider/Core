@@ -64,8 +64,6 @@ func TestSDK_GenerateLanguage_Bad(t *testing.T) {
 
 		require.NoError(t, err)
 
-
-
 		s := New(tmpDir, nil)
 
 		err = s.GenerateLanguage(context.Background(), "invalid-lang")

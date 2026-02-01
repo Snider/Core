@@ -24,11 +24,17 @@ import (
 // Level defines logging verbosity.
 type Level int
 
+// Logging level constants ordered by increasing verbosity.
 const (
+	// LevelQuiet suppresses all log output.
 	LevelQuiet Level = iota
+	// LevelError shows only error messages.
 	LevelError
+	// LevelWarn shows warnings and errors.
 	LevelWarn
+	// LevelInfo shows informational messages, warnings, and errors.
 	LevelInfo
+	// LevelDebug shows all messages including debug details.
 	LevelDebug
 )
 

@@ -113,7 +113,7 @@ func runIssues(registryPath string, limit int, assignee string) error {
 
 	// Print issues
 	if len(allIssues) == 0 {
-				cli.Text(i18n.T("cmd.dev.issues.no_issues"))
+		cli.Text(i18n.T("cmd.dev.issues.no_issues"))
 		return nil
 	}
 
@@ -204,5 +204,5 @@ func printIssue(issue GitHubIssue) {
 	age := cli.FormatAge(issue.CreatedAt)
 	line += " " + issueAgeStyle.Render(age)
 
-			cli.Text(line)
+	cli.Text(line)
 }

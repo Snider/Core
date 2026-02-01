@@ -78,7 +78,7 @@ func TestDetectScramble_Bad(t *testing.T) {
 		tmpDir := t.TempDir()
 		err := os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{}`), 0644)
 		require.NoError(t, err)
-		
+
 		sdk := New(tmpDir, nil)
 		_, err = sdk.detectScramble()
 		assert.Error(t, err)

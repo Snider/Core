@@ -16,8 +16,8 @@ var (
 	commitAll          bool
 )
 
-// addCommitCommand adds the 'commit' command to the given parent command.
-func addCommitCommand(parent *cli.Command) {
+// AddCommitCommand adds the 'commit' command to the given parent command.
+func AddCommitCommand(parent *cli.Command) {
 	commitCmd := &cli.Command{
 		Use:   "commit",
 		Short: i18n.T("cmd.dev.commit.short"),

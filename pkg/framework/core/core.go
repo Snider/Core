@@ -356,6 +356,7 @@ func (c *Core) Display() Display {
 	return d
 }
 
+// Core returns self, implementing the CoreProvider interface.
 func (c *Core) Core() *Core { return c }
 
 // Assets returns the embedded filesystem containing the application's assets.

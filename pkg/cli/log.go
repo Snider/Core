@@ -8,11 +8,17 @@ import (
 // LogLevel aliases for backwards compatibility.
 type LogLevel = log.Level
 
+// Log level constants aliased from the log package.
 const (
+	// LogLevelQuiet suppresses all output.
 	LogLevelQuiet = log.LevelQuiet
+	// LogLevelError shows only error messages.
 	LogLevelError = log.LevelError
-	LogLevelWarn  = log.LevelWarn
-	LogLevelInfo  = log.LevelInfo
+	// LogLevelWarn shows warnings and errors.
+	LogLevelWarn = log.LevelWarn
+	// LogLevelInfo shows info, warnings, and errors.
+	LogLevelInfo = log.LevelInfo
+	// LogLevelDebug shows all messages including debug.
 	LogLevelDebug = log.LevelDebug
 )
 

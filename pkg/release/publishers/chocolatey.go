@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/i18n"
 )
 
 //go:embed templates/chocolatey/*.tmpl templates/chocolatey/tools/*.tmpl
@@ -79,7 +80,7 @@ func (p *ChocolateyPublisher) Publish(ctx context.Context, release *Release, pub
 
 	data := chocolateyTemplateData{
 		PackageName: packageName,
-		Title:       fmt.Sprintf("%s CLI", strings.Title(projectName)),
+		Title:       fmt.Sprintf("%s CLI", i18n.Title(projectName)),
 		Description: fmt.Sprintf("%s CLI", projectName),
 		Repository:  repo,
 		Version:     version,

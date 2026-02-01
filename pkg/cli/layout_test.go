@@ -13,7 +13,7 @@ func TestParseVariant(t *testing.T) {
 	if _, ok := c.regions[RegionFooter]; !ok {
 		t.Error("Expected Footer region")
 	}
-	
+
 	hSlot := c.regions[RegionHeader]
 	if hSlot.child == nil {
 		t.Error("Header should have child layout")

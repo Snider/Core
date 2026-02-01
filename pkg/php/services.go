@@ -220,6 +220,7 @@ type FrankenPHPOptions struct {
 	KeyFile   string
 }
 
+// Start launches the FrankenPHP Octane server.
 func (s *FrankenPHPService) Start(ctx context.Context) error {
 	args := []string{
 		"artisan", "octane:start",
@@ -239,6 +240,7 @@ func (s *FrankenPHPService) Start(ctx context.Context) error {
 	return s.startProcess(ctx, "php", args, nil)
 }
 
+// Stop terminates the FrankenPHP server process.
 func (s *FrankenPHPService) Stop() error {
 	return s.stopProcess()
 }
@@ -277,6 +279,7 @@ type ViteOptions struct {
 	PackageManager string
 }
 
+// Start launches the Vite development server.
 func (s *ViteService) Start(ctx context.Context) error {
 	var cmdName string
 	var args []string
@@ -299,6 +302,7 @@ func (s *ViteService) Start(ctx context.Context) error {
 	return s.startProcess(ctx, cmdName, args, nil)
 }
 
+// Stop terminates the Vite development server.
 func (s *ViteService) Stop() error {
 	return s.stopProcess()
 }
@@ -319,10 +323,12 @@ func NewHorizonService(dir string) *HorizonService {
 	}
 }
 
+// Start launches the Laravel Horizon queue worker.
 func (s *HorizonService) Start(ctx context.Context) error {
 	return s.startProcess(ctx, "php", []string{"artisan", "horizon"}, nil)
 }
 
+// Stop terminates Horizon using its terminate command.
 func (s *HorizonService) Stop() error {
 	// Horizon has its own terminate command
 	cmd := exec.Command("php", "artisan", "horizon:terminate")
@@ -358,6 +364,7 @@ type ReverbOptions struct {
 	Port int
 }
 
+// Start launches the Laravel Reverb WebSocket server.
 func (s *ReverbService) Start(ctx context.Context) error {
 	args := []string{
 		"artisan", "reverb:start",
@@ -367,6 +374,7 @@ func (s *ReverbService) Start(ctx context.Context) error {
 	return s.startProcess(ctx, "php", args, nil)
 }
 
+// Stop terminates the Reverb WebSocket server.
 func (s *ReverbService) Stop() error {
 	return s.stopProcess()
 }
@@ -400,6 +408,7 @@ type RedisOptions struct {
 	ConfigFile string
 }
 
+// Start launches the Redis server.
 func (s *RedisService) Start(ctx context.Context) error {
 	args := []string{
 		"--port", cli.Sprintf("%d", s.port),
@@ -414,6 +423,7 @@ func (s *RedisService) Start(ctx context.Context) error {
 	return s.startProcess(ctx, "redis-server", args, nil)
 }
 
+// Stop terminates Redis using the shutdown command.
 func (s *RedisService) Stop() error {
 	// Try graceful shutdown via redis-cli
 	cmd := exec.Command("redis-cli", "-p", cli.Sprintf("%d", s.port), "shutdown", "nosave")

@@ -137,7 +137,7 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 
 		// Start the process
 		if err := cmd.Start(); err != nil {
-			logFile.Close()
+			_ = logFile.Close()
 			return nil, fmt.Errorf("failed to start VM: %w", err)
 		}
 
@@ -146,13 +146,13 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 		// Save state
 		if err := m.state.Add(container); err != nil {
 			// Try to kill the process we just started
-			cmd.Process.Kill()
-			logFile.Close()
+			_ = cmd.Process.Kill()
+			_ = logFile.Close()
 			return nil, fmt.Errorf("failed to save state: %w", err)
 		}
 
 		// Close log file handle (process has its own)
-		logFile.Close()
+		_ = logFile.Close()
 
 		// Start a goroutine to wait for process exit and update state
 		go m.waitForExit(container.ID, cmd)
@@ -170,12 +170,12 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		return nil, fmt.Errorf("failed to get stderr pipe: %w", err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		return nil, fmt.Errorf("failed to start VM: %w", err)
 	}
 
@@ -183,19 +183,19 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 
 	// Save state before waiting
 	if err := m.state.Add(container); err != nil {
-		cmd.Process.Kill()
-		logFile.Close()
+		_ = cmd.Process.Kill()
+		_ = logFile.Close()
 		return nil, fmt.Errorf("failed to save state: %w", err)
 	}
 
 	// Copy output to both log and stdout
 	go func() {
 		mw := io.MultiWriter(logFile, os.Stdout)
-		io.Copy(mw, stdout)
+		_, _ = io.Copy(mw, stdout)
 	}()
 	go func() {
 		mw := io.MultiWriter(logFile, os.Stderr)
-		io.Copy(mw, stderr)
+		_, _ = io.Copy(mw, stderr)
 	}()
 
 	// Wait for the process to complete
@@ -205,20 +205,26 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 		container.Status = StatusStopped
 	}
 
-	logFile.Close()
-	m.state.Update(container)
+	_ = logFile.Close()
+	if err := m.state.Update(container); err != nil {
+		return container, fmt.Errorf("update container state: %w", err)
+	}
 
 	return container, nil
 }
 
 // waitForExit monitors a detached process and updates state when it exits.
 func (m *LinuxKitManager) waitForExit(id string, cmd *exec.Cmd) {
-	cmd.Wait()
+	err := cmd.Wait()
 
 	container, ok := m.state.Get(id)
 	if ok {
-		container.Status = StatusStopped
-		m.state.Update(container)
+		if err != nil {
+			container.Status = StatusError
+		} else {
+			container.Status = StatusStopped
+		}
+		_ = m.state.Update(container)
 	}
 }
 
@@ -238,7 +244,7 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 	if err != nil {
 		// Process doesn't exist, update state
 		container.Status = StatusStopped
-		m.state.Update(container)
+		_ = m.state.Update(container)
 		return nil
 	}
 
@@ -246,14 +252,14 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 	if err := process.Signal(syscall.SIGTERM); err != nil {
 		// Process might already be gone
 		container.Status = StatusStopped
-		m.state.Update(container)
+		_ = m.state.Update(container)
 		return nil
 	}
 
 	// Wait for graceful shutdown with timeout
 	done := make(chan struct{})
 	go func() {
-		process.Wait()
+		_, _ = process.Wait()
 		close(done)
 	}()
 
@@ -262,11 +268,11 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 		// Process exited gracefully
 	case <-time.After(10 * time.Second):
 		// Force kill
-		process.Signal(syscall.SIGKILL)
+		_ = process.Signal(syscall.SIGKILL)
 		<-done
 	case <-ctx.Done():
 		// Context cancelled
-		process.Signal(syscall.SIGKILL)
+		_ = process.Signal(syscall.SIGKILL)
 		return ctx.Err()
 	}
 
@@ -283,7 +289,7 @@ func (m *LinuxKitManager) List(ctx context.Context) ([]*Container, error) {
 		if c.Status == StatusRunning {
 			if !isProcessRunning(c.PID) {
 				c.Status = StatusStopped
-				m.state.Update(c)
+				_ = m.state.Update(c)
 			}
 		}
 	}
@@ -346,7 +352,7 @@ func newFollowReader(ctx context.Context, path string) (*followReader, error) {
 	}
 
 	// Seek to end
-	file.Seek(0, io.SeekEnd)
+	_, _ = file.Seek(0, io.SeekEnd)
 
 	ctx, cancel := context.WithCancel(ctx)
 
