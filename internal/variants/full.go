@@ -39,6 +39,7 @@ import (
 	_ "github.com/host-uk/core/pkg/security"
 	_ "github.com/host-uk/core/pkg/setup"
 	_ "github.com/host-uk/core/pkg/test"
+	_ "github.com/host-uk/core/pkg/updater"
 	_ "github.com/host-uk/core/pkg/vm"
 	_ "github.com/host-uk/core/pkg/workspace"
 )
