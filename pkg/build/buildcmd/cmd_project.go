@@ -21,7 +21,7 @@ import (
 )
 
 // runProjectBuild handles the main `core build` command with auto-detection.
-func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string, noSign bool, notarize bool) error {
+func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string, noSign bool, notarize bool, verbose bool) error {
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
@@ -80,8 +80,8 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 		binaryName = filepath.Base(projectDir)
 	}
 
-	// Print build info (unless CI mode)
-	if !ciMode {
+	// Print build info (verbose mode only)
+	if verbose && !ciMode {
 		fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.build")), i18n.T("cmd.build.building_project"))
 		fmt.Printf("  %s %s\n", i18n.T("cmd.build.label.type"), buildTargetStyle.Render(string(projectType)))
 		fmt.Printf("  %s %s\n", i18n.T("cmd.build.label.output"), buildTargetStyle.Render(outputDir))
@@ -120,12 +120,12 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	artifacts, err := builder.Build(ctx, cfg, buildTargets)
 	if err != nil {
 		if !ciMode {
-			fmt.Printf("%s %s: %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), i18n.T("common.error.failed", map[string]any{"Action": "build"}), err)
+			fmt.Printf("%s %v\n", buildErrorStyle.Render(i18n.T("common.label.error")), err)
 		}
 		return err
 	}
 
-	if !ciMode {
+	if verbose && !ciMode {
 		fmt.Printf("%s %s\n", buildSuccessStyle.Render(i18n.T("common.label.success")), i18n.T("cmd.build.built_artifacts", map[string]interface{}{"Count": len(artifacts)}))
 		fmt.Println()
 		for _, artifact := range artifacts {
@@ -151,7 +151,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	}
 
 	if signCfg.Enabled && runtime.GOOS == "darwin" {
-		if !ciMode {
+		if verbose && !ciMode {
 			fmt.Println()
 			fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.sign")), i18n.T("cmd.build.signing_binaries"))
 		}
@@ -182,7 +182,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	// Archive artifacts if enabled
 	var archivedArtifacts []build.Artifact
 	if doArchive && len(artifacts) > 0 {
-		if !ciMode {
+		if verbose && !ciMode {
 			fmt.Println()
 			fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.archive")), i18n.T("cmd.build.creating_archives"))
 		}
@@ -195,7 +195,7 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 			return err
 		}
 
-		if !ciMode {
+		if verbose && !ciMode {
 			for _, artifact := range archivedArtifacts {
 				relPath, err := filepath.Rel(projectDir, artifact.Path)
 				if err != nil {
@@ -213,19 +213,19 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	// Compute checksums if enabled
 	var checksummedArtifacts []build.Artifact
 	if doChecksum && len(archivedArtifacts) > 0 {
-		checksummedArtifacts, err = computeAndWriteChecksums(ctx, projectDir, outputDir, archivedArtifacts, signCfg, ciMode)
+		checksummedArtifacts, err = computeAndWriteChecksums(ctx, projectDir, outputDir, archivedArtifacts, signCfg, ciMode, verbose)
 		if err != nil {
 			return err
 		}
 	} else if doChecksum && len(artifacts) > 0 && !doArchive {
 		// Checksum raw binaries if archiving is disabled
-		checksummedArtifacts, err = computeAndWriteChecksums(ctx, projectDir, outputDir, artifacts, signCfg, ciMode)
+		checksummedArtifacts, err = computeAndWriteChecksums(ctx, projectDir, outputDir, artifacts, signCfg, ciMode, verbose)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Output results for CI mode
+	// Output results
 	if ciMode {
 		// Determine which artifacts to output (prefer checksummed > archived > raw)
 		var outputArtifacts []build.Artifact
@@ -243,14 +243,21 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 			return fmt.Errorf("%s: %w", i18n.T("common.error.failed", map[string]any{"Action": "marshal artifacts"}), err)
 		}
 		fmt.Println(string(output))
+	} else if !verbose {
+		// Minimal output: just success with artifact count
+		fmt.Printf("%s %s %s\n",
+			buildSuccessStyle.Render(i18n.T("common.label.success")),
+			i18n.T("cmd.build.built_artifacts", map[string]interface{}{"Count": len(artifacts)}),
+			buildDimStyle.Render(fmt.Sprintf("(%s)", outputDir)),
+		)
 	}
 
 	return nil
 }
 
 // computeAndWriteChecksums computes checksums for artifacts and writes CHECKSUMS.txt.
-func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string, artifacts []build.Artifact, signCfg signing.SignConfig, ciMode bool) ([]build.Artifact, error) {
-	if !ciMode {
+func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string, artifacts []build.Artifact, signCfg signing.SignConfig, ciMode bool, verbose bool) ([]build.Artifact, error) {
+	if verbose && !ciMode {
 		fmt.Println()
 		fmt.Printf("%s %s\n", buildHeaderStyle.Render(i18n.T("cmd.build.label.checksum")), i18n.T("cmd.build.computing_checksums"))
 	}
@@ -282,7 +289,7 @@ func computeAndWriteChecksums(ctx context.Context, projectDir, outputDir string,
 		}
 	}
 
-	if !ciMode {
+	if verbose && !ciMode {
 		for _, artifact := range checksummedArtifacts {
 			relPath, err := filepath.Rel(projectDir, artifact.Path)
 			if err != nil {
