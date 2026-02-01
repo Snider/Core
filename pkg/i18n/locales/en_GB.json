@@ -289,7 +289,17 @@
 			"watch.workflows_failed": "{{.Count}} workflow(s) failed",
 			"watch.all_passed": "All workflows passed",
 			"watch.error.not_git_repo": "Not in a git repository",
-			"watch.error.repo_format": "Invalid repo format. Use --repo org/name or run from a git repo"
+			"watch.error.repo_format": "Invalid repo format. Use --repo org/name or run from a git repo",
+			"review.short": "Check PR review status",
+			"review.long": "Show PR review status with actionable next steps. Answers: What do I need to do to get my PRs merged? What reviews am I blocking?",
+			"review.flag.mine": "Show only your open PRs",
+			"review.flag.requested": "Show only PRs where your review is requested",
+			"review.flag.repo": "Specific repository (default: current)",
+			"review.your_prs": "Your PRs",
+			"review.review_requested": "Review Requested",
+			"review.no_prs": "No open PRs",
+			"review.no_reviews": "No reviews requested",
+			"review.error.no_repo": "Not in a git repository. Use --repo to specify one"
 		},
 		"test": {
 			"short": "Run Go tests with coverage"
