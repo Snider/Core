@@ -1,4 +1,4 @@
-name: release
+name: Release
 
 on:
   push:
@@ -9,28 +9,78 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          check-latest: true
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build CLI
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+          go build -trimpath \
+            -ldflags="-s -w -X github.com/host-uk/core/pkg/cli.AppVersion=${{ steps.version.outputs.VERSION }}" \
+            -o core-${GOOS}-${GOARCH}${EXT} .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: core-*
+
+  release:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-          check-latest: true
-      - name: Set up Node (for GUI builds if needed)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install Wails (optional)
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
         run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@latest || true
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
+          cd artifacts
+          sha256sum core-* > checksums.txt
+          cat checksums.txt
+
+      - name: Create release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            artifacts/*

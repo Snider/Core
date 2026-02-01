@@ -11,9 +11,12 @@ import (
 const (
 	// AppName is the CLI application name.
 	AppName = "core"
-	// AppVersion is the CLI application version.
-	AppVersion = "0.1.0"
 )
+
+// AppVersion is set at build time via ldflags:
+//
+//	go build -ldflags="-X github.com/host-uk/core/pkg/cli.AppVersion=v1.0.0"
+var AppVersion = "dev"
 
 // Main initialises and runs the CLI application.
 // This is the main entry point for the CLI.

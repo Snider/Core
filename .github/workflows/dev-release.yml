@@ -44,7 +44,8 @@ jobs:
         run: |
           EXT=""
           if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          go build -trimpath -ldflags="-s -w" -o core-${GOOS}-${GOARCH}${EXT} ./cmd/core
+          VERSION="dev-$(git rev-parse --short HEAD)"
+          go build -trimpath -ldflags="-s -w -X github.com/host-uk/core/pkg/cli.AppVersion=${VERSION}" -o core-${GOOS}-${GOARCH}${EXT} .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
