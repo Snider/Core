@@ -32,11 +32,12 @@ func Command(ctx context.Context, name string, args ...string) *Cmd {
 
 // Cmd represents a wrapped command
 type Cmd struct {
-	name string
-	args []string
-	ctx  context.Context
-	opts Options
-	cmd  *exec.Cmd
+	name   string
+	args   []string
+	ctx    context.Context
+	opts   Options
+	cmd    *exec.Cmd
+	logger Logger
 }
 
 // WithDir sets the working directory
@@ -69,17 +70,23 @@ func (c *Cmd) WithStderr(w io.Writer) *Cmd {
 	return c
 }
 
+// WithLogger sets a custom logger for this command.
+// If not set, the package default logger is used.
+func (c *Cmd) WithLogger(l Logger) *Cmd {
+	c.logger = l
+	return c
+}
+
 // Run executes the command and waits for it to finish.
 // It automatically logs the command execution at debug level.
 func (c *Cmd) Run() error {
 	c.prepare()
-
-	// TODO: Use a proper logger interface when available in pkg/process
-	// For now using cli.Debug which might not be visible unless verbose
-	// cli.Debug("Executing: %s %s", c.name, strings.Join(c.args, " "))
+	c.logDebug("executing command")
 
 	if err := c.cmd.Run(); err != nil {
-		return wrapError(err, c.name, c.args)
+		wrapped := wrapError(err, c.name, c.args)
+		c.logError("command failed", wrapped)
+		return wrapped
 	}
 	return nil
 }
@@ -87,9 +94,13 @@ func (c *Cmd) Run() error {
 // Output runs the command and returns its standard output.
 func (c *Cmd) Output() ([]byte, error) {
 	c.prepare()
+	c.logDebug("executing command")
+
 	out, err := c.cmd.Output()
 	if err != nil {
-		return nil, wrapError(err, c.name, c.args)
+		wrapped := wrapError(err, c.name, c.args)
+		c.logError("command failed", wrapped)
+		return nil, wrapped
 	}
 	return out, nil
 }
@@ -97,9 +108,13 @@ func (c *Cmd) Output() ([]byte, error) {
 // CombinedOutput runs the command and returns its combined standard output and standard error.
 func (c *Cmd) CombinedOutput() ([]byte, error) {
 	c.prepare()
+	c.logDebug("executing command")
+
 	out, err := c.cmd.CombinedOutput()
 	if err != nil {
-		return out, wrapError(err, c.name, c.args)
+		wrapped := wrapError(err, c.name, c.args)
+		c.logError("command failed", wrapped)
+		return out, wrapped
 	}
 	return out, nil
 }
@@ -143,4 +158,19 @@ func wrapError(err error, name string, args []string) error {
 		return fmt.Errorf("command %q failed with exit code %d: %w", cmdStr, exitErr.ExitCode(), err)
 	}
 	return fmt.Errorf("failed to execute %q: %w", cmdStr, err)
+}
+
+func (c *Cmd) getLogger() Logger {
+	if c.logger != nil {
+		return c.logger
+	}
+	return defaultLogger
+}
+
+func (c *Cmd) logDebug(msg string) {
+	c.getLogger().Debug(msg, "cmd", c.name, "args", strings.Join(c.args, " "))
+}
+
+func (c *Cmd) logError(msg string, err error) {
+	c.getLogger().Error(msg, "cmd", c.name, "args", strings.Join(c.args, " "), "err", err)
 }
