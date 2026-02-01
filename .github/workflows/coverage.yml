@@ -18,7 +18,7 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: Setup Task
-      uses: arduino/setup-task@v1
+      uses: arduino/setup-task@v2
 
     - name: Install dependencies
       run: |
