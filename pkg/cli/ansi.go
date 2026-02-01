@@ -118,8 +118,9 @@ func hexToRGB(hex string) (int, int, int) {
 	if len(hex) != 6 {
 		return 255, 255, 255
 	}
-	r, _ := strconv.ParseInt(hex[0:2], 16, 64)
-	g, _ := strconv.ParseInt(hex[2:4], 16, 64)
-	b, _ := strconv.ParseInt(hex[4:6], 16, 64)
+	// Use 8-bit parsing since RGB values are 0-255, avoiding integer overflow on 32-bit systems.
+	r, _ := strconv.ParseUint(hex[0:2], 16, 8)
+	g, _ := strconv.ParseUint(hex[2:4], 16, 8)
+	b, _ := strconv.ParseUint(hex[4:6], 16, 8)
 	return int(r), int(g), int(b)
 }
