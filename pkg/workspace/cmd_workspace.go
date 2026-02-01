@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
