@@ -13,6 +13,10 @@
 //   - ci: Check GitHub Actions CI status
 //   - impact: Analyse dependency impact of changes
 //
+// CI/Workflow Management:
+//   - workflow list: Show table of repos vs workflows
+//   - workflow sync: Copy workflow template to all repos
+//
 // API Tools:
 //   - api sync: Synchronize public service APIs
 //
@@ -76,6 +80,9 @@ func AddDevCommands(root *cli.Command) {
 	addReviewsCommand(devCmd)
 	addCICommand(devCmd)
 	addImpactCommand(devCmd)
+
+	// CI/Workflow management
+	addWorkflowCommands(devCmd)
 
 	// API tools
 	addAPICommands(devCmd)
