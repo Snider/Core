@@ -1,8 +1,11 @@
 package gocmd
 
 import (
+	"bufio"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
@@ -12,14 +15,29 @@ var (
 	fmtFix   bool
 	fmtDiff  bool
 	fmtCheck bool
+	fmtAll   bool
 )
 
 func addGoFmtCommand(parent *cli.Command) {
 	fmtCmd := &cli.Command{
 		Use:   "fmt",
 		Short: "Format Go code",
-		Long:  "Format Go code using goimports or gofmt",
+		Long:  "Format Go code using goimports or gofmt. By default only checks changed files.",
 		RunE: func(cmd *cli.Command, args []string) error {
+			// Get list of files to check
+			var files []string
+			if fmtAll {
+				// Check all Go files
+				files = []string{"."}
+			} else {
+				// Only check changed Go files (git-aware)
+				files = getChangedGoFiles()
+				if len(files) == 0 {
+					cli.Print("%s\n", i18n.T("cmd.go.fmt.no_changes"))
+					return nil
+				}
+			}
+
 			fmtArgs := []string{}
 			if fmtFix {
 				fmtArgs = append(fmtArgs, "-w")
@@ -30,7 +48,7 @@ func addGoFmtCommand(parent *cli.Command) {
 			if !fmtFix && !fmtDiff {
 				fmtArgs = append(fmtArgs, "-l")
 			}
-			fmtArgs = append(fmtArgs, ".")
+			fmtArgs = append(fmtArgs, files...)
 
 			// Try goimports first, fall back to gofmt
 			var execCmd *exec.Cmd
@@ -47,10 +65,58 @@ func addGoFmtCommand(parent *cli.Command) {
 	}
 
 	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, i18n.T("common.flag.fix"))
-	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, "Show diff of changes")
-	fmtCmd.Flags().BoolVar(&fmtCheck, "check", false, "Check if formatted (exit 1 if not)")
+	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("common.flag.diff"))
+	fmtCmd.Flags().BoolVar(&fmtCheck, "check", false, i18n.T("cmd.go.fmt.flag.check"))
+	fmtCmd.Flags().BoolVar(&fmtAll, "all", false, i18n.T("cmd.go.fmt.flag.all"))
 
 	parent.AddCommand(fmtCmd)
+}
+
+// getChangedGoFiles returns Go files that have been modified, staged, or are untracked.
+func getChangedGoFiles() []string {
+	var files []string
+
+	// Get modified and staged files
+	cmd := exec.Command("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD")
+	output, err := cmd.Output()
+	if err == nil {
+		files = append(files, filterGoFiles(string(output))...)
+	}
+
+	// Get untracked files
+	cmd = exec.Command("git", "ls-files", "--others", "--exclude-standard")
+	output, err = cmd.Output()
+	if err == nil {
+		files = append(files, filterGoFiles(string(output))...)
+	}
+
+	// Deduplicate
+	seen := make(map[string]bool)
+	var unique []string
+	for _, f := range files {
+		if !seen[f] {
+			seen[f] = true
+			// Verify file exists (might have been deleted)
+			if _, err := os.Stat(f); err == nil {
+				unique = append(unique, f)
+			}
+		}
+	}
+
+	return unique
+}
+
+// filterGoFiles filters a newline-separated list of files to only include .go files.
+func filterGoFiles(output string) []string {
+	var goFiles []string
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		file := strings.TrimSpace(scanner.Text())
+		if file != "" && filepath.Ext(file) == ".go" {
+			goFiles = append(goFiles, file)
+		}
+	}
+	return goFiles
 }
 
 var lintFix bool
