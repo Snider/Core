@@ -90,7 +90,10 @@ type Core struct {
 	stoppables     []Stoppable
 }
 
-var instance *Core
+var (
+	instance   *Core
+	instanceMu sync.RWMutex
+)
 
 // Config provides access to application configuration.
 type Config interface {

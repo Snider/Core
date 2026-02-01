@@ -332,16 +332,38 @@ func MustServiceFor[T any](c *Core, name string) T {
 // It panics if the Core has not been initialized via SetInstance.
 // This is typically used by GUI runtimes that need global access.
 func App() any {
-	if instance == nil {
+	instanceMu.RLock()
+	inst := instance
+	instanceMu.RUnlock()
+	if inst == nil {
 		panic("core.App() called before core.SetInstance()")
 	}
-	return instance.App
+	return inst.App
 }
 
 // SetInstance sets the global Core instance for App() access.
 // This is typically called by GUI runtimes during initialization.
 func SetInstance(c *Core) {
+	instanceMu.Lock()
 	instance = c
+	instanceMu.Unlock()
+}
+
+// GetInstance returns the global Core instance, or nil if not set.
+// Use this for non-panicking access to the global instance.
+func GetInstance() *Core {
+	instanceMu.RLock()
+	inst := instance
+	instanceMu.RUnlock()
+	return inst
+}
+
+// ClearInstance resets the global Core instance to nil.
+// This is primarily useful for testing to ensure a clean state between tests.
+func ClearInstance() {
+	instanceMu.Lock()
+	instance = nil
+	instanceMu.Unlock()
 }
 
 // Config returns the registered Config service.

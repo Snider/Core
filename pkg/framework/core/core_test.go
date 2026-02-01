@@ -89,18 +89,18 @@ func TestCore_App_Good(t *testing.T) {
 	assert.NoError(t, err)
 
 	// To test the global App() function, we need to set the global instance.
-	originalInstance := instance
-	instance = c
-	defer func() { instance = originalInstance }()
+	originalInstance := GetInstance()
+	SetInstance(c)
+	defer SetInstance(originalInstance)
 
 	assert.Equal(t, app, App())
 }
 
 func TestCore_App_Ugly(t *testing.T) {
 	// This test ensures that calling App() before the core is initialized panics.
-	originalInstance := instance
-	instance = nil
-	defer func() { instance = originalInstance }()
+	originalInstance := GetInstance()
+	ClearInstance()
+	defer SetInstance(originalInstance)
 	assert.Panics(t, func() {
 		App()
 	})
@@ -294,4 +294,43 @@ func TestCore_WithName_Bad(t *testing.T) {
 	_, err := New(WithName("my-service", factory))
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, assert.AnError)
+}
+
+func TestCore_GlobalInstance_ThreadSafety_Good(t *testing.T) {
+	// Save original instance
+	original := GetInstance()
+	defer SetInstance(original)
+
+	// Test SetInstance/GetInstance
+	c1, _ := New()
+	SetInstance(c1)
+	assert.Equal(t, c1, GetInstance())
+
+	// Test ClearInstance
+	ClearInstance()
+	assert.Nil(t, GetInstance())
+
+	// Test concurrent access (race detector should catch issues)
+	c2, _ := New(WithApp(&mockApp{}))
+	done := make(chan bool)
+
+	for i := 0; i < 10; i++ {
+		go func() {
+			SetInstance(c2)
+			_ = GetInstance()
+			done <- true
+		}()
+		go func() {
+			inst := GetInstance()
+			if inst != nil {
+				_ = inst.App
+			}
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines
+	for i := 0; i < 20; i++ {
+		<-done
+	}
 }
