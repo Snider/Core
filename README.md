@@ -1,10 +1,18 @@
 # Core
 
+<<<<<<< HEAD
 > NOTICE
 > The current version here is not the current version, which is in letheanVPN/desktop/services/core (from memory). This was a nice idea, but I'm reorganising the code bases. Check back later.
 
 
 [![codecov](https://codecov.io/github/Snider/Core/branch/dev/graph/badge.svg?token=I4DVF9746V)](https://codecov.io/github/Snider/Core)
+=======
+[![codecov](https://codecov.io/gh/host-uk/core/branch/dev/graph/badge.svg)](https://codecov.io/gh/host-uk/core)
+[![Go Test Coverage](https://github.com/host-uk/core/actions/workflows/coverage.yml/badge.svg)](https://github.com/host-uk/core/actions/workflows/coverage.yml)
+[![Code Scanning](https://github.com/host-uk/core/actions/workflows/codescan.yml/badge.svg)](https://github.com/host-uk/core/actions/workflows/codescan.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/host-uk/core)](https://go.dev/)
+[![License](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://opensource.org/licenses/EUPL-1.2)
+>>>>>>> 8c93abb (docs: add CI and coverage badges to README)
 
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
 
