@@ -25,8 +25,11 @@ func UseUnicode() { currentTheme = ThemeUnicode }
 // UseEmoji switches the glyph theme to Emoji.
 func UseEmoji() { currentTheme = ThemeEmoji }
 
-// UseASCII switches the glyph theme to ASCII.
-func UseASCII() { currentTheme = ThemeASCII }
+// UseASCII switches the glyph theme to ASCII and disables colors.
+func UseASCII() {
+	currentTheme = ThemeASCII
+	SetColorEnabled(false)
+}
 
 func glyphMap() map[string]string {
 	switch currentTheme {

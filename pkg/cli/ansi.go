@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // ANSI escape codes
@@ -14,6 +16,40 @@ const (
 	ansiItalic    = "\033[3m"
 	ansiUnderline = "\033[4m"
 )
+
+var (
+	colorEnabled   = true
+	colorEnabledMu sync.RWMutex
+)
+
+func init() {
+	// NO_COLOR standard: https://no-color.org/
+	// If NO_COLOR is set (to any value, including empty), disable colors.
+	if _, exists := os.LookupEnv("NO_COLOR"); exists {
+		colorEnabled = false
+		return
+	}
+
+	// TERM=dumb indicates a terminal without color support.
+	if os.Getenv("TERM") == "dumb" {
+		colorEnabled = false
+	}
+}
+
+// ColorEnabled returns true if ANSI color output is enabled.
+func ColorEnabled() bool {
+	colorEnabledMu.RLock()
+	defer colorEnabledMu.RUnlock()
+	return colorEnabled
+}
+
+// SetColorEnabled enables or disables ANSI color output.
+// This overrides the NO_COLOR environment variable check.
+func SetColorEnabled(enabled bool) {
+	colorEnabledMu.Lock()
+	colorEnabled = enabled
+	colorEnabledMu.Unlock()
+}
 
 // AnsiStyle represents terminal text styling.
 // Use NewStyle() to create, chain methods, call Render().
@@ -68,8 +104,9 @@ func (s *AnsiStyle) Background(hex string) *AnsiStyle {
 }
 
 // Render applies the style to text.
+// Returns plain text if NO_COLOR is set or colors are disabled.
 func (s *AnsiStyle) Render(text string) string {
-	if s == nil {
+	if s == nil || !ColorEnabled() {
 		return text
 	}
 
