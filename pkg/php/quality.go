@@ -23,6 +23,9 @@ type FormatOptions struct {
 	// Diff shows a diff of changes instead of modifying files.
 	Diff bool
 
+	// JSON outputs results in JSON format.
+	JSON bool
+
 	// Paths limits formatting to specific paths.
 	Paths []string
 
@@ -43,6 +46,12 @@ type AnalyseOptions struct {
 
 	// Memory is the memory limit for analysis (e.g., "2G").
 	Memory string
+
+	// JSON outputs results in JSON format.
+	JSON bool
+
+	// SARIF outputs results in SARIF format for GitHub Security tab.
+	SARIF bool
 
 	// Output is the writer for output (defaults to os.Stdout).
 	Output io.Writer
@@ -209,6 +218,10 @@ func buildPintCommand(opts FormatOptions) (string, []string) {
 		args = append(args, "--diff")
 	}
 
+	if opts.JSON {
+		args = append(args, "--format=json")
+	}
+
 	// Add specific paths if provided
 	args = append(args, opts.Paths...)
 
@@ -234,6 +247,13 @@ func buildPHPStanCommand(opts AnalyseOptions) (string, []string) {
 		args = append(args, "--memory-limit", opts.Memory)
 	}
 
+	// Output format - SARIF takes precedence over JSON
+	if opts.SARIF {
+		args = append(args, "--error-format=sarif")
+	} else if opts.JSON {
+		args = append(args, "--error-format=json")
+	}
+
 	// Add specific paths if provided
 	args = append(args, opts.Paths...)
 
@@ -251,6 +271,8 @@ type PsalmOptions struct {
 	Fix      bool // Auto-fix issues where possible
 	Baseline bool // Generate/update baseline file
 	ShowInfo bool // Show info-level issues
+	JSON     bool // Output in JSON format
+	SARIF    bool // Output in SARIF format for GitHub Security tab
 	Output   io.Writer
 }
 
@@ -325,6 +347,13 @@ func RunPsalm(ctx context.Context, opts PsalmOptions) error {
 
 	if opts.ShowInfo {
 		args = append(args, "--show-info=true")
+	}
+
+	// Output format - SARIF takes precedence over JSON
+	if opts.SARIF {
+		args = append(args, "--output-format=sarif")
+	} else if opts.JSON {
+		args = append(args, "--output-format=json")
 	}
 
 	cmd := exec.CommandContext(ctx, cmdName, args...)

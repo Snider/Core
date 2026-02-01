@@ -17,6 +17,7 @@ var (
 	testCoverage bool
 	testFilter   string
 	testGroup    string
+	testJSON     bool
 )
 
 func addPHPTestCommand(parent *cobra.Command) {
@@ -43,6 +44,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 				Filter:   testFilter,
 				Parallel: testParallel,
 				Coverage: testCoverage,
+				JSON:     testJSON,
 				Output:   os.Stdout,
 			}
 
@@ -62,6 +64,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 	testCmd.Flags().BoolVar(&testCoverage, "coverage", false, i18n.T("cmd.php.test.flag.coverage"))
 	testCmd.Flags().StringVar(&testFilter, "filter", "", i18n.T("cmd.php.test.flag.filter"))
 	testCmd.Flags().StringVar(&testGroup, "group", "", i18n.T("cmd.php.test.flag.group"))
+	testCmd.Flags().BoolVar(&testJSON, "json", false, i18n.T("common.flag.json"))
 
 	parent.AddCommand(testCmd)
 }
@@ -69,6 +72,7 @@ func addPHPTestCommand(parent *cobra.Command) {
 var (
 	fmtFix  bool
 	fmtDiff bool
+	fmtJSON bool
 )
 
 func addPHPFmtCommand(parent *cobra.Command) {
@@ -106,6 +110,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 				Dir:    cwd,
 				Fix:    fmtFix,
 				Diff:   fmtDiff,
+				JSON:   fmtJSON,
 				Output: os.Stdout,
 			}
 
@@ -133,6 +138,7 @@ func addPHPFmtCommand(parent *cobra.Command) {
 
 	fmtCmd.Flags().BoolVar(&fmtFix, "fix", false, i18n.T("cmd.php.fmt.flag.fix"))
 	fmtCmd.Flags().BoolVar(&fmtDiff, "diff", false, i18n.T("common.flag.diff"))
+	fmtCmd.Flags().BoolVar(&fmtJSON, "json", false, i18n.T("common.flag.json"))
 
 	parent.AddCommand(fmtCmd)
 }
@@ -140,6 +146,8 @@ func addPHPFmtCommand(parent *cobra.Command) {
 var (
 	stanLevel  int
 	stanMemory string
+	stanJSON   bool
+	stanSARIF  bool
 )
 
 func addPHPStanCommand(parent *cobra.Command) {
@@ -171,6 +179,8 @@ func addPHPStanCommand(parent *cobra.Command) {
 				Dir:    cwd,
 				Level:  stanLevel,
 				Memory: stanMemory,
+				JSON:   stanJSON,
+				SARIF:  stanSARIF,
 				Output: os.Stdout,
 			}
 
@@ -190,6 +200,8 @@ func addPHPStanCommand(parent *cobra.Command) {
 
 	stanCmd.Flags().IntVar(&stanLevel, "level", 0, i18n.T("cmd.php.analyse.flag.level"))
 	stanCmd.Flags().StringVar(&stanMemory, "memory", "", i18n.T("cmd.php.analyse.flag.memory"))
+	stanCmd.Flags().BoolVar(&stanJSON, "json", false, i18n.T("common.flag.json"))
+	stanCmd.Flags().BoolVar(&stanSARIF, "sarif", false, i18n.T("common.flag.sarif"))
 
 	parent.AddCommand(stanCmd)
 }
@@ -203,6 +215,8 @@ var (
 	psalmFix      bool
 	psalmBaseline bool
 	psalmShowInfo bool
+	psalmJSON     bool
+	psalmSARIF    bool
 )
 
 func addPHPPsalmCommand(parent *cobra.Command) {
@@ -245,6 +259,8 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 				Fix:      psalmFix,
 				Baseline: psalmBaseline,
 				ShowInfo: psalmShowInfo,
+				JSON:     psalmJSON,
+				SARIF:    psalmSARIF,
 				Output:   os.Stdout,
 			}
 
@@ -261,6 +277,8 @@ func addPHPPsalmCommand(parent *cobra.Command) {
 	psalmCmd.Flags().BoolVar(&psalmFix, "fix", false, i18n.T("common.flag.fix"))
 	psalmCmd.Flags().BoolVar(&psalmBaseline, "baseline", false, i18n.T("cmd.php.psalm.flag.baseline"))
 	psalmCmd.Flags().BoolVar(&psalmShowInfo, "show-info", false, i18n.T("cmd.php.psalm.flag.show_info"))
+	psalmCmd.Flags().BoolVar(&psalmJSON, "json", false, i18n.T("common.flag.json"))
+	psalmCmd.Flags().BoolVar(&psalmSARIF, "sarif", false, i18n.T("common.flag.sarif"))
 
 	parent.AddCommand(psalmCmd)
 }
@@ -459,6 +477,7 @@ var (
 	qaQuick bool
 	qaFull  bool
 	qaFix   bool
+	qaJSON  bool
 )
 
 func addPHPQACommand(parent *cobra.Command) {
@@ -482,6 +501,7 @@ func addPHPQACommand(parent *cobra.Command) {
 				Quick: qaQuick,
 				Full:  qaFull,
 				Fix:   qaFix,
+				JSON:  qaJSON,
 			}
 			stages := GetQAStages(opts)
 
@@ -559,9 +579,10 @@ func addPHPQACommand(parent *cobra.Command) {
 		},
 	}
 
-	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, "Run quick checks only (audit, fmt, stan)")
-	qaCmd.Flags().BoolVar(&qaFull, "full", false, "Run all stages including slow checks")
-	qaCmd.Flags().BoolVar(&qaFix, "fix", false, "Auto-fix issues where possible")
+	qaCmd.Flags().BoolVar(&qaQuick, "quick", false, i18n.T("cmd.php.qa.flag.quick"))
+	qaCmd.Flags().BoolVar(&qaFull, "full", false, i18n.T("cmd.php.qa.flag.full"))
+	qaCmd.Flags().BoolVar(&qaFix, "fix", false, i18n.T("common.flag.fix"))
+	qaCmd.Flags().BoolVar(&qaJSON, "json", false, i18n.T("common.flag.json"))
 
 	parent.AddCommand(qaCmd)
 }
