@@ -185,7 +185,45 @@
 			"sync.short": "Synchronizes public service APIs with internal implementations",
 			"vm.short": "Dev environment commands",
 			"vm.not_installed": "dev environment not installed (run 'core dev install' first)",
-			"vm.not_running": "Dev environment is not running"
+			"vm.not_running": "Dev environment is not running",
+			"file_sync.short": "Sync files across repos (agent-safe)",
+			"file_sync.long": "Safely sync files or directories across multiple repositories with automatic pull/commit/push. Designed for AI agents to avoid common git pitfalls.",
+			"file_sync.flag.to": "Target repos pattern (e.g., packages/core-*)",
+			"file_sync.flag.message": "Commit message for the sync",
+			"file_sync.flag.co_author": "Co-author for commit (e.g., 'Name <email>')",
+			"file_sync.flag.dry_run": "Show what would be done without making changes",
+			"file_sync.flag.push": "Push after committing",
+			"file_sync.source": "Source",
+			"file_sync.targets": "Targets",
+			"file_sync.summary": "Summary",
+			"file_sync.no_changes": "no changes",
+			"file_sync.dry_run_mode": "(dry run)",
+			"file_sync.error.source_not_found": "Source not found: {{.Path}}",
+			"file_sync.error.no_targets": "No target repos matched the pattern",
+			"file_sync.error.no_registry": "No repos.yaml found",
+			"apply.short": "Run command or script across repos (agent-safe)",
+			"apply.long": "Run a command or script across multiple repositories with optional commit and push. Designed for AI agents to safely apply changes at scale.",
+			"apply.flag.command": "Shell command to run in each repo",
+			"apply.flag.script": "Script file to run in each repo",
+			"apply.flag.repos": "Comma-separated list of repo names (default: all)",
+			"apply.flag.commit": "Commit changes after running",
+			"apply.flag.message": "Commit message (required with --commit)",
+			"apply.flag.co_author": "Co-author for commit",
+			"apply.flag.dry_run": "Show what would be done without making changes",
+			"apply.flag.push": "Push after committing",
+			"apply.flag.continue": "Continue on error instead of stopping",
+			"apply.action": "Action",
+			"apply.targets": "Targets",
+			"apply.summary": "Summary",
+			"apply.no_changes": "no changes",
+			"apply.dry_run_mode": "(dry run)",
+			"apply.error.no_command": "Either --command or --script is required",
+			"apply.error.both_command_script": "Cannot use both --command and --script",
+			"apply.error.commit_needs_message": "--commit requires --message",
+			"apply.error.script_not_found": "Script not found: {{.Path}}",
+			"apply.error.no_repos": "No repos found",
+			"apply.error.no_registry": "No repos.yaml found",
+			"apply.error.command_failed": "Command failed (use --continue to skip failures)"
 		},
 		"docs": {
 			"short": "Documentation management",
@@ -425,6 +463,11 @@
 		},
 		"hint": {
 			"fix_deps": "Update dependencies to fix vulnerabilities"
+		},
+		"count": {
+			"succeeded": "{{.Count}} succeeded",
+			"failed": "{{.Count}} failed",
+			"skipped": "{{.Count}} skipped"
 		}
 	},
 	"error": {

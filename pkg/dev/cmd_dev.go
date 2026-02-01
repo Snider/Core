@@ -75,6 +75,10 @@ func AddDevCommands(root *cli.Command) {
 	addPushCommand(devCmd)
 	addPullCommand(devCmd)
 
+	// Safe git operations for AI agents
+	addFileSyncCommand(devCmd)
+	addApplyCommand(devCmd)
+
 	// GitHub integration
 	addIssuesCommand(devCmd)
 	addReviewsCommand(devCmd)
