@@ -6,10 +6,15 @@ import "fmt"
 type Region rune
 
 const (
+	// RegionHeader is the top region of the layout.
 	RegionHeader  Region = 'H'
+	// RegionLeft is the left sidebar region.
 	RegionLeft    Region = 'L'
+	// RegionContent is the main content region.
 	RegionContent Region = 'C'
+	// RegionRight is the right sidebar region.
 	RegionRight   Region = 'R'
+	// RegionFooter is the bottom region of the layout.
 	RegionFooter  Region = 'F'
 )
 
@@ -37,6 +42,7 @@ type Renderable interface {
 // StringBlock is a simple string that implements Renderable.
 type StringBlock string
 
+// Render returns the string content.
 func (s StringBlock) Render() string { return string(s) }
 
 // Layout creates a new layout from a variant string.
