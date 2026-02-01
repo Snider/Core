@@ -57,9 +57,39 @@ jobs:
               labelsToAdd.push('agentic');
             }
 
-            // Complexity hints
-            if (content.includes('simple') || content.includes('quick fix') || content.includes('typo')) {
+            // Complexity - from template dropdown or heuristics
+            if (body.includes('small - quick fix')) {
+              labelsToAdd.push('complexity:small');
               labelsToAdd.push('good first issue');
+            } else if (body.includes('medium - multiple files')) {
+              labelsToAdd.push('complexity:medium');
+            } else if (body.includes('large - significant')) {
+              labelsToAdd.push('complexity:large');
+            } else if (!body.includes('unknown - not sure')) {
+              // Heuristic complexity detection
+              const checklistCount = (body.match(/- \[ \]/g) || []).length;
+              const codeBlocks = (body.match(/```/g) || []).length / 2;
+              const sections = (body.match(/^##/gm) || []).length;
+              const fileRefs = (body.match(/\.(go|php|js|ts|yml|yaml|json|md)\b/g) || []).length;
+
+              const complexKeywords = ['refactor', 'rewrite', 'migration', 'breaking change', 'across repos', 'architecture'];
+              const simpleKeywords = ['simple', 'quick fix', 'typo', 'minor', 'trivial'];
+
+              const hasComplexKeyword = complexKeywords.some(k => content.includes(k));
+              const hasSimpleKeyword = simpleKeywords.some(k => content.includes(k));
+
+              let score = checklistCount * 2 + codeBlocks + sections + fileRefs;
+              score += hasComplexKeyword ? 5 : 0;
+              score -= hasSimpleKeyword ? 3 : 0;
+
+              if (hasSimpleKeyword || score <= 2) {
+                labelsToAdd.push('complexity:small');
+                labelsToAdd.push('good first issue');
+              } else if (score <= 6) {
+                labelsToAdd.push('complexity:medium');
+              } else {
+                labelsToAdd.push('complexity:large');
+              }
             }
 
             // Apply labels if any detected
