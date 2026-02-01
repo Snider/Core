@@ -554,7 +554,13 @@
 			"issues.category.triage": "Needs Triage",
 			"issues.hint.needs_response": "commented recently",
 			"issues.hint.blocked": "Waiting on dependency",
-			"issues.hint.triage": "Add labels and assignee"
+			"issues.hint.triage": "Add labels and assignee",
+			"docblock.short": "Check docstring coverage for Go code",
+			"docblock.long": "Analyse Go packages for docstring coverage on exported symbols. Checks functions, types, constants, and variables.",
+			"docblock.flag.threshold": "Minimum coverage percentage required",
+			"docblock.missing_docs": "Missing documentation:",
+			"docblock.coverage": "Docstring coverage:",
+			"docblock.use_verbose": "Run with -v to see missing docstrings"
 		},
 		"test": {
 			"short": "Run Go tests with coverage",

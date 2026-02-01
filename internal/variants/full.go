@@ -18,6 +18,7 @@
 //   - setup: Repository cloning and setup
 //   - doctor: Environment health checks
 //   - test: Test runner with coverage
+//   - qa: Quality assurance workflows
 
 package variants
 
@@ -33,6 +34,7 @@ import (
 	_ "github.com/host-uk/core/pkg/go"
 	_ "github.com/host-uk/core/pkg/php"
 	_ "github.com/host-uk/core/pkg/pkgcmd"
+	_ "github.com/host-uk/core/pkg/qa"
 	_ "github.com/host-uk/core/pkg/sdk"
 	_ "github.com/host-uk/core/pkg/security"
 	_ "github.com/host-uk/core/pkg/setup"
