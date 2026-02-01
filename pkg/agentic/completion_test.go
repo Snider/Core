@@ -1,6 +1,7 @@
 package agentic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -153,14 +154,14 @@ func TestGenerateBranchName(t *testing.T) {
 }
 
 func TestAutoCommit_Bad_NilTask(t *testing.T) {
-	err := AutoCommit(nil, nil, ".", "test message")
+	err := AutoCommit(context.TODO(), nil, ".", "test message")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "task is required")
 }
 
 func TestAutoCommit_Bad_EmptyMessage(t *testing.T) {
 	task := &Task{ID: "123", Title: "Test"}
-	err := AutoCommit(nil, task, ".", "")
+	err := AutoCommit(context.TODO(), task, ".", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "commit message is required")
 }
@@ -169,7 +170,7 @@ func TestSyncStatus_Bad_NilClient(t *testing.T) {
 	task := &Task{ID: "123", Title: "Test"}
 	update := TaskUpdate{Status: StatusInProgress}
 
-	err := SyncStatus(nil, nil, task, update)
+	err := SyncStatus(context.TODO(), nil, task, update)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "client is required")
 }
@@ -178,20 +179,20 @@ func TestSyncStatus_Bad_NilTask(t *testing.T) {
 	client := &Client{BaseURL: "http://test"}
 	update := TaskUpdate{Status: StatusInProgress}
 
-	err := SyncStatus(nil, client, nil, update)
+	err := SyncStatus(context.TODO(), client, nil, update)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "task is required")
 }
 
 func TestCreateBranch_Bad_NilTask(t *testing.T) {
-	branch, err := CreateBranch(nil, nil, ".")
+	branch, err := CreateBranch(context.TODO(), nil, ".")
 	assert.Error(t, err)
 	assert.Empty(t, branch)
 	assert.Contains(t, err.Error(), "task is required")
 }
 
 func TestCreatePR_Bad_NilTask(t *testing.T) {
-	url, err := CreatePR(nil, nil, ".", PROptions{})
+	url, err := CreatePR(context.TODO(), nil, ".", PROptions{})
 	assert.Error(t, err)
 	assert.Empty(t, url)
 	assert.Contains(t, err.Error(), "task is required")
