@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
+	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 	"github.com/host-uk/core/pkg/repos"
@@ -62,19 +63,19 @@ func runApply() error {
 
 	// Validate inputs
 	if applyCommand == "" && applyScript == "" {
-		return cli.Err("%s", i18n.T("cmd.dev.apply.error.no_command"))
+		return errors.E("dev.apply", i18n.T("cmd.dev.apply.error.no_command"), nil)
 	}
 	if applyCommand != "" && applyScript != "" {
-		return cli.Err("%s", i18n.T("cmd.dev.apply.error.both_command_script"))
+		return errors.E("dev.apply", i18n.T("cmd.dev.apply.error.both_command_script"), nil)
 	}
 	if applyCommit && applyMessage == "" {
-		return cli.Err("%s", i18n.T("cmd.dev.apply.error.commit_needs_message"))
+		return errors.E("dev.apply", i18n.T("cmd.dev.apply.error.commit_needs_message"), nil)
 	}
 
 	// Validate script exists
 	if applyScript != "" {
 		if _, err := os.Stat(applyScript); err != nil {
-			return cli.Err("%s", i18n.T("cmd.dev.apply.error.script_not_found", map[string]interface{}{"Path": applyScript}))
+			return errors.E("dev.apply", "script not found: "+applyScript, err)
 		}
 	}
 
@@ -85,7 +86,7 @@ func runApply() error {
 	}
 
 	if len(targetRepos) == 0 {
-		return cli.Err("%s", i18n.T("cmd.dev.apply.error.no_repos"))
+		return errors.E("dev.apply", i18n.T("cmd.dev.apply.error.no_repos"), nil)
 	}
 
 	// Show plan
@@ -211,12 +212,12 @@ func getApplyTargetRepos() ([]*repos.Repo, error) {
 	// Load registry
 	registryPath, err := repos.FindRegistry()
 	if err != nil {
-		return nil, cli.Wrap(err, i18n.T("cmd.dev.apply.error.no_registry"))
+		return nil, errors.E("dev.apply", "failed to find registry", err)
 	}
 
 	registry, err := repos.LoadRegistry(registryPath)
 	if err != nil {
-		return nil, cli.Wrap(err, "failed to load registry")
+		return nil, errors.E("dev.apply", "failed to load registry", err)
 	}
 
 	// If --repos specified, filter to those
@@ -272,7 +273,8 @@ func runScriptInRepo(ctx context.Context, repoPath, scriptPath string) error {
 	if isWindows() {
 		cmd = exec.CommandContext(ctx, "cmd", "/C", absScript)
 	} else {
-		cmd = exec.CommandContext(ctx, "sh", absScript)
+		// Execute script directly to honor shebang
+		cmd = exec.CommandContext(ctx, absScript)
 	}
 	cmd.Dir = repoPath
 	cmd.Stdout = os.Stdout
