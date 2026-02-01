@@ -1,0 +1,18 @@
+# CI configuration for core CLI installation
+# Used by: core setup ci
+
+# Homebrew (macOS/Linux)
+tap: host-uk/tap
+formula: core
+
+# Scoop (Windows)
+scoop_bucket: https://github.com/host-uk/scoop-bucket.git
+
+# Chocolatey (Windows)
+chocolatey_pkg: core-cli
+
+# GitHub releases (fallback for all platforms)
+repository: host-uk/core
+
+# Default version to install (use 'dev' for latest development build)
+default_version: dev

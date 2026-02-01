@@ -16,24 +16,24 @@ import (
 
 // QA command flags - comprehensive options for all agents
 var (
-	qaFix              bool
-	qaChanged          bool
-	qaAll              bool
-	qaSkip             string
-	qaOnly             string
-	qaCoverage         bool
-	qaThreshold        float64
+	qaFix               bool
+	qaChanged           bool
+	qaAll               bool
+	qaSkip              string
+	qaOnly              string
+	qaCoverage          bool
+	qaThreshold         float64
 	qaDocblockThreshold float64
-	qaJSON             bool
-	qaVerbose          bool
-	qaQuiet            bool
-	qaTimeout          time.Duration
-	qaShort            bool
-	qaRace             bool
-	qaBench            bool
-	qaFailFast         bool
-	qaMod              bool
-	qaCI               bool
+	qaJSON              bool
+	qaVerbose           bool
+	qaQuiet             bool
+	qaTimeout           time.Duration
+	qaShort             bool
+	qaRace              bool
+	qaBench             bool
+	qaFailFast          bool
+	qaMod               bool
+	qaCI                bool
 )
 
 func addGoQACommand(parent *cli.Command) {

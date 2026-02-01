@@ -8,25 +8,12 @@ on:
 permissions:
   contents: write
 
+env:
+  CORE_VERSION: dev
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
-          - goos: windows
-            goarch: arm64
-
     steps:
       - uses: actions/checkout@v6
 
@@ -35,24 +22,24 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Build CLI
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: '0'
+      - name: Install core CLI
         run: |
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          VERSION="dev-$(git rev-parse --short HEAD)"
-          go build -trimpath \
-            -ldflags="-s -w -X github.com/host-uk/core/pkg/cli.AppVersion=${VERSION}" \
-            -o core-${GOOS}-${GOARCH}${EXT} .
+          curl -fsSL "https://github.com/host-uk/core/releases/download/${{ env.CORE_VERSION }}/core-linux-amd64" -o /tmp/core
+          chmod +x /tmp/core
+          sudo mv /tmp/core /usr/local/bin/core
+          core --version
 
-      - name: Upload artifact
+      - name: Generate code
+        run: go generate ./pkg/updater/...
+
+      - name: Build all targets
+        run: core build --targets=linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64 --ci
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: core-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: core-*
+          name: binaries
+          path: dist/
 
   release:
     needs: build
@@ -60,17 +47,29 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: binaries
+          path: dist
 
-      - name: Generate checksums
+      - name: Prepare release files
         run: |
-          cd artifacts
-          sha256sum core-* > CHECKSUMS.txt
-          cat CHECKSUMS.txt
+          mkdir -p release
+          cp dist/*.tar.gz dist/*.zip dist/CHECKSUMS.txt release/ 2>/dev/null || true
+          # Also copy raw binaries for direct download
+          for dir in dist/*/; do
+            if [ -d "$dir" ]; then
+              platform=$(basename "$dir")
+              for bin in "$dir"*; do
+                if [ -f "$bin" ]; then
+                  name=$(basename "$bin")
+                  cp "$bin" "release/core-${platform//_/-}${name##core}"
+                fi
+              done
+            fi
+          done
+          ls -la release/
 
       - name: Delete existing dev release
         env:
@@ -91,7 +90,18 @@ jobs:
           **Commit:** ${{ github.sha }}
           **Built:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
+          ## Installation
+
+          \`\`\`bash
+          # macOS/Linux
+          curl -fsSL https://github.com/host-uk/core/releases/download/dev/core-linux-amd64 -o core
+          chmod +x core && sudo mv core /usr/local/bin/
+
+          # Or with Homebrew
+          brew tap host-uk/tap && brew install host-uk/tap/core
+          \`\`\`
+
           This is a pre-release for testing. Use tagged releases for production." \
             --prerelease \
             --target dev \
-            artifacts/*
+            release/*

@@ -32,7 +32,7 @@ func AddGitCommands(root *cli.Command) {
 	root.AddCommand(gitCmd)
 
 	// Import git commands from dev package
-	dev.AddHealthCommand(gitCmd)  // Shows repo status
+	dev.AddHealthCommand(gitCmd) // Shows repo status
 	dev.AddCommitCommand(gitCmd)
 	dev.AddPushCommand(gitCmd)
 	dev.AddPullCommand(gitCmd)
