@@ -9,6 +9,7 @@
 package qa
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -102,13 +103,22 @@ func runWatch() error {
 	cli.Print("%s %s\n", dimStyle.Render(i18n.T("cmd.qa.watch.commit")), shaPrefix)
 	cli.Blank()
 
+	// Create context with timeout for all gh commands
+	ctx, cancel := context.WithTimeout(context.Background(), watchTimeout)
+	defer cancel()
+
 	// Poll for workflow runs
-	deadline := time.Now().Add(watchTimeout)
 	pollInterval := 3 * time.Second
 	var lastStatus string
 
-	for time.Now().Before(deadline) {
-		runs, err := fetchWorkflowRunsForCommit(repoFullName, commitSha)
+	for {
+		// Check if context deadline exceeded
+		if ctx.Err() != nil {
+			cli.Blank()
+			return errors.E("qa.watch", i18n.T("cmd.qa.watch.timeout", map[string]interface{}{"Duration": watchTimeout}), nil)
+		}
+
+		runs, err := fetchWorkflowRunsForCommit(ctx, repoFullName, commitSha)
 		if err != nil {
 			return errors.Wrap(err, "qa.watch", "failed to fetch workflow runs")
 		}
@@ -166,14 +176,11 @@ func runWatch() error {
 		if allComplete {
 			cli.Blank()
 			cli.Blank()
-			return printResults(repoFullName, runs)
+			return printResults(ctx, repoFullName, runs)
 		}
 
 		time.Sleep(pollInterval)
 	}
-
-	cli.Blank()
-	return errors.E("qa.watch", i18n.T("cmd.qa.watch.timeout", map[string]interface{}{"Duration": watchTimeout}), nil)
 }
 
 // resolveRepo determines the repo to watch
@@ -258,7 +265,7 @@ func parseGitHubRepo(url string) (string, error) {
 }
 
 // fetchWorkflowRunsForCommit fetches workflow runs for a specific commit
-func fetchWorkflowRunsForCommit(repoFullName, commitSha string) ([]WorkflowRun, error) {
+func fetchWorkflowRunsForCommit(ctx context.Context, repoFullName, commitSha string) ([]WorkflowRun, error) {
 	args := []string{
 		"run", "list",
 		"--repo", repoFullName,
@@ -266,9 +273,13 @@ func fetchWorkflowRunsForCommit(repoFullName, commitSha string) ([]WorkflowRun, 
 		"--json", "databaseId,name,displayTitle,status,conclusion,headSha,url,createdAt,updatedAt",
 	}
 
-	cmd := exec.Command("gh", args...)
+	cmd := exec.CommandContext(ctx, "gh", args...)
 	output, err := cmd.Output()
 	if err != nil {
+		// Check if context was cancelled/deadline exceeded
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return nil, cli.Err("%s", strings.TrimSpace(string(exitErr.Stderr)))
 		}
@@ -284,7 +295,7 @@ func fetchWorkflowRunsForCommit(repoFullName, commitSha string) ([]WorkflowRun, 
 }
 
 // printResults prints the final results with actionable information
-func printResults(repoFullName string, runs []WorkflowRun) error {
+func printResults(ctx context.Context, repoFullName string, runs []WorkflowRun) error {
 	var failures []WorkflowRun
 	var successes []WorkflowRun
 
@@ -307,7 +318,7 @@ func printResults(repoFullName string, runs []WorkflowRun) error {
 		cli.Print("%s %s\n", errorStyle.Render(cli.Glyph(":cross:")), run.Name)
 
 		// Fetch failed job details
-		failedJob, failedStep, errorLine := fetchFailureDetails(repoFullName, run.ID)
+		failedJob, failedStep, errorLine := fetchFailureDetails(ctx, repoFullName, run.ID)
 		if failedJob != "" {
 			cli.Print("  %s Job: %s", dimStyle.Render("->"), failedJob)
 			if failedStep != "" {
@@ -333,7 +344,7 @@ func printResults(repoFullName string, runs []WorkflowRun) error {
 }
 
 // fetchFailureDetails fetches details about why a workflow failed
-func fetchFailureDetails(repoFullName string, runID int64) (jobName, stepName, errorLine string) {
+func fetchFailureDetails(ctx context.Context, repoFullName string, runID int64) (jobName, stepName, errorLine string) {
 	// Fetch jobs for this run
 	args := []string{
 		"run", "view", fmt.Sprintf("%d", runID),
@@ -341,7 +352,7 @@ func fetchFailureDetails(repoFullName string, runID int64) (jobName, stepName, e
 		"--json", "jobs",
 	}
 
-	cmd := exec.Command("gh", args...)
+	cmd := exec.CommandContext(ctx, "gh", args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return "", "", ""
@@ -378,15 +389,56 @@ func fetchFailureDetails(repoFullName string, runID int64) (jobName, stepName, e
 	}
 
 	// Try to get the error line from logs (if available)
-	errorLine = fetchErrorFromLogs(repoFullName, runID, jobName)
+	errorLine = fetchErrorFromLogs(ctx, repoFullName, runID)
 
 	return jobName, stepName, errorLine
 }
 
 // fetchErrorFromLogs attempts to extract the first error line from workflow logs
-func fetchErrorFromLogs(repoFullName string, runID int64, jobName string) string {
-	// This would require downloading and parsing logs, which can be large
-	// For now, return empty - users can follow the URL for details
-	// Future: could use `gh run view --log-failed` and parse output
+func fetchErrorFromLogs(ctx context.Context, repoFullName string, runID int64) string {
+	// Use gh run view --log-failed to get failed step logs
+	args := []string{
+		"run", "view", fmt.Sprintf("%d", runID),
+		"--repo", repoFullName,
+		"--log-failed",
+	}
+
+	cmd := exec.CommandContext(ctx, "gh", args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	// Parse output to find the first meaningful error line
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Skip common metadata/progress lines
+		lower := strings.ToLower(line)
+		if strings.HasPrefix(lower, "##[") { // GitHub Actions command markers
+			continue
+		}
+		if strings.HasPrefix(line, "Run ") || strings.HasPrefix(line, "Running ") {
+			continue
+		}
+
+		// Look for error indicators
+		if strings.Contains(lower, "error") ||
+			strings.Contains(lower, "failed") ||
+			strings.Contains(lower, "fatal") ||
+			strings.Contains(lower, "panic") ||
+			strings.Contains(line, ": ") { // Likely a file:line or key: value format
+			// Truncate long lines
+			if len(line) > 120 {
+				line = line[:117] + "..."
+			}
+			return line
+		}
+	}
+
 	return ""
 }
