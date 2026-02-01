@@ -31,7 +31,7 @@ type Medium interface {
 
 // Local is a pre-initialized medium for the local filesystem.
 // It uses "/" as root, providing unsandboxed access to the filesystem.
-// For sandboxed access, create a new local.Medium with a specific root path.
+// For sandboxed access, use NewSandboxed with a specific root path.
 var Local Medium
 
 func init() {
@@ -40,6 +40,13 @@ func init() {
 	if err != nil {
 		panic("io: failed to initialize Local medium: " + err.Error())
 	}
+}
+
+// NewSandboxed creates a new Medium sandboxed to the given root directory.
+// All file operations are restricted to paths within the root.
+// The root directory will be created if it doesn't exist.
+func NewSandboxed(root string) (Medium, error) {
+	return local.New(root)
 }
 
 // --- Helper Functions ---

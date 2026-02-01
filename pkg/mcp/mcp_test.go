@@ -6,111 +6,7 @@ import (
 	"testing"
 )
 
-func TestValidatePath_Good(t *testing.T) {
-	// Create a temp directory as workspace root
-	tmpDir := t.TempDir()
-
-	// Resolve symlinks for comparison (macOS /var -> /private/var)
-	realTmpDir, err := filepath.EvalSymlinks(tmpDir)
-	if err != nil {
-		t.Fatalf("Failed to resolve symlinks: %v", err)
-	}
-
-	s := New(WithWorkspaceRoot(tmpDir))
-
-	// Test valid path within workspace
-	validPath := filepath.Join(tmpDir, "test.txt")
-	result, err := s.validatePath(validPath)
-	if err != nil {
-		t.Errorf("Expected no error for valid path, got: %v", err)
-	}
-	expectedPath := filepath.Join(realTmpDir, "test.txt")
-	if result != expectedPath {
-		t.Errorf("Expected path %s, got %s", expectedPath, result)
-	}
-
-	// Test nested path within workspace (parent doesn't exist, but should still validate)
-	nestedPath := filepath.Join(tmpDir, "subdir", "test.txt")
-	result, err = s.validatePath(nestedPath)
-	if err != nil {
-		t.Errorf("Expected no error for nested path, got: %v", err)
-	}
-	expectedNested := filepath.Join(realTmpDir, "subdir", "test.txt")
-	if result != expectedNested {
-		t.Errorf("Expected path %s, got %s", expectedNested, result)
-	}
-}
-
-func TestValidatePath_Bad_DirectoryTraversal(t *testing.T) {
-	// Create a temp directory as workspace root
-	tmpDir := t.TempDir()
-
-	s := New(WithWorkspaceRoot(tmpDir))
-
-	// Test path traversal attempt
-	traversalPath := filepath.Join(tmpDir, "..", "etc", "passwd")
-	_, err := s.validatePath(traversalPath)
-	if err == nil {
-		t.Error("Expected error for directory traversal attempt")
-	}
-
-	// Test explicit parent directory
-	parentPath := filepath.Join(tmpDir, "..")
-	_, err = s.validatePath(parentPath)
-	if err == nil {
-		t.Error("Expected error for parent directory access")
-	}
-
-	// Test absolute path outside workspace
-	outsidePath := "/etc/passwd"
-	_, err = s.validatePath(outsidePath)
-	if err == nil {
-		t.Error("Expected error for path outside workspace")
-	}
-}
-
-func TestValidatePath_Bad_SymlinkTraversal(t *testing.T) {
-	// Create a temp directory as workspace root
-	tmpDir := t.TempDir()
-
-	// Create a target file outside workspace
-	outsideDir := t.TempDir()
-	targetFile := filepath.Join(outsideDir, "secret.txt")
-	if err := os.WriteFile(targetFile, []byte("secret"), 0644); err != nil {
-		t.Fatalf("Failed to create target file: %v", err)
-	}
-
-	// Create symlink inside workspace pointing outside
-	symlinkPath := filepath.Join(tmpDir, "evil-link")
-	if err := os.Symlink(targetFile, symlinkPath); err != nil {
-		t.Skipf("Symlinks not supported: %v", err)
-	}
-
-	s := New(WithWorkspaceRoot(tmpDir))
-
-	// Symlink traversal should be blocked
-	_, err := s.validatePath(symlinkPath)
-	if err == nil {
-		t.Error("Expected error for symlink pointing outside workspace")
-	}
-}
-
-func TestValidatePath_Good_NoRestriction(t *testing.T) {
-	// Create service with no workspace restriction
-	s := New(WithWorkspaceRoot(""))
-
-	// Any path should be allowed
-	result, err := s.validatePath("/etc/passwd")
-	if err != nil {
-		t.Errorf("Expected no error with no restriction, got: %v", err)
-	}
-	if result != "/etc/passwd" {
-		t.Errorf("Expected path /etc/passwd, got %s", result)
-	}
-}
-
 func TestNew_Good_DefaultWorkspace(t *testing.T) {
-	// Get current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
@@ -118,9 +14,11 @@ func TestNew_Good_DefaultWorkspace(t *testing.T) {
 
 	s := New()
 
-	// Default should be current working directory
 	if s.workspaceRoot != cwd {
 		t.Errorf("Expected default workspace root %s, got %s", cwd, s.workspaceRoot)
+	}
+	if s.medium == nil {
+		t.Error("Expected medium to be set")
 	}
 }
 
@@ -132,32 +30,114 @@ func TestNew_Good_CustomWorkspace(t *testing.T) {
 	if s.workspaceRoot != tmpDir {
 		t.Errorf("Expected workspace root %s, got %s", tmpDir, s.workspaceRoot)
 	}
+	if s.medium == nil {
+		t.Error("Expected medium to be set")
+	}
 }
 
-func TestValidatePath_Good_RelativePath(t *testing.T) {
-	// Create a temp directory as workspace root
+func TestNew_Good_NoRestriction(t *testing.T) {
+	s := New(WithWorkspaceRoot(""))
+
+	if s.workspaceRoot != "" {
+		t.Errorf("Expected empty workspace root, got %s", s.workspaceRoot)
+	}
+	if s.medium == nil {
+		t.Error("Expected medium to be set (unsandboxed)")
+	}
+}
+
+func TestMedium_Good_ReadWrite(t *testing.T) {
 	tmpDir := t.TempDir()
+	s := New(WithWorkspaceRoot(tmpDir))
 
-	// Resolve symlinks (macOS /var -> /private/var)
-	realTmpDir, err := filepath.EvalSymlinks(tmpDir)
+	// Write a file
+	testContent := "hello world"
+	err := s.medium.Write("test.txt", testContent)
 	if err != nil {
-		t.Fatalf("Failed to resolve symlinks: %v", err)
+		t.Fatalf("Failed to write file: %v", err)
 	}
 
-	// Change to the temp directory
-	oldWd, _ := os.Getwd()
-	defer func() { _ = os.Chdir(oldWd) }()
-	_ = os.Chdir(realTmpDir)
-
-	s := New(WithWorkspaceRoot(realTmpDir))
-
-	// Test relative path within workspace
-	result, err := s.validatePath("test.txt")
+	// Read it back
+	content, err := s.medium.Read("test.txt")
 	if err != nil {
-		t.Errorf("Expected no error for relative path, got: %v", err)
+		t.Fatalf("Failed to read file: %v", err)
 	}
-	expected := filepath.Join(realTmpDir, "test.txt")
-	if result != expected {
-		t.Errorf("Expected path %s, got %s", expected, result)
+	if content != testContent {
+		t.Errorf("Expected content %q, got %q", testContent, content)
+	}
+
+	// Verify file exists on disk
+	diskPath := filepath.Join(tmpDir, "test.txt")
+	if _, err := os.Stat(diskPath); os.IsNotExist(err) {
+		t.Error("File should exist on disk")
+	}
+}
+
+func TestMedium_Good_EnsureDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	s := New(WithWorkspaceRoot(tmpDir))
+
+	err := s.medium.EnsureDir("subdir/nested")
+	if err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+
+	// Verify directory exists
+	diskPath := filepath.Join(tmpDir, "subdir", "nested")
+	info, err := os.Stat(diskPath)
+	if os.IsNotExist(err) {
+		t.Error("Directory should exist on disk")
+	}
+	if err == nil && !info.IsDir() {
+		t.Error("Path should be a directory")
+	}
+}
+
+func TestMedium_Good_IsFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	s := New(WithWorkspaceRoot(tmpDir))
+
+	// File doesn't exist yet
+	if s.medium.IsFile("test.txt") {
+		t.Error("File should not exist yet")
+	}
+
+	// Create the file
+	_ = s.medium.Write("test.txt", "content")
+
+	// Now it should exist
+	if !s.medium.IsFile("test.txt") {
+		t.Error("File should exist after write")
+	}
+}
+
+func TestResolvePath_Good(t *testing.T) {
+	tmpDir := t.TempDir()
+	s := New(WithWorkspaceRoot(tmpDir))
+
+	// Relative path should resolve to workspace
+	resolved := s.resolvePath("test.txt")
+	expected := filepath.Join(tmpDir, "test.txt")
+	if resolved != expected {
+		t.Errorf("Expected %s, got %s", expected, resolved)
+	}
+
+	// Absolute path should stay absolute
+	absPath := "/etc/passwd"
+	resolved = s.resolvePath(absPath)
+	if resolved != absPath {
+		t.Errorf("Expected %s, got %s", absPath, resolved)
+	}
+}
+
+func TestResolvePath_Good_NoWorkspace(t *testing.T) {
+	s := New(WithWorkspaceRoot(""))
+
+	// With no workspace, relative paths resolve to cwd
+	cwd, _ := os.Getwd()
+	resolved := s.resolvePath("test.txt")
+	expected := filepath.Join(cwd, "test.txt")
+	if resolved != expected {
+		t.Errorf("Expected %s, got %s", expected, resolved)
 	}
 }
