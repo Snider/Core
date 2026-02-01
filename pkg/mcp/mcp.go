@@ -17,8 +17,8 @@ import (
 // For full GUI features, use the core-gui package.
 type Service struct {
 	server        *mcp.Server
-	workspaceRoot string     // Root directory for file operations (empty = unrestricted)
-	medium        io.Medium  // Filesystem medium for sandboxed operations
+	workspaceRoot string    // Root directory for file operations (empty = unrestricted)
+	medium        io.Medium // Filesystem medium for sandboxed operations
 }
 
 // Option configures a Service.
