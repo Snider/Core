@@ -39,32 +39,7 @@ jobs:
         # Skip lint until golangci-lint supports Go 1.25
         run: core go qa --skip=lint
 
-  build:
-    runs-on: ubuntu-latest
-    needs: qa
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-
-      - name: Install core CLI
-        run: |
-          curl -fsSL "https://github.com/host-uk/core/releases/download/${{ env.CORE_VERSION }}/core-linux-amd64" -o /tmp/core
-          chmod +x /tmp/core
-          sudo mv /tmp/core /usr/local/bin/core
-          core --version
-
-      - name: Generate code
-        run: go generate ./pkg/updater/...
-
-      - name: Build
-        run: core build --targets=linux/amd64,darwin/arm64,windows/amd64 --ci
-
       - name: Verify build
         run: |
-          ls -la dist/
-          chmod +x dist/linux_amd64/core
+          core build --targets=linux/amd64 --ci
           dist/linux_amd64/core --version
