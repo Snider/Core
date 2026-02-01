@@ -166,7 +166,9 @@ func CheckDocblockCoverage(patterns []string) (*DocblockResult, error) {
 			return !strings.HasSuffix(fi.Name(), "_test.go")
 		}, parser.ParseComments)
 		if err != nil {
-			continue // Skip unparseable directories
+			// Log parse errors but continue to check other directories
+			fmt.Fprintf(os.Stderr, "warning: failed to parse %s: %v\n", dir, err)
+			continue
 		}
 
 		for _, pkg := range pkgs {

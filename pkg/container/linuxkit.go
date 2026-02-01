@@ -206,18 +206,24 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 	}
 
 	_ = logFile.Close()
-	_ = m.state.Update(container)
+	if err := m.state.Update(container); err != nil {
+		return container, fmt.Errorf("update container state: %w", err)
+	}
 
 	return container, nil
 }
 
 // waitForExit monitors a detached process and updates state when it exits.
 func (m *LinuxKitManager) waitForExit(id string, cmd *exec.Cmd) {
-	_ = cmd.Wait()
+	err := cmd.Wait()
 
 	container, ok := m.state.Get(id)
 	if ok {
-		container.Status = StatusStopped
+		if err != nil {
+			container.Status = StatusError
+		} else {
+			container.Status = StatusStopped
+		}
 		_ = m.state.Update(container)
 	}
 }

@@ -330,6 +330,10 @@ func (s *Service) getSupportedLanguages(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input EditDiffInput) (*mcp.CallToolResult, EditDiffOutput, error) {
+	if input.OldString == "" {
+		return nil, EditDiffOutput{}, fmt.Errorf("old_string cannot be empty")
+	}
+
 	content, err := os.ReadFile(input.Path)
 	if err != nil {
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to read file: %w", err)
