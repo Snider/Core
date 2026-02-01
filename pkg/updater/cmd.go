@@ -218,4 +218,3 @@ func handleDevTagUpdate(currentVersion string) error {
 	os.Exit(0)
 	return nil
 }
-
