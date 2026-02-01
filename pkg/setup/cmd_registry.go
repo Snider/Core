@@ -39,7 +39,10 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	basePath := reg.BasePath
 	if basePath == "" {
 		// Load workspace config to see if packages_dir is set
-		wsConfig, _ := repos.LoadWorkspaceConfig(registryDir)
+		wsConfig, err := repos.LoadWorkspaceConfig(registryDir)
+		if err != nil {
+			return fmt.Errorf("failed to load workspace config: %w", err)
+		}
 		if wsConfig.PackagesDir != "" {
 			basePath = wsConfig.PackagesDir
 		} else {
@@ -47,14 +50,15 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 		}
 	}
 
-	// Resolve relative to registry location
-	if !filepath.IsAbs(basePath) {
-		basePath = filepath.Join(registryDir, basePath)
-	}
 	// Expand ~
 	if strings.HasPrefix(basePath, "~/") {
 		home, _ := os.UserHomeDir()
 		basePath = filepath.Join(home, basePath[2:])
+	}
+
+	// Resolve relative to registry location
+	if !filepath.IsAbs(basePath) {
+		basePath = filepath.Join(registryDir, basePath)
 	}
 
 	fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("target")), basePath)

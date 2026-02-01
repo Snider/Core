@@ -39,5 +39,9 @@ func LoadWorkspaceConfig(dir string) (*WorkspaceConfig, error) {
 		return nil, fmt.Errorf("failed to parse workspace config: %w", err)
 	}
 
+	if config.Version != 1 {
+		return nil, fmt.Errorf("unsupported workspace config version: %d", config.Version)
+	}
+
 	return config, nil
 }

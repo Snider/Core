@@ -52,22 +52,32 @@ func loadRegistry(registryPath string) (*repos.Registry, string, error) {
 	}
 
 	// Load workspace config to respect packages_dir
-	wsConfig, _ := repos.LoadWorkspaceConfig(registryDir)
+	wsConfig, err := repos.LoadWorkspaceConfig(registryDir)
+	if err != nil {
+		return nil, "", cli.Wrap(err, i18n.T("i18n.fail.load", "workspace config"))
+	}
+
 	basePath := registryDir
 
 	if wsConfig.PackagesDir != "" {
 		pkgDir := wsConfig.PackagesDir
+		
+		// Expand ~
+		if strings.HasPrefix(pkgDir, "~/") {
+			home, _ := os.UserHomeDir()
+			pkgDir = filepath.Join(home, pkgDir[2:])
+		}
+
 		if !filepath.IsAbs(pkgDir) {
 			pkgDir = filepath.Join(registryDir, pkgDir)
 		}
 		basePath = pkgDir
 
 		// Update repo paths if they were relative to registry
-		if reg.BasePath == "" || !filepath.IsAbs(reg.BasePath) {
-			reg.BasePath = basePath
-			for _, repo := range reg.Repos {
-				repo.Path = filepath.Join(basePath, repo.Name)
-			}
+		// This ensures consistency when packages_dir overrides the default
+		reg.BasePath = basePath
+		for _, repo := range reg.Repos {
+			repo.Path = filepath.Join(basePath, repo.Name)
 		}
 	}
 
