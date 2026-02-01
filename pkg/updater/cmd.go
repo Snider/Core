@@ -3,11 +3,7 @@ package updater
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
-	"strconv"
-	"syscall"
-	"time"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/spf13/cobra"
@@ -223,79 +219,3 @@ func handleDevTagUpdate(currentVersion string) error {
 	return nil
 }
 
-// spawnWatcher spawns a background process that watches for the current process
-// to exit, then restarts the binary with --version to confirm the update.
-func spawnWatcher() error {
-	executable, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	pid := os.Getpid()
-
-	// Spawn: core update --watch-pid=<pid>
-	cmd := exec.Command(executable, "update", "--watch-pid", strconv.Itoa(pid))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// Detach from parent process group
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
-
-	return cmd.Start()
-}
-
-// watchAndRestart waits for the given PID to exit, then restarts the binary.
-func watchAndRestart(pid int) error {
-	// Wait for the parent process to die
-	for {
-		if !isProcessRunning(pid) {
-			break
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	// Small delay to ensure file handle is released
-	time.Sleep(200 * time.Millisecond)
-
-	// Get executable path
-	executable, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	// On Unix, use exec to replace this process
-	if runtime.GOOS != "windows" {
-		return syscall.Exec(executable, []string{executable, "--version"}, os.Environ())
-	}
-
-	// On Windows, spawn new process and exit
-	cmd := exec.Command(executable, "--version")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	os.Exit(0)
-	return nil
-}
-
-// isProcessRunning checks if a process with the given PID is still running.
-func isProcessRunning(pid int) bool {
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-
-	// On Unix, FindProcess always succeeds, so we need to send signal 0
-	// to check if the process actually exists
-	if runtime.GOOS != "windows" {
-		err = process.Signal(syscall.Signal(0))
-		return err == nil
-	}
-
-	// On Windows, FindProcess returns an error if process doesn't exist
-	return true
-}
