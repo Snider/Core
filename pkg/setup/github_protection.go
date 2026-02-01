@@ -255,6 +255,16 @@ func SyncBranchProtection(repoFullName string, config *GitHubConfig, dryRun bool
 			details["allow_deletions"] = fmt.Sprintf("%v -> %v", existingDeletions, wantProtection.AllowDeletions)
 		}
 
+		// Check required status checks
+		var existingStatusChecks []string
+		if existing.RequiredStatusChecks != nil {
+			existingStatusChecks = existing.RequiredStatusChecks.Contexts
+		}
+		if !stringSliceEqual(existingStatusChecks, wantProtection.RequiredStatusChecks) {
+			needsUpdate = true
+			details["status_checks"] = fmt.Sprintf("%v -> %v", existingStatusChecks, wantProtection.RequiredStatusChecks)
+		}
+
 		if needsUpdate {
 			changes.AddWithDetails(CategoryProtection, ChangeUpdate, branch, "", details)
 			if !dryRun {

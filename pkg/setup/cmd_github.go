@@ -116,6 +116,11 @@ func runGitHubSetup() error {
 	// Determine which repos to process
 	var reposToProcess []*repos.Repo
 
+	// Reject conflicting flags
+	if ghRepo != "" && ghAll {
+		return errors.New(i18n.T("cmd.setup.github.error.conflicting_flags"))
+	}
+
 	if ghRepo != "" {
 		// Single repo mode
 		repo, ok := reg.Get(ghRepo)
@@ -159,6 +164,7 @@ func runGitHubSetup() error {
 			if err != nil {
 				cli.Print("\033[2K\r")
 				cli.Print("%s %s: %s\n", errorStyle.Render(cli.Glyph(":cross:")), repo.Name, err)
+				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
 			for _, c := range labelChanges.Changes {
@@ -172,6 +178,7 @@ func runGitHubSetup() error {
 			if err != nil {
 				cli.Print("\033[2K\r")
 				cli.Print("%s %s: %s\n", errorStyle.Render(cli.Glyph(":cross:")), repo.Name, err)
+				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
 			for _, c := range webhookChanges.Changes {
@@ -185,6 +192,7 @@ func runGitHubSetup() error {
 			if err != nil {
 				cli.Print("\033[2K\r")
 				cli.Print("%s %s: %s\n", errorStyle.Render(cli.Glyph(":cross:")), repo.Name, err)
+				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
 			for _, c := range protectionChanges.Changes {
@@ -198,6 +206,7 @@ func runGitHubSetup() error {
 			if err != nil {
 				cli.Print("\033[2K\r")
 				cli.Print("%s %s: %s\n", errorStyle.Render(cli.Glyph(":cross:")), repo.Name, err)
+				aggregate.Add(changes) // Preserve partial results
 				continue
 			}
 			for _, c := range securityChanges.Changes {

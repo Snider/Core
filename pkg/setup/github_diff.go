@@ -4,6 +4,7 @@ package setup
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
@@ -172,9 +173,14 @@ func (cs *ChangeSet) printByCategory(category ChangeCategory, title string) {
 		}
 		fmt.Println()
 
-		// Print details
-		for k, v := range c.Details {
-			fmt.Printf("      %s: %s\n", dimStyle.Render(k), v)
+		// Print details (sorted for deterministic output)
+		keys := make([]string, 0, len(c.Details))
+		for k := range c.Details {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			fmt.Printf("      %s: %s\n", dimStyle.Render(k), c.Details[k])
 		}
 	}
 }

@@ -167,10 +167,11 @@ func (c *GitHubConfig) Validate() error {
 		}
 	}
 
-	// Validate webhooks
+	// Validate webhooks (skip those with empty URLs - allows optional webhooks via env vars)
 	for name, wh := range c.Webhooks {
 		if wh.URL == "" {
-			return fmt.Errorf("webhook %q: url is required", name)
+			// Empty URL is allowed - webhook will be skipped during sync
+			continue
 		}
 		if len(wh.Events) == 0 {
 			return fmt.Errorf("webhook %q: at least one event is required", name)

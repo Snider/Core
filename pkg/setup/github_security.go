@@ -130,6 +130,22 @@ func EnableDependabotSecurityUpdates(repoFullName string) error {
 	return nil
 }
 
+// DisableDependabotSecurityUpdates disables automated Dependabot security updates.
+func DisableDependabotSecurityUpdates(repoFullName string) error {
+	parts := strings.Split(repoFullName, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid repo format: %s", repoFullName)
+	}
+
+	endpoint := fmt.Sprintf("repos/%s/%s/automated-security-fixes", parts[0], parts[1])
+	cmd := exec.Command("gh", "api", endpoint, "--method", "DELETE")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return cli.Err("%s", strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
 // UpdateSecurityAndAnalysis updates security_and_analysis settings.
 func UpdateSecurityAndAnalysis(repoFullName string, secretScanning, pushProtection bool) error {
 	parts := strings.Split(repoFullName, "/")
@@ -214,6 +230,13 @@ func SyncSecuritySettings(repoFullName string, config *GitHubConfig, dryRun bool
 			if err := EnableDependabotSecurityUpdates(repoFullName); err != nil {
 				// This might fail if alerts aren't enabled first
 				return changes, cli.Wrap(err, "failed to enable dependabot security updates")
+			}
+		}
+	} else if !wantConfig.DependabotSecurityUpdates && existing.DependabotSecurityUpdates {
+		changes.Add(CategorySecurity, ChangeDelete, "dependabot_security_updates", "disable")
+		if !dryRun {
+			if err := DisableDependabotSecurityUpdates(repoFullName); err != nil {
+				return changes, cli.Wrap(err, "failed to disable dependabot security updates")
 			}
 		}
 	} else {

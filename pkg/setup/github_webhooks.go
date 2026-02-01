@@ -204,6 +204,12 @@ func SyncWebhooks(repoFullName string, config *GitHubConfig, dryRun bool) (*Chan
 			details["events"] = fmt.Sprintf("%v -> %v", existingHook.Events, wantHook.Events)
 		}
 
+		// Check content type
+		if existingHook.Config.ContentType != wantHook.ContentType {
+			needsUpdate = true
+			details["content_type"] = fmt.Sprintf("%s -> %s", existingHook.Config.ContentType, wantHook.ContentType)
+		}
+
 		// Check active state
 		wantActive := true
 		if wantHook.Active != nil {

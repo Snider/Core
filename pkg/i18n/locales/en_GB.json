@@ -260,7 +260,8 @@
 			"github.to_delete": "To delete",
 			"github.run_without_check": "Run without --check to apply changes",
 			"github.error.not_authenticated": "GitHub CLI not authenticated. Run: gh auth login",
-			"github.error.config_not_found": "GitHub config file not found"
+			"github.error.config_not_found": "GitHub config file not found",
+			"github.error.conflicting_flags": "Cannot use --repo and --all together"
 		},
 		"test": {
 			"short": "Run Go tests with coverage"
