@@ -86,9 +86,11 @@ type DependabotAlert struct {
 		Summary     string `json:"summary"`
 		Description string `json:"description"`
 	} `json:"security_advisory"`
-	DependencyPath string `json:"dependency.manifest_path"`
-	HTMLURL        string `json:"html_url"`
-	CreatedAt      string `json:"created_at"`
+	Dependency struct {
+		ManifestPath string `json:"manifest_path"`
+	} `json:"dependency"`
+	HTMLURL   string `json:"html_url"`
+	CreatedAt string `json:"created_at"`
 }
 
 // SecretScanningAlert represents a GitHub secret scanning alert
@@ -151,11 +153,12 @@ func runMonitor() error {
 // resolveRepos determines which repos to scan
 func resolveRepos() ([]string, error) {
 	if monitorRepo != "" {
-		// Specific repo
+		// Specific repo - if fully qualified (org/repo), use as-is
 		if strings.Contains(monitorRepo, "/") {
 			return []string{monitorRepo}, nil
 		}
-		// Try to get org from current directory or use default
+		// Otherwise, try to detect org from git remote, fallback to host-uk
+		// Note: Users outside host-uk org should use fully qualified names
 		org := detectOrgFromGit()
 		if org == "" {
 			org = "host-uk"
@@ -214,7 +217,6 @@ func fetchCodeScanningAlerts(repoFullName string) []Finding {
 	args := []string{
 		"api",
 		fmt.Sprintf("repos/%s/code-scanning/alerts", repoFullName),
-		"--jq", ".[]",
 	}
 
 	cmd := exec.Command("gh", args...)
@@ -224,20 +226,9 @@ func fetchCodeScanningAlerts(repoFullName string) []Finding {
 		return nil
 	}
 
-	// Parse JSON array from output
 	var alerts []CodeScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		// Try parsing as individual JSON objects (one per line from jq)
-		lines := strings.Split(string(output), "\n")
-		for _, line := range lines {
-			if line == "" {
-				continue
-			}
-			var alert CodeScanningAlert
-			if err := json.Unmarshal([]byte(line), &alert); err == nil {
-				alerts = append(alerts, alert)
-			}
-		}
+		return nil
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -296,7 +287,7 @@ func fetchDependabotAlerts(repoFullName string) []Finding {
 			Source:    "dependabot",
 			Severity:  normalizeSeverity(alert.SecurityVulnerability.Severity),
 			Rule:      alert.SecurityAdvisory.CVEID,
-			File:      alert.DependencyPath,
+			File:      alert.Dependency.ManifestPath,
 			Line:      0,
 			Message:   fmt.Sprintf("%s: %s", alert.SecurityVulnerability.Package.Name, alert.SecurityAdvisory.Summary),
 			URL:       alert.HTMLURL,
@@ -452,8 +443,16 @@ func outputTable(findings []Finding) error {
 		byRepo[f.RepoName] = append(byRepo[f.RepoName], f)
 	}
 
+	// Sort repos for consistent output
+	repoNames := make([]string, 0, len(byRepo))
+	for repo := range byRepo {
+		repoNames = append(repoNames, repo)
+	}
+	sort.Strings(repoNames)
+
 	// Print by repo
-	for repo, repoFindings := range byRepo {
+	for _, repo := range repoNames {
+		repoFindings := byRepo[repo]
 		cli.Print("%s\n", cli.BoldStyle.Render(repo))
 		for _, f := range repoFindings {
 			sevStyle := dimStyle
@@ -488,12 +487,13 @@ func outputTable(findings []Finding) error {
 	return nil
 }
 
-// truncate truncates a string to max length
+// truncate truncates a string to max runes (Unicode-safe)
 func truncate(s string, max int) string {
-	if len(s) <= max {
+	runes := []rune(s)
+	if len(runes) <= max {
 		return s
 	}
-	return s[:max-3] + "..."
+	return string(runes[:max-3]) + "..."
 }
 
 // detectRepoFromGit detects the repo from git remote
