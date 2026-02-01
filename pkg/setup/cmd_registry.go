@@ -47,11 +47,8 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 	// Determine base path for cloning
 	basePath := reg.BasePath
 	if basePath == "" {
-		// Load workspace config to see if packages_dir is set
-		wsConfig, err := workspace.LoadConfig(registryDir)
-		if err != nil {
-			return fmt.Errorf("failed to load workspace config: %w", err)
-		}
+		// Load workspace config to see if packages_dir is set (ignore errors, fall back to default)
+		wsConfig, _ := workspace.LoadConfig(registryDir)
 		if wsConfig != nil && wsConfig.PackagesDir != "" {
 			basePath = wsConfig.PackagesDir
 		} else {
