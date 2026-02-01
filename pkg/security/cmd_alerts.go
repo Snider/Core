@@ -45,12 +45,12 @@ func runAlerts() error {
 
 	reg, err := loadRegistry(securityRegistryPath)
 	if err != nil {
-		return cli.Wrap(err, i18n.T("error.registry_not_found"))
+		return err
 	}
 
 	repoList := getReposToCheck(reg, securityRepo)
 	if len(repoList) == 0 {
-		return cli.Err(i18n.T("error.repo_not_found", map[string]any{"Name": securityRepo}))
+		return cli.Err("repo not found: %s", securityRepo)
 	}
 
 	var allAlerts []AlertOutput
@@ -114,10 +114,10 @@ func runAlerts() error {
 				if alert.State != "open" {
 					continue
 				}
-				summary.Add("high") // Secrets are always high severity
 				if !filterBySeverity("high", securitySeverity) {
 					continue
 				}
+				summary.Add("high") // Secrets are always high severity
 				allAlerts = append(allAlerts, AlertOutput{
 					Repo:     repo.Name,
 					Severity: "high",
@@ -174,12 +174,12 @@ func fetchDependabotAlerts(repoFullName string) ([]DependabotAlert, error) {
 	endpoint := fmt.Sprintf("repos/%s/dependabot/alerts?state=open", repoFullName)
 	output, err := runGHAPI(endpoint)
 	if err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, fmt.Sprintf("fetch dependabot alerts for %s", repoFullName))
 	}
 
 	var alerts []DependabotAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, fmt.Sprintf("parse dependabot alerts for %s", repoFullName))
 	}
 	return alerts, nil
 }
@@ -188,12 +188,12 @@ func fetchCodeScanningAlerts(repoFullName string) ([]CodeScanningAlert, error) {
 	endpoint := fmt.Sprintf("repos/%s/code-scanning/alerts?state=open", repoFullName)
 	output, err := runGHAPI(endpoint)
 	if err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, fmt.Sprintf("fetch code-scanning alerts for %s", repoFullName))
 	}
 
 	var alerts []CodeScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, fmt.Sprintf("parse code-scanning alerts for %s", repoFullName))
 	}
 	return alerts, nil
 }
@@ -202,12 +202,12 @@ func fetchSecretScanningAlerts(repoFullName string) ([]SecretScanningAlert, erro
 	endpoint := fmt.Sprintf("repos/%s/secret-scanning/alerts?state=open", repoFullName)
 	output, err := runGHAPI(endpoint)
 	if err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, fmt.Sprintf("fetch secret-scanning alerts for %s", repoFullName))
 	}
 
 	var alerts []SecretScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, fmt.Sprintf("parse secret-scanning alerts for %s", repoFullName))
 	}
 	return alerts, nil
 }

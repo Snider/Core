@@ -8,10 +8,6 @@ import (
 	"github.com/host-uk/core/pkg/i18n"
 )
 
-var (
-	depsVulnerable bool
-)
-
 func addDepsCommand(parent *cli.Command) {
 	cmd := &cli.Command{
 		Use:   "deps",
@@ -25,7 +21,6 @@ func addDepsCommand(parent *cli.Command) {
 	cmd.Flags().StringVar(&securityRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	cmd.Flags().StringVar(&securityRepo, "repo", "", i18n.T("cmd.security.flag.repo"))
 	cmd.Flags().StringVar(&securitySeverity, "severity", "", i18n.T("cmd.security.flag.severity"))
-	cmd.Flags().BoolVar(&depsVulnerable, "vulnerable", false, i18n.T("cmd.security.deps.flag.vulnerable"))
 	cmd.Flags().BoolVar(&securityJSON, "json", false, i18n.T("common.flag.json"))
 
 	parent.AddCommand(cmd)
@@ -51,12 +46,12 @@ func runDeps() error {
 
 	reg, err := loadRegistry(securityRegistryPath)
 	if err != nil {
-		return cli.Wrap(err, i18n.T("error.registry_not_found"))
+		return err
 	}
 
 	repoList := getReposToCheck(reg, securityRepo)
 	if len(repoList) == 0 {
-		return cli.Err(i18n.T("error.repo_not_found", map[string]any{"Name": securityRepo}))
+		return cli.Err("repo not found: %s", securityRepo)
 	}
 
 	var allAlerts []DepAlert

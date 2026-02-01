@@ -36,13 +36,9 @@ func AddSecurityCommands(root *cli.Command) {
 
 // DependabotAlert represents a Dependabot vulnerability alert.
 type DependabotAlert struct {
-	Number    int    `json:"number"`
-	State     string `json:"state"`
-	Severity  string `json:"security_advisory.severity"`
-	Package   string `json:"dependency.package.name"`
-	Ecosystem string `json:"dependency.package.ecosystem"`
-	Manifest  string `json:"dependency.manifest_path"`
-	Advisory  struct {
+	Number   int    `json:"number"`
+	State    string `json:"state"`
+	Advisory struct {
 		Severity    string `json:"severity"`
 		CVEID       string `json:"cve_id"`
 		Summary     string `json:"summary"`
@@ -107,14 +103,22 @@ type SecretScanningAlert struct {
 // loadRegistry loads the repository registry.
 func loadRegistry(registryPath string) (*repos.Registry, error) {
 	if registryPath != "" {
-		return repos.LoadRegistry(registryPath)
+		reg, err := repos.LoadRegistry(registryPath)
+		if err != nil {
+			return nil, cli.Wrap(err, "load registry")
+		}
+		return reg, nil
 	}
 
 	path, err := repos.FindRegistry()
 	if err != nil {
-		return nil, err
+		return nil, cli.Wrap(err, "find registry")
 	}
-	return repos.LoadRegistry(path)
+	reg, err := repos.LoadRegistry(path)
+	if err != nil {
+		return nil, cli.Wrap(err, "load registry")
+	}
+	return reg, nil
 }
 
 // checkGH verifies gh CLI is available.
@@ -140,7 +144,7 @@ func runGHAPI(endpoint string) ([]byte, error) {
 				return nil, fmt.Errorf("access denied (check token permissions)")
 			}
 		}
-		return nil, err
+		return nil, cli.Wrap(err, "run gh api")
 	}
 	return output, nil
 }
@@ -209,9 +213,11 @@ type AlertSummary struct {
 	High     int
 	Medium   int
 	Low      int
+	Unknown  int
 	Total    int
 }
 
+// Add increments summary counters for the provided severity.
 func (s *AlertSummary) Add(severity string) {
 	s.Total++
 	switch strings.ToLower(severity) {
@@ -223,9 +229,12 @@ func (s *AlertSummary) Add(severity string) {
 		s.Medium++
 	case "low":
 		s.Low++
+	default:
+		s.Unknown++
 	}
 }
 
+// String renders a human-readable summary of alert counts.
 func (s *AlertSummary) String() string {
 	parts := []string{}
 	if s.Critical > 0 {
@@ -239,6 +248,9 @@ func (s *AlertSummary) String() string {
 	}
 	if s.Low > 0 {
 		parts = append(parts, cli.DimStyle.Render(fmt.Sprintf("%d low", s.Low)))
+	}
+	if s.Unknown > 0 {
+		parts = append(parts, cli.DimStyle.Render(fmt.Sprintf("%d unknown", s.Unknown)))
 	}
 	if len(parts) == 0 {
 		return cli.SuccessStyle.Render("No alerts")

@@ -42,12 +42,12 @@ func runSecrets() error {
 
 	reg, err := loadRegistry(securityRegistryPath)
 	if err != nil {
-		return cli.Wrap(err, i18n.T("error.registry_not_found"))
+		return err
 	}
 
 	repoList := getReposToCheck(reg, securityRepo)
 	if len(repoList) == 0 {
-		return cli.Err(i18n.T("error.repo_not_found", map[string]any{"Name": securityRepo}))
+		return cli.Err("repo not found: %s", securityRepo)
 	}
 
 	var allAlerts []SecretAlert
@@ -62,9 +62,10 @@ func runSecrets() error {
 		}
 
 		for _, alert := range alerts {
-			if alert.State == "open" {
-				openCount++
+			if alert.State != "open" {
+				continue
 			}
+			openCount++
 
 			secretAlert := SecretAlert{
 				Repo:           repo.Name,
@@ -97,12 +98,8 @@ func runSecrets() error {
 		return nil
 	}
 
-	// Print table - only show open alerts by default
+	// Print table
 	for _, alert := range allAlerts {
-		if alert.State != "open" {
-			continue
-		}
-
 		bypassed := ""
 		if alert.PushProtection {
 			bypassed = cli.WarningStyle.Render(" (push protection bypassed)")
