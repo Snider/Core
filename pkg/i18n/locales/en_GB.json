@@ -237,7 +237,31 @@
 			"bootstrap_mode": "Bootstrap mode (no repos.yaml found)",
 			"nothing_to_clone": "Nothing to clone.",
 			"wizard.select_packages": "Select packages to clone",
-			"wizard.what_to_do": "What would you like to do?"
+			"wizard.what_to_do": "What would you like to do?",
+			"github.short": "Configure GitHub repos with org standards",
+			"github.long": "Configure GitHub repositories with organisation standards including labels, webhooks, branch protection, and security settings.",
+			"github.flag.repo": "Specific repo to setup",
+			"github.flag.all": "Setup all repos in registry",
+			"github.flag.labels": "Only sync labels",
+			"github.flag.webhooks": "Only sync webhooks",
+			"github.flag.protection": "Only sync branch protection",
+			"github.flag.security": "Only sync security settings",
+			"github.flag.check": "Dry-run: show what would change",
+			"github.flag.config": "Path to github.yaml config",
+			"github.dry_run_mode": "(dry run) no changes will be made",
+			"github.no_repos_specified": "No repos specified.",
+			"github.usage_hint": "Use --repo <name> for a single repo, or --all for all repos",
+			"github.no_changes": "no changes needed",
+			"github.repos_checked": "Repos checked",
+			"github.repos_with_changes": "Repos with changes",
+			"github.all_up_to_date": "All repos are up to date",
+			"github.to_create": "To create",
+			"github.to_update": "To update",
+			"github.to_delete": "To delete",
+			"github.run_without_check": "Run without --check to apply changes",
+			"github.error.not_authenticated": "GitHub CLI not authenticated. Run: gh auth login",
+			"github.error.config_not_found": "GitHub config file not found",
+			"github.error.conflicting_flags": "Cannot use --repo and --all together"
 		},
 		"test": {
 			"short": "Run Go tests with coverage"
@@ -261,12 +285,15 @@
 			"fix": "Fix:",
 			"install": "Install:",
 			"summary": "Summary:",
-			"setup": "Setup:"
+			"setup": "Setup:",
+			"config": "Config:",
+			"repo": "Repo:"
 		},
 		"flag": {
 			"fix": "Auto-fix issues where possible",
 			"diff": "Show diff of changes",
-			"json": "Output as JSON"
+			"json": "Output as JSON",
+			"verbose": "Show detailed output"
 		},
 		"progress": {
 			"running": "Running {{.Task}}...",

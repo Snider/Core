@@ -12,6 +12,7 @@ var (
 	repoNameStyle = cli.RepoStyle
 	successStyle  = cli.SuccessStyle
 	errorStyle    = cli.ErrorStyle
+	warningStyle  = cli.WarningStyle
 	dimStyle      = cli.DimStyle
 )
 
@@ -53,5 +54,6 @@ func initSetupFlags() {
 // AddSetupCommand adds the 'setup' command to the given parent command.
 func AddSetupCommand(root *cobra.Command) {
 	initSetupFlags()
+	addGitHubCommand(setupCmd)
 	root.AddCommand(setupCmd)
 }
