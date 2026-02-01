@@ -4,9 +4,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/host-uk/core/internal/cmd/workspace"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/workspace"
 	"github.com/spf13/cobra"
 )
 

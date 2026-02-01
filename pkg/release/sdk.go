@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/host-uk/core/pkg/sdk"
+	"github.com/host-uk/core/internal/cmd/sdk"
 )
 
 // SDKRelease holds the result of an SDK release.

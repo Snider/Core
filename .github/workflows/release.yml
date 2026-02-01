@@ -30,7 +30,7 @@ jobs:
           core --version
 
       - name: Generate code
-        run: go generate ./pkg/updater/...
+        run: go generate ./internal/cmd/updater/...
 
       - name: Build all targets
         run: core build --targets=linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64 --ci

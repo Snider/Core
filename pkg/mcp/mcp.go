@@ -9,17 +9,52 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // Service provides a lightweight MCP server with file operations only.
 // For full GUI features, use the core-gui package.
 type Service struct {
-	server *mcp.Server
+	server        *mcp.Server
+	workspaceRoot string    // Root directory for file operations (empty = unrestricted)
+	medium        io.Medium // Filesystem medium for sandboxed operations
+}
+
+// Option configures a Service.
+type Option func(*Service) error
+
+// WithWorkspaceRoot restricts file operations to the given directory.
+// All paths are validated to be within this directory.
+// An empty string disables the restriction (not recommended).
+func WithWorkspaceRoot(root string) Option {
+	return func(s *Service) error {
+		if root == "" {
+			// Explicitly disable restriction - use unsandboxed global
+			s.workspaceRoot = ""
+			s.medium = io.Local
+			return nil
+		}
+		// Create sandboxed medium for this workspace
+		abs, err := filepath.Abs(root)
+		if err != nil {
+			return fmt.Errorf("invalid workspace root: %w", err)
+		}
+		m, err := io.NewSandboxed(abs)
+		if err != nil {
+			return fmt.Errorf("failed to create workspace medium: %w", err)
+		}
+		s.workspaceRoot = abs
+		s.medium = m
+		return nil
+	}
 }
 
 // New creates a new MCP service with file operations.
-func New() *Service {
+// By default, restricts file access to the current working directory.
+// Use WithWorkspaceRoot("") to disable restrictions (not recommended).
+// Returns an error if initialization fails.
+func New(opts ...Option) (*Service, error) {
 	impl := &mcp.Implementation{
 		Name:    "core-cli",
 		Version: "0.1.0",
@@ -27,8 +62,28 @@ func New() *Service {
 
 	server := mcp.NewServer(impl, nil)
 	s := &Service{server: server}
+
+	// Default to current working directory with sandboxed medium
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get working directory: %w", err)
+	}
+	s.workspaceRoot = cwd
+	m, err := io.NewSandboxed(cwd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sandboxed medium: %w", err)
+	}
+	s.medium = m
+
+	// Apply options
+	for _, opt := range opts {
+		if err := opt(s); err != nil {
+			return nil, fmt.Errorf("failed to apply option: %w", err)
+		}
+	}
+
 	s.registerTools()
-	return s
+	return s, nil
 }
 
 // registerTools adds file operation tools to the MCP server.
@@ -223,31 +278,33 @@ type EditDiffOutput struct {
 // Tool handlers
 
 func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input ReadFileInput) (*mcp.CallToolResult, ReadFileOutput, error) {
-	content, err := os.ReadFile(input.Path)
+	content, err := s.medium.Read(input.Path)
 	if err != nil {
 		return nil, ReadFileOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 	return nil, ReadFileOutput{
-		Content:  string(content),
+		Content:  content,
 		Language: detectLanguageFromPath(input.Path),
 		Path:     input.Path,
 	}, nil
 }
 
 func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input WriteFileInput) (*mcp.CallToolResult, WriteFileOutput, error) {
-	dir := filepath.Dir(input.Path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, WriteFileOutput{}, fmt.Errorf("failed to create directory: %w", err)
-	}
-	err := os.WriteFile(input.Path, []byte(input.Content), 0644)
-	if err != nil {
+	// Medium.Write creates parent directories automatically
+	if err := s.medium.Write(input.Path, input.Content); err != nil {
 		return nil, WriteFileOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil, WriteFileOutput{Success: true, Path: input.Path}, nil
 }
 
 func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, input ListDirectoryInput) (*mcp.CallToolResult, ListDirectoryOutput, error) {
-	entries, err := os.ReadDir(input.Path)
+	// For directory listing, we need to use the underlying filesystem
+	// The Medium interface doesn't have a list method, so we validate and use os.ReadDir
+	path, err := s.resolvePath(input.Path)
+	if err != nil {
+		return nil, ListDirectoryOutput{}, err
+	}
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, ListDirectoryOutput{}, fmt.Errorf("failed to list directory: %w", err)
 	}
@@ -269,31 +326,51 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest, input CreateDirectoryInput) (*mcp.CallToolResult, CreateDirectoryOutput, error) {
-	err := os.MkdirAll(input.Path, 0755)
-	if err != nil {
+	if err := s.medium.EnsureDir(input.Path); err != nil {
 		return nil, CreateDirectoryOutput{}, fmt.Errorf("failed to create directory: %w", err)
 	}
 	return nil, CreateDirectoryOutput{Success: true, Path: input.Path}, nil
 }
 
 func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, input DeleteFileInput) (*mcp.CallToolResult, DeleteFileOutput, error) {
-	err := os.Remove(input.Path)
+	// Medium interface doesn't have delete, use resolved path with os.Remove
+	path, err := s.resolvePath(input.Path)
 	if err != nil {
+		return nil, DeleteFileOutput{}, err
+	}
+	if err := os.Remove(path); err != nil {
 		return nil, DeleteFileOutput{}, fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil, DeleteFileOutput{Success: true, Path: input.Path}, nil
 }
 
 func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, input RenameFileInput) (*mcp.CallToolResult, RenameFileOutput, error) {
-	err := os.Rename(input.OldPath, input.NewPath)
+	// Medium interface doesn't have rename, use resolved paths with os.Rename
+	oldPath, err := s.resolvePath(input.OldPath)
 	if err != nil {
+		return nil, RenameFileOutput{}, err
+	}
+	newPath, err := s.resolvePath(input.NewPath)
+	if err != nil {
+		return nil, RenameFileOutput{}, err
+	}
+	if err := os.Rename(oldPath, newPath); err != nil {
 		return nil, RenameFileOutput{}, fmt.Errorf("failed to rename file: %w", err)
 	}
 	return nil, RenameFileOutput{Success: true, OldPath: input.OldPath, NewPath: input.NewPath}, nil
 }
 
 func (s *Service) fileExists(ctx context.Context, req *mcp.CallToolRequest, input FileExistsInput) (*mcp.CallToolResult, FileExistsOutput, error) {
-	info, err := os.Stat(input.Path)
+	exists := s.medium.IsFile(input.Path)
+	if exists {
+		return nil, FileExistsOutput{Exists: true, IsDir: false, Path: input.Path}, nil
+	}
+	// Check if it's a directory
+	path, err := s.resolvePath(input.Path)
+	if err != nil {
+		return nil, FileExistsOutput{}, err
+	}
+	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return nil, FileExistsOutput{Exists: false, IsDir: false, Path: input.Path}, nil
 	}
@@ -334,30 +411,28 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 		return nil, EditDiffOutput{}, fmt.Errorf("old_string cannot be empty")
 	}
 
-	content, err := os.ReadFile(input.Path)
+	content, err := s.medium.Read(input.Path)
 	if err != nil {
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	fileContent := string(content)
 	count := 0
 
 	if input.ReplaceAll {
-		count = strings.Count(fileContent, input.OldString)
+		count = strings.Count(content, input.OldString)
 		if count == 0 {
 			return nil, EditDiffOutput{}, fmt.Errorf("old_string not found in file")
 		}
-		fileContent = strings.ReplaceAll(fileContent, input.OldString, input.NewString)
+		content = strings.ReplaceAll(content, input.OldString, input.NewString)
 	} else {
-		if !strings.Contains(fileContent, input.OldString) {
+		if !strings.Contains(content, input.OldString) {
 			return nil, EditDiffOutput{}, fmt.Errorf("old_string not found in file")
 		}
-		fileContent = strings.Replace(fileContent, input.OldString, input.NewString, 1)
+		content = strings.Replace(content, input.OldString, input.NewString, 1)
 		count = 1
 	}
 
-	err = os.WriteFile(input.Path, []byte(fileContent), 0644)
-	if err != nil {
+	if err := s.medium.Write(input.Path, content); err != nil {
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -366,6 +441,73 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 		Success:      true,
 		Replacements: count,
 	}, nil
+}
+
+// resolvePath converts a relative path to absolute using the workspace root.
+// For operations not covered by Medium interface, this provides the full path.
+// Returns an error if the path is outside the workspace root.
+func (s *Service) resolvePath(path string) (string, error) {
+	if s.workspaceRoot == "" {
+		// Unrestricted mode
+		if filepath.IsAbs(path) {
+			return filepath.Clean(path), nil
+		}
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			return "", fmt.Errorf("invalid path: %w", err)
+		}
+		return abs, nil
+	}
+
+	var absPath string
+	if filepath.IsAbs(path) {
+		absPath = filepath.Clean(path)
+	} else {
+		absPath = filepath.Join(s.workspaceRoot, path)
+	}
+
+	// Resolve symlinks for security
+	resolvedRoot, err := filepath.EvalSymlinks(s.workspaceRoot)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve workspace root: %w", err)
+	}
+
+	// Build boundary-aware prefix
+	rootWithSep := resolvedRoot
+	if !strings.HasSuffix(rootWithSep, string(filepath.Separator)) {
+		rootWithSep += string(filepath.Separator)
+	}
+
+	// Check if path exists to resolve symlinks
+	if _, err := os.Lstat(absPath); err == nil {
+		resolvedPath, err := filepath.EvalSymlinks(absPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve path: %w", err)
+		}
+		if resolvedPath != resolvedRoot && !strings.HasPrefix(resolvedPath, rootWithSep) {
+			return "", fmt.Errorf("path outside workspace: %s", path)
+		}
+		return resolvedPath, nil
+	}
+
+	// Path doesn't exist - verify parent directory
+	parentDir := filepath.Dir(absPath)
+	if _, err := os.Lstat(parentDir); err == nil {
+		resolvedParent, err := filepath.EvalSymlinks(parentDir)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve parent: %w", err)
+		}
+		if resolvedParent != resolvedRoot && !strings.HasPrefix(resolvedParent, rootWithSep) {
+			return "", fmt.Errorf("path outside workspace: %s", path)
+		}
+	}
+
+	// Verify the cleaned path is within workspace
+	if absPath != s.workspaceRoot && !strings.HasPrefix(absPath, rootWithSep) {
+		return "", fmt.Errorf("path outside workspace: %s", path)
+	}
+
+	return absPath, nil
 }
 
 // detectLanguageFromPath maps file extensions to language IDs.

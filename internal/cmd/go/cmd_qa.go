@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/host-uk/core/internal/cmd/qa"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/qa"
 )
 
 // QA command flags - comprehensive options for all agents
