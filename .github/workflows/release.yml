@@ -53,7 +53,7 @@ jobs:
             -o core-${GOOS}-${GOARCH}${EXT} .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: core-${{ matrix.goos }}-${{ matrix.goarch }}
           path: core-*
