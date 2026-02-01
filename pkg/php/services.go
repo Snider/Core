@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/host-uk/core/pkg/cli"
@@ -120,10 +119,8 @@ func (s *baseService) startProcess(ctx context.Context, cmdName string, args []s
 	s.cmd.Stderr = logFile
 	s.cmd.Env = append(os.Environ(), env...)
 
-	// Set process group for clean shutdown
-	s.cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
+	// Set platform-specific process attributes for clean shutdown
+	setSysProcAttr(s.cmd)
 
 	if err := s.cmd.Start(); err != nil {
 		logFile.Close()
@@ -159,13 +156,8 @@ func (s *baseService) stopProcess() error {
 		return nil
 	}
 
-	// Send SIGTERM to process group
-	pgid, err := syscall.Getpgid(s.cmd.Process.Pid)
-	if err == nil {
-		syscall.Kill(-pgid, syscall.SIGTERM)
-	} else {
-		s.cmd.Process.Signal(syscall.SIGTERM)
-	}
+	// Send termination signal to process (group on Unix)
+	signalProcessGroup(s.cmd, termSignal())
 
 	// Wait for graceful shutdown with timeout
 	done := make(chan struct{})
@@ -179,11 +171,7 @@ func (s *baseService) stopProcess() error {
 		// Process exited gracefully
 	case <-time.After(5 * time.Second):
 		// Force kill
-		if pgid, err := syscall.Getpgid(s.cmd.Process.Pid); err == nil {
-			syscall.Kill(-pgid, syscall.SIGKILL)
-		} else {
-			s.cmd.Process.Kill()
-		}
+		signalProcessGroup(s.cmd, killSignal())
 	}
 
 	s.running = false
