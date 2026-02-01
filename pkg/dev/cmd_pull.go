@@ -15,8 +15,8 @@ var (
 	pullAll          bool
 )
 
-// addPullCommand adds the 'pull' command to the given parent command.
-func addPullCommand(parent *cli.Command) {
+// AddPullCommand adds the 'pull' command to the given parent command.
+func AddPullCommand(parent *cli.Command) {
 	pullCmd := &cli.Command{
 		Use:   "pull",
 		Short: i18n.T("cmd.dev.pull.short"),

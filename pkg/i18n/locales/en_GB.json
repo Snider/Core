@@ -346,6 +346,10 @@
 			"install_macos": "brew install git gh php composer node pnpm docker",
 			"ssh_missing": "SSH key missing - run: ssh-keygen && gh ssh-key add"
 		},
+		"git": {
+			"short": "Git workflow commands",
+			"long": "Git workflow commands for managing repositories. Includes status, commit, push, pull operations and safe multi-repo commands for AI agents."
+		},
 		"go": {
 			"short": "Go development tools",
 			"long": "Go development tools including testing, formatting, linting, and module management.",

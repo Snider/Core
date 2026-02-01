@@ -20,8 +20,8 @@ var (
 	workRegistryPath string
 )
 
-// addWorkCommand adds the 'work' command to the given parent command.
-func addWorkCommand(parent *cli.Command) {
+// AddWorkCommand adds the 'work' command to the given parent command.
+func AddWorkCommand(parent *cli.Command) {
 	workCmd := &cli.Command{
 		Use:   "work",
 		Short: i18n.T("cmd.dev.work.short"),
@@ -342,5 +342,3 @@ func claudeEditCommit(ctx context.Context, repoPath, repoName, registryPath stri
 
 	return cmd.Run()
 }
-
-

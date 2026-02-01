@@ -17,8 +17,8 @@ var (
 	healthVerbose      bool
 )
 
-// addHealthCommand adds the 'health' command to the given parent command.
-func addHealthCommand(parent *cli.Command) {
+// AddHealthCommand adds the 'health' command to the given parent command.
+func AddHealthCommand(parent *cli.Command) {
 	healthCmd := &cli.Command{
 		Use:   "health",
 		Short: i18n.T("cmd.dev.health.short"),
