@@ -32,6 +32,7 @@ var (
 	applyDryRun   bool
 	applyPush     bool
 	applyContinue bool // Continue on error
+	applyYes      bool // Skip confirmation prompt
 )
 
 // AddApplyCommand adds the 'apply' command to dev.
@@ -54,6 +55,7 @@ func AddApplyCommand(parent *cli.Command) {
 	applyCmd.Flags().BoolVar(&applyDryRun, "dry-run", false, i18n.T("cmd.dev.apply.flag.dry_run"))
 	applyCmd.Flags().BoolVar(&applyPush, "push", false, i18n.T("cmd.dev.apply.flag.push"))
 	applyCmd.Flags().BoolVar(&applyContinue, "continue", false, i18n.T("cmd.dev.apply.flag.continue"))
+	applyCmd.Flags().BoolVarP(&applyYes, "yes", "y", false, i18n.T("cmd.dev.apply.flag.yes"))
 
 	parent.AddCommand(applyCmd)
 }
@@ -100,6 +102,18 @@ func runApply() error {
 		cli.Print("%s\n", warningStyle.Render(i18n.T("cmd.dev.apply.dry_run_mode")))
 	}
 	cli.Blank()
+
+	// Require confirmation unless --yes or --dry-run
+	if !applyYes && !applyDryRun {
+		cli.Print("%s\n", warningStyle.Render(i18n.T("cmd.dev.apply.warning")))
+		cli.Blank()
+
+		if !cli.Confirm(i18n.T("cmd.dev.apply.confirm"), cli.Required()) {
+			cli.Print("%s\n", dimStyle.Render(i18n.T("cmd.dev.apply.cancelled")))
+			return nil
+		}
+		cli.Blank()
+	}
 
 	var succeeded, skipped, failed int
 
