@@ -86,7 +86,7 @@ func RunDocblockCheck(paths []string, threshold float64, verbose, jsonOutput boo
 		}
 		fmt.Println(string(data))
 		if !result.Passed {
-			os.Exit(1)
+			return cli.Err("docblock coverage %.1f%% below threshold %.1f%%", result.Coverage, threshold)
 		}
 		return nil
 	}
@@ -146,8 +146,7 @@ func RunDocblockCheck(paths []string, threshold float64, verbose, jsonOutput boo
 		}
 	}
 
-	os.Exit(1)
-	return nil
+	return cli.Err("docblock coverage %.1f%% below threshold %.1f%%", result.Coverage, threshold)
 }
 
 // CheckDocblockCoverage analyzes Go packages for docblock coverage.

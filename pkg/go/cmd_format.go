@@ -38,6 +38,11 @@ func addGoFmtCommand(parent *cli.Command) {
 				}
 			}
 
+			// Validate flag combinations
+			if fmtCheck && fmtFix {
+				return cli.Err("--check and --fix are mutually exclusive")
+			}
+
 			fmtArgs := []string{}
 			if fmtFix {
 				fmtArgs = append(fmtArgs, "-w")
@@ -60,8 +65,9 @@ func addGoFmtCommand(parent *cli.Command) {
 
 			// For --check mode, capture output to detect unformatted files
 			if fmtCheck {
-				output, err := execCmd.Output()
+				output, err := execCmd.CombinedOutput()
 				if err != nil {
+					os.Stderr.Write(output)
 					return err
 				}
 				if len(output) > 0 {
