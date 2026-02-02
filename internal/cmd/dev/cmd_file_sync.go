@@ -9,7 +9,6 @@ package dev
 
 import (
 	"context"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -62,25 +61,14 @@ func runFileSync(source string) error {
 		return log.E("dev.sync", "path traversal not allowed", nil)
 	}
 
-	// Validate source exists
-	sourceInfo, err := os.Stat(source) // Keep os.Stat for local source check or use coreio? coreio.Local.IsFile is bool.
-	// If source is local file on disk (not in medium), we can use os.Stat.
-	// But concept is everything is via Medium?
-	// User is running CLI on host. `source` is relative to CWD.
-	// coreio.Local uses absolute path or relative to root (which is "/" by default).
-	// So coreio.Local works.
-	if !coreio.Local.IsFile(source) {
-		// Might be directory
-		// IsFile returns false for directory.
+	// Convert to absolute path for io.Local
+	absSource, err := filepath.Abs(source)
+	if err != nil {
+		return log.E("dev.sync", "failed to resolve source path", err)
 	}
-	// Let's rely on os.Stat for initial source check to distinguish dir vs file easily if coreio doesn't expose Stat.
-	// coreio doesn't expose Stat.
 
-	// Check using standard os for source determination as we are outside strict sandbox for input args potentially?
-	// But we should use coreio where possible.
-	// coreio.Local.List worked for dirs.
-	// Let's stick to os.Stat for source properties finding as typically allowed for CLI args.
-
+	// Validate source exists using io.Local.Stat
+	sourceInfo, err := coreio.Local.Stat(absSource)
 	if err != nil {
 		return log.E("dev.sync", i18n.T("cmd.dev.file_sync.error.source_not_found", map[string]interface{}{"Path": source}), err)
 	}

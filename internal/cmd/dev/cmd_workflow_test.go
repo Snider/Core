@@ -1,28 +1,29 @@
 package dev
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 func TestFindWorkflows_Good(t *testing.T) {
 	// Create a temp directory with workflow files
 	tmpDir := t.TempDir()
 	workflowsDir := filepath.Join(tmpDir, ".github", "workflows")
-	if err := os.MkdirAll(workflowsDir, 0755); err != nil {
+	if err := io.Local.EnsureDir(workflowsDir); err != nil {
 		t.Fatalf("Failed to create workflows dir: %v", err)
 	}
 
 	// Create some workflow files
 	for _, name := range []string{"qa.yml", "tests.yml", "codeql.yaml"} {
-		if err := os.WriteFile(filepath.Join(workflowsDir, name), []byte("name: Test"), 0644); err != nil {
+		if err := io.Local.Write(filepath.Join(workflowsDir, name), "name: Test"); err != nil {
 			t.Fatalf("Failed to create workflow file: %v", err)
 		}
 	}
 
 	// Create a non-workflow file (should be ignored)
-	if err := os.WriteFile(filepath.Join(workflowsDir, "readme.md"), []byte("# Workflows"), 0644); err != nil {
+	if err := io.Local.Write(filepath.Join(workflowsDir, "readme.md"), "# Workflows"); err != nil {
 		t.Fatalf("Failed to create readme file: %v", err)
 	}
 
@@ -57,12 +58,12 @@ func TestFindWorkflows_NoWorkflowsDir(t *testing.T) {
 func TestFindTemplateWorkflow_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	templatesDir := filepath.Join(tmpDir, ".github", "workflow-templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	if err := io.Local.EnsureDir(templatesDir); err != nil {
 		t.Fatalf("Failed to create templates dir: %v", err)
 	}
 
 	templateContent := "name: QA\non: [push]"
-	if err := os.WriteFile(filepath.Join(templatesDir, "qa.yml"), []byte(templateContent), 0644); err != nil {
+	if err := io.Local.Write(filepath.Join(templatesDir, "qa.yml"), templateContent); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
 
@@ -82,12 +83,12 @@ func TestFindTemplateWorkflow_Good(t *testing.T) {
 func TestFindTemplateWorkflow_FallbackToWorkflows(t *testing.T) {
 	tmpDir := t.TempDir()
 	workflowsDir := filepath.Join(tmpDir, ".github", "workflows")
-	if err := os.MkdirAll(workflowsDir, 0755); err != nil {
+	if err := io.Local.EnsureDir(workflowsDir); err != nil {
 		t.Fatalf("Failed to create workflows dir: %v", err)
 	}
 
 	templateContent := "name: Tests\non: [push]"
-	if err := os.WriteFile(filepath.Join(workflowsDir, "tests.yml"), []byte(templateContent), 0644); err != nil {
+	if err := io.Local.Write(filepath.Join(workflowsDir, "tests.yml"), templateContent); err != nil {
 		t.Fatalf("Failed to create workflow file: %v", err)
 	}
 
