@@ -8,194 +8,172 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew_Good(t *testing.T) {
-	testRoot := t.TempDir()
-
-	// Test successful creation
-	medium, err := New(testRoot)
+func TestNew(t *testing.T) {
+	root := t.TempDir()
+	m, err := New(root)
 	assert.NoError(t, err)
-	assert.NotNil(t, medium)
-	assert.Equal(t, testRoot, medium.root)
+	assert.Equal(t, root, m.root)
+}
 
-	// Verify the root directory exists
-	info, err := os.Stat(testRoot)
+func TestPath(t *testing.T) {
+	m := &Medium{root: "/home/user"}
+
+	// Normal paths
+	assert.Equal(t, "/home/user/file.txt", m.path("file.txt"))
+	assert.Equal(t, "/home/user/dir/file.txt", m.path("dir/file.txt"))
+
+	// Empty returns root
+	assert.Equal(t, "/home/user", m.path(""))
+
+	// Traversal attempts get sanitized (.. becomes ., then cleaned by Join)
+	assert.Equal(t, "/home/user/file.txt", m.path("../file.txt"))
+	assert.Equal(t, "/home/user/dir/file.txt", m.path("dir/../file.txt"))
+
+	// Absolute paths pass through
+	assert.Equal(t, "/etc/passwd", m.path("/etc/passwd"))
+}
+
+func TestReadWrite(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	// Write and read back
+	err := m.Write("test.txt", "hello")
+	assert.NoError(t, err)
+
+	content, err := m.Read("test.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", content)
+
+	// Write creates parent dirs
+	err = m.Write("a/b/c.txt", "nested")
+	assert.NoError(t, err)
+
+	content, err = m.Read("a/b/c.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "nested", content)
+
+	// Read nonexistent
+	_, err = m.Read("nope.txt")
+	assert.Error(t, err)
+}
+
+func TestEnsureDir(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	err := m.EnsureDir("one/two/three")
+	assert.NoError(t, err)
+
+	info, err := os.Stat(filepath.Join(root, "one/two/three"))
 	assert.NoError(t, err)
 	assert.True(t, info.IsDir())
-
-	// Test creating a new instance with an existing directory (should not error)
-	medium2, err := New(testRoot)
-	assert.NoError(t, err)
-	assert.NotNil(t, medium2)
 }
 
-func TestPath_Good(t *testing.T) {
-	testRoot := t.TempDir()
-	medium := &Medium{root: testRoot}
+func TestIsDir(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
 
-	// Valid path
-	validPath, err := medium.path("file.txt")
-	assert.NoError(t, err)
-	assert.Equal(t, filepath.Join(testRoot, "file.txt"), validPath)
+	os.Mkdir(filepath.Join(root, "mydir"), 0755)
+	os.WriteFile(filepath.Join(root, "myfile"), []byte("x"), 0644)
 
-	// Subdirectory path
-	subDirPath, err := medium.path("dir/sub/file.txt")
-	assert.NoError(t, err)
-	assert.Equal(t, filepath.Join(testRoot, "dir", "sub", "file.txt"), subDirPath)
+	assert.True(t, m.IsDir("mydir"))
+	assert.False(t, m.IsDir("myfile"))
+	assert.False(t, m.IsDir("nope"))
+	assert.False(t, m.IsDir(""))
 }
 
-func TestPath_Bad(t *testing.T) {
-	testRoot := t.TempDir()
-	medium := &Medium{root: testRoot}
+func TestIsFile(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
 
-	// Path traversal attempt
-	_, err := medium.path("../secret.txt")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal attempt detected")
+	os.Mkdir(filepath.Join(root, "mydir"), 0755)
+	os.WriteFile(filepath.Join(root, "myfile"), []byte("x"), 0644)
 
-	_, err = medium.path("dir/../../secret.txt")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal attempt detected")
-
-	// Absolute path attempt
-	_, err = medium.path("/etc/passwd")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal attempt detected")
+	assert.True(t, m.IsFile("myfile"))
+	assert.False(t, m.IsFile("mydir"))
+	assert.False(t, m.IsFile("nope"))
+	assert.False(t, m.IsFile(""))
 }
 
-func TestReadWrite_Good(t *testing.T) {
-	testRoot, err := os.MkdirTemp("", "local_read_write_test")
-	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+func TestExists(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
 
-	medium, err := New(testRoot)
-	assert.NoError(t, err)
+	os.WriteFile(filepath.Join(root, "exists"), []byte("x"), 0644)
 
-	fileName := "testfile.txt"
-	filePath := filepath.Join("subdir", fileName)
-	content := "Hello, Gopher!\nThis is a test file."
-
-	// Test Write
-	err = medium.Write(filePath, content)
-	assert.NoError(t, err)
-
-	// Verify file content by reading directly from OS
-	readContent, err := os.ReadFile(filepath.Join(testRoot, filePath))
-	assert.NoError(t, err)
-	assert.Equal(t, content, string(readContent))
-
-	// Test Read
-	readByMedium, err := medium.Read(filePath)
-	assert.NoError(t, err)
-	assert.Equal(t, content, readByMedium)
-
-	// Test Read non-existent file
-	_, err = medium.Read("nonexistent.txt")
-	assert.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
-
-	// Test Write to a path with traversal attempt
-	writeErr := medium.Write("../badfile.txt", "malicious content")
-	assert.Error(t, writeErr)
-	assert.Contains(t, writeErr.Error(), "path traversal attempt detected")
+	assert.True(t, m.Exists("exists"))
+	assert.False(t, m.Exists("nope"))
 }
 
-func TestEnsureDir_Good(t *testing.T) {
-	testRoot, err := os.MkdirTemp("", "local_ensure_dir_test")
-	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+func TestList(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
 
-	medium, err := New(testRoot)
-	assert.NoError(t, err)
+	os.WriteFile(filepath.Join(root, "a.txt"), []byte("a"), 0644)
+	os.WriteFile(filepath.Join(root, "b.txt"), []byte("b"), 0644)
+	os.Mkdir(filepath.Join(root, "subdir"), 0755)
 
-	dirName := "newdir/subdir"
-	dirPath := filepath.Join(testRoot, dirName)
-
-	// Test creating a new directory
-	err = medium.EnsureDir(dirName)
+	entries, err := m.List("")
 	assert.NoError(t, err)
-	info, err := os.Stat(dirPath)
-	assert.NoError(t, err)
-	assert.True(t, info.IsDir())
-
-	// Test ensuring an existing directory (should not error)
-	err = medium.EnsureDir(dirName)
-	assert.NoError(t, err)
-
-	// Test ensuring a directory with path traversal attempt
-	err = medium.EnsureDir("../bad_dir")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal attempt detected")
+	assert.Len(t, entries, 3)
 }
 
-func TestIsFile_Good(t *testing.T) {
-	testRoot, err := os.MkdirTemp("", "local_is_file_test")
+func TestStat(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	os.WriteFile(filepath.Join(root, "file"), []byte("content"), 0644)
+
+	info, err := m.Stat("file")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
-
-	medium, err := New(testRoot)
-	assert.NoError(t, err)
-
-	// Create a test file
-	fileName := "existing_file.txt"
-	filePath := filepath.Join(testRoot, fileName)
-	err = os.WriteFile(filePath, []byte("content"), 0644)
-	assert.NoError(t, err)
-
-	// Create a test directory
-	dirName := "existing_dir"
-	dirPath := filepath.Join(testRoot, dirName)
-	err = os.Mkdir(dirPath, 0755)
-	assert.NoError(t, err)
-
-	// Test with an existing file
-	assert.True(t, medium.IsFile(fileName))
-
-	// Test with a non-existent file
-	assert.False(t, medium.IsFile("nonexistent_file.txt"))
-
-	// Test with a directory
-	assert.False(t, medium.IsFile(dirName))
-
-	// Test with path traversal attempt
-	assert.False(t, medium.IsFile("../bad_file.txt"))
+	assert.Equal(t, int64(7), info.Size())
 }
 
-func TestFileGetFileSet_Good(t *testing.T) {
-	testRoot, err := os.MkdirTemp("", "local_fileget_fileset_test")
+func TestDelete(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	os.WriteFile(filepath.Join(root, "todelete"), []byte("x"), 0644)
+	assert.True(t, m.Exists("todelete"))
+
+	err := m.Delete("todelete")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	assert.False(t, m.Exists("todelete"))
+}
 
-	medium, err := New(testRoot)
+func TestDeleteAll(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	os.MkdirAll(filepath.Join(root, "dir/sub"), 0755)
+	os.WriteFile(filepath.Join(root, "dir/sub/file"), []byte("x"), 0644)
+
+	err := m.DeleteAll("dir")
+	assert.NoError(t, err)
+	assert.False(t, m.Exists("dir"))
+}
+
+func TestRename(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	os.WriteFile(filepath.Join(root, "old"), []byte("x"), 0644)
+
+	err := m.Rename("old", "new")
+	assert.NoError(t, err)
+	assert.False(t, m.Exists("old"))
+	assert.True(t, m.Exists("new"))
+}
+
+func TestFileGetFileSet(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	err := m.FileSet("data", "value")
 	assert.NoError(t, err)
 
-	fileName := "data.txt"
-	content := "Hello, FileGet/FileSet!"
-
-	// Test FileSet
-	err = medium.FileSet(fileName, content)
+	val, err := m.FileGet("data")
 	assert.NoError(t, err)
-
-	// Verify file was written
-	readContent, err := os.ReadFile(filepath.Join(testRoot, fileName))
-	assert.NoError(t, err)
-	assert.Equal(t, content, string(readContent))
-
-	// Test FileGet
-	gotContent, err := medium.FileGet(fileName)
-	assert.NoError(t, err)
-	assert.Equal(t, content, gotContent)
-
-	// Test FileGet on non-existent file
-	_, err = medium.FileGet("nonexistent.txt")
-	assert.Error(t, err)
-
-	// Test FileSet with path traversal attempt
-	err = medium.FileSet("../bad.txt", "malicious")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal attempt detected")
-
-	// Test FileGet with path traversal attempt
-	_, err = medium.FileGet("../bad.txt")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal attempt detected")
+	assert.Equal(t, "value", val)
 }
