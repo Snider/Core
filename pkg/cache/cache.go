@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // DefaultTTL is the default cache expiry time.
@@ -40,10 +42,18 @@ func New(baseDir string, ttl time.Duration) (*Cache, error) {
 		ttl = DefaultTTL
 	}
 
-	// Ensure cache directory exists
-	if err := os.MkdirAll(baseDir, 0755); err != nil {
+	// Convert to absolute path for io.Local
+	absBaseDir, err := filepath.Abs(baseDir)
+	if err != nil {
 		return nil, err
 	}
+
+	// Ensure cache directory exists
+	if err := io.Local.EnsureDir(absBaseDir); err != nil {
+		return nil, err
+	}
+
+	baseDir = absBaseDir
 
 	return &Cache{
 		baseDir: baseDir,
@@ -60,13 +70,14 @@ func (c *Cache) Path(key string) string {
 func (c *Cache) Get(key string, dest interface{}) (bool, error) {
 	path := c.Path(key)
 
-	data, err := os.ReadFile(path)
+	content, err := io.Local.Read(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
 		return false, err
 	}
+	data := []byte(content)
 
 	var entry Entry
 	if err := json.Unmarshal(data, &entry); err != nil {
@@ -91,11 +102,6 @@ func (c *Cache) Get(key string, dest interface{}) (bool, error) {
 func (c *Cache) Set(key string, data interface{}) error {
 	path := c.Path(key)
 
-	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
-	}
-
 	// Marshal the data
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
@@ -113,13 +119,14 @@ func (c *Cache) Set(key string, data interface{}) error {
 		return err
 	}
 
-	return os.WriteFile(path, entryBytes, 0644)
+	// io.Local.Write creates parent directories automatically
+	return io.Local.Write(path, string(entryBytes))
 }
 
 // Delete removes an item from the cache.
 func (c *Cache) Delete(key string) error {
 	path := c.Path(key)
-	err := os.Remove(path)
+	err := io.Local.Delete(path)
 	if os.IsNotExist(err) {
 		return nil
 	}
@@ -128,17 +135,18 @@ func (c *Cache) Delete(key string) error {
 
 // Clear removes all cached items.
 func (c *Cache) Clear() error {
-	return os.RemoveAll(c.baseDir)
+	return io.Local.DeleteAll(c.baseDir)
 }
 
 // Age returns how old a cached item is, or -1 if not cached.
 func (c *Cache) Age(key string) time.Duration {
 	path := c.Path(key)
 
-	data, err := os.ReadFile(path)
+	content, err := io.Local.Read(path)
 	if err != nil {
 		return -1
 	}
+	data := []byte(content)
 
 	var entry Entry
 	if err := json.Unmarshal(data, &entry); err != nil {

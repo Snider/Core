@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -60,10 +61,16 @@ type Repo struct {
 
 // LoadRegistry reads and parses a repos.yaml file.
 func LoadRegistry(path string) (*Registry, error) {
-	data, err := os.ReadFile(path)
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve path: %w", err)
+	}
+
+	content, err := io.Local.Read(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read registry file: %w", err)
 	}
+	data := []byte(content)
 
 	var reg Registry
 	if err := yaml.Unmarshal(data, &reg); err != nil {
@@ -98,7 +105,7 @@ func FindRegistry() (string, error) {
 
 	for {
 		candidate := filepath.Join(dir, "repos.yaml")
-		if _, err := os.Stat(candidate); err == nil {
+		if io.Local.Exists(candidate) {
 			return candidate, nil
 		}
 
@@ -121,7 +128,7 @@ func FindRegistry() (string, error) {
 	}
 
 	for _, p := range commonPaths {
-		if _, err := os.Stat(p); err == nil {
+		if io.Local.Exists(p) {
 			return p, nil
 		}
 	}
@@ -132,14 +139,19 @@ func FindRegistry() (string, error) {
 // ScanDirectory creates a Registry by scanning a directory for git repos.
 // This is used as a fallback when no repos.yaml is found.
 func ScanDirectory(dir string) (*Registry, error) {
-	entries, err := os.ReadDir(dir)
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	entries, err := io.Local.List(absDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
 	reg := &Registry{
 		Version:  1,
-		BasePath: dir,
+		BasePath: absDir,
 		Repos:    make(map[string]*Repo),
 	}
 
@@ -149,10 +161,10 @@ func ScanDirectory(dir string) (*Registry, error) {
 			continue
 		}
 
-		repoPath := filepath.Join(dir, entry.Name())
+		repoPath := filepath.Join(absDir, entry.Name())
 		gitPath := filepath.Join(repoPath, ".git")
 
-		if _, err := os.Stat(gitPath); err != nil {
+		if !io.Local.IsDir(gitPath) {
 			continue // Not a git repo
 		}
 
@@ -176,14 +188,11 @@ func ScanDirectory(dir string) (*Registry, error) {
 // detectOrg tries to extract the GitHub org from a repo's origin remote.
 func detectOrg(repoPath string) string {
 	// Try to read git remote
-	cmd := filepath.Join(repoPath, ".git", "config")
-	data, err := os.ReadFile(cmd)
+	configPath := filepath.Join(repoPath, ".git", "config")
+	content, err := io.Local.Read(configPath)
 	if err != nil {
 		return ""
 	}
-
-	// Simple parse for github.com URLs
-	content := string(data)
 	// Look for patterns like github.com:org/repo or github.com/org/repo
 	for _, line := range strings.Split(content, "\n") {
 		line = strings.TrimSpace(line)
@@ -292,15 +301,13 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 
 // Exists checks if the repo directory exists on disk.
 func (repo *Repo) Exists() bool {
-	info, err := os.Stat(repo.Path)
-	return err == nil && info.IsDir()
+	return io.Local.IsDir(repo.Path)
 }
 
 // IsGitRepo checks if the repo directory contains a .git folder.
 func (repo *Repo) IsGitRepo() bool {
 	gitPath := filepath.Join(repo.Path, ".git")
-	info, err := os.Stat(gitPath)
-	return err == nil && info.IsDir()
+	return io.Local.IsDir(gitPath)
 }
 
 // expandPath expands ~ to home directory.

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -170,8 +171,12 @@ type ChangelogConfig struct {
 // Returns an error if the file exists but cannot be parsed.
 func LoadConfig(dir string) (*Config, error) {
 	configPath := filepath.Join(dir, ConfigDir, ConfigFileName)
+	absPath, err := filepath.Abs(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("release.LoadConfig: failed to resolve path: %w", err)
+	}
 
-	data, err := os.ReadFile(configPath)
+	content, err := io.Local.Read(absPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			cfg := DefaultConfig()
@@ -182,7 +187,7 @@ func LoadConfig(dir string) (*Config, error) {
 	}
 
 	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := yaml.Unmarshal([]byte(content), &cfg); err != nil {
 		return nil, fmt.Errorf("release.LoadConfig: failed to parse config file: %w", err)
 	}
 
@@ -263,8 +268,12 @@ func ConfigPath(dir string) string {
 
 // ConfigExists checks if a release config file exists in the given directory.
 func ConfigExists(dir string) bool {
-	_, err := os.Stat(ConfigPath(dir))
-	return err == nil
+	configPath := ConfigPath(dir)
+	absPath, err := filepath.Abs(configPath)
+	if err != nil {
+		return false
+	}
+	return io.Local.IsFile(absPath)
 }
 
 // GetRepository returns the repository from the config.
@@ -280,11 +289,9 @@ func (c *Config) GetProjectName() string {
 // WriteConfig writes the config to the .core/release.yaml file.
 func WriteConfig(cfg *Config, dir string) error {
 	configPath := ConfigPath(dir)
-
-	// Ensure directory exists
-	configDir := filepath.Dir(configPath)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("release.WriteConfig: failed to create directory: %w", err)
+	absPath, err := filepath.Abs(configPath)
+	if err != nil {
+		return fmt.Errorf("release.WriteConfig: failed to resolve path: %w", err)
 	}
 
 	data, err := yaml.Marshal(cfg)
@@ -292,7 +299,8 @@ func WriteConfig(cfg *Config, dir string) error {
 		return fmt.Errorf("release.WriteConfig: failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	// io.Local.Write creates parent directories automatically
+	if err := io.Local.Write(absPath, string(data)); err != nil {
 		return fmt.Errorf("release.WriteConfig: failed to write config file: %w", err)
 	}
 

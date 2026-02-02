@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
+	goio "io"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // LinuxKitManager implements the Manager interface for LinuxKit VMs.
@@ -51,7 +53,7 @@ func NewLinuxKitManagerWithHypervisor(state *State, hypervisor Hypervisor) *Linu
 // Run starts a new LinuxKit VM from the given image.
 func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions) (*Container, error) {
 	// Validate image exists
-	if _, err := os.Stat(image); err != nil {
+	if !io.Local.IsFile(image) {
 		return nil, fmt.Errorf("image not found: %s", image)
 	}
 
@@ -190,12 +192,12 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 
 	// Copy output to both log and stdout
 	go func() {
-		mw := io.MultiWriter(logFile, os.Stdout)
-		_, _ = io.Copy(mw, stdout)
+		mw := goio.MultiWriter(logFile, os.Stdout)
+		_, _ = goio.Copy(mw, stdout)
 	}()
 	go func() {
-		mw := io.MultiWriter(logFile, os.Stderr)
-		_, _ = io.Copy(mw, stderr)
+		mw := goio.MultiWriter(logFile, os.Stderr)
+		_, _ = goio.Copy(mw, stderr)
 	}()
 
 	// Wait for the process to complete
@@ -310,7 +312,7 @@ func isProcessRunning(pid int) bool {
 }
 
 // Logs returns a reader for the container's log output.
-func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (io.ReadCloser, error) {
+func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (goio.ReadCloser, error) {
 	_, ok := m.state.Get(id)
 	if !ok {
 		return nil, fmt.Errorf("container not found: %s", id)
@@ -321,11 +323,8 @@ func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (io.
 		return nil, fmt.Errorf("failed to determine log path: %w", err)
 	}
 
-	if _, err := os.Stat(logPath); err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("no logs available for container: %s", id)
-		}
-		return nil, err
+	if !io.Local.IsFile(logPath) {
+		return nil, fmt.Errorf("no logs available for container: %s", id)
 	}
 
 	if !follow {
@@ -337,7 +336,7 @@ func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (io.
 	return newFollowReader(ctx, logPath)
 }
 
-// followReader implements io.ReadCloser for following log files.
+// followReader implements goio.ReadCloser for following log files.
 type followReader struct {
 	file   *os.File
 	ctx    context.Context
@@ -352,7 +351,7 @@ func newFollowReader(ctx context.Context, path string) (*followReader, error) {
 	}
 
 	// Seek to end
-	_, _ = file.Seek(0, io.SeekEnd)
+	_, _ = file.Seek(0, goio.SeekEnd)
 
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -368,7 +367,7 @@ func (f *followReader) Read(p []byte) (int, error) {
 	for {
 		select {
 		case <-f.ctx.Done():
-			return 0, io.EOF
+			return 0, goio.EOF
 		default:
 		}
 
@@ -376,14 +375,14 @@ func (f *followReader) Read(p []byte) (int, error) {
 		if n > 0 {
 			return n, nil
 		}
-		if err != nil && err != io.EOF {
+		if err != nil && err != goio.EOF {
 			return 0, err
 		}
 
 		// No data available, wait a bit and try again
 		select {
 		case <-f.ctx.Done():
-			return 0, io.EOF
+			return 0, goio.EOF
 		case <-time.After(100 * time.Millisecond):
 			// Reset reader to pick up new data
 			f.reader.Reset(f.file)

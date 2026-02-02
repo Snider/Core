@@ -6,12 +6,12 @@ package release
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
 	"github.com/host-uk/core/pkg/build/builders"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/release/publishers"
 )
 
@@ -103,13 +103,13 @@ func Publish(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 
 // findArtifacts discovers pre-built artifacts in the dist directory.
 func findArtifacts(distDir string) ([]build.Artifact, error) {
-	if _, err := os.Stat(distDir); os.IsNotExist(err) {
+	if !io.Local.IsDir(distDir) {
 		return nil, fmt.Errorf("dist/ directory not found")
 	}
 
 	var artifacts []build.Artifact
 
-	entries, err := os.ReadDir(distDir)
+	entries, err := io.Local.List(distDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read dist/: %w", err)
 	}

@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -114,13 +114,18 @@ func DetectTestCommand(projectDir string) string {
 // LoadTestConfig loads .core/test.yaml.
 func LoadTestConfig(projectDir string) (*TestConfig, error) {
 	path := filepath.Join(projectDir, ".core", "test.yaml")
-	data, err := os.ReadFile(path)
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := io.Local.Read(absPath)
 	if err != nil {
 		return nil, err
 	}
 
 	var cfg TestConfig
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := yaml.Unmarshal([]byte(content), &cfg); err != nil {
 		return nil, err
 	}
 
@@ -128,12 +133,22 @@ func LoadTestConfig(projectDir string) (*TestConfig, error) {
 }
 
 func hasFile(dir, name string) bool {
-	_, err := os.Stat(filepath.Join(dir, name))
-	return err == nil
+	path := filepath.Join(dir, name)
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	return io.Local.IsFile(absPath)
 }
 
 func hasPackageScript(projectDir, script string) bool {
-	data, err := os.ReadFile(filepath.Join(projectDir, "package.json"))
+	path := filepath.Join(projectDir, "package.json")
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+
+	content, err := io.Local.Read(absPath)
 	if err != nil {
 		return false
 	}
@@ -141,7 +156,7 @@ func hasPackageScript(projectDir, script string) bool {
 	var pkg struct {
 		Scripts map[string]string `json:"scripts"`
 	}
-	if err := json.Unmarshal(data, &pkg); err != nil {
+	if err := json.Unmarshal([]byte(content), &pkg); err != nil {
 		return false
 	}
 
@@ -150,7 +165,13 @@ func hasPackageScript(projectDir, script string) bool {
 }
 
 func hasComposerScript(projectDir, script string) bool {
-	data, err := os.ReadFile(filepath.Join(projectDir, "composer.json"))
+	path := filepath.Join(projectDir, "composer.json")
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+
+	content, err := io.Local.Read(absPath)
 	if err != nil {
 		return false
 	}
@@ -158,7 +179,7 @@ func hasComposerScript(projectDir, script string) bool {
 	var pkg struct {
 		Scripts map[string]interface{} `json:"scripts"`
 	}
-	if err := json.Unmarshal(data, &pkg); err != nil {
+	if err := json.Unmarshal([]byte(content), &pkg); err != nil {
 		return false
 	}
 

@@ -131,6 +131,6 @@ func TestHasFile_Bad_Directory(t *testing.T) {
 	err := os.Mkdir(subDir, 0755)
 	assert.NoError(t, err)
 
-	// hasFile returns true for directories too (it's just checking existence)
-	assert.True(t, hasFile(tmpDir, "subdir"))
+	// hasFile correctly returns false for directories (only true for regular files)
+	assert.False(t, hasFile(tmpDir, "subdir"))
 }

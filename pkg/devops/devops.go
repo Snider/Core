@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/container"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // DevOps manages the portable development environment.
@@ -75,8 +76,7 @@ func (d *DevOps) IsInstalled() bool {
 	if err != nil {
 		return false
 	}
-	_, err = os.Stat(path)
-	return err == nil
+	return io.Local.IsFile(path)
 }
 
 // Install downloads and installs the dev image.

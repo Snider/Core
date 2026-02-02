@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/devops/sources"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // ImageManager handles image downloads and updates.
@@ -40,7 +41,7 @@ func NewImageManager(cfg *Config) (*ImageManager, error) {
 	}
 
 	// Ensure images directory exists
-	if err := os.MkdirAll(imagesDir, 0755); err != nil {
+	if err := io.Local.EnsureDir(imagesDir); err != nil {
 		return nil, err
 	}
 
@@ -86,8 +87,7 @@ func (m *ImageManager) IsInstalled() bool {
 	if err != nil {
 		return false
 	}
-	_, err = os.Stat(path)
-	return err == nil
+	return io.Local.IsFile(path)
 }
 
 // Install downloads and installs the dev image.
@@ -167,7 +167,7 @@ func loadManifest(path string) (*Manifest, error) {
 		path:   path,
 	}
 
-	data, err := os.ReadFile(path)
+	content, err := io.Local.Read(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return m, nil
@@ -175,7 +175,7 @@ func loadManifest(path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	if err := json.Unmarshal(data, m); err != nil {
+	if err := json.Unmarshal([]byte(content), m); err != nil {
 		return nil, err
 	}
 	m.path = path
@@ -189,5 +189,5 @@ func (m *Manifest) Save() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(m.path, data, 0644)
+	return io.Local.Write(m.path, string(data))
 }

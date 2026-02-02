@@ -3,10 +3,12 @@ package sources
 import (
 	"context"
 	"fmt"
-	"io"
+	goio "io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // CDNSource downloads images from a CDN or S3 bucket.
@@ -71,7 +73,7 @@ func (s *CDNSource) Download(ctx context.Context, dest string, progress func(dow
 	}
 
 	// Ensure dest directory exists
-	if err := os.MkdirAll(dest, 0755); err != nil {
+	if err := io.Local.EnsureDir(dest); err != nil {
 		return fmt.Errorf("cdn.Download: %w", err)
 	}
 
@@ -99,7 +101,7 @@ func (s *CDNSource) Download(ctx context.Context, dest string, progress func(dow
 				progress(downloaded, total)
 			}
 		}
-		if err == io.EOF {
+		if err == goio.EOF {
 			break
 		}
 		if err != nil {

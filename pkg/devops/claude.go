@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // ClaudeOptions configures the Claude sandbox session.
@@ -124,7 +126,7 @@ func (d *DevOps) CopyGHAuth(ctx context.Context) error {
 	}
 
 	ghConfigDir := filepath.Join(home, ".config", "gh")
-	if _, err := os.Stat(ghConfigDir); os.IsNotExist(err) {
+	if !io.Local.IsDir(ghConfigDir) {
 		return nil // No gh config to copy
 	}
 

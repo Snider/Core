@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 //go:embed templates/*.yml
@@ -71,12 +73,12 @@ func GetTemplate(name string) (string, error) {
 	userTemplatesDir := getUserTemplatesDir()
 	if userTemplatesDir != "" {
 		templatePath := filepath.Join(userTemplatesDir, name+".yml")
-		if _, err := os.Stat(templatePath); err == nil {
-			content, err := os.ReadFile(templatePath)
+		if io.Local.IsFile(templatePath) {
+			content, err := io.Local.Read(templatePath)
 			if err != nil {
 				return "", fmt.Errorf("failed to read user template %s: %w", name, err)
 			}
-			return string(content), nil
+			return content, nil
 		}
 	}
 
@@ -194,7 +196,7 @@ func getUserTemplatesDir() string {
 	cwd, err := os.Getwd()
 	if err == nil {
 		wsDir := filepath.Join(cwd, ".core", "linuxkit")
-		if info, err := os.Stat(wsDir); err == nil && info.IsDir() {
+		if io.Local.IsDir(wsDir) {
 			return wsDir
 		}
 	}
@@ -206,7 +208,7 @@ func getUserTemplatesDir() string {
 	}
 
 	homeDir := filepath.Join(home, ".core", "linuxkit")
-	if info, err := os.Stat(homeDir); err == nil && info.IsDir() {
+	if io.Local.IsDir(homeDir) {
 		return homeDir
 	}
 
@@ -217,7 +219,7 @@ func getUserTemplatesDir() string {
 func scanUserTemplates(dir string) []Template {
 	var templates []Template
 
-	entries, err := os.ReadDir(dir)
+	entries, err := io.Local.List(dir)
 	if err != nil {
 		return templates
 	}
@@ -266,12 +268,12 @@ func scanUserTemplates(dir string) []Template {
 // extractTemplateDescription reads the first comment block from a YAML file
 // to use as a description.
 func extractTemplateDescription(path string) string {
-	content, err := os.ReadFile(path)
+	content, err := io.Local.Read(path)
 	if err != nil {
 		return ""
 	}
 
-	lines := strings.Split(string(content), "\n")
+	lines := strings.Split(content, "\n")
 	var descLines []string
 
 	for _, line := range lines {

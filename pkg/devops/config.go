@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -69,7 +70,7 @@ func LoadConfig() (*Config, error) {
 		return DefaultConfig(), nil
 	}
 
-	data, err := os.ReadFile(configPath)
+	content, err := io.Local.Read(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return DefaultConfig(), nil
@@ -78,7 +79,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	cfg := DefaultConfig()
-	if err := yaml.Unmarshal(data, cfg); err != nil {
+	if err := yaml.Unmarshal([]byte(content), cfg); err != nil {
 		return nil, err
 	}
 

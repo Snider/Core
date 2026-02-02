@@ -5,6 +5,7 @@ on:
     branches: [dev, main]
   pull_request:
     branches: [dev, main]
+  workflow_dispatch:
 
 env:
   CORE_VERSION: dev
@@ -25,11 +26,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
 
-      - name: Install core CLI
+      - name: Build core CLI
         run: |
-          curl -fsSL "https://github.com/host-uk/core/releases/download/${{ env.CORE_VERSION }}/core-linux-amd64" -o /tmp/core
-          chmod +x /tmp/core
-          sudo mv /tmp/core /usr/local/bin/core
+          go build -ldflags "-X github.com/host-uk/core/pkg/cli.AppVersion=${{ env.CORE_VERSION }}" -o /usr/local/bin/core .
           core --version
 
       - name: Generate code

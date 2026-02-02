@@ -192,10 +192,13 @@ func TestManifest_Save_Good_CreatesDirs(t *testing.T) {
 	}
 	m.Images["test.img"] = ImageInfo{Version: "1.0.0"}
 
-	// Should fail because nested directories don't exist
-	// (Save doesn't create parent directories, it just writes to path)
+	// Save creates parent directories automatically via io.Local.Write
 	err := m.Save()
-	assert.Error(t, err)
+	assert.NoError(t, err)
+
+	// Verify file was created
+	_, err = os.Stat(nestedPath)
+	assert.NoError(t, err)
 }
 
 func TestManifest_Save_Good_Overwrite(t *testing.T) {
