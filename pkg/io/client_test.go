@@ -73,6 +73,127 @@ func TestMockMedium_FileSet_Good(t *testing.T) {
 	assert.Equal(t, "content", m.Files["test.txt"])
 }
 
+func TestMockMedium_Delete_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Files["test.txt"] = "content"
+
+	err := m.Delete("test.txt")
+	assert.NoError(t, err)
+	assert.False(t, m.IsFile("test.txt"))
+}
+
+func TestMockMedium_Delete_Bad_NotFound(t *testing.T) {
+	m := NewMockMedium()
+	err := m.Delete("nonexistent.txt")
+	assert.Error(t, err)
+}
+
+func TestMockMedium_Delete_Bad_DirNotEmpty(t *testing.T) {
+	m := NewMockMedium()
+	m.Dirs["mydir"] = true
+	m.Files["mydir/file.txt"] = "content"
+
+	err := m.Delete("mydir")
+	assert.Error(t, err)
+}
+
+func TestMockMedium_DeleteAll_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Dirs["mydir"] = true
+	m.Dirs["mydir/subdir"] = true
+	m.Files["mydir/file.txt"] = "content"
+	m.Files["mydir/subdir/nested.txt"] = "nested"
+
+	err := m.DeleteAll("mydir")
+	assert.NoError(t, err)
+	assert.Empty(t, m.Dirs)
+	assert.Empty(t, m.Files)
+}
+
+func TestMockMedium_Rename_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Files["old.txt"] = "content"
+
+	err := m.Rename("old.txt", "new.txt")
+	assert.NoError(t, err)
+	assert.False(t, m.IsFile("old.txt"))
+	assert.True(t, m.IsFile("new.txt"))
+	assert.Equal(t, "content", m.Files["new.txt"])
+}
+
+func TestMockMedium_Rename_Good_Dir(t *testing.T) {
+	m := NewMockMedium()
+	m.Dirs["olddir"] = true
+	m.Files["olddir/file.txt"] = "content"
+
+	err := m.Rename("olddir", "newdir")
+	assert.NoError(t, err)
+	assert.False(t, m.Dirs["olddir"])
+	assert.True(t, m.Dirs["newdir"])
+	assert.Equal(t, "content", m.Files["newdir/file.txt"])
+}
+
+func TestMockMedium_List_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Dirs["mydir"] = true
+	m.Files["mydir/file1.txt"] = "content1"
+	m.Files["mydir/file2.txt"] = "content2"
+	m.Dirs["mydir/subdir"] = true
+
+	entries, err := m.List("mydir")
+	assert.NoError(t, err)
+	assert.Len(t, entries, 3)
+
+	names := make(map[string]bool)
+	for _, e := range entries {
+		names[e.Name()] = true
+	}
+	assert.True(t, names["file1.txt"])
+	assert.True(t, names["file2.txt"])
+	assert.True(t, names["subdir"])
+}
+
+func TestMockMedium_Stat_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Files["test.txt"] = "hello world"
+
+	info, err := m.Stat("test.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "test.txt", info.Name())
+	assert.Equal(t, int64(11), info.Size())
+	assert.False(t, info.IsDir())
+}
+
+func TestMockMedium_Stat_Good_Dir(t *testing.T) {
+	m := NewMockMedium()
+	m.Dirs["mydir"] = true
+
+	info, err := m.Stat("mydir")
+	assert.NoError(t, err)
+	assert.Equal(t, "mydir", info.Name())
+	assert.True(t, info.IsDir())
+}
+
+func TestMockMedium_Exists_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Files["file.txt"] = "content"
+	m.Dirs["mydir"] = true
+
+	assert.True(t, m.Exists("file.txt"))
+	assert.True(t, m.Exists("mydir"))
+	assert.False(t, m.Exists("nonexistent"))
+}
+
+func TestMockMedium_IsDir_Good(t *testing.T) {
+	m := NewMockMedium()
+	m.Files["file.txt"] = "content"
+	m.Dirs["mydir"] = true
+
+	assert.False(t, m.IsDir("file.txt"))
+	assert.True(t, m.IsDir("mydir"))
+	assert.False(t, m.IsDir("nonexistent"))
+}
+
 // --- Wrapper Function Tests ---
 
 func TestRead_Good(t *testing.T) {

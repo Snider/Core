@@ -74,7 +74,7 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 
 	repoPath := filepath.Join(targetDir, repoName)
 
-	if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err == nil {
+	if coreio.Local.Exists(filepath.Join(repoPath, ".git")) {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("skip")), i18n.T("cmd.pkg.install.already_exists", map[string]string{"Name": repoName, "Path": repoPath}))
 		return nil
 	}

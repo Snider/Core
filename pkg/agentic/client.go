@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/host-uk/core/pkg/errors"
+	"github.com/host-uk/core/pkg/log"
 )
 
 // Client is the API client for the core-agentic service.
@@ -77,24 +77,24 @@ func (c *Client) ListTasks(ctx context.Context, opts ListOptions) ([]Task, error
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, errors.E(op, "failed to create request", err)
+		return nil, log.E(op, "failed to create request", err)
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, errors.E(op, "request failed", err)
+		return nil, log.E(op, "request failed", err)
 	}
 	defer resp.Body.Close()
 
 	if err := c.checkResponse(resp); err != nil {
-		return nil, errors.E(op, "API error", err)
+		return nil, log.E(op, "API error", err)
 	}
 
 	var tasks []Task
 	if err := json.NewDecoder(resp.Body).Decode(&tasks); err != nil {
-		return nil, errors.E(op, "failed to decode response", err)
+		return nil, log.E(op, "failed to decode response", err)
 	}
 
 	return tasks, nil
@@ -105,31 +105,31 @@ func (c *Client) GetTask(ctx context.Context, id string) (*Task, error) {
 	const op = "agentic.Client.GetTask"
 
 	if id == "" {
-		return nil, errors.E(op, "task ID is required", nil)
+		return nil, log.E(op, "task ID is required", nil)
 	}
 
 	endpoint := fmt.Sprintf("%s/api/tasks/%s", c.BaseURL, url.PathEscape(id))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, errors.E(op, "failed to create request", err)
+		return nil, log.E(op, "failed to create request", err)
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, errors.E(op, "request failed", err)
+		return nil, log.E(op, "request failed", err)
 	}
 	defer resp.Body.Close()
 
 	if err := c.checkResponse(resp); err != nil {
-		return nil, errors.E(op, "API error", err)
+		return nil, log.E(op, "API error", err)
 	}
 
 	var task Task
 	if err := json.NewDecoder(resp.Body).Decode(&task); err != nil {
-		return nil, errors.E(op, "failed to decode response", err)
+		return nil, log.E(op, "failed to decode response", err)
 	}
 
 	return &task, nil
@@ -140,7 +140,7 @@ func (c *Client) ClaimTask(ctx context.Context, id string) (*Task, error) {
 	const op = "agentic.Client.ClaimTask"
 
 	if id == "" {
-		return nil, errors.E(op, "task ID is required", nil)
+		return nil, log.E(op, "task ID is required", nil)
 	}
 
 	endpoint := fmt.Sprintf("%s/api/tasks/%s/claim", c.BaseURL, url.PathEscape(id))
@@ -154,7 +154,7 @@ func (c *Client) ClaimTask(ctx context.Context, id string) (*Task, error) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, body)
 	if err != nil {
-		return nil, errors.E(op, "failed to create request", err)
+		return nil, log.E(op, "failed to create request", err)
 	}
 
 	c.setHeaders(req)
@@ -164,18 +164,18 @@ func (c *Client) ClaimTask(ctx context.Context, id string) (*Task, error) {
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, errors.E(op, "request failed", err)
+		return nil, log.E(op, "request failed", err)
 	}
 	defer resp.Body.Close()
 
 	if err := c.checkResponse(resp); err != nil {
-		return nil, errors.E(op, "API error", err)
+		return nil, log.E(op, "API error", err)
 	}
 
 	// Read body once to allow multiple decode attempts
 	bodyData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.E(op, "failed to read response", err)
+		return nil, log.E(op, "failed to read response", err)
 	}
 
 	// Try decoding as ClaimResponse first
@@ -187,7 +187,7 @@ func (c *Client) ClaimTask(ctx context.Context, id string) (*Task, error) {
 	// Try decoding as just a Task for simpler API responses
 	var task Task
 	if err := json.Unmarshal(bodyData, &task); err != nil {
-		return nil, errors.E(op, "failed to decode response", err)
+		return nil, log.E(op, "failed to decode response", err)
 	}
 
 	return &task, nil
@@ -198,19 +198,19 @@ func (c *Client) UpdateTask(ctx context.Context, id string, update TaskUpdate) e
 	const op = "agentic.Client.UpdateTask"
 
 	if id == "" {
-		return errors.E(op, "task ID is required", nil)
+		return log.E(op, "task ID is required", nil)
 	}
 
 	endpoint := fmt.Sprintf("%s/api/tasks/%s", c.BaseURL, url.PathEscape(id))
 
 	data, err := json.Marshal(update)
 	if err != nil {
-		return errors.E(op, "failed to marshal update", err)
+		return log.E(op, "failed to marshal update", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, endpoint, bytes.NewReader(data))
 	if err != nil {
-		return errors.E(op, "failed to create request", err)
+		return log.E(op, "failed to create request", err)
 	}
 
 	c.setHeaders(req)
@@ -218,12 +218,12 @@ func (c *Client) UpdateTask(ctx context.Context, id string, update TaskUpdate) e
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return errors.E(op, "request failed", err)
+		return log.E(op, "request failed", err)
 	}
 	defer resp.Body.Close()
 
 	if err := c.checkResponse(resp); err != nil {
-		return errors.E(op, "API error", err)
+		return log.E(op, "API error", err)
 	}
 
 	return nil
@@ -234,19 +234,19 @@ func (c *Client) CompleteTask(ctx context.Context, id string, result TaskResult)
 	const op = "agentic.Client.CompleteTask"
 
 	if id == "" {
-		return errors.E(op, "task ID is required", nil)
+		return log.E(op, "task ID is required", nil)
 	}
 
 	endpoint := fmt.Sprintf("%s/api/tasks/%s/complete", c.BaseURL, url.PathEscape(id))
 
 	data, err := json.Marshal(result)
 	if err != nil {
-		return errors.E(op, "failed to marshal result", err)
+		return log.E(op, "failed to marshal result", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(data))
 	if err != nil {
-		return errors.E(op, "failed to create request", err)
+		return log.E(op, "failed to create request", err)
 	}
 
 	c.setHeaders(req)
@@ -254,12 +254,12 @@ func (c *Client) CompleteTask(ctx context.Context, id string, result TaskResult)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return errors.E(op, "request failed", err)
+		return log.E(op, "request failed", err)
 	}
 	defer resp.Body.Close()
 
 	if err := c.checkResponse(resp); err != nil {
-		return errors.E(op, "API error", err)
+		return log.E(op, "API error", err)
 	}
 
 	return nil
@@ -303,19 +303,19 @@ func (c *Client) Ping(ctx context.Context) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return errors.E(op, "failed to create request", err)
+		return log.E(op, "failed to create request", err)
 	}
 
 	c.setHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return errors.E(op, "request failed", err)
+		return log.E(op, "request failed", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return errors.E(op, fmt.Sprintf("server returned status %d", resp.StatusCode), nil)
+		return log.E(op, fmt.Sprintf("server returned status %d", resp.StatusCode), nil)
 	}
 
 	return nil

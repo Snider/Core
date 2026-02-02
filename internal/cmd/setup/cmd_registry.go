@@ -117,8 +117,8 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 
 			// Check if already exists
 			repoPath := filepath.Join(basePath, repo.Name)
-			// Check .git dir existence via List
-			if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err == nil {
+			// Check .git dir existence via Exists
+			if coreio.Local.Exists(filepath.Join(repoPath, ".git")) {
 				exists++
 				continue
 			}
@@ -147,7 +147,7 @@ func runRegistrySetupWithReg(ctx context.Context, reg *repos.Registry, registryP
 
 			// Check if already exists
 			repoPath := filepath.Join(basePath, repo.Name)
-			if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err == nil {
+			if coreio.Local.Exists(filepath.Join(repoPath, ".git")) {
 				exists++
 				continue
 			}

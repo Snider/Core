@@ -126,8 +126,8 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		outName := packageOutputName(info.Name)
 		repoOutDir := filepath.Join(outputDir, outName)
 
-		// Clear existing directory
-		io.Local.Delete(repoOutDir) // Recursive delete
+		// Clear existing directory (recursively)
+		_ = io.Local.DeleteAll(repoOutDir)
 
 		if err := io.Local.EnsureDir(repoOutDir); err != nil {
 			cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), info.Name, err)

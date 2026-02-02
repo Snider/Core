@@ -177,3 +177,201 @@ func TestFileGetFileSet(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "value", val)
 }
+
+func TestDelete_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_delete_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	// Create and delete a file
+	err = medium.Write("file.txt", "content")
+	assert.NoError(t, err)
+	assert.True(t, medium.IsFile("file.txt"))
+
+	err = medium.Delete("file.txt")
+	assert.NoError(t, err)
+	assert.False(t, medium.IsFile("file.txt"))
+
+	// Create and delete an empty directory
+	err = medium.EnsureDir("emptydir")
+	assert.NoError(t, err)
+	err = medium.Delete("emptydir")
+	assert.NoError(t, err)
+	assert.False(t, medium.IsDir("emptydir"))
+}
+
+func TestDelete_Bad_NotEmpty(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_delete_notempty_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	// Create a directory with a file
+	err = medium.Write("mydir/file.txt", "content")
+	assert.NoError(t, err)
+
+	// Try to delete non-empty directory
+	err = medium.Delete("mydir")
+	assert.Error(t, err)
+}
+
+func TestDeleteAll_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_deleteall_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	// Create nested structure
+	err = medium.Write("mydir/file1.txt", "content1")
+	assert.NoError(t, err)
+	err = medium.Write("mydir/subdir/file2.txt", "content2")
+	assert.NoError(t, err)
+
+	// Delete all
+	err = medium.DeleteAll("mydir")
+	assert.NoError(t, err)
+	assert.False(t, medium.Exists("mydir"))
+	assert.False(t, medium.Exists("mydir/file1.txt"))
+	assert.False(t, medium.Exists("mydir/subdir/file2.txt"))
+}
+
+func TestRename_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_rename_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	// Rename a file
+	err = medium.Write("old.txt", "content")
+	assert.NoError(t, err)
+	err = medium.Rename("old.txt", "new.txt")
+	assert.NoError(t, err)
+	assert.False(t, medium.IsFile("old.txt"))
+	assert.True(t, medium.IsFile("new.txt"))
+
+	content, err := medium.Read("new.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "content", content)
+}
+
+func TestRename_Traversal_Sanitized(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_rename_traversal_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	err = medium.Write("file.txt", "content")
+	assert.NoError(t, err)
+
+	// Traversal attempts are sanitized (.. becomes .), so this renames to "./escaped.txt"
+	// which is just "escaped.txt" in the root
+	err = medium.Rename("file.txt", "../escaped.txt")
+	assert.NoError(t, err)
+	assert.False(t, medium.Exists("file.txt"))
+	assert.True(t, medium.Exists("escaped.txt"))
+}
+
+func TestList_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_list_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	// Create some files and directories
+	err = medium.Write("file1.txt", "content1")
+	assert.NoError(t, err)
+	err = medium.Write("file2.txt", "content2")
+	assert.NoError(t, err)
+	err = medium.EnsureDir("subdir")
+	assert.NoError(t, err)
+
+	// List root
+	entries, err := medium.List(".")
+	assert.NoError(t, err)
+	assert.Len(t, entries, 3)
+
+	names := make(map[string]bool)
+	for _, e := range entries {
+		names[e.Name()] = true
+	}
+	assert.True(t, names["file1.txt"])
+	assert.True(t, names["file2.txt"])
+	assert.True(t, names["subdir"])
+}
+
+func TestStat_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_stat_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	// Stat a file
+	err = medium.Write("file.txt", "hello world")
+	assert.NoError(t, err)
+	info, err := medium.Stat("file.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "file.txt", info.Name())
+	assert.Equal(t, int64(11), info.Size())
+	assert.False(t, info.IsDir())
+
+	// Stat a directory
+	err = medium.EnsureDir("mydir")
+	assert.NoError(t, err)
+	info, err = medium.Stat("mydir")
+	assert.NoError(t, err)
+	assert.Equal(t, "mydir", info.Name())
+	assert.True(t, info.IsDir())
+}
+
+func TestExists_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_exists_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	assert.False(t, medium.Exists("nonexistent"))
+
+	err = medium.Write("file.txt", "content")
+	assert.NoError(t, err)
+	assert.True(t, medium.Exists("file.txt"))
+
+	err = medium.EnsureDir("mydir")
+	assert.NoError(t, err)
+	assert.True(t, medium.Exists("mydir"))
+}
+
+func TestIsDir_Good(t *testing.T) {
+	testRoot, err := os.MkdirTemp("", "local_isdir_test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(testRoot)
+
+	medium, err := New(testRoot)
+	assert.NoError(t, err)
+
+	err = medium.Write("file.txt", "content")
+	assert.NoError(t, err)
+	assert.False(t, medium.IsDir("file.txt"))
+
+	err = medium.EnsureDir("mydir")
+	assert.NoError(t, err)
+	assert.True(t, medium.IsDir("mydir"))
+
+	assert.False(t, medium.IsDir("nonexistent"))
+}

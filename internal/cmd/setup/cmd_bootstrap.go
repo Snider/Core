@@ -105,7 +105,7 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 
 	// Clone core-devops first
 	devopsPath := filepath.Join(targetDir, devopsRepo)
-	if _, err := coreio.Local.List(filepath.Join(devopsPath, ".git")); err != nil {
+	if !coreio.Local.Exists(filepath.Join(devopsPath, ".git")) {
 		fmt.Printf("%s %s %s...\n", dimStyle.Render(">>"), i18n.T("common.status.cloning"), devopsRepo)
 
 		if !dryRun {
@@ -148,9 +148,9 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 }
 
 // isGitRepoRoot returns true if the directory is a git repository root.
+// Handles both regular repos (.git is a directory) and worktrees (.git is a file).
 func isGitRepoRoot(path string) bool {
-	_, err := coreio.Local.List(filepath.Join(path, ".git"))
-	return err == nil
+	return coreio.Local.Exists(filepath.Join(path, ".git"))
 }
 
 // isDirEmpty returns true if the directory is empty or contains only hidden files.

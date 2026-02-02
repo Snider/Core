@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/cli"
-	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/log"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -92,7 +92,7 @@ func addIssuesCommand(parent *cli.Command) {
 func runQAIssues() error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return errors.E("qa.issues", i18n.T("error.gh_not_found"), nil)
+		return log.E("qa.issues", i18n.T("error.gh_not_found"), nil)
 	}
 
 	// Load registry
@@ -104,12 +104,12 @@ func runQAIssues() error {
 	} else {
 		registryPath, findErr := repos.FindRegistry()
 		if findErr != nil {
-			return errors.E("qa.issues", i18n.T("error.registry_not_found"), nil)
+			return log.E("qa.issues", i18n.T("error.registry_not_found"), nil)
 		}
 		reg, err = repos.LoadRegistry(registryPath)
 	}
 	if err != nil {
-		return errors.E("qa.issues", "failed to load registry", err)
+		return log.E("qa.issues", "failed to load registry", err)
 	}
 
 	// Fetch issues from all repos

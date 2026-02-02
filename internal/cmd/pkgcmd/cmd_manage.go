@@ -57,9 +57,8 @@ func runPkgList() error {
 	var installed, missing int
 	for _, r := range allRepos {
 		repoPath := filepath.Join(basePath, r.Name)
-		exists := false
-		if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err == nil {
-			exists = true
+		exists := coreio.Local.Exists(filepath.Join(repoPath, ".git"))
+		if exists {
 			installed++
 		} else {
 			missing++
@@ -219,7 +218,7 @@ func runPkgOutdated() error {
 	for _, r := range reg.List() {
 		repoPath := filepath.Join(basePath, r.Name)
 
-		if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err != nil {
+		if !coreio.Local.Exists(filepath.Join(repoPath, ".git")) {
 			notInstalled++
 			continue
 		}

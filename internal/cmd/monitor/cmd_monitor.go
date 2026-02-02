@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
-	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/log"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -107,7 +107,7 @@ type SecretScanningAlert struct {
 func runMonitor() error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return errors.E("monitor", i18n.T("error.gh_not_found"), err)
+		return log.E("monitor", i18n.T("error.gh_not_found"), err)
 	}
 
 	// Determine repos to scan
@@ -117,7 +117,7 @@ func runMonitor() error {
 	}
 
 	if len(repoList) == 0 {
-		return errors.E("monitor", i18n.T("cmd.monitor.error.no_repos"), nil)
+		return log.E("monitor", i18n.T("cmd.monitor.error.no_repos"), nil)
 	}
 
 	// Collect all findings and errors
@@ -179,12 +179,12 @@ func resolveRepos() ([]string, error) {
 		// All repos from registry
 		registry, err := repos.FindRegistry()
 		if err != nil {
-			return nil, errors.E("monitor", "failed to find registry", err)
+			return nil, log.E("monitor", "failed to find registry", err)
 		}
 
 		loaded, err := repos.LoadRegistry(registry)
 		if err != nil {
-			return nil, errors.E("monitor", "failed to load registry", err)
+			return nil, log.E("monitor", "failed to load registry", err)
 		}
 
 		var repoList []string
@@ -253,12 +253,12 @@ func fetchCodeScanningAlerts(repoFullName string) ([]Finding, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.E("monitor.fetchCodeScanning", "API request failed", err)
+		return nil, log.E("monitor.fetchCodeScanning", "API request failed", err)
 	}
 
 	var alerts []CodeScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil, errors.E("monitor.fetchCodeScanning", "failed to parse response", err)
+		return nil, log.E("monitor.fetchCodeScanning", "failed to parse response", err)
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -307,12 +307,12 @@ func fetchDependabotAlerts(repoFullName string) ([]Finding, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.E("monitor.fetchDependabot", "API request failed", err)
+		return nil, log.E("monitor.fetchDependabot", "API request failed", err)
 	}
 
 	var alerts []DependabotAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil, errors.E("monitor.fetchDependabot", "failed to parse response", err)
+		return nil, log.E("monitor.fetchDependabot", "failed to parse response", err)
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -358,12 +358,12 @@ func fetchSecretScanningAlerts(repoFullName string) ([]Finding, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.E("monitor.fetchSecretScanning", "API request failed", err)
+		return nil, log.E("monitor.fetchSecretScanning", "API request failed", err)
 	}
 
 	var alerts []SecretScanningAlert
 	if err := json.Unmarshal(output, &alerts); err != nil {
-		return nil, errors.E("monitor.fetchSecretScanning", "failed to parse response", err)
+		return nil, log.E("monitor.fetchSecretScanning", "failed to parse response", err)
 	}
 
 	repoName := strings.Split(repoFullName, "/")[1]
@@ -447,7 +447,7 @@ func sortBySeverity(findings []Finding) {
 func outputJSON(findings []Finding) error {
 	data, err := json.MarshalIndent(findings, "", "  ")
 	if err != nil {
-		return errors.E("monitor", "failed to marshal findings", err)
+		return log.E("monitor", "failed to marshal findings", err)
 	}
 	cli.Print("%s\n", string(data))
 	return nil
@@ -547,7 +547,7 @@ func detectRepoFromGit() (string, error) {
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", errors.E("monitor", i18n.T("cmd.monitor.error.not_git_repo"), err)
+		return "", log.E("monitor", i18n.T("cmd.monitor.error.not_git_repo"), err)
 	}
 
 	url := strings.TrimSpace(string(output))

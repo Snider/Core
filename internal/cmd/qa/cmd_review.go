@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/cli"
-	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/log"
 )
 
 // Review command flags
@@ -102,7 +102,7 @@ func addReviewCommand(parent *cli.Command) {
 func runReview() error {
 	// Check gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return errors.E("qa.review", i18n.T("error.gh_not_found"), nil)
+		return log.E("qa.review", i18n.T("error.gh_not_found"), nil)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -114,7 +114,7 @@ func runReview() error {
 		var err error
 		repoFullName, err = detectRepoFromGit()
 		if err != nil {
-			return errors.E("qa.review", i18n.T("cmd.qa.review.error.no_repo"), nil)
+			return log.E("qa.review", i18n.T("cmd.qa.review.error.no_repo"), nil)
 		}
 	}
 
@@ -144,7 +144,7 @@ func runReview() error {
 func showMyPRs(ctx context.Context, repo string) error {
 	prs, err := fetchPRs(ctx, repo, "author:@me")
 	if err != nil {
-		return errors.E("qa.review", "failed to fetch your PRs", err)
+		return log.E("qa.review", "failed to fetch your PRs", err)
 	}
 
 	if len(prs) == 0 {
@@ -165,7 +165,7 @@ func showMyPRs(ctx context.Context, repo string) error {
 func showRequestedReviews(ctx context.Context, repo string) error {
 	prs, err := fetchPRs(ctx, repo, "review-requested:@me")
 	if err != nil {
-		return errors.E("qa.review", "failed to fetch review requests", err)
+		return log.E("qa.review", "failed to fetch review requests", err)
 	}
 
 	if len(prs) == 0 {
