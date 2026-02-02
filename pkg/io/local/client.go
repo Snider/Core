@@ -25,6 +25,7 @@ func New(root string) (*Medium, error) {
 
 // path sanitizes and returns the full path.
 // Replaces .. with . to prevent traversal, then joins with root.
+// Absolute paths are sandboxed under root (unless root is "/").
 func (m *Medium) path(p string) string {
 	if p == "" {
 		return m.root
@@ -35,7 +36,12 @@ func (m *Medium) path(p string) string {
 		if len(clean) == 3 && clean[1] == ':' && (clean[2] == '\\' || clean[2] == '/') {
 			return clean
 		}
-		return filepath.Clean(clean)
+		// If root is "/", allow absolute paths through
+		if m.root == "/" {
+			return filepath.Clean(clean)
+		}
+		// Otherwise, sandbox absolute paths by stripping leading /
+		return filepath.Join(m.root, strings.TrimPrefix(clean, "/"))
 	}
 	return filepath.Join(m.root, clean)
 }

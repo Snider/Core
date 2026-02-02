@@ -29,8 +29,19 @@ func TestPath(t *testing.T) {
 	assert.Equal(t, "/home/user/file.txt", m.path("../file.txt"))
 	assert.Equal(t, "/home/user/dir/file.txt", m.path("dir/../file.txt"))
 
-	// Absolute paths pass through
+	// Absolute paths are constrained to sandbox (no escape)
+	assert.Equal(t, "/home/user/etc/passwd", m.path("/etc/passwd"))
+}
+
+func TestPath_RootFilesystem(t *testing.T) {
+	m := &Medium{root: "/"}
+
+	// When root is "/", absolute paths pass through
 	assert.Equal(t, "/etc/passwd", m.path("/etc/passwd"))
+	assert.Equal(t, "/home/user/file.txt", m.path("/home/user/file.txt"))
+
+	// Relative paths still work
+	assert.Equal(t, "/file.txt", m.path("file.txt"))
 }
 
 func TestReadWrite(t *testing.T) {
