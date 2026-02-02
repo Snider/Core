@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
+	coreio "github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -73,12 +74,12 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 
 	repoPath := filepath.Join(targetDir, repoName)
 
-	if _, err := os.Stat(filepath.Join(repoPath, ".git")); err == nil {
+	if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err == nil {
 		fmt.Printf("%s %s\n", dimStyle.Render(i18n.Label("skip")), i18n.T("cmd.pkg.install.already_exists", map[string]string{"Name": repoName, "Path": repoPath}))
 		return nil
 	}
 
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := coreio.Local.EnsureDir(targetDir); err != nil {
 		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.create", "directory"), err)
 	}
 
@@ -123,18 +124,17 @@ func addToRegistryFile(org, repoName string) error {
 		return nil
 	}
 
-	f, err := os.OpenFile(regPath, os.O_APPEND|os.O_WRONLY, 0644)
+	content, err := coreio.Local.Read(regPath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	repoType := detectRepoType(repoName)
 	entry := fmt.Sprintf("\n  %s:\n    type: %s\n    description: (installed via core pkg install)\n",
 		repoName, repoType)
 
-	_, err = f.WriteString(entry)
-	return err
+	content += entry
+	return coreio.Local.Write(regPath, content)
 }
 
 func detectRepoType(name string) string {

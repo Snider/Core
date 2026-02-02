@@ -62,7 +62,7 @@ func TestContainsScramble(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.expected, containsScramble([]byte(tt.data)))
+		assert.Equal(t, tt.expected, containsScramble(tt.data))
 	}
 }
 

@@ -2,9 +2,10 @@ package sdk
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
+
+	coreio "github.com/host-uk/core/pkg/io"
 )
 
 // commonSpecPaths are checked in order when no spec is configured.
@@ -25,7 +26,7 @@ func (s *SDK) DetectSpec() (string, error) {
 	// 1. Check configured path
 	if s.config.Spec != "" {
 		specPath := filepath.Join(s.projectDir, s.config.Spec)
-		if _, err := os.Stat(specPath); err == nil {
+		if coreio.Local.IsFile(specPath) {
 			return specPath, nil
 		}
 		return "", fmt.Errorf("sdk.DetectSpec: configured spec not found: %s", s.config.Spec)
@@ -34,7 +35,7 @@ func (s *SDK) DetectSpec() (string, error) {
 	// 2. Check common paths
 	for _, p := range commonSpecPaths {
 		specPath := filepath.Join(s.projectDir, p)
-		if _, err := os.Stat(specPath); err == nil {
+		if coreio.Local.IsFile(specPath) {
 			return specPath, nil
 		}
 	}
@@ -51,12 +52,12 @@ func (s *SDK) DetectSpec() (string, error) {
 // detectScramble checks for Laravel Scramble and exports the spec.
 func (s *SDK) detectScramble() (string, error) {
 	composerPath := filepath.Join(s.projectDir, "composer.json")
-	if _, err := os.Stat(composerPath); err != nil {
+	if !coreio.Local.IsFile(composerPath) {
 		return "", fmt.Errorf("no composer.json")
 	}
 
 	// Check for scramble in composer.json
-	data, err := os.ReadFile(composerPath)
+	data, err := coreio.Local.Read(composerPath)
 	if err != nil {
 		return "", err
 	}
@@ -71,8 +72,7 @@ func (s *SDK) detectScramble() (string, error) {
 }
 
 // containsScramble checks if composer.json includes scramble.
-func containsScramble(data []byte) bool {
-	content := string(data)
+func containsScramble(content string) bool {
 	return strings.Contains(content, "dedoc/scramble") ||
 		strings.Contains(content, "\"scramble\"")
 }

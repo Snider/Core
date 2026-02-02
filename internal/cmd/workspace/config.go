@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	coreio "github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,9 +29,14 @@ func DefaultConfig() *WorkspaceConfig {
 // Returns nil if no config file exists (caller should check for nil).
 func LoadConfig(dir string) (*WorkspaceConfig, error) {
 	path := filepath.Join(dir, ".core", "workspace.yaml")
-	data, err := os.ReadFile(path)
+	data, err := coreio.Local.Read(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		// If using Local.Read, it returns error on not found.
+		// We can check if file exists first or handle specific error if exposed.
+		// Simplest is to check existence first or assume IsNotExist.
+		// Since we don't have easy IsNotExist check on coreio error returned yet (uses wrapped error),
+		// let's check IsFile first.
+		if !coreio.Local.IsFile(path) {
 			// Try parent directory
 			parent := filepath.Dir(dir)
 			if parent != dir {
@@ -43,7 +49,7 @@ func LoadConfig(dir string) (*WorkspaceConfig, error) {
 	}
 
 	config := DefaultConfig()
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err := yaml.Unmarshal([]byte(data), config); err != nil {
 		return nil, fmt.Errorf("failed to parse workspace config: %w", err)
 	}
 
@@ -57,7 +63,7 @@ func LoadConfig(dir string) (*WorkspaceConfig, error) {
 // SaveConfig saves the configuration to the given directory's .core/workspace.yaml.
 func SaveConfig(dir string, config *WorkspaceConfig) error {
 	coreDir := filepath.Join(dir, ".core")
-	if err := os.MkdirAll(coreDir, 0755); err != nil {
+	if err := coreio.Local.EnsureDir(coreDir); err != nil {
 		return fmt.Errorf("failed to create .core directory: %w", err)
 	}
 
@@ -67,7 +73,7 @@ func SaveConfig(dir string, config *WorkspaceConfig) error {
 		return fmt.Errorf("failed to marshal workspace config: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := coreio.Local.Write(path, string(data)); err != nil {
 		return fmt.Errorf("failed to write workspace config: %w", err)
 	}
 
@@ -82,7 +88,7 @@ func FindWorkspaceRoot() (string, error) {
 	}
 
 	for {
-		if _, err := os.Stat(filepath.Join(dir, ".core", "workspace.yaml")); err == nil {
+		if coreio.Local.IsFile(filepath.Join(dir, ".core", "workspace.yaml")) {
 			return dir, nil
 		}
 

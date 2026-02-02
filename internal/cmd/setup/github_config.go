@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	coreio "github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,13 +65,13 @@ type SecurityConfig struct {
 
 // LoadGitHubConfig reads and parses a GitHub configuration file.
 func LoadGitHubConfig(path string) (*GitHubConfig, error) {
-	data, err := os.ReadFile(path)
+	data, err := coreio.Local.Read(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	// Expand environment variables before parsing
-	expanded := expandEnvVars(string(data))
+	expanded := expandEnvVars(data)
 
 	var config GitHubConfig
 	if err := yaml.Unmarshal([]byte(expanded), &config); err != nil {
@@ -127,7 +128,7 @@ func expandEnvVars(input string) string {
 //  3. github.yaml (relative to registry)
 func FindGitHubConfig(registryDir, specifiedPath string) (string, error) {
 	if specifiedPath != "" {
-		if _, err := os.Stat(specifiedPath); err == nil {
+		if coreio.Local.IsFile(specifiedPath) {
 			return specifiedPath, nil
 		}
 		return "", fmt.Errorf("config file not found: %s", specifiedPath)
@@ -140,7 +141,7 @@ func FindGitHubConfig(registryDir, specifiedPath string) (string, error) {
 	}
 
 	for _, path := range candidates {
-		if _, err := os.Stat(path); err == nil {
+		if coreio.Local.IsFile(path) {
 			return path, nil
 		}
 	}

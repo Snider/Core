@@ -99,13 +99,19 @@ func (s *State) Add(c *Container) error {
 	return s.SaveState()
 }
 
-// Get retrieves a container by ID.
+// Get retrieves a copy of a container by ID.
+// Returns a copy to prevent data races when the container is modified.
 func (s *State) Get(id string) (*Container, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	c, ok := s.Containers[id]
-	return c, ok
+	if !ok {
+		return nil, false
+	}
+	// Return a copy to prevent data races
+	copy := *c
+	return &copy, true
 }
 
 // Update updates a container in the state and persists it.
@@ -126,14 +132,16 @@ func (s *State) Remove(id string) error {
 	return s.SaveState()
 }
 
-// All returns all containers in the state.
+// All returns copies of all containers in the state.
+// Returns copies to prevent data races when containers are modified.
 func (s *State) All() []*Container {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	containers := make([]*Container, 0, len(s.Containers))
 	for _, c := range s.Containers {
-		containers = append(containers, c)
+		copy := *c
+		containers = append(containers, &copy)
 	}
 	return containers
 }

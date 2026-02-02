@@ -5,7 +5,6 @@ go 1.25.5
 require (
 	github.com/Snider/Borg v0.1.0
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/host-uk/core-gui v0.0.0-20260131214111-6e2460834a87
 	github.com/leaanthony/debme v1.2.1
 	github.com/leaanthony/gosod v1.0.4
 	github.com/minio/selfupdate v0.6.0
@@ -58,6 +57,7 @@ require (
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
+	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/wI2L/jsondiff v0.7.0 // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect

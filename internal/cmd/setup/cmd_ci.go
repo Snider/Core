@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/host-uk/core/pkg/cli"
+	coreio "github.com/host-uk/core/pkg/io"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -51,9 +52,9 @@ func LoadCIConfig() *CIConfig {
 
 	for {
 		configPath := filepath.Join(dir, ".core", "ci.yaml")
-		data, err := os.ReadFile(configPath)
+		data, err := coreio.Local.Read(configPath)
 		if err == nil {
-			if err := yaml.Unmarshal(data, cfg); err == nil {
+			if err := yaml.Unmarshal([]byte(data), cfg); err == nil {
 				return cfg
 			}
 		}

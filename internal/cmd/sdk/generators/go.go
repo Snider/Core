@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	coreio "github.com/host-uk/core/pkg/io"
 )
 
 // GoGenerator generates Go SDKs from OpenAPI specs.
@@ -34,7 +36,7 @@ func (g *GoGenerator) Install() string {
 
 // Generate creates SDK from OpenAPI spec.
 func (g *GoGenerator) Generate(ctx context.Context, opts Options) error {
-	if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
+	if err := coreio.Local.EnsureDir(opts.OutputDir); err != nil {
 		return fmt.Errorf("go.Generate: failed to create output dir: %w", err)
 	}
 
@@ -61,7 +63,7 @@ func (g *GoGenerator) generateNative(ctx context.Context, opts Options) error {
 	}
 
 	goMod := fmt.Sprintf("module %s\n\ngo 1.21\n", opts.PackageName)
-	return os.WriteFile(filepath.Join(opts.OutputDir, "go.mod"), []byte(goMod), 0644)
+	return coreio.Local.Write(filepath.Join(opts.OutputDir, "go.mod"), goMod)
 }
 
 func (g *GoGenerator) generateDocker(ctx context.Context, opts Options) error {

@@ -1,13 +1,13 @@
 package dev
 
 import (
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // Workflow command flags
@@ -156,7 +156,7 @@ func runWorkflowSync(registryPath string, workflowFile string, dryRun bool) erro
 	}
 
 	// Read template content
-	templateContent, err := os.ReadFile(templatePath)
+	templateContent, err := io.Local.Read(templatePath)
 	if err != nil {
 		return cli.Wrap(err, i18n.T("cmd.dev.workflow.read_template_error"))
 	}
@@ -189,8 +189,8 @@ func runWorkflowSync(registryPath string, workflowFile string, dryRun bool) erro
 		destPath := filepath.Join(destDir, workflowFile)
 
 		// Check if workflow already exists and is identical
-		if existingContent, err := os.ReadFile(destPath); err == nil {
-			if string(existingContent) == string(templateContent) {
+		if existingContent, err := io.Local.Read(destPath); err == nil {
+			if existingContent == templateContent {
 				cli.Print("  %s %s %s\n",
 					dimStyle.Render("-"),
 					repoNameStyle.Render(repo.Name),
@@ -210,7 +210,7 @@ func runWorkflowSync(registryPath string, workflowFile string, dryRun bool) erro
 		}
 
 		// Create .github/workflows directory if needed
-		if err := os.MkdirAll(destDir, 0755); err != nil {
+		if err := io.Local.EnsureDir(destDir); err != nil {
 			cli.Print("  %s %s %s\n",
 				errorStyle.Render(cli.Glyph(":cross:")),
 				repoNameStyle.Render(repo.Name),
@@ -220,7 +220,7 @@ func runWorkflowSync(registryPath string, workflowFile string, dryRun bool) erro
 		}
 
 		// Write workflow file
-		if err := os.WriteFile(destPath, templateContent, 0644); err != nil {
+		if err := io.Local.Write(destPath, templateContent); err != nil {
 			cli.Print("  %s %s %s\n",
 				errorStyle.Render(cli.Glyph(":cross:")),
 				repoNameStyle.Render(repo.Name),
@@ -264,7 +264,7 @@ func findWorkflows(dir string) []string {
 		workflowsDir = dir
 	}
 
-	entries, err := os.ReadDir(workflowsDir)
+	entries, err := io.Local.List(workflowsDir)
 	if err != nil {
 		return nil
 	}
@@ -298,7 +298,7 @@ func findTemplateWorkflow(registryDir, workflowFile string) string {
 	}
 
 	for _, candidate := range candidates {
-		if _, err := os.Stat(candidate); err == nil {
+		if io.Local.IsFile(candidate) {
 			return candidate
 		}
 	}
