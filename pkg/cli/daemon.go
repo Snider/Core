@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/host-uk/core/pkg/io"
 	"golang.org/x/term"
 )
 
@@ -89,8 +90,8 @@ func (p *PIDFile) Acquire() error {
 	defer p.mu.Unlock()
 
 	// Check if PID file exists
-	if data, err := os.ReadFile(p.path); err == nil {
-		pid, err := strconv.Atoi(string(data))
+	if data, err := io.Local.Read(p.path); err == nil {
+		pid, err := strconv.Atoi(data)
 		if err == nil && pid > 0 {
 			// Check if process is still running
 			if process, err := os.FindProcess(pid); err == nil {
@@ -100,19 +101,19 @@ func (p *PIDFile) Acquire() error {
 			}
 		}
 		// Stale PID file, remove it
-		_ = os.Remove(p.path)
+		_ = io.Local.Delete(p.path)
 	}
 
 	// Ensure directory exists
 	if dir := filepath.Dir(p.path); dir != "." {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := io.Local.EnsureDir(dir); err != nil {
 			return fmt.Errorf("failed to create PID directory: %w", err)
 		}
 	}
 
 	// Write current PID
 	pid := os.Getpid()
-	if err := os.WriteFile(p.path, []byte(strconv.Itoa(pid)), 0644); err != nil {
+	if err := io.Local.Write(p.path, strconv.Itoa(pid)); err != nil {
 		return fmt.Errorf("failed to write PID file: %w", err)
 	}
 
@@ -123,7 +124,7 @@ func (p *PIDFile) Acquire() error {
 func (p *PIDFile) Release() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return os.Remove(p.path)
+	return io.Local.Delete(p.path)
 }
 
 // Path returns the PID file path.
