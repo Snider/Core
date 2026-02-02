@@ -230,6 +230,11 @@ func (m *LinuxKitManager) waitForExit(id string, cmd *exec.Cmd) {
 
 // Stop stops a running container by sending SIGTERM.
 func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
+	// Check for context cancellation upfront
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	container, ok := m.state.Get(id)
 	if !ok {
 		return fmt.Errorf("container not found: %s", id)
