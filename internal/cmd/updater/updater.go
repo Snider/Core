@@ -7,13 +7,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/minio/selfupdate"
 	"golang.org/x/mod/semver"
 )
 
 // Version holds the current version of the application.
 // It is set at build time via ldflags or fallback to the version in package.json.
-var Version = PkgVersion
+var Version = cli.AppVersion
 
 // NewGithubClient is a variable that holds a function to create a new GithubClient.
 // This can be replaced in tests to inject a mock client.

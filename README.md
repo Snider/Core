@@ -76,6 +76,25 @@ task cli:run      # Build and run
 
 ---
 
+## Configuration
+
+Core is configured through a combination of environment variables and a configuration file.
+
+### Environment Variables
+
+*   `CORE_LOG_LEVEL`: Sets the log level for the application. Valid values are `DEBUG`, `INFO`, `WARN`, `ERROR`, and `FATAL`.
+*   `CORE_CONFIG_PATH`: Sets the path to the configuration file. If not set, the default path is `$HOME/.config/core/config.json`.
+
+### Configuration File
+
+The configuration file is a JSON file that contains the following settings:
+
+*   `log_level`: The log level for the application.
+*   `port`: The port to use for the web interface.
+*   `database_url`: The URL for the database.
+
+---
+
 ## Architecture
 
 ### Project Structure
