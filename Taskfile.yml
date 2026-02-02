@@ -3,19 +3,34 @@ version: '3'
 vars:
   VERSION:
     sh: git describe --tags --exact-match 2>/dev/null || echo "dev"
-  LDFLAGS: "-X github.com/host-uk/core/pkg/cli.AppVersion={{.VERSION}}"
+  # Base ldflags for version injection
+  LDFLAGS_BASE: "-X github.com/host-uk/core/pkg/cli.AppVersion={{.VERSION}}"
+  # Development build: includes debug info
+  LDFLAGS: "{{.LDFLAGS_BASE}}"
+  # Release build: strips debug info and symbol table for smaller binary
+  LDFLAGS_RELEASE: "-s -w {{.LDFLAGS_BASE}}"
 
 tasks:
   # --- CLI Management ---
   cli:build:
-    desc: "Build core CLI to ./bin/core"
+    desc: "Build core CLI to ./bin/core (dev build with debug info)"
     cmds:
       - go build -ldflags '{{.LDFLAGS}}' -o ./bin/core .
 
+  cli:build:release:
+    desc: "Build core CLI for release (smaller binary, no debug info)"
+    cmds:
+      - go build -ldflags '{{.LDFLAGS_RELEASE}}' -o ./bin/core .
+
   cli:install:
-    desc: "Install core CLI to system PATH"
+    desc: "Install core CLI to system PATH (dev build)"
     cmds:
       - go install -ldflags '{{.LDFLAGS}}' .
+
+  cli:install:release:
+    desc: "Install core CLI for release (smaller binary)"
+    cmds:
+      - go install -ldflags '{{.LDFLAGS_RELEASE}}' .
 
   # --- Development ---
   test:
