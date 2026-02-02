@@ -254,8 +254,8 @@ func extractSnippet(content string, queryWords []string) string {
 		return content
 	}
 
-	// Convert byte position to rune position
-	matchRunePos := len([]rune(content[:matchPos]))
+	// Convert byte position to rune position (use same string as Index)
+	matchRunePos := len([]rune(contentLower[:matchPos]))
 
 	// Extract snippet around match (rune-based)
 	start := matchRunePos - 50
