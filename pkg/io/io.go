@@ -1,6 +1,7 @@
 package io
 
 import (
+	"io/fs"
 	"os"
 	"strings"
 
@@ -33,11 +34,23 @@ type Medium interface {
 	// Delete removes a file or empty directory.
 	Delete(path string) error
 
-	// Rename moves or renames a file.
+	// DeleteAll removes a file or directory recursively.
+	DeleteAll(path string) error
+
+	// Rename moves or renames a file or directory.
 	Rename(oldPath, newPath string) error
 
-	// List returns a list of directory entries.
-	List(path string) ([]os.DirEntry, error)
+	// List returns directory entries.
+	List(path string) ([]fs.DirEntry, error)
+
+	// Stat returns file information.
+	Stat(path string) (fs.FileInfo, error)
+
+	// Exists returns true if path exists.
+	Exists(path string) bool
+
+	// IsDir returns true if path is a directory.
+	IsDir(path string) bool
 }
 
 // Local is a pre-initialized medium for the local filesystem.
@@ -147,13 +160,18 @@ func (m *MockMedium) FileSet(path, content string) error {
 	return m.Write(path, content)
 }
 
-// Delete removes a file or directory recursively from the mock filesystem.
+// Delete removes a file or empty directory from the mock filesystem.
 func (m *MockMedium) Delete(path string) error {
-	// Delete exact match
+	delete(m.Files, path)
+	delete(m.Dirs, path)
+	return nil
+}
+
+// DeleteAll removes a file or directory recursively from the mock filesystem.
+func (m *MockMedium) DeleteAll(path string) error {
 	delete(m.Files, path)
 	delete(m.Dirs, path)
 
-	// Delete all children (naive string prefix check)
 	prefix := path + "/"
 	for k := range m.Files {
 		if strings.HasPrefix(k, prefix) {
@@ -181,9 +199,33 @@ func (m *MockMedium) Rename(oldPath, newPath string) error {
 	return nil
 }
 
-// List returns a list of directory entries from the mock filesystem.
-func (m *MockMedium) List(path string) ([]os.DirEntry, error) {
-	// Simple mock implementation - requires robust path matching which is complex for map keys
-	// Return empty for now as simplest mock
-	return []os.DirEntry{}, nil
+// List returns directory entries from the mock filesystem.
+func (m *MockMedium) List(path string) ([]fs.DirEntry, error) {
+	return []fs.DirEntry{}, nil
+}
+
+// Stat returns file information from the mock filesystem.
+func (m *MockMedium) Stat(path string) (fs.FileInfo, error) {
+	if _, ok := m.Files[path]; ok {
+		return nil, nil // Mock returns nil info for simplicity
+	}
+	if _, ok := m.Dirs[path]; ok {
+		return nil, nil
+	}
+	return nil, os.ErrNotExist
+}
+
+// Exists returns true if path exists in the mock filesystem.
+func (m *MockMedium) Exists(path string) bool {
+	if _, ok := m.Files[path]; ok {
+		return true
+	}
+	_, ok := m.Dirs[path]
+	return ok
+}
+
+// IsDir returns true if path is a directory in the mock filesystem.
+func (m *MockMedium) IsDir(path string) bool {
+	_, ok := m.Dirs[path]
+	return ok
 }
