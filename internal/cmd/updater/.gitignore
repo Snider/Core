@@ -1,6 +1,5 @@
 # Go
 updater
-version.go
 *.exe
 *.exe~
 *.dll
