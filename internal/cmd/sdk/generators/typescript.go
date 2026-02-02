@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	coreio "github.com/host-uk/core/pkg/io"
 )
 
 // TypeScriptGenerator generates TypeScript SDKs from OpenAPI specs.
@@ -38,7 +40,7 @@ func (g *TypeScriptGenerator) Install() string {
 
 // Generate creates SDK from OpenAPI spec.
 func (g *TypeScriptGenerator) Generate(ctx context.Context, opts Options) error {
-	if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
+	if err := coreio.Local.EnsureDir(opts.OutputDir); err != nil {
 		return fmt.Errorf("typescript.Generate: failed to create output dir: %w", err)
 	}
 

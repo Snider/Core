@@ -9,7 +9,6 @@ package dev
 
 import (
 	"context"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
+	coreio "github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -63,7 +63,24 @@ func runFileSync(source string) error {
 	}
 
 	// Validate source exists
-	sourceInfo, err := os.Stat(source)
+	sourceInfo, err := os.Stat(source) // Keep os.Stat for local source check or use coreio? coreio.Local.IsFile is bool.
+	// If source is local file on disk (not in medium), we can use os.Stat.
+	// But concept is everything is via Medium?
+	// User is running CLI on host. `source` is relative to CWD.
+	// coreio.Local uses absolute path or relative to root (which is "/" by default).
+	// So coreio.Local works.
+	if !coreio.Local.IsFile(source) {
+		// Might be directory
+		// IsFile returns false for directory.
+	}
+	// Let's rely on os.Stat for initial source check to distinguish dir vs file easily if coreio doesn't expose Stat.
+	// coreio doesn't expose Stat.
+
+	// Check using standard os for source determination as we are outside strict sandbox for input args potentially?
+	// But we should use coreio where possible.
+	// coreio.Local.List worked for dirs.
+	// Let's stick to os.Stat for source properties finding as typically allowed for CLI args.
+
 	if err != nil {
 		return errors.E("dev.sync", i18n.T("cmd.dev.file_sync.error.source_not_found", map[string]interface{}{"Path": source}), err)
 	}
@@ -113,7 +130,9 @@ func runFileSync(source string) error {
 				continue
 			}
 		} else {
-			if err := copyFile(source, destPath); err != nil {
+			// Ensure dir exists
+			coreio.Local.EnsureDir(filepath.Dir(destPath))
+			if err := coreio.Copy(coreio.Local, source, coreio.Local, destPath); err != nil {
 				cli.Print("  %s %s: copy failed: %s\n", errorStyle.Render("x"), repoName, err)
 				failed++
 				continue
@@ -287,47 +306,14 @@ func gitCommandQuiet(ctx context.Context, dir string, args ...string) (string, e
 	return string(output), nil
 }
 
-// copyFile copies a single file
-func copyFile(src, dst string) error {
-	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		return err
-	}
-
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	srcInfo, err := srcFile.Stat()
-	if err != nil {
-		return err
-	}
-
-	dstFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcInfo.Mode())
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, srcFile)
-	return err
-}
-
 // copyDir recursively copies a directory
 func copyDir(src, dst string) error {
-	srcInfo, err := os.Stat(src)
+	entries, err := coreio.Local.List(src)
 	if err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
-		return err
-	}
-
-	entries, err := os.ReadDir(src)
-	if err != nil {
+	if err := coreio.Local.EnsureDir(dst); err != nil {
 		return err
 	}
 
@@ -340,7 +326,7 @@ func copyDir(src, dst string) error {
 				return err
 			}
 		} else {
-			if err := copyFile(srcPath, dstPath); err != nil {
+			if err := coreio.Copy(coreio.Local, srcPath, coreio.Local, dstPath); err != nil {
 				return err
 			}
 		}

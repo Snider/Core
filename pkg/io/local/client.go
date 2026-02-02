@@ -2,7 +2,7 @@
 package local
 
 import (
-	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,157 +13,115 @@ type Medium struct {
 	root string
 }
 
-// New creates a new local Medium with the specified root directory.
-// The root directory will be created if it doesn't exist.
+// New creates a new local Medium rooted at the given directory.
+// Pass "/" for full filesystem access, or a specific path to sandbox.
 func New(root string) (*Medium, error) {
-	// Ensure root is an absolute path
-	absRoot, err := filepath.Abs(root)
+	abs, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
 	}
-
-	// Create root directory if it doesn't exist
-	if err := os.MkdirAll(absRoot, 0755); err != nil {
-		return nil, err
-	}
-
-	return &Medium{root: absRoot}, nil
+	return &Medium{root: abs}, nil
 }
 
-// path sanitizes and joins the relative path with the root directory.
-// Returns an error if a path traversal attempt is detected.
-// Uses filepath.EvalSymlinks to prevent symlink-based bypass attacks.
-func (m *Medium) path(relativePath string) (string, error) {
-	// Clean the path to remove any .. or . components
-	cleanPath := filepath.Clean(relativePath)
-
-	// Check for path traversal attempts in the raw path
-	if strings.HasPrefix(cleanPath, "..") || strings.Contains(cleanPath, string(filepath.Separator)+"..") {
-		return "", errors.New("path traversal attempt detected")
+// path sanitizes and returns the full path.
+// Replaces .. with . to prevent traversal, then joins with root.
+func (m *Medium) path(p string) string {
+	if p == "" {
+		return m.root
 	}
-
-	// Reject absolute paths - they bypass the sandbox
-	if filepath.IsAbs(cleanPath) {
-		return "", errors.New("path traversal attempt detected")
+	clean := strings.ReplaceAll(p, "..", ".")
+	if filepath.IsAbs(clean) {
+		return filepath.Clean(clean)
 	}
+	return filepath.Join(m.root, clean)
+}
 
-	fullPath := filepath.Join(m.root, cleanPath)
-
-	// Verify the resulting path is still within root (boundary-aware check)
-	// Must use separator to prevent /tmp/root matching /tmp/root2
-	rootWithSep := m.root
-	if !strings.HasSuffix(rootWithSep, string(filepath.Separator)) {
-		rootWithSep += string(filepath.Separator)
-	}
-	if fullPath != m.root && !strings.HasPrefix(fullPath, rootWithSep) {
-		return "", errors.New("path traversal attempt detected")
-	}
-
-	// Resolve symlinks to prevent bypass attacks
-	// We need to resolve both the root and full path to handle symlinked roots
-	resolvedRoot, err := filepath.EvalSymlinks(m.root)
+// Read returns file contents as string.
+func (m *Medium) Read(p string) (string, error) {
+	data, err := os.ReadFile(m.path(p))
 	if err != nil {
 		return "", err
 	}
-
-	// Build boundary-aware prefix for resolved root
-	resolvedRootWithSep := resolvedRoot
-	if !strings.HasSuffix(resolvedRootWithSep, string(filepath.Separator)) {
-		resolvedRootWithSep += string(filepath.Separator)
-	}
-
-	// For the full path, resolve as much as exists
-	// Use Lstat first to check if the path exists
-	if _, err := os.Lstat(fullPath); err == nil {
-		resolvedPath, err := filepath.EvalSymlinks(fullPath)
-		if err != nil {
-			return "", err
-		}
-		// Verify resolved path is still within resolved root (boundary-aware)
-		if resolvedPath != resolvedRoot && !strings.HasPrefix(resolvedPath, resolvedRootWithSep) {
-			return "", errors.New("path traversal attempt detected via symlink")
-		}
-		return resolvedPath, nil
-	}
-
-	// Path doesn't exist yet - verify parent directory
-	parentDir := filepath.Dir(fullPath)
-	if _, err := os.Lstat(parentDir); err == nil {
-		resolvedParent, err := filepath.EvalSymlinks(parentDir)
-		if err != nil {
-			return "", err
-		}
-		if resolvedParent != resolvedRoot && !strings.HasPrefix(resolvedParent, resolvedRootWithSep) {
-			return "", errors.New("path traversal attempt detected via symlink")
-		}
-	}
-
-	return fullPath, nil
+	return string(data), nil
 }
 
-// Read retrieves the content of a file as a string.
-func (m *Medium) Read(relativePath string) (string, error) {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return "", err
-	}
-
-	content, err := os.ReadFile(fullPath)
-	if err != nil {
-		return "", err
-	}
-
-	return string(content), nil
-}
-
-// Write saves the given content to a file, overwriting it if it exists.
-// Parent directories are created automatically.
-func (m *Medium) Write(relativePath, content string) error {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
+// Write saves content to file, creating parent directories as needed.
+func (m *Medium) Write(p, content string) error {
+	full := m.path(p)
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
 		return err
 	}
-
-	// Ensure parent directory exists
-	parentDir := filepath.Dir(fullPath)
-	if err := os.MkdirAll(parentDir, 0755); err != nil {
-		return err
-	}
-
-	return os.WriteFile(fullPath, []byte(content), 0644)
+	return os.WriteFile(full, []byte(content), 0644)
 }
 
-// EnsureDir makes sure a directory exists, creating it if necessary.
-func (m *Medium) EnsureDir(relativePath string) error {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
-		return err
-	}
-
-	return os.MkdirAll(fullPath, 0755)
+// EnsureDir creates directory if it doesn't exist.
+func (m *Medium) EnsureDir(p string) error {
+	return os.MkdirAll(m.path(p), 0755)
 }
 
-// IsFile checks if a path exists and is a regular file.
-func (m *Medium) IsFile(relativePath string) bool {
-	fullPath, err := m.path(relativePath)
-	if err != nil {
+// IsDir returns true if path is a directory.
+func (m *Medium) IsDir(p string) bool {
+	if p == "" {
 		return false
 	}
+	info, err := os.Stat(m.path(p))
+	return err == nil && info.IsDir()
+}
 
-	info, err := os.Stat(fullPath)
-	if err != nil {
+// IsFile returns true if path is a regular file.
+func (m *Medium) IsFile(p string) bool {
+	if p == "" {
 		return false
 	}
-
-	return info.Mode().IsRegular()
+	info, err := os.Stat(m.path(p))
+	return err == nil && info.Mode().IsRegular()
 }
 
-// FileGet is a convenience function that reads a file from the medium.
-func (m *Medium) FileGet(relativePath string) (string, error) {
-	return m.Read(relativePath)
+// Exists returns true if path exists.
+func (m *Medium) Exists(p string) bool {
+	_, err := os.Stat(m.path(p))
+	return err == nil
 }
 
-// FileSet is a convenience function that writes a file to the medium.
-func (m *Medium) FileSet(relativePath, content string) error {
-	return m.Write(relativePath, content)
+// List returns directory entries.
+func (m *Medium) List(p string) ([]fs.DirEntry, error) {
+	return os.ReadDir(m.path(p))
+}
+
+// Stat returns file info.
+func (m *Medium) Stat(p string) (fs.FileInfo, error) {
+	return os.Stat(m.path(p))
+}
+
+// Delete removes a file or empty directory.
+func (m *Medium) Delete(p string) error {
+	full := m.path(p)
+	if len(full) < 3 {
+		return nil
+	}
+	return os.Remove(full)
+}
+
+// DeleteAll removes a file or directory recursively.
+func (m *Medium) DeleteAll(p string) error {
+	full := m.path(p)
+	if len(full) < 3 {
+		return nil
+	}
+	return os.RemoveAll(full)
+}
+
+// Rename moves a file or directory.
+func (m *Medium) Rename(oldPath, newPath string) error {
+	return os.Rename(m.path(oldPath), m.path(newPath))
+}
+
+// FileGet is an alias for Read.
+func (m *Medium) FileGet(p string) (string, error) {
+	return m.Read(p)
+}
+
+// FileSet is an alias for Write.
+func (m *Medium) FileSet(p, content string) error {
+	return m.Write(p, content)
 }

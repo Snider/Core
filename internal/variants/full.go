@@ -31,6 +31,7 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/doctor"
 	_ "github.com/host-uk/core/internal/cmd/gitcmd"
 	_ "github.com/host-uk/core/internal/cmd/go"
+	_ "github.com/host-uk/core/internal/cmd/help"
 	_ "github.com/host-uk/core/internal/cmd/php"
 	_ "github.com/host-uk/core/internal/cmd/pkgcmd"
 	_ "github.com/host-uk/core/internal/cmd/qa"

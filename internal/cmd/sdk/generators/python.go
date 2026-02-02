@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	coreio "github.com/host-uk/core/pkg/io"
 )
 
 // PythonGenerator generates Python SDKs from OpenAPI specs.
@@ -34,7 +36,7 @@ func (g *PythonGenerator) Install() string {
 
 // Generate creates SDK from OpenAPI spec.
 func (g *PythonGenerator) Generate(ctx context.Context, opts Options) error {
-	if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
+	if err := coreio.Local.EnsureDir(opts.OutputDir); err != nil {
 		return fmt.Errorf("python.Generate: failed to create output dir: %w", err)
 	}
 

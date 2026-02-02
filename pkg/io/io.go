@@ -2,6 +2,7 @@ package io
 
 import (
 	"os"
+	"strings"
 
 	coreerr "github.com/host-uk/core/pkg/framework/core"
 	"github.com/host-uk/core/pkg/io/local"
@@ -28,6 +29,15 @@ type Medium interface {
 
 	// FileSet is a convenience function that writes a file to the medium.
 	FileSet(path, content string) error
+
+	// Delete removes a file or empty directory.
+	Delete(path string) error
+
+	// Rename moves or renames a file.
+	Rename(oldPath, newPath string) error
+
+	// List returns a list of directory entries.
+	List(path string) ([]os.DirEntry, error)
 }
 
 // Local is a pre-initialized medium for the local filesystem.
@@ -135,4 +145,45 @@ func (m *MockMedium) FileGet(path string) (string, error) {
 // FileSet is a convenience function that writes a file to the mock filesystem.
 func (m *MockMedium) FileSet(path, content string) error {
 	return m.Write(path, content)
+}
+
+// Delete removes a file or directory recursively from the mock filesystem.
+func (m *MockMedium) Delete(path string) error {
+	// Delete exact match
+	delete(m.Files, path)
+	delete(m.Dirs, path)
+
+	// Delete all children (naive string prefix check)
+	prefix := path + "/"
+	for k := range m.Files {
+		if strings.HasPrefix(k, prefix) {
+			delete(m.Files, k)
+		}
+	}
+	for k := range m.Dirs {
+		if strings.HasPrefix(k, prefix) {
+			delete(m.Dirs, k)
+		}
+	}
+	return nil
+}
+
+// Rename moves or renames a file in the mock filesystem.
+func (m *MockMedium) Rename(oldPath, newPath string) error {
+	if content, ok := m.Files[oldPath]; ok {
+		m.Files[newPath] = content
+		delete(m.Files, oldPath)
+	}
+	if m.Dirs[oldPath] {
+		m.Dirs[newPath] = true
+		delete(m.Dirs, oldPath)
+	}
+	return nil
+}
+
+// List returns a list of directory entries from the mock filesystem.
+func (m *MockMedium) List(path string) ([]os.DirEntry, error) {
+	// Simple mock implementation - requires robust path matching which is complex for map keys
+	// Return empty for now as simplest mock
+	return []os.DirEntry{}, nil
 }

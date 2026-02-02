@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	coreio "github.com/host-uk/core/pkg/io"
 )
 
 // PHPGenerator generates PHP SDKs from OpenAPI specs.
@@ -38,7 +40,7 @@ func (g *PHPGenerator) Generate(ctx context.Context, opts Options) error {
 		return fmt.Errorf("php.Generate: Docker is required but not available")
 	}
 
-	if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
+	if err := coreio.Local.EnsureDir(opts.OutputDir); err != nil {
 		return fmt.Errorf("php.Generate: failed to create output dir: %w", err)
 	}
 

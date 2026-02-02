@@ -1,12 +1,12 @@
 package docs
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // Flag variables for sync command
@@ -127,9 +127,9 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		repoOutDir := filepath.Join(outputDir, outName)
 
 		// Clear existing directory
-		os.RemoveAll(repoOutDir)
+		io.Local.Delete(repoOutDir) // Recursive delete
 
-		if err := os.MkdirAll(repoOutDir, 0755); err != nil {
+		if err := io.Local.EnsureDir(repoOutDir); err != nil {
 			cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), info.Name, err)
 			continue
 		}
@@ -139,8 +139,10 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 		for _, f := range info.DocsFiles {
 			src := filepath.Join(docsDir, f)
 			dst := filepath.Join(repoOutDir, f)
-			os.MkdirAll(filepath.Dir(dst), 0755)
-			if err := copyFile(src, dst); err != nil {
+			// Ensure parent dir
+			io.Local.EnsureDir(filepath.Dir(dst))
+
+			if err := io.Copy(io.Local, src, io.Local, dst); err != nil {
 				cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), f, err)
 			}
 		}

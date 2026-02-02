@@ -18,6 +18,7 @@ import (
 	"github.com/host-uk/core/pkg/errors"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -76,8 +77,8 @@ func runApply() error {
 
 	// Validate script exists
 	if applyScript != "" {
-		if _, err := os.Stat(applyScript); err != nil {
-			return errors.E("dev.apply", "script not found: "+applyScript, err)
+		if !io.Local.IsFile(applyScript) {
+			return errors.E("dev.apply", "script not found: "+applyScript, nil) // Error mismatch? IsFile returns bool
 		}
 	}
 

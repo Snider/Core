@@ -8,6 +8,7 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
+	coreio "github.com/host-uk/core/pkg/io"
 )
 
 // Commit command flags
@@ -139,8 +140,8 @@ func runCommit(registryPath string, all bool) error {
 // isGitRepo checks if a directory is a git repository.
 func isGitRepo(path string) bool {
 	gitDir := path + "/.git"
-	info, err := os.Stat(gitDir)
-	return err == nil && info.IsDir()
+	_, err := coreio.Local.List(gitDir)
+	return err == nil
 }
 
 // runCommitSingleRepo handles commit for a single repo (current directory).

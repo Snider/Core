@@ -2,18 +2,39 @@ package dev
 
 import (
 	"bytes"
+	"context"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
 	"path/filepath"
 	"text/template"
 
-	"github.com/host-uk/core/pkg/cli"
-	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/cli"  // Added
+	"github.com/host-uk/core/pkg/i18n" // Added
+	coreio "github.com/host-uk/core/pkg/io"
+	// Added
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
+
+// syncInternalToPublic handles the synchronization of internal packages to public-facing directories.
+// This function is a placeholder for future implementation.
+func syncInternalToPublic(ctx context.Context, publicDir string) error {
+	// 1. Clean public/internal
+	// 2. Copy relevant files from internal/ to public/internal/
+	//    Usually just shared logic, not private stuff.
+
+	// For now, let's assume we copy specific safe packages
+	// Logic to be refined.
+
+	// Example migration of os calls:
+	// internalDirs, err := os.ReadDir(pkgDir) -> coreio.Local.List(pkgDir)
+	// os.Stat -> coreio.Local.IsFile (returns bool) or List for existence check
+	// os.MkdirAll -> coreio.Local.EnsureDir
+	// os.WriteFile -> coreio.Local.Write
+
+	return nil
+}
 
 // addSyncCommand adds the 'sync' command to the given parent command.
 func addSyncCommand(parent *cli.Command) {
@@ -40,7 +61,7 @@ type symbolInfo struct {
 
 func runSync() error {
 	pkgDir := "pkg"
-	internalDirs, err := os.ReadDir(pkgDir)
+	internalDirs, err := coreio.Local.List(pkgDir)
 	if err != nil {
 		return cli.Wrap(err, "failed to read pkg directory")
 	}
@@ -55,7 +76,7 @@ func runSync() error {
 		publicDir := serviceName
 		publicFile := filepath.Join(publicDir, serviceName+".go")
 
-		if _, err := os.Stat(internalFile); os.IsNotExist(err) {
+		if !coreio.Local.IsFile(internalFile) {
 			continue
 		}
 
@@ -73,8 +94,16 @@ func runSync() error {
 }
 
 func getExportedSymbols(path string) ([]symbolInfo, error) {
+	// ParseFile expects a filename/path and reads it using os.Open by default if content is nil.
+	// Since we want to use our Medium abstraction, we should read the file content first.
+	content, err := coreio.Local.Read(path)
+	if err != nil {
+		return nil, err
+	}
+
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	// ParseFile can take content as string (src argument).
+	node, err := parser.ParseFile(fset, path, content, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +163,7 @@ type {{.InterfaceName}} = core.{{.InterfaceName}}
 `
 
 func generatePublicAPIFile(dir, path, serviceName string, symbols []symbolInfo) error {
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+	if err := coreio.Local.EnsureDir(dir); err != nil {
 		return err
 	}
 
@@ -161,5 +190,5 @@ func generatePublicAPIFile(dir, path, serviceName string, symbols []symbolInfo) 
 		return err
 	}
 
-	return os.WriteFile(path, buf.Bytes(), 0644)
+	return coreio.Local.Write(path, buf.String())
 }

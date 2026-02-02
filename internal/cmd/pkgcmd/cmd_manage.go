@@ -3,12 +3,12 @@ package pkgcmd
 import (
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
+	coreio "github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -58,7 +58,7 @@ func runPkgList() error {
 	for _, r := range allRepos {
 		repoPath := filepath.Join(basePath, r.Name)
 		exists := false
-		if _, err := os.Stat(filepath.Join(repoPath, ".git")); err == nil {
+		if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err == nil {
 			exists = true
 			installed++
 		} else {
@@ -147,7 +147,7 @@ func runPkgUpdate(packages []string, all bool) error {
 	for _, name := range toUpdate {
 		repoPath := filepath.Join(basePath, name)
 
-		if _, err := os.Stat(filepath.Join(repoPath, ".git")); os.IsNotExist(err) {
+		if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err != nil {
 			fmt.Printf("  %s %s (%s)\n", dimStyle.Render("○"), name, i18n.T("cmd.pkg.update.not_installed"))
 			skipped++
 			continue
@@ -219,7 +219,7 @@ func runPkgOutdated() error {
 	for _, r := range reg.List() {
 		repoPath := filepath.Join(basePath, r.Name)
 
-		if _, err := os.Stat(filepath.Join(repoPath, ".git")); os.IsNotExist(err) {
+		if _, err := coreio.Local.List(filepath.Join(repoPath, ".git")); err != nil {
 			notInstalled++
 			continue
 		}
