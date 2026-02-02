@@ -699,12 +699,14 @@ func TestDevOps_Stop_Bad_ContainerNotRunning(t *testing.T) {
 }
 
 func TestDevOps_Boot_Good_FreshWithNoExisting(t *testing.T) {
-	tempDir := t.TempDir()
+	tempDir, err := os.MkdirTemp("", "devops-boot-fresh-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	t.Setenv("CORE_IMAGES_DIR", tempDir)
 
 	// Create fake image
 	imagePath := filepath.Join(tempDir, ImageName())
-	err := os.WriteFile(imagePath, []byte("fake"), 0644)
+	err = os.WriteFile(imagePath, []byte("fake"), 0644)
 	require.NoError(t, err)
 
 	cfg := DefaultConfig()
