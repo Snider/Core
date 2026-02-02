@@ -29,6 +29,20 @@ func TestErr_Error_Good(t *testing.T) {
 	assert.Equal(t, "cache.Get: miss", err.Error())
 }
 
+func TestErr_Error_EmptyOp_Good(t *testing.T) {
+	// No Op - should not have leading colon
+	err := &Err{Msg: "just a message"}
+	assert.Equal(t, "just a message", err.Error())
+
+	// No Op with code
+	err = &Err{Msg: "error with code", Code: "ERR_CODE"}
+	assert.Equal(t, "error with code [ERR_CODE]", err.Error())
+
+	// No Op with underlying error
+	err = &Err{Msg: "wrapped", Err: errors.New("underlying")}
+	assert.Equal(t, "wrapped: underlying", err.Error())
+}
+
 func TestErr_Unwrap_Good(t *testing.T) {
 	underlying := errors.New("underlying error")
 	err := &Err{Op: "test", Msg: "wrapped", Err: underlying}
@@ -66,6 +80,23 @@ func TestWrap_Good(t *testing.T) {
 	assert.Contains(t, err.Error(), "handler.Process")
 	assert.Contains(t, err.Error(), "processing failed")
 	assert.True(t, errors.Is(err, underlying))
+}
+
+func TestWrap_PreservesCode_Good(t *testing.T) {
+	// Create an error with a code
+	inner := WrapCode(errors.New("base"), "VALIDATION_ERROR", "inner.Op", "validation failed")
+
+	// Wrap it - should preserve the code
+	outer := Wrap(inner, "outer.Op", "outer context")
+
+	assert.NotNil(t, outer)
+	assert.Equal(t, "VALIDATION_ERROR", ErrCode(outer))
+	assert.Contains(t, outer.Error(), "[VALIDATION_ERROR]")
+}
+
+func TestWrap_NilError_Good(t *testing.T) {
+	err := Wrap(nil, "op", "msg")
+	assert.Nil(t, err)
 }
 
 func TestWrapCode_Good(t *testing.T) {

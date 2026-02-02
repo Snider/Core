@@ -4,12 +4,16 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// maxMCPMessageSize is the maximum size for MCP JSON-RPC messages (10 MB).
+const maxMCPMessageSize = 10 * 1024 * 1024
 
 // TCPTransport manages a TCP listener for MCP.
 type TCPTransport struct {
@@ -35,6 +39,12 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 		return err
 	}
 	defer t.listener.Close()
+
+	// Close listener when context is cancelled to unblock Accept
+	go func() {
+		<-ctx.Done()
+		t.listener.Close()
+	}()
 
 	if addr == "" {
 		addr = t.listener.Addr().String()
@@ -84,9 +94,11 @@ type connTransport struct {
 }
 
 func (t *connTransport) Connect(ctx context.Context) (mcp.Connection, error) {
+	scanner := bufio.NewScanner(t.conn)
+	scanner.Buffer(make([]byte, 64*1024), maxMCPMessageSize)
 	return &connConnection{
 		conn:    t.conn,
-		scanner: bufio.NewScanner(t.conn),
+		scanner: scanner,
 	}, nil
 }
 
@@ -102,10 +114,8 @@ func (c *connConnection) Read(ctx context.Context) (jsonrpc.Message, error) {
 		if err := c.scanner.Err(); err != nil {
 			return nil, err
 		}
-		// EOF
-		// Return error to signal closure, as per Scanner contract?
-		// SDK usually expects error on close.
-		return nil, fmt.Errorf("EOF")
+		// EOF - connection closed cleanly
+		return nil, io.EOF
 	}
 	line := c.scanner.Bytes()
 	return jsonrpc.DecodeMessage(line)

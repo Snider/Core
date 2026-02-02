@@ -31,6 +31,10 @@ func (m *Medium) path(p string) string {
 	}
 	clean := strings.ReplaceAll(p, "..", ".")
 	if filepath.IsAbs(clean) {
+		// Handle Windows drive root (e.g. "C:\")
+		if len(clean) == 3 && clean[1] == ':' && (clean[2] == '\\' || clean[2] == '/') {
+			return clean
+		}
 		return filepath.Clean(clean)
 	}
 	return filepath.Join(m.root, clean)

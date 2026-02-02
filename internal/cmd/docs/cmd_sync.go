@@ -140,7 +140,10 @@ func runDocsSync(registryPath string, outputDir string, dryRun bool) error {
 			src := filepath.Join(docsDir, f)
 			dst := filepath.Join(repoOutDir, f)
 			// Ensure parent dir
-			io.Local.EnsureDir(filepath.Dir(dst))
+			if err := io.Local.EnsureDir(filepath.Dir(dst)); err != nil {
+				cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), f, err)
+				continue
+			}
 
 			if err := io.Copy(io.Local, src, io.Local, dst); err != nil {
 				cli.Print("  %s %s: %s\n", errorStyle.Render("✗"), f, err)

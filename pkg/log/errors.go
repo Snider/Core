@@ -21,16 +21,20 @@ type Err struct {
 
 // Error implements the error interface.
 func (e *Err) Error() string {
+	var prefix string
+	if e.Op != "" {
+		prefix = e.Op + ": "
+	}
 	if e.Err != nil {
 		if e.Code != "" {
-			return fmt.Sprintf("%s: %s [%s]: %v", e.Op, e.Msg, e.Code, e.Err)
+			return fmt.Sprintf("%s%s [%s]: %v", prefix, e.Msg, e.Code, e.Err)
 		}
-		return fmt.Sprintf("%s: %s: %v", e.Op, e.Msg, e.Err)
+		return fmt.Sprintf("%s%s: %v", prefix, e.Msg, e.Err)
 	}
 	if e.Code != "" {
-		return fmt.Sprintf("%s: %s [%s]", e.Op, e.Msg, e.Code)
+		return fmt.Sprintf("%s%s [%s]", prefix, e.Msg, e.Code)
 	}
-	return fmt.Sprintf("%s: %s", e.Op, e.Msg)
+	return fmt.Sprintf("%s%s", prefix, e.Msg)
 }
 
 // Unwrap returns the underlying error for use with errors.Is and errors.As.
@@ -53,6 +57,7 @@ func E(op, msg string, err error) error {
 
 // Wrap wraps an error with operation context.
 // Returns nil if err is nil, to support conditional wrapping.
+// Preserves error Code if the wrapped error is an *Err.
 //
 // Example:
 //
@@ -61,7 +66,12 @@ func Wrap(err error, op, msg string) error {
 	if err == nil {
 		return nil
 	}
-	return E(op, msg, err)
+	// Preserve Code from wrapped *Err
+	var logErr *Err
+	if As(err, &logErr) && logErr.Code != "" {
+		return &Err{Op: op, Msg: msg, Err: err, Code: logErr.Code}
+	}
+	return &Err{Op: op, Msg: msg, Err: err}
 }
 
 // WrapCode wraps an error with operation context and error code.

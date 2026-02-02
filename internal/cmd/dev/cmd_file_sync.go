@@ -131,7 +131,11 @@ func runFileSync(source string) error {
 			}
 		} else {
 			// Ensure dir exists
-			coreio.Local.EnsureDir(filepath.Dir(destPath))
+			if err := coreio.Local.EnsureDir(filepath.Dir(destPath)); err != nil {
+				cli.Print("  %s %s: copy failed: %s\n", errorStyle.Render("x"), repoName, err)
+				failed++
+				continue
+			}
 			if err := coreio.Copy(coreio.Local, source, coreio.Local, destPath); err != nil {
 				cli.Print("  %s %s: copy failed: %s\n", errorStyle.Render("x"), repoName, err)
 				failed++
