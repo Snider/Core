@@ -13,62 +13,46 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+          - os: ubuntu-latest
+            platform: linux/arm64
+          - os: macos-latest
+            platform: darwin/universal
+          - os: windows-latest
+            platform: windows/amd64
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Build
+        uses: host-uk/build@dev
         with:
-          go-version-file: 'go.mod'
-
-      - name: Install core CLI
-        run: |
-          curl -fsSL "https://github.com/host-uk/core/releases/download/${{ env.CORE_VERSION }}/core-linux-amd64" -o /tmp/core
-          chmod +x /tmp/core
-          sudo mv /tmp/core /usr/local/bin/core
-          core --version
-
-      - name: Generate code
-        run: go generate ./internal/cmd/updater/...
-
-      - name: Build all targets
-        run: core build --targets=linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64 --ci
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries
-          path: dist/
+          build-name: core
+          build-platform: ${{ matrix.platform }}
+          build: true
+          package: true
+          sign: false
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: binaries
           path: dist
+          merge-multiple: true
 
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp dist/*.tar.gz dist/*.zip dist/CHECKSUMS.txt release/ 2>/dev/null || true
-          # Also copy raw binaries for direct download
-          for dir in dist/*/; do
-            if [ -d "$dir" ]; then
-              platform=$(basename "$dir")
-              for bin in "$dir"*; do
-                if [ -f "$bin" ]; then
-                  name=$(basename "$bin")
-                  cp "$bin" "release/core-${platform//_/-}${name##core}"
-                fi
-              done
-            fi
-          done
+          cp dist/* release/ 2>/dev/null || true
           ls -la release/
 
       - name: Delete existing dev release
@@ -96,9 +80,6 @@ jobs:
           # macOS/Linux
           curl -fsSL https://github.com/host-uk/core/releases/download/dev/core-linux-amd64 -o core
           chmod +x core && sudo mv core /usr/local/bin/
-
-          # Or with Homebrew
-          brew tap host-uk/tap && brew install host-uk/tap/core
           \`\`\`
 
           This is a pre-release for testing. Use tagged releases for production." \

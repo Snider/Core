@@ -8,8 +8,7 @@
 
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
 
-- Discord: http://discord.dappco.re
-- Repo: https://github.com/Snider/Core
+- Repo: https://github.com/host-uk/core
 
 ## Vision
 
@@ -26,7 +25,7 @@ Core is an **opinionated Web3 desktop application framework** providing:
 ## Quick Start
 
 ```go
-import core "github.com/Snider/Core"
+import core "github.com/host-uk/core"
 
 app := core.New(
   core.WithServiceLock(),
@@ -144,7 +143,7 @@ app.RegisterService(application.NewService(coreService))  // Only Core is regist
 **Currently exposed** (see `cmd/core-gui/public/bindings/`):
 ```typescript
 // From frontend:
-import { ACTION, Config, Service } from './bindings/github.com/Snider/Core/pkg/core'
+import { ACTION, Config, Service } from './bindings/github.com/host-uk/core/pkg/core'
 
 ACTION(msg)              // Broadcast IPC message
 Config()                 // Get config service reference
@@ -159,7 +158,7 @@ Sub-services are accessed via Core's **IPC/ACTION system**, not direct Wails bin
 
 ```typescript
 // Frontend calls Core.ACTION() with typed messages
-import { ACTION } from './bindings/github.com/Snider/Core/pkg/core'
+import { ACTION } from './bindings/github.com/host-uk/core/pkg/core'
 
 // Open a window
 ACTION({ action: "display.open_window", name: "settings", options: { Title: "Settings", Width: 800 } })
@@ -198,7 +197,7 @@ cd cmd/core-gui
 wails3 generate bindings    # Regenerate after Go changes
 ```
 
-Bindings output to `cmd/core-gui/public/bindings/github.com/Snider/Core/` mirroring Go package structure.
+Bindings output to `cmd/core-gui/public/bindings/github.com/host-uk/core/` mirroring Go package structure.
 
 ---
 
