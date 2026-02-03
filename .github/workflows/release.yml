@@ -65,11 +65,11 @@ jobs:
 
       - name: Create archive (Windows)
         if: matrix.goos == 'windows'
-        shell: bash
+        shell: pwsh
         run: |
           cd dist
-          zip core-${{ matrix.goos }}-${{ matrix.goarch }}.zip core.exe
-          rm core.exe
+          Compress-Archive -Path core.exe -DestinationPath core-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+          Remove-Item core.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
