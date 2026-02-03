@@ -32,16 +32,15 @@ func (m *Medium) path(p string) string {
 	}
 	clean := strings.ReplaceAll(p, "..", ".")
 	if filepath.IsAbs(clean) {
-		// Handle Windows drive root (e.g. "C:\")
-		if len(clean) == 3 && clean[1] == ':' && (clean[2] == '\\' || clean[2] == '/') {
-			return clean
-		}
 		// If root is "/", allow absolute paths through
 		if m.root == "/" {
 			return filepath.Clean(clean)
 		}
-		// Otherwise, sandbox absolute paths by stripping leading /
-		return filepath.Join(m.root, strings.TrimPrefix(clean, "/"))
+		// Otherwise, sandbox absolute paths by stripping volume + leading separators
+		vol := filepath.VolumeName(clean)
+		clean = strings.TrimPrefix(clean, vol)
+		clean = strings.TrimLeft(clean, string(os.PathSeparator)+"/")
+		return filepath.Join(m.root, clean)
 	}
 	return filepath.Join(m.root, clean)
 }

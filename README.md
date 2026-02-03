@@ -16,7 +16,11 @@
 
 Core is a Web3 Framework, written in Go using Wails.io to replace Electron and the bloat of browsers that, at their core, still live in their mum's basement.
 
+<<<<<<< HEAD
 More to come, follow us on Discord http://discord.dappco.re
+=======
+- Repo: https://github.com/host-uk/core
+>>>>>>> b553afa (feat: CI improvements and release channels (#266))
 
 
 Repo: https://github.com/Snider/Core
@@ -24,7 +28,7 @@ Repo: https://github.com/Snider/Core
 ## Quick start
 
 ```go
-import core "github.com/Snider/Core"
+import core "github.com/host-uk/core"
 
 app := core.New(
   core.WithServiceLock(),
@@ -97,13 +101,148 @@ task gui:build
 
 ### CLI Application
 
+<<<<<<< HEAD
 To build the CLI application:
+=======
+| Task | Description |
+|------|-------------|
+| `task test` | Run all Go tests |
+| `task test-gen` | Generate test stubs for public API |
+| `task check` | go mod tidy + tests + review |
+| `task review` | CodeRabbit review |
+| `task cov` | Generate coverage.txt |
+| `task cov-view` | Open HTML coverage report |
+| `task sync` | Update public API Go files |
+
+---
+
+## Architecture
+
+### Project Structure
+
+```
+.
+├── core.go              # Facade re-exporting pkg/core
+├── pkg/
+│   ├── core/            # Service container, DI, Runtime[T]
+│   ├── config/          # JSON persistence, XDG paths
+│   ├── display/         # Windows, tray, menus (Wails)
+│   ├── crypt/           # Hashing, checksums, PGP
+│   │   └── openpgp/     # Full PGP implementation
+│   ├── io/              # Medium interface + backends
+│   ├── workspace/       # Encrypted workspace management
+│   ├── help/            # In-app documentation
+│   └── i18n/            # Internationalization
+├── cmd/
+│   ├── core/            # CLI application
+│   └── core-gui/        # Wails GUI application
+└── go.work              # Links root, cmd/core, cmd/core-gui
+```
+
+### Service Pattern (Dual-Constructor DI)
+
+Every service follows this pattern:
+
+```go
+// Static DI - standalone use/testing (no core.Runtime)
+func New() (*Service, error)
+
+// Dynamic DI - for core.WithService() registration
+func Register(c *core.Core) (any, error)
+```
+
+Services embed `*core.Runtime[Options]` for access to `Core()` and `Config()`.
+
+### IPC/Action System
+
+Services implement `HandleIPCEvents(c *core.Core, msg core.Message) error` - auto-discovered via reflection. Handles typed actions like `core.ActionServiceStartup`.
+
+---
+
+## Wails v3 Frontend Bindings
+
+Core uses [Wails v3](https://v3alpha.wails.io/) to expose Go methods to a WebView2 browser runtime. Wails automatically generates TypeScript bindings for registered services.
+
+**Documentation:** [Wails v3 Method Bindings](https://v3alpha.wails.io/features/bindings/methods/)
+
+### How It Works
+
+1. **Go services** with exported methods are registered with Wails
+2. Run `wails3 generate bindings` (or `wails3 dev` / `wails3 build`)
+3. **TypeScript SDK** is generated in `frontend/bindings/`
+4. Frontend calls Go methods with full type safety, no HTTP overhead
+
+### Current Binding Architecture
+
+```go
+// cmd/core-gui/main.go
+app.RegisterService(application.NewService(coreService))  // Only Core is registered
+```
+
+**Problem:** Only `Core` is registered with Wails. Sub-services (crypt, workspace, display, etc.) are internal to Core's service map - their methods aren't directly exposed to JS.
+
+**Currently exposed** (see `cmd/core-gui/public/bindings/`):
+```typescript
+// From frontend:
+import { ACTION, Config, Service } from './bindings/github.com/host-uk/core/pkg/core'
+
+ACTION(msg)              // Broadcast IPC message
+Config()                 // Get config service reference
+Service("workspace")     // Get service by name (returns any)
+```
+
+**NOT exposed:** Direct calls like `workspace.CreateWorkspace()` or `crypt.Hash()`.
+
+### The IPC Bridge Pattern (Chosen Architecture)
+
+Sub-services are accessed via Core's **IPC/ACTION system**, not direct Wails bindings:
+
+```typescript
+// Frontend calls Core.ACTION() with typed messages
+import { ACTION } from './bindings/github.com/host-uk/core/pkg/core'
+
+// Open a window
+ACTION({ action: "display.open_window", name: "settings", options: { Title: "Settings", Width: 800 } })
+
+// Switch workspace
+ACTION({ action: "workspace.switch_workspace", name: "myworkspace" })
+```
+
+Each service implements `HandleIPCEvents(c *core.Core, msg core.Message)` to process these messages:
+
+```go
+// pkg/display/display.go
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+    switch m := msg.(type) {
+    case map[string]any:
+        if action, ok := m["action"].(string); ok && action == "display.open_window" {
+            return s.handleOpenWindowAction(m)
+        }
+    }
+    return nil
+}
+```
+
+**Why this pattern:**
+- Single Wails service (Core) = simpler binding generation
+- Services remain decoupled from Wails
+- Centralized message routing via `ACTION()`
+- Services can communicate internally using same pattern
+
+**Current gap:** Not all service methods have IPC handlers yet. See `HandleIPCEvents` in each service to understand what's wired up.
+
+### Generating Bindings
+>>>>>>> b553afa (feat: CI improvements and release channels (#266))
 
 ```bash
 task cli:build
 ```
 
+<<<<<<< HEAD
 The executable will be located in the `cmd/core/bin` directory.
+=======
+Bindings output to `cmd/core-gui/public/bindings/github.com/host-uk/core/` mirroring Go package structure.
+>>>>>>> b553afa (feat: CI improvements and release channels (#266))
 
 ## Available Tasks
 
