@@ -44,6 +44,7 @@ jobs:
           cache: true
 
       - name: Build CLI
+        shell: bash
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
