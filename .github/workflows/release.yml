@@ -52,8 +52,24 @@ jobs:
         run: |
           mkdir -p dist
           go build -ldflags="-s -w -X main.Version=${{ github.ref_name }}" \
-            -o dist/core-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} \
+            -o dist/core${{ matrix.ext }} \
             .
+
+      - name: Create archive (Unix)
+        if: matrix.goos != 'windows'
+        shell: bash
+        run: |
+          cd dist
+          tar -czvf core-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz core
+          rm core
+
+      - name: Create archive (Windows)
+        if: matrix.goos == 'windows'
+        shell: bash
+        run: |
+          cd dist
+          zip core-${{ matrix.goos }}-${{ matrix.goarch }}.zip core.exe
+          rm core.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
