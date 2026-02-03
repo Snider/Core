@@ -27,7 +27,7 @@ jobs:
           github-token: ${{ secrets.PROJECT_TOKEN }}
       
       - name: Comment verification needed
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const implementer = context.payload.sender.login;
@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Get issue details
         id: issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const issue = await github.rest.issues.get({
@@ -80,7 +80,7 @@ jobs:
 
       - name: Record verification
         if: success()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const label = context.payload.label.name;
@@ -113,7 +113,7 @@ jobs:
     needs: check-verification
     steps:
       - name: Reset for rework
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Remove verify-failed after processing
