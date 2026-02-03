@@ -14,25 +14,51 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            platform: linux/amd64
+            goos: linux
+            goarch: amd64
+            ext: ""
           - os: ubuntu-latest
-            platform: linux/arm64
+            goos: linux
+            goarch: arm64
+            ext: ""
           - os: macos-latest
-            platform: darwin/universal
+            goos: darwin
+            goarch: amd64
+            ext: ""
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            ext: ""
           - os: windows-latest
-            platform: windows/amd64
+            goos: windows
+            goarch: amd64
+            ext: ".exe"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build
-        uses: host-uk/build@dev
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          build-name: core
-          build-platform: ${{ matrix.platform }}
-          build: true
-          package: true
-          sign: false
+          go-version: '1.23'
+          cache: true
+
+      - name: Build CLI
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p dist
+          go build -ldflags="-s -w -X main.Version=${{ github.ref_name }}" \
+            -o dist/core-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} \
+            ./cmd/core
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/core-*
 
   release:
     needs: build
