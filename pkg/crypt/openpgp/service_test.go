@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	core "github.com/host-uk/core/pkg/framework/core"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateKeyPair(t *testing.T) {

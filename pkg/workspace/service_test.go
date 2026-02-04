@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/host-uk/core/pkg/crypt/openpgp"
 	core "github.com/host-uk/core/pkg/framework/core"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWorkspace(t *testing.T) {
