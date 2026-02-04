@@ -8,9 +8,12 @@
 //   - task:commit: Create commits with task references
 //   - task:pr: Create pull requests linked to tasks
 //   - claude: Claude Code CLI integration (planned)
+//   - rag: RAG tools (ingest, query, collections)
+//   - metrics: View AI/security event metrics
 package ai
 
 import (
+	ragcmd "github.com/host-uk/core/internal/cmd/rag"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 )
@@ -57,6 +60,12 @@ func initCommands() {
 
 	// Add agentic task commands
 	AddAgenticCommands(aiCmd)
+
+	// Add RAG subcommands (core ai rag ...)
+	ragcmd.AddRAGSubcommands(aiCmd)
+
+	// Add metrics subcommand (core ai metrics)
+	addMetricsCommand(aiCmd)
 }
 
 // AddAICommands registers the 'ai' command and all subcommands.

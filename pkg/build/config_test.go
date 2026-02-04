@@ -188,7 +188,7 @@ func TestDefaultConfig_Good(t *testing.T) {
 		assert.Empty(t, cfg.Build.Env)
 
 		// Default targets cover common platforms
-		assert.Len(t, cfg.Targets, 5)
+		assert.Len(t, cfg.Targets, 4)
 		hasLinuxAmd64 := false
 		hasDarwinArm64 := false
 		hasWindowsAmd64 := false

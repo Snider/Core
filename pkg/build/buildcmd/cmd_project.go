@@ -21,7 +21,7 @@ import (
 )
 
 // runProjectBuild handles the main `core build` command with auto-detection.
-func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string, noSign bool, notarize bool, verbose bool) error {
+func runProjectBuild(ctx context.Context, buildType string, ciMode bool, targetsFlag string, outputDir string, doArchive bool, doChecksum bool, configPath string, format string, push bool, imageName string, noSign bool, notarize bool, verbose bool) error {
 	// Get current working directory as project root
 	projectDir, err := os.Getwd()
 	if err != nil {
@@ -116,7 +116,6 @@ func runProjectBuild(buildType string, ciMode bool, targetsFlag string, outputDi
 	}
 
 	// Execute build
-	ctx := context.Background()
 	artifacts, err := builder.Build(ctx, cfg, buildTargets)
 	if err != nil {
 		if !ciMode {

@@ -6,7 +6,7 @@
 //
 // This is the default build variant with all development tools:
 //   - dev: Multi-repo git workflows (commit, push, pull, sync)
-//   - ai: AI agent task management
+//   - ai: AI agent task management + RAG + metrics
 //   - go: Go module and build tools
 //   - php: Laravel/Composer development tools
 //   - build: Cross-platform compilation
@@ -19,6 +19,7 @@
 //   - doctor: Environment health checks
 //   - test: Test runner with coverage
 //   - qa: Quality assurance workflows
+//   - monitor: Security monitoring aggregation
 
 package variants
 
@@ -26,12 +27,14 @@ import (
 	// Commands via self-registration
 	_ "github.com/host-uk/core/internal/cmd/ai"
 	_ "github.com/host-uk/core/internal/cmd/ci"
+	_ "github.com/host-uk/core/internal/cmd/deploy"
 	_ "github.com/host-uk/core/internal/cmd/dev"
 	_ "github.com/host-uk/core/internal/cmd/docs"
 	_ "github.com/host-uk/core/internal/cmd/doctor"
 	_ "github.com/host-uk/core/internal/cmd/gitcmd"
 	_ "github.com/host-uk/core/internal/cmd/go"
 	_ "github.com/host-uk/core/internal/cmd/help"
+	_ "github.com/host-uk/core/internal/cmd/monitor"
 	_ "github.com/host-uk/core/internal/cmd/php"
 	_ "github.com/host-uk/core/internal/cmd/pkgcmd"
 	_ "github.com/host-uk/core/internal/cmd/qa"

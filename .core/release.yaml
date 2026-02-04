@@ -1,0 +1,39 @@
+# Core CLI release configuration
+# Used by: core release
+
+version: 1
+
+project:
+  name: core
+  repository: host-uk/core
+
+build:
+  targets:
+    - os: linux
+      arch: amd64
+    - os: linux
+      arch: arm64
+    - os: darwin
+      arch: amd64
+    - os: darwin
+      arch: arm64
+    - os: windows
+      arch: amd64
+
+publishers:
+  - type: github
+    prerelease: false
+    draft: false
+
+changelog:
+  include:
+    - feat
+    - fix
+    - perf
+    - refactor
+  exclude:
+    - chore
+    - docs
+    - style
+    - test
+    - ci

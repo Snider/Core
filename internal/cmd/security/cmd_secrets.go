@@ -21,6 +21,7 @@ func addSecretsCommand(parent *cli.Command) {
 	cmd.Flags().StringVar(&securityRegistryPath, "registry", "", i18n.T("common.flag.registry"))
 	cmd.Flags().StringVar(&securityRepo, "repo", "", i18n.T("cmd.security.flag.repo"))
 	cmd.Flags().BoolVar(&securityJSON, "json", false, i18n.T("common.flag.json"))
+	cmd.Flags().StringVar(&securityTarget, "target", "", i18n.T("cmd.security.flag.target"))
 
 	parent.AddCommand(cmd)
 }
@@ -38,6 +39,11 @@ type SecretAlert struct {
 func runSecrets() error {
 	if err := checkGH(); err != nil {
 		return err
+	}
+
+	// External target mode: bypass registry entirely
+	if securityTarget != "" {
+		return runSecretsForTarget(securityTarget)
 	}
 
 	reg, err := loadRegistry(securityRegistryPath)
@@ -108,6 +114,70 @@ func runSecrets() error {
 			bypassed = cli.WarningStyle.Render(" (push protection bypassed)")
 		}
 
+		cli.Print("%-16s %-6d %-30s%s\n",
+			cli.ValueStyle.Render(alert.Repo),
+			alert.Number,
+			cli.ErrorStyle.Render(alert.SecretType),
+			bypassed,
+		)
+	}
+	cli.Blank()
+
+	return nil
+}
+
+// runSecretsForTarget runs secret scanning checks against an external repo target.
+func runSecretsForTarget(target string) error {
+	repo, fullName := buildTargetRepo(target)
+	if repo == nil {
+		return cli.Err("invalid target format: use owner/repo (e.g. wailsapp/wails)")
+	}
+
+	var allAlerts []SecretAlert
+	openCount := 0
+
+	alerts, err := fetchSecretScanningAlerts(fullName)
+	if err != nil {
+		return cli.Wrap(err, "fetch secret-scanning alerts for "+fullName)
+	}
+
+	for _, alert := range alerts {
+		if alert.State != "open" {
+			continue
+		}
+		openCount++
+		allAlerts = append(allAlerts, SecretAlert{
+			Repo:           repo.Name,
+			Number:         alert.Number,
+			SecretType:     alert.SecretType,
+			State:          alert.State,
+			Resolution:     alert.Resolution,
+			PushProtection: alert.PushProtection,
+		})
+	}
+
+	if securityJSON {
+		output, err := json.MarshalIndent(allAlerts, "", "  ")
+		if err != nil {
+			return cli.Wrap(err, "marshal JSON output")
+		}
+		cli.Text(string(output))
+		return nil
+	}
+
+	cli.Blank()
+	if openCount > 0 {
+		cli.Print("%s %s\n", cli.DimStyle.Render("Secrets ("+fullName+"):"), cli.ErrorStyle.Render(fmt.Sprintf("%d open", openCount)))
+	} else {
+		cli.Print("%s %s\n", cli.DimStyle.Render("Secrets ("+fullName+"):"), cli.SuccessStyle.Render("No exposed secrets"))
+	}
+	cli.Blank()
+
+	for _, alert := range allAlerts {
+		bypassed := ""
+		if alert.PushProtection {
+			bypassed = cli.WarningStyle.Render(" (push protection bypassed)")
+		}
 		cli.Print("%-16s %-6d %-30s%s\n",
 			cli.ValueStyle.Render(alert.Repo),
 			alert.Number,

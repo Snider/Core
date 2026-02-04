@@ -22,6 +22,7 @@ func addAlertsCommand(parent *cli.Command) {
 	cmd.Flags().StringVar(&securityRepo, "repo", "", i18n.T("cmd.security.flag.repo"))
 	cmd.Flags().StringVar(&securitySeverity, "severity", "", i18n.T("cmd.security.flag.severity"))
 	cmd.Flags().BoolVar(&securityJSON, "json", false, i18n.T("common.flag.json"))
+	cmd.Flags().StringVar(&securityTarget, "target", "", i18n.T("cmd.security.flag.target"))
 
 	parent.AddCommand(cmd)
 }
@@ -41,6 +42,11 @@ type AlertOutput struct {
 func runAlerts() error {
 	if err := checkGH(); err != nil {
 		return err
+	}
+
+	// External target mode: bypass registry entirely
+	if securityTarget != "" {
+		return runAlertsForTarget(securityTarget)
 	}
 
 	reg, err := loadRegistry(securityRegistryPath)
@@ -160,6 +166,124 @@ func runAlerts() error {
 			location = fmt.Sprintf("%s %s", location, cli.DimStyle.Render(alert.Version))
 		}
 
+		cli.Print("%-20s %s  %-16s %-40s %s\n",
+			cli.ValueStyle.Render(alert.Repo),
+			sevStyle.Render(fmt.Sprintf("%-8s", alert.Severity)),
+			alert.ID,
+			location,
+			cli.DimStyle.Render(alert.Type),
+		)
+	}
+	cli.Blank()
+
+	return nil
+}
+
+// runAlertsForTarget runs unified alert checks against an external repo target.
+func runAlertsForTarget(target string) error {
+	repo, fullName := buildTargetRepo(target)
+	if repo == nil {
+		return cli.Err("invalid target format: use owner/repo (e.g. wailsapp/wails)")
+	}
+
+	var allAlerts []AlertOutput
+	summary := &AlertSummary{}
+
+	// Fetch Dependabot alerts
+	depAlerts, err := fetchDependabotAlerts(fullName)
+	if err == nil {
+		for _, alert := range depAlerts {
+			if alert.State != "open" {
+				continue
+			}
+			severity := alert.Advisory.Severity
+			if !filterBySeverity(severity, securitySeverity) {
+				continue
+			}
+			summary.Add(severity)
+			allAlerts = append(allAlerts, AlertOutput{
+				Repo:     repo.Name,
+				Severity: severity,
+				ID:       alert.Advisory.CVEID,
+				Package:  alert.Dependency.Package.Name,
+				Version:  alert.SecurityVulnerability.VulnerableVersionRange,
+				Type:     "dependabot",
+				Message:  alert.Advisory.Summary,
+			})
+		}
+	}
+
+	// Fetch code scanning alerts
+	codeAlerts, err := fetchCodeScanningAlerts(fullName)
+	if err == nil {
+		for _, alert := range codeAlerts {
+			if alert.State != "open" {
+				continue
+			}
+			severity := alert.Rule.Severity
+			if !filterBySeverity(severity, securitySeverity) {
+				continue
+			}
+			summary.Add(severity)
+			location := fmt.Sprintf("%s:%d", alert.MostRecentInstance.Location.Path, alert.MostRecentInstance.Location.StartLine)
+			allAlerts = append(allAlerts, AlertOutput{
+				Repo:     repo.Name,
+				Severity: severity,
+				ID:       alert.Rule.ID,
+				Location: location,
+				Type:     alert.Tool.Name,
+				Message:  alert.Rule.Description,
+			})
+		}
+	}
+
+	// Fetch secret scanning alerts
+	secretAlerts, err := fetchSecretScanningAlerts(fullName)
+	if err == nil {
+		for _, alert := range secretAlerts {
+			if alert.State != "open" {
+				continue
+			}
+			if !filterBySeverity("high", securitySeverity) {
+				continue
+			}
+			summary.Add("high")
+			allAlerts = append(allAlerts, AlertOutput{
+				Repo:     repo.Name,
+				Severity: "high",
+				ID:       fmt.Sprintf("secret-%d", alert.Number),
+				Type:     "secret-scanning",
+				Message:  alert.SecretType,
+			})
+		}
+	}
+
+	if securityJSON {
+		output, err := json.MarshalIndent(allAlerts, "", "  ")
+		if err != nil {
+			return cli.Wrap(err, "marshal JSON output")
+		}
+		cli.Text(string(output))
+		return nil
+	}
+
+	cli.Blank()
+	cli.Print("%s %s\n", cli.DimStyle.Render("Alerts ("+fullName+"):"), summary.String())
+	cli.Blank()
+
+	if len(allAlerts) == 0 {
+		return nil
+	}
+
+	for _, alert := range allAlerts {
+		sevStyle := severityStyle(alert.Severity)
+		location := alert.Package
+		if location == "" {
+			location = alert.Location
+		}
+		if alert.Version != "" {
+			location = fmt.Sprintf("%s %s", location, cli.DimStyle.Render(alert.Version))
+		}
 		cli.Print("%-20s %s  %-16s %-40s %s\n",
 			cli.ValueStyle.Render(alert.Repo),
 			sevStyle.Render(fmt.Sprintf("%-8s", alert.Severity)),

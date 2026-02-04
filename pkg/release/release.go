@@ -227,7 +227,6 @@ func buildArtifacts(ctx context.Context, cfg *Config, projectDir, version string
 		targets = []build.Target{
 			{OS: "linux", Arch: "amd64"},
 			{OS: "linux", Arch: "arm64"},
-			{OS: "darwin", Arch: "amd64"},
 			{OS: "darwin", Arch: "arm64"},
 			{OS: "windows", Arch: "amd64"},
 		}

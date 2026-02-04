@@ -17,6 +17,7 @@ var (
 	securityRepo         string
 	securitySeverity     string
 	securityJSON         bool
+	securityTarget       string // External repo target (e.g. "wailsapp/wails")
 )
 
 // AddSecurityCommands adds the 'security' command to the root.
@@ -31,6 +32,7 @@ func AddSecurityCommands(root *cli.Command) {
 	addDepsCommand(secCmd)
 	addScanCommand(secCmd)
 	addSecretsCommand(secCmd)
+	addJobsCommand(secCmd)
 
 	root.AddCommand(secCmd)
 }
@@ -191,6 +193,16 @@ func getReposToCheck(reg *repos.Registry, repoFilter string) []*repos.Repo {
 	}
 	return reg.List()
 }
+
+// buildTargetRepo creates a synthetic Repo entry for an external target (e.g. "wailsapp/wails").
+func buildTargetRepo(target string) (*repos.Repo, string) {
+	parts := strings.SplitN(target, "/", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return nil, ""
+	}
+	return &repos.Repo{Name: parts[1]}, target
+}
+
 
 // AlertSummary holds aggregated alert counts.
 type AlertSummary struct {
