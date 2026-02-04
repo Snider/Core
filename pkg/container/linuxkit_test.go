@@ -673,7 +673,7 @@ func TestLinuxKitManager_Run_Good_WithPortsAndVolumes(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 }
 
-func TestFollowReader_Read_Good_ReaderError(t *testing.T) {
+func TestFollowReader_Read_Bad_ReaderError(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "test.log")
 
