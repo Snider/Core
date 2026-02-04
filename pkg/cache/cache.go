@@ -3,6 +3,8 @@ package cache
 
 import (
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -15,6 +17,7 @@ const DefaultTTL = 1 * time.Hour
 
 // Cache represents a file-based cache.
 type Cache struct {
+	medium  io.Medium
 	baseDir string
 	ttl     time.Duration
 }
@@ -27,8 +30,13 @@ type Entry struct {
 }
 
 // New creates a new cache instance.
-// If baseDir is empty, uses .core/cache in current directory
-func New(baseDir string, ttl time.Duration) (*Cache, error) {
+// If baseDir is empty, uses .core/cache in current directory.
+// If m is nil, uses io.Local.
+func New(m io.Medium, baseDir string, ttl time.Duration) (*Cache, error) {
+	if m == nil {
+		m = io.Local
+	}
+
 	if baseDir == "" {
 		// Use .core/cache in current working directory
 		cwd, err := os.Getwd()
@@ -42,20 +50,21 @@ func New(baseDir string, ttl time.Duration) (*Cache, error) {
 		ttl = DefaultTTL
 	}
 
-	// Convert to absolute path for io.Local
+	// Convert to absolute path for consistency
 	absBaseDir, err := filepath.Abs(baseDir)
 	if err != nil {
 		return nil, err
 	}
 
 	// Ensure cache directory exists
-	if err := io.Local.EnsureDir(absBaseDir); err != nil {
+	if err := m.EnsureDir(absBaseDir); err != nil {
 		return nil, err
 	}
 
 	baseDir = absBaseDir
 
 	return &Cache{
+		medium:  m,
 		baseDir: baseDir,
 		ttl:     ttl,
 	}, nil
@@ -70,9 +79,9 @@ func (c *Cache) Path(key string) string {
 func (c *Cache) Get(key string, dest interface{}) (bool, error) {
 	path := c.Path(key)
 
-	content, err := io.Local.Read(path)
+	content, err := c.medium.Read(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) || os.IsNotExist(err) {
 			return false, nil
 		}
 		return false, err
@@ -119,15 +128,15 @@ func (c *Cache) Set(key string, data interface{}) error {
 		return err
 	}
 
-	// io.Local.Write creates parent directories automatically
-	return io.Local.Write(path, string(entryBytes))
+	// medium.Write creates parent directories automatically
+	return c.medium.Write(path, string(entryBytes))
 }
 
 // Delete removes an item from the cache.
 func (c *Cache) Delete(key string) error {
 	path := c.Path(key)
-	err := io.Local.Delete(path)
-	if os.IsNotExist(err) {
+	err := c.medium.Delete(path)
+	if errors.Is(err, fs.ErrNotExist) || os.IsNotExist(err) {
 		return nil
 	}
 	return err
@@ -135,14 +144,14 @@ func (c *Cache) Delete(key string) error {
 
 // Clear removes all cached items.
 func (c *Cache) Clear() error {
-	return io.Local.DeleteAll(c.baseDir)
+	return c.medium.DeleteAll(c.baseDir)
 }
 
 // Age returns how old a cached item is, or -1 if not cached.
 func (c *Cache) Age(key string) time.Duration {
 	path := c.Path(key)
 
-	content, err := io.Local.Read(path)
+	content, err := c.medium.Read(path)
 	if err != nil {
 		return -1
 	}
