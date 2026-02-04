@@ -22,26 +22,7 @@ Core is an **opinionated Web3 desktop application framework** providing:
 
 **Mental model:** A secure, encrypted workspace manager where each "workspace" is a cryptographically isolated environment. The framework handles windows, menus, trays, config, and i18n.
 
-## CLI Quick Start
-
-```bash
-# 1. Install Core
-go install github.com/host-uk/core/cmd/core@latest
-
-# 2. Verify environment
-core doctor
-
-# 3. Run tests in any Go/PHP project
-core go test   # or core php test
-
-# 4. Build and preview release
-core build
-core ci
-```
-
-For more details, see the [User Guide](docs/user-guide.md).
-
-## Framework Quick Start (Go)
+## Quick Start
 
 ```go
 import core "github.com/host-uk/core/pkg/framework/core"
@@ -88,7 +69,7 @@ task cli:run      # Build and run
 | `task test-gen` | Generate test stubs for public API |
 | `task check` | go mod tidy + tests + review |
 | `task review` | CodeRabbit review |
-| `task cov` | Run tests with coverage report |
+| `task cov` | Generate coverage.txt |
 | `task cov-view` | Open HTML coverage report |
 | `task sync` | Update public API Go files |
 
@@ -172,37 +153,23 @@ Service("workspace")     // Get service by name (returns any)
 
 ## Configuration Management
 
-Core uses a **centralized configuration service** implemented in `pkg/config`, with YAML-based persistence and layered overrides.
+Core uses a decentralized configuration approach based on YAML files. Configuration is split between project-level settings and global user settings.
 
-The `pkg/config` package provides:
-
-- YAML-backed persistence at `~/.core/config.yaml`
-- Dot-notation key access (for example: `cfg.Set("dev.editor", "vim")`, `cfg.GetString("dev.editor")`)
-- Environment variable overlay support (env vars can override persisted values)
-- Thread-safe operations for concurrent reads/writes
-
-Application code should treat `pkg/config` as the **primary configuration mechanism**. Direct reads/writes to YAML files should generally be avoided from application logic in favour of using this centralized service.
-
-### Project and Service Configuration Files
-
-In addition to the centralized configuration service, Core uses several YAML files for project-specific build/CI and service configuration. These live alongside (but are distinct from) the centralized configuration:
+### Configuration Locations
 
 - **Project Configuration** (in the `.core/` directory of the project root):
     - `build.yaml`: Build targets, flags, and project metadata.
     - `release.yaml`: Release automation, changelog settings, and publishing targets.
     - `ci.yaml`: CI pipeline configuration.
 - **Global Configuration** (in the `~/.core/` directory):
-    - `config.yaml`: Centralized user/framework settings and defaults, managed via `pkg/config`.
+    - `config.yaml`: Global framework settings and defaults.
     - `agentic.yaml`: Configuration for agentic services (BaseURL, Token, etc.).
-- **Registry Configuration** (`repos.yaml`, auto-discovered):
-    - Multi-repo registry definition.
-    - Searched in the current directory and its parent directories (walking up).
-    - Then in `~/Code/host-uk/repos.yaml`.
-    - Finally in `~/.config/core/repos.yaml`.
+- **Registry Configuration**:
+    - `repos.yaml`: Multi-repo registry definition.
 
 ### Format
 
-All persisted configuration files described above use **YAML** format for readability and nested structure support.
+All configuration files use YAML format for readability and nested structure support.
 
 ### The IPC Bridge Pattern (Chosen Architecture)
 
@@ -286,7 +253,6 @@ type Crypt interface {
 | Package | Notes |
 |---------|-------|
 | `pkg/framework/core` | Service container, DI, thread-safe - solid |
-| `pkg/config` | Layered YAML configuration, XDG paths - solid |
 | `pkg/crypt` | Hashing, checksums, symmetric/asymmetric - solid, well-tested |
 | `pkg/help` | Embedded docs, full-text search - solid |
 | `pkg/i18n` | Multi-language with go-i18n - solid |
@@ -303,9 +269,9 @@ type Crypt interface {
 
 The crypt package provides a comprehensive suite of cryptographic primitives:
 - **Hashing & Checksums**: SHA-256, SHA-512, and CRC32 support.
-- **Symmetric Encryption**: AES-GCM and ChaCha20-Poly1305 for secure data at rest.
+- **Symmetric Encryption**: AES-GCM for secure data at rest.
+- **Asymmetric Encryption**: PGP implementation using `github.com/ProtonMail/go-crypto`.
 - **Key Derivation**: Argon2id for secure password hashing.
-- **Asymmetric Encryption**: PGP implementation in the `pkg/crypt/openpgp` subpackage using `github.com/ProtonMail/go-crypto`.
 
 ### pkg/io - Storage Abstraction
 
@@ -365,24 +331,6 @@ Implementations: `local/`, `sftp/`, `webdav/`
 - [ ] Platform installers (DMG, MSI, AppImage)
 - [ ] Signing and notarization
 - [ ] Crash reporting integration
-
----
-
-## Getting Help
-
-- **[User Guide](docs/user-guide.md)**: Detailed usage and concepts.
-- **[FAQ](docs/faq.md)**: Frequently asked questions.
-- **[Workflows](docs/workflows.md)**: Common task sequences.
-- **[Troubleshooting](docs/troubleshooting.md)**: Solving common issues.
-- **[Configuration](docs/configuration.md)**: Config file reference.
-
-```bash
-# Check environment
-core doctor
-
-# Command help
-core <command> --help
-```
 
 ---
 
