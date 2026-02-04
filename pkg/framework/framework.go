@@ -16,25 +16,25 @@ import (
 
 // Re-export core types for cleaner imports
 type (
-	Core                  = core.Core
-	Option                = core.Option
-	Message               = core.Message
-	Query                 = core.Query
-	Task                  = core.Task
-	QueryHandler          = core.QueryHandler
-	TaskHandler           = core.TaskHandler
-	Startable             = core.Startable
-	Stoppable             = core.Stoppable
-	Config                = core.Config
-	Display               = core.Display
-	WindowOption          = core.WindowOption
-	Features              = core.Features
-	Contract              = core.Contract
-	Error                 = core.Error
-	ServiceRuntime[T any] = core.ServiceRuntime[T]
-	Runtime               = core.Runtime
-	ServiceFactory        = core.ServiceFactory
-	Request[R any]        = core.Request[R]
+	Core                            = core.Core
+	Option                          = core.Option
+	Message                         = core.Message
+	Query                           = core.Query
+	Task                            = core.Task
+	QueryHandler                    = core.QueryHandler
+	TaskHandler                     = core.TaskHandler
+	Startable                       = core.Startable
+	Stoppable                       = core.Stoppable
+	Config                          = core.Config
+	Display                         = core.Display
+	WindowOption                    = core.WindowOption
+	Features                        = core.Features
+	Contract                        = core.Contract
+	Error                           = core.Error
+	ServiceRuntime[T any]           = core.ServiceRuntime[T]
+	Runtime                         = core.Runtime
+	ServiceFactory                  = core.ServiceFactory
+	Request[R any]                  = core.Request[R]
 	TypedQueryHandler[Q any, R any] = core.TypedQueryHandler[Q, R]
 	TypedTaskHandler[T any, R any]  = core.TypedTaskHandler[T, R]
 )
@@ -51,7 +51,6 @@ var (
 	E                = core.E
 	NewRuntime       = core.NewRuntime
 	NewWithFactories = core.NewWithFactories
-
 )
 
 // Action dispatches a message of type T to all registered IPC handlers.
