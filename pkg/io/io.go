@@ -55,8 +55,16 @@ type Medium interface {
 	// Create creates or truncates the named file.
 	Create(path string) (goio.WriteCloser, error)
 
-	// Append opens the named file for appending, creating it if it doesn't exist.
+// Append opens the named file for appending, creating it if it doesn't exist.
 	Append(path string) (goio.WriteCloser, error)
+
+	// ReadStream returns a reader for the file content.
+	// Use this for large files to avoid loading the entire content into memory.
+	ReadStream(path string) (goio.ReadCloser, error)
+
+	// WriteStream returns a writer for the file content.
+	// Use this for large files to avoid loading the entire content into memory.
+	WriteStream(path string) (goio.WriteCloser, error)
 
 	// Exists checks if a path exists (file or directory).
 	Exists(path string) bool
@@ -124,6 +132,16 @@ func Read(m Medium, path string) (string, error) {
 // Write saves the given content to a file in the given medium.
 func Write(m Medium, path, content string) error {
 	return m.Write(path, content)
+}
+
+// ReadStream returns a reader for the file content from the given medium.
+func ReadStream(m Medium, path string) (goio.ReadCloser, error) {
+	return m.ReadStream(path)
+}
+
+// WriteStream returns a writer for the file content in the given medium.
+func WriteStream(m Medium, path string) (goio.WriteCloser, error) {
+	return m.WriteStream(path)
 }
 
 // EnsureDir makes sure a directory exists in the given medium.
@@ -355,6 +373,16 @@ func (m *MockMedium) Append(path string) (goio.WriteCloser, error) {
 		path:   path,
 		data:   []byte(content),
 	}, nil
+}
+
+// ReadStream returns a reader for the file content in the mock filesystem.
+func (m *MockMedium) ReadStream(path string) (goio.ReadCloser, error) {
+	return m.Open(path)
+}
+
+// WriteStream returns a writer for the file content in the mock filesystem.
+func (m *MockMedium) WriteStream(path string) (goio.WriteCloser, error) {
+	return m.Create(path)
 }
 
 // MockFile implements fs.File for MockMedium.

@@ -3,6 +3,7 @@ package agentic
 
 import (
 	"bytes"
+	goio "io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,8 +11,11 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/ai"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 )
+
+const maxContextBytes = 5000
 
 // FileContent represents the content of a file for AI context.
 type FileContent struct {
@@ -104,17 +108,33 @@ func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
 
 	// Read files explicitly mentioned in the task
 	for _, relPath := range task.Files {
-		fullPath := filepath.Join(dir, relPath)
-
-		content, err := os.ReadFile(fullPath)
+		// Use streaming API to read only what we need
+		f, err := io.Local.ReadStream(relPath)
 		if err != nil {
-			// Skip files that don't exist
+			// Try with full path if relative fails (for backward compatibility if dir is provided)
+			fullPath := filepath.Join(dir, relPath)
+			f, err = io.Local.ReadStream(fullPath)
+			if err != nil {
+				continue
+			}
+		}
+
+		// Read up to maxContextBytes + 1 to detect truncation
+		reader := goio.LimitReader(f, maxContextBytes+1)
+		content, err := goio.ReadAll(reader)
+		_ = f.Close()
+		if err != nil {
 			continue
+		}
+
+		contentStr := string(content)
+		if len(contentStr) > maxContextBytes {
+			contentStr = contentStr[:maxContextBytes] + "\n... (truncated)"
 		}
 
 		files = append(files, FileContent{
 			Path:     relPath,
-			Content:  string(content),
+			Content:  contentStr,
 			Language: detectLanguage(relPath),
 		})
 	}
@@ -163,16 +183,28 @@ func findRelatedCode(task *Task, dir string) ([]FileContent, error) {
 				break
 			}
 
-			fullPath := filepath.Join(dir, line)
-			content, err := os.ReadFile(fullPath)
+			// Use streaming API to read only what we need
+			f, err := io.Local.ReadStream(line)
+			if err != nil {
+				// Try with full path if relative fails
+				fullPath := filepath.Join(dir, line)
+				f, err = io.Local.ReadStream(fullPath)
+				if err != nil {
+					continue
+				}
+			}
+
+			// Read up to maxContextBytes + 1 to detect truncation
+			reader := goio.LimitReader(f, maxContextBytes+1)
+			content, err := goio.ReadAll(reader)
+			_ = f.Close()
 			if err != nil {
 				continue
 			}
 
-			// Truncate large files
 			contentStr := string(content)
-			if len(contentStr) > 5000 {
-				contentStr = contentStr[:5000] + "\n... (truncated)"
+			if len(contentStr) > maxContextBytes {
+				contentStr = contentStr[:maxContextBytes] + "\n... (truncated)"
 			}
 
 			files = append(files, FileContent{

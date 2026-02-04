@@ -213,6 +213,16 @@ func (m *Medium) Append(p string) (goio.WriteCloser, error) {
 	return os.OpenFile(full, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 }
 
+// ReadStream returns a reader for the file content.
+func (m *Medium) ReadStream(path string) (goio.ReadCloser, error) {
+	return m.Open(path)
+}
+
+// WriteStream returns a writer for the file content.
+func (m *Medium) WriteStream(path string) (goio.WriteCloser, error) {
+	return m.Create(path)
+}
+
 // Delete removes a file or empty directory.
 func (m *Medium) Delete(p string) error {
 	full, err := m.validatePath(p)
