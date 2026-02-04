@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,7 +186,7 @@ func TestHomebrewPublisher_RenderTemplate_Good(t *testing.T) {
 			},
 		}
 
-		result, err := p.renderTemplate("templates/homebrew/formula.rb.tmpl", data)
+		result, err := p.renderTemplate(io.Local, "templates/homebrew/formula.rb.tmpl", data)
 		require.NoError(t, err)
 
 		assert.Contains(t, result, "class MyApp < Formula")
@@ -206,7 +207,7 @@ func TestHomebrewPublisher_RenderTemplate_Bad(t *testing.T) {
 
 	t.Run("returns error for non-existent template", func(t *testing.T) {
 		data := homebrewTemplateData{}
-		_, err := p.renderTemplate("templates/homebrew/nonexistent.tmpl", data)
+		_, err := p.renderTemplate(io.Local, "templates/homebrew/nonexistent.tmpl", data)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to read template")
 	})
@@ -234,7 +235,7 @@ func TestHomebrewPublisher_DryRunPublish_Good(t *testing.T) {
 			Tap: "owner/homebrew-tap",
 		}
 
-		err := p.dryRunPublish(data, cfg)
+		err := p.dryRunPublish(io.Local, data, cfg)
 
 		_ = w.Close()
 		var buf bytes.Buffer
@@ -271,7 +272,7 @@ func TestHomebrewPublisher_DryRunPublish_Good(t *testing.T) {
 			},
 		}
 
-		err := p.dryRunPublish(data, cfg)
+		err := p.dryRunPublish(io.Local, data, cfg)
 
 		_ = w.Close()
 		var buf bytes.Buffer
@@ -300,7 +301,7 @@ func TestHomebrewPublisher_DryRunPublish_Good(t *testing.T) {
 			},
 		}
 
-		err := p.dryRunPublish(data, cfg)
+		err := p.dryRunPublish(io.Local, data, cfg)
 
 		_ = w.Close()
 		var buf bytes.Buffer
@@ -320,6 +321,7 @@ func TestHomebrewPublisher_Publish_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "homebrew"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}

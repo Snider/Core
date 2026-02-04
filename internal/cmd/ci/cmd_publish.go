@@ -7,6 +7,7 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/release"
 )
 
@@ -22,7 +23,7 @@ func runCIPublish(dryRun bool, version string, draft, prerelease bool) error {
 	}
 
 	// Load configuration
-	cfg, err := release.LoadConfig(projectDir)
+	cfg, err := release.LoadConfig(io.Local, projectDir)
 	if err != nil {
 		return cli.WrapVerb(err, "load", "config")
 	}

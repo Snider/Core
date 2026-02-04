@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 )
 
 //go:embed templates/homebrew/*.tmpl
@@ -104,10 +105,10 @@ func (p *HomebrewPublisher) Publish(ctx context.Context, release *Release, pubCf
 	}
 
 	if dryRun {
-		return p.dryRunPublish(data, cfg)
+		return p.dryRunPublish(release.FS, data, cfg)
 	}
 
-	return p.executePublish(ctx, release.ProjectDir, data, cfg)
+	return p.executePublish(ctx, release.ProjectDir, data, cfg, release)
 }
 
 // homebrewTemplateData holds data for Homebrew templates.
@@ -160,7 +161,7 @@ func (p *HomebrewPublisher) parseConfig(pubCfg PublisherConfig, relCfg ReleaseCo
 }
 
 // dryRunPublish shows what would be done.
-func (p *HomebrewPublisher) dryRunPublish(data homebrewTemplateData, cfg HomebrewConfig) error {
+func (p *HomebrewPublisher) dryRunPublish(m io.Medium, data homebrewTemplateData, cfg HomebrewConfig) error {
 	fmt.Println()
 	fmt.Println("=== DRY RUN: Homebrew Publish ===")
 	fmt.Println()
@@ -171,7 +172,7 @@ func (p *HomebrewPublisher) dryRunPublish(data homebrewTemplateData, cfg Homebre
 	fmt.Println()
 
 	// Generate and show formula
-	formula, err := p.renderTemplate("templates/homebrew/formula.rb.tmpl", data)
+	formula, err := p.renderTemplate(m, "templates/homebrew/formula.rb.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("homebrew.dryRunPublish: %w", err)
 	}
@@ -198,9 +199,9 @@ func (p *HomebrewPublisher) dryRunPublish(data homebrewTemplateData, cfg Homebre
 }
 
 // executePublish creates the formula and commits to tap.
-func (p *HomebrewPublisher) executePublish(ctx context.Context, projectDir string, data homebrewTemplateData, cfg HomebrewConfig) error {
+func (p *HomebrewPublisher) executePublish(ctx context.Context, projectDir string, data homebrewTemplateData, cfg HomebrewConfig, release *Release) error {
 	// Generate formula
-	formula, err := p.renderTemplate("templates/homebrew/formula.rb.tmpl", data)
+	formula, err := p.renderTemplate(release.FS, "templates/homebrew/formula.rb.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("homebrew.Publish: failed to render formula: %w", err)
 	}
@@ -214,12 +215,12 @@ func (p *HomebrewPublisher) executePublish(ctx context.Context, projectDir strin
 			output = filepath.Join(projectDir, output)
 		}
 
-		if err := os.MkdirAll(output, 0755); err != nil {
+		if err := release.FS.EnsureDir(output); err != nil {
 			return fmt.Errorf("homebrew.Publish: failed to create output directory: %w", err)
 		}
 
 		formulaPath := filepath.Join(output, fmt.Sprintf("%s.rb", strings.ToLower(data.FormulaClass)))
-		if err := os.WriteFile(formulaPath, []byte(formula), 0644); err != nil {
+		if err := release.FS.Write(formulaPath, formula); err != nil {
 			return fmt.Errorf("homebrew.Publish: failed to write formula: %w", err)
 		}
 		fmt.Printf("Wrote Homebrew formula for official PR: %s\n", formulaPath)
@@ -295,10 +296,25 @@ func (p *HomebrewPublisher) commitToTap(ctx context.Context, tap string, data ho
 }
 
 // renderTemplate renders an embedded template with the given data.
-func (p *HomebrewPublisher) renderTemplate(name string, data homebrewTemplateData) (string, error) {
-	content, err := homebrewTemplates.ReadFile(name)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", name, err)
+func (p *HomebrewPublisher) renderTemplate(m io.Medium, name string, data homebrewTemplateData) (string, error) {
+	var content []byte
+	var err error
+
+	// Try custom template from medium
+	customPath := filepath.Join(".core", name)
+	if m != nil && m.IsFile(customPath) {
+		customContent, err := m.Read(customPath)
+		if err == nil {
+			content = []byte(customContent)
+		}
+	}
+
+	// Fallback to embedded template
+	if content == nil {
+		content, err = homebrewTemplates.ReadFile(name)
+		if err != nil {
+			return "", fmt.Errorf("failed to read template %s: %w", name, err)
+		}
 	}
 
 	tmpl, err := template.New(filepath.Base(name)).Parse(string(content))

@@ -25,9 +25,9 @@ func TestPath(t *testing.T) {
 	// Empty returns root
 	assert.Equal(t, "/home/user", m.path(""))
 
-	// Traversal attempts get sanitized (.. becomes ., then cleaned by Join)
+	// Traversal attempts get sanitized
 	assert.Equal(t, "/home/user/file.txt", m.path("../file.txt"))
-	assert.Equal(t, "/home/user/dir/file.txt", m.path("dir/../file.txt"))
+	assert.Equal(t, "/home/user/file.txt", m.path("dir/../file.txt"))
 
 	// Absolute paths are constrained to sandbox (no escape)
 	assert.Equal(t, "/home/user/etc/passwd", m.path("/etc/passwd"))

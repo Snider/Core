@@ -169,14 +169,14 @@ type ChangelogConfig struct {
 // LoadConfig loads release configuration from the .core/release.yaml file in the given directory.
 // If the config file does not exist, it returns DefaultConfig().
 // Returns an error if the file exists but cannot be parsed.
-func LoadConfig(dir string) (*Config, error) {
+func LoadConfig(m io.Medium, dir string) (*Config, error) {
 	configPath := filepath.Join(dir, ConfigDir, ConfigFileName)
 	absPath, err := filepath.Abs(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("release.LoadConfig: failed to resolve path: %w", err)
 	}
 
-	content, err := io.Local.Read(absPath)
+	content, err := m.Read(absPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			cfg := DefaultConfig()
@@ -266,13 +266,13 @@ func ConfigPath(dir string) string {
 }
 
 // ConfigExists checks if a release config file exists in the given directory.
-func ConfigExists(dir string) bool {
+func ConfigExists(m io.Medium, dir string) bool {
 	configPath := ConfigPath(dir)
 	absPath, err := filepath.Abs(configPath)
 	if err != nil {
 		return false
 	}
-	return io.Local.IsFile(absPath)
+	return m.IsFile(absPath)
 }
 
 // GetRepository returns the repository from the config.
@@ -286,7 +286,7 @@ func (c *Config) GetProjectName() string {
 }
 
 // WriteConfig writes the config to the .core/release.yaml file.
-func WriteConfig(cfg *Config, dir string) error {
+func WriteConfig(m io.Medium, cfg *Config, dir string) error {
 	configPath := ConfigPath(dir)
 	absPath, err := filepath.Abs(configPath)
 	if err != nil {
@@ -298,8 +298,8 @@ func WriteConfig(cfg *Config, dir string) error {
 		return fmt.Errorf("release.WriteConfig: failed to marshal config: %w", err)
 	}
 
-	// io.Local.Write creates parent directories automatically
-	if err := io.Local.Write(absPath, string(data)); err != nil {
+	// m.Write creates parent directories automatically
+	if err := m.Write(absPath, string(data)); err != nil {
 		return fmt.Errorf("release.WriteConfig: failed to write config file: %w", err)
 	}
 

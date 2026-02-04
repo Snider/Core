@@ -47,7 +47,7 @@ func (d *DevOps) Test(ctx context.Context, projectDir string, opts TestOptions) 
 	if len(opts.Command) > 0 {
 		cmd = strings.Join(opts.Command, " ")
 	} else if opts.Name != "" {
-		cfg, err := LoadTestConfig(projectDir)
+		cfg, err := LoadTestConfig(d.medium, projectDir)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func (d *DevOps) Test(ctx context.Context, projectDir string, opts TestOptions) 
 			return fmt.Errorf("test command %q not found in .core/test.yaml", opts.Name)
 		}
 	} else {
-		cmd = DetectTestCommand(projectDir)
+		cmd = DetectTestCommand(d.medium, projectDir)
 		if cmd == "" {
 			return fmt.Errorf("could not detect test command (create .core/test.yaml)")
 		}
@@ -72,39 +72,39 @@ func (d *DevOps) Test(ctx context.Context, projectDir string, opts TestOptions) 
 }
 
 // DetectTestCommand auto-detects the test command for a project.
-func DetectTestCommand(projectDir string) string {
+func DetectTestCommand(m io.Medium, projectDir string) string {
 	// 1. Check .core/test.yaml
-	cfg, err := LoadTestConfig(projectDir)
+	cfg, err := LoadTestConfig(m, projectDir)
 	if err == nil && cfg.Command != "" {
 		return cfg.Command
 	}
 
 	// 2. Check composer.json for test script
-	if hasFile(projectDir, "composer.json") {
-		if hasComposerScript(projectDir, "test") {
+	if hasFile(m, projectDir, "composer.json") {
+		if hasComposerScript(m, projectDir, "test") {
 			return "composer test"
 		}
 	}
 
 	// 3. Check package.json for test script
-	if hasFile(projectDir, "package.json") {
-		if hasPackageScript(projectDir, "test") {
+	if hasFile(m, projectDir, "package.json") {
+		if hasPackageScript(m, projectDir, "test") {
 			return "npm test"
 		}
 	}
 
 	// 4. Check go.mod
-	if hasFile(projectDir, "go.mod") {
+	if hasFile(m, projectDir, "go.mod") {
 		return "go test ./..."
 	}
 
 	// 5. Check pytest
-	if hasFile(projectDir, "pytest.ini") || hasFile(projectDir, "pyproject.toml") {
+	if hasFile(m, projectDir, "pytest.ini") || hasFile(m, projectDir, "pyproject.toml") {
 		return "pytest"
 	}
 
 	// 6. Check Taskfile
-	if hasFile(projectDir, "Taskfile.yaml") || hasFile(projectDir, "Taskfile.yml") {
+	if hasFile(m, projectDir, "Taskfile.yaml") || hasFile(m, projectDir, "Taskfile.yml") {
 		return "task test"
 	}
 
@@ -112,14 +112,14 @@ func DetectTestCommand(projectDir string) string {
 }
 
 // LoadTestConfig loads .core/test.yaml.
-func LoadTestConfig(projectDir string) (*TestConfig, error) {
+func LoadTestConfig(m io.Medium, projectDir string) (*TestConfig, error) {
 	path := filepath.Join(projectDir, ".core", "test.yaml")
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
 
-	content, err := io.Local.Read(absPath)
+	content, err := m.Read(absPath)
 	if err != nil {
 		return nil, err
 	}
@@ -132,23 +132,23 @@ func LoadTestConfig(projectDir string) (*TestConfig, error) {
 	return &cfg, nil
 }
 
-func hasFile(dir, name string) bool {
+func hasFile(m io.Medium, dir, name string) bool {
 	path := filepath.Join(dir, name)
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return false
 	}
-	return io.Local.IsFile(absPath)
+	return m.IsFile(absPath)
 }
 
-func hasPackageScript(projectDir, script string) bool {
+func hasPackageScript(m io.Medium, projectDir, script string) bool {
 	path := filepath.Join(projectDir, "package.json")
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return false
 	}
 
-	content, err := io.Local.Read(absPath)
+	content, err := m.Read(absPath)
 	if err != nil {
 		return false
 	}
@@ -164,14 +164,14 @@ func hasPackageScript(projectDir, script string) bool {
 	return ok
 }
 
-func hasComposerScript(projectDir, script string) bool {
+func hasComposerScript(m io.Medium, projectDir, script string) bool {
 	path := filepath.Join(projectDir, "composer.json")
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return false
 	}
 
-	content, err := io.Local.Read(absPath)
+	content, err := m.Read(absPath)
 	if err != nil {
 		return false
 	}

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +14,7 @@ func TestDetectServeCommand_Good_Laravel(t *testing.T) {
 	err := os.WriteFile(filepath.Join(tmpDir, "artisan"), []byte("#!/usr/bin/env php"), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "php artisan octane:start --host=0.0.0.0 --port=8000", cmd)
 }
 
@@ -23,7 +24,7 @@ func TestDetectServeCommand_Good_NodeDev(t *testing.T) {
 	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(packageJSON), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "npm run dev -- --host 0.0.0.0", cmd)
 }
 
@@ -33,7 +34,7 @@ func TestDetectServeCommand_Good_NodeStart(t *testing.T) {
 	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(packageJSON), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "npm start", cmd)
 }
 
@@ -42,7 +43,7 @@ func TestDetectServeCommand_Good_PHP(t *testing.T) {
 	err := os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"require":{}}`), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "frankenphp php-server -l :8000", cmd)
 }
 
@@ -53,7 +54,7 @@ func TestDetectServeCommand_Good_GoMain(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main"), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "go run .", cmd)
 }
 
@@ -63,7 +64,7 @@ func TestDetectServeCommand_Good_GoWithoutMain(t *testing.T) {
 	assert.NoError(t, err)
 
 	// No main.go, so falls through to fallback
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "python3 -m http.server 8000", cmd)
 }
 
@@ -72,14 +73,14 @@ func TestDetectServeCommand_Good_Django(t *testing.T) {
 	err := os.WriteFile(filepath.Join(tmpDir, "manage.py"), []byte("#!/usr/bin/env python"), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "python manage.py runserver 0.0.0.0:8000", cmd)
 }
 
 func TestDetectServeCommand_Good_Fallback(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "python3 -m http.server 8000", cmd)
 }
 
@@ -91,7 +92,7 @@ func TestDetectServeCommand_Good_Priority(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"require":{}}`), 0644)
 	assert.NoError(t, err)
 
-	cmd := DetectServeCommand(tmpDir)
+	cmd := DetectServeCommand(io.Local, tmpDir)
 	assert.Equal(t, "php artisan octane:start --host=0.0.0.0 --port=8000", cmd)
 }
 
@@ -116,13 +117,13 @@ func TestHasFile_Good(t *testing.T) {
 	err := os.WriteFile(testFile, []byte("content"), 0644)
 	assert.NoError(t, err)
 
-	assert.True(t, hasFile(tmpDir, "test.txt"))
+	assert.True(t, hasFile(io.Local, tmpDir, "test.txt"))
 }
 
 func TestHasFile_Bad(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	assert.False(t, hasFile(tmpDir, "nonexistent.txt"))
+	assert.False(t, hasFile(io.Local, tmpDir, "nonexistent.txt"))
 }
 
 func TestHasFile_Bad_Directory(t *testing.T) {
@@ -132,5 +133,5 @@ func TestHasFile_Bad_Directory(t *testing.T) {
 	assert.NoError(t, err)
 
 	// hasFile correctly returns false for directories (only true for regular files)
-	assert.False(t, hasFile(tmpDir, "subdir"))
+	assert.False(t, hasFile(io.Local, tmpDir, "subdir"))
 }

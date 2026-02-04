@@ -4,13 +4,15 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 func TestDetectTestCommand_Good_ComposerJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"scripts":{"test":"pest"}}`), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "composer test" {
 		t.Errorf("expected 'composer test', got %q", cmd)
 	}
@@ -20,7 +22,7 @@ func TestDetectTestCommand_Good_PackageJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"scripts":{"test":"vitest"}}`), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "npm test" {
 		t.Errorf("expected 'npm test', got %q", cmd)
 	}
@@ -30,7 +32,7 @@ func TestDetectTestCommand_Good_GoMod(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module example"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "go test ./..." {
 		t.Errorf("expected 'go test ./...', got %q", cmd)
 	}
@@ -42,7 +44,7 @@ func TestDetectTestCommand_Good_CoreTestYaml(t *testing.T) {
 	_ = os.MkdirAll(coreDir, 0755)
 	_ = os.WriteFile(filepath.Join(coreDir, "test.yaml"), []byte("command: custom-test"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "custom-test" {
 		t.Errorf("expected 'custom-test', got %q", cmd)
 	}
@@ -52,7 +54,7 @@ func TestDetectTestCommand_Good_Pytest(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "pytest.ini"), []byte("[pytest]"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "pytest" {
 		t.Errorf("expected 'pytest', got %q", cmd)
 	}
@@ -62,7 +64,7 @@ func TestDetectTestCommand_Good_Taskfile(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "Taskfile.yaml"), []byte("version: '3'"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "task test" {
 		t.Errorf("expected 'task test', got %q", cmd)
 	}
@@ -71,7 +73,7 @@ func TestDetectTestCommand_Good_Taskfile(t *testing.T) {
 func TestDetectTestCommand_Bad_NoFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "" {
 		t.Errorf("expected empty string, got %q", cmd)
 	}
@@ -85,7 +87,7 @@ func TestDetectTestCommand_Good_Priority(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(coreDir, "test.yaml"), []byte("command: my-custom-test"), 0644)
 	_ = os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module example"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "my-custom-test" {
 		t.Errorf("expected 'my-custom-test' (from .core/test.yaml), got %q", cmd)
 	}
@@ -108,7 +110,7 @@ env:
 `
 	_ = os.WriteFile(filepath.Join(coreDir, "test.yaml"), []byte(configYAML), 0644)
 
-	cfg, err := LoadTestConfig(tmpDir)
+	cfg, err := LoadTestConfig(io.Local, tmpDir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,7 +135,7 @@ env:
 func TestLoadTestConfig_Bad_NotFound(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	_, err := LoadTestConfig(tmpDir)
+	_, err := LoadTestConfig(io.Local, tmpDir)
 	if err == nil {
 		t.Error("expected error for missing config, got nil")
 	}
@@ -143,10 +145,10 @@ func TestHasPackageScript_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"scripts":{"test":"jest","build":"webpack"}}`), 0644)
 
-	if !hasPackageScript(tmpDir, "test") {
+	if !hasPackageScript(io.Local, tmpDir, "test") {
 		t.Error("expected to find 'test' script")
 	}
-	if !hasPackageScript(tmpDir, "build") {
+	if !hasPackageScript(io.Local, tmpDir, "build") {
 		t.Error("expected to find 'build' script")
 	}
 }
@@ -155,7 +157,7 @@ func TestHasPackageScript_Bad_MissingScript(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"scripts":{"build":"webpack"}}`), 0644)
 
-	if hasPackageScript(tmpDir, "test") {
+	if hasPackageScript(io.Local, tmpDir, "test") {
 		t.Error("expected not to find 'test' script")
 	}
 }
@@ -164,7 +166,7 @@ func TestHasComposerScript_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"scripts":{"test":"pest","post-install-cmd":"@php artisan migrate"}}`), 0644)
 
-	if !hasComposerScript(tmpDir, "test") {
+	if !hasComposerScript(io.Local, tmpDir, "test") {
 		t.Error("expected to find 'test' script")
 	}
 }
@@ -173,7 +175,7 @@ func TestHasComposerScript_Bad_MissingScript(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"scripts":{"build":"@php build.php"}}`), 0644)
 
-	if hasComposerScript(tmpDir, "test") {
+	if hasComposerScript(io.Local, tmpDir, "test") {
 		t.Error("expected not to find 'test' script")
 	}
 }
@@ -229,7 +231,7 @@ func TestDetectTestCommand_Good_TaskfileYml(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "Taskfile.yml"), []byte("version: '3'"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "task test" {
 		t.Errorf("expected 'task test', got %q", cmd)
 	}
@@ -239,7 +241,7 @@ func TestDetectTestCommand_Good_Pyproject(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "pyproject.toml"), []byte("[tool.pytest]"), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	if cmd != "pytest" {
 		t.Errorf("expected 'pytest', got %q", cmd)
 	}
@@ -248,7 +250,7 @@ func TestDetectTestCommand_Good_Pyproject(t *testing.T) {
 func TestHasPackageScript_Bad_NoFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	if hasPackageScript(tmpDir, "test") {
+	if hasPackageScript(io.Local, tmpDir, "test") {
 		t.Error("expected false for missing package.json")
 	}
 }
@@ -257,7 +259,7 @@ func TestHasPackageScript_Bad_InvalidJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`invalid json`), 0644)
 
-	if hasPackageScript(tmpDir, "test") {
+	if hasPackageScript(io.Local, tmpDir, "test") {
 		t.Error("expected false for invalid JSON")
 	}
 }
@@ -266,7 +268,7 @@ func TestHasPackageScript_Bad_NoScripts(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test"}`), 0644)
 
-	if hasPackageScript(tmpDir, "test") {
+	if hasPackageScript(io.Local, tmpDir, "test") {
 		t.Error("expected false for missing scripts section")
 	}
 }
@@ -274,7 +276,7 @@ func TestHasPackageScript_Bad_NoScripts(t *testing.T) {
 func TestHasComposerScript_Bad_NoFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	if hasComposerScript(tmpDir, "test") {
+	if hasComposerScript(io.Local, tmpDir, "test") {
 		t.Error("expected false for missing composer.json")
 	}
 }
@@ -283,7 +285,7 @@ func TestHasComposerScript_Bad_InvalidJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`invalid json`), 0644)
 
-	if hasComposerScript(tmpDir, "test") {
+	if hasComposerScript(io.Local, tmpDir, "test") {
 		t.Error("expected false for invalid JSON")
 	}
 }
@@ -292,7 +294,7 @@ func TestHasComposerScript_Bad_NoScripts(t *testing.T) {
 	tmpDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"name":"test/pkg"}`), 0644)
 
-	if hasComposerScript(tmpDir, "test") {
+	if hasComposerScript(io.Local, tmpDir, "test") {
 		t.Error("expected false for missing scripts section")
 	}
 }
@@ -303,7 +305,7 @@ func TestLoadTestConfig_Bad_InvalidYAML(t *testing.T) {
 	_ = os.MkdirAll(coreDir, 0755)
 	_ = os.WriteFile(filepath.Join(coreDir, "test.yaml"), []byte("invalid: yaml: :"), 0644)
 
-	_, err := LoadTestConfig(tmpDir)
+	_, err := LoadTestConfig(io.Local, tmpDir)
 	if err == nil {
 		t.Error("expected error for invalid YAML")
 	}
@@ -315,7 +317,7 @@ func TestLoadTestConfig_Good_MinimalConfig(t *testing.T) {
 	_ = os.MkdirAll(coreDir, 0755)
 	_ = os.WriteFile(filepath.Join(coreDir, "test.yaml"), []byte("version: 1"), 0644)
 
-	cfg, err := LoadTestConfig(tmpDir)
+	cfg, err := LoadTestConfig(io.Local, tmpDir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -332,7 +334,7 @@ func TestDetectTestCommand_Good_ComposerWithoutScript(t *testing.T) {
 	// composer.json without test script should not return composer test
 	_ = os.WriteFile(filepath.Join(tmpDir, "composer.json"), []byte(`{"name":"test/pkg"}`), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	// Falls through to empty (no match)
 	if cmd != "" {
 		t.Errorf("expected empty string, got %q", cmd)
@@ -344,7 +346,7 @@ func TestDetectTestCommand_Good_PackageJSONWithoutScript(t *testing.T) {
 	// package.json without test or dev script
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test"}`), 0644)
 
-	cmd := DetectTestCommand(tmpDir)
+	cmd := DetectTestCommand(io.Local, tmpDir)
 	// Falls through to empty
 	if cmd != "" {
 		t.Errorf("expected empty string, got %q", cmd)
