@@ -203,7 +203,6 @@ func buildTargetRepo(target string) (*repos.Repo, string) {
 	return &repos.Repo{Name: parts[1]}, target
 }
 
-
 // AlertSummary holds aggregated alert counts.
 type AlertSummary struct {
 	Critical int

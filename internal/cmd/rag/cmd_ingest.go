@@ -169,5 +169,3 @@ func IngestFile(ctx context.Context, filePath, collectionName string) (int, erro
 
 	return rag.IngestFile(ctx, qdrantClient, ollamaClient, collectionName, filePath, rag.DefaultChunkConfig())
 }
-
-
