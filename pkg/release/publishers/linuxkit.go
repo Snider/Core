@@ -47,7 +47,7 @@ func (p *LinuxKitPublisher) Publish(ctx context.Context, release *Release, pubCf
 	lkCfg := p.parseConfig(pubCfg, release.ProjectDir)
 
 	// Validate config file exists
-	if _, err := os.Stat(lkCfg.Config); err != nil {
+	if !release.FS.Exists(lkCfg.Config) {
 		return fmt.Errorf("linuxkit.Publish: config file not found: %s", lkCfg.Config)
 	}
 
@@ -169,7 +169,7 @@ func (p *LinuxKitPublisher) executePublish(ctx context.Context, release *Release
 	outputDir := filepath.Join(release.ProjectDir, "dist", "linuxkit")
 
 	// Create output directory
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := release.FS.EnsureDir(outputDir); err != nil {
 		return fmt.Errorf("linuxkit.Publish: failed to create output directory: %w", err)
 	}
 
@@ -207,7 +207,7 @@ func (p *LinuxKitPublisher) executePublish(ctx context.Context, release *Release
 
 	// Upload artifacts to GitHub release
 	for _, artifactPath := range artifacts {
-		if _, err := os.Stat(artifactPath); err != nil {
+		if !release.FS.Exists(artifactPath) {
 			return fmt.Errorf("linuxkit.Publish: artifact not found after build: %s", artifactPath)
 		}
 

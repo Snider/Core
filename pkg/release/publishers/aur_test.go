@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -97,7 +98,7 @@ func TestAURPublisher_RenderTemplate_Good(t *testing.T) {
 			},
 		}
 
-		result, err := p.renderTemplate("templates/aur/PKGBUILD.tmpl", data)
+		result, err := p.renderTemplate(io.Local, "templates/aur/PKGBUILD.tmpl", data)
 		require.NoError(t, err)
 
 		assert.Contains(t, result, "# Maintainer: John Doe <john@example.com>")
@@ -125,7 +126,7 @@ func TestAURPublisher_RenderTemplate_Good(t *testing.T) {
 			},
 		}
 
-		result, err := p.renderTemplate("templates/aur/.SRCINFO.tmpl", data)
+		result, err := p.renderTemplate(io.Local, "templates/aur/.SRCINFO.tmpl", data)
 		require.NoError(t, err)
 
 		assert.Contains(t, result, "pkgbase = myapp-bin")
@@ -144,7 +145,7 @@ func TestAURPublisher_RenderTemplate_Bad(t *testing.T) {
 
 	t.Run("returns error for non-existent template", func(t *testing.T) {
 		data := aurTemplateData{}
-		_, err := p.renderTemplate("templates/aur/nonexistent.tmpl", data)
+		_, err := p.renderTemplate(io.Local, "templates/aur/nonexistent.tmpl", data)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to read template")
 	})
@@ -170,7 +171,7 @@ func TestAURPublisher_DryRunPublish_Good(t *testing.T) {
 			Maintainer: "John Doe <john@example.com>",
 		}
 
-		err := p.dryRunPublish(data, cfg)
+		err := p.dryRunPublish(io.Local, data, cfg)
 
 		_ = w.Close()
 		var buf bytes.Buffer
@@ -199,6 +200,7 @@ func TestAURPublisher_Publish_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "aur"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
