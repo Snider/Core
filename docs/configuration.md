@@ -160,7 +160,10 @@ dev:
 
 test:
   parallel: true
-  coverage: false
+  coverage: true
+  thresholds:
+    statements: 80
+    branches: 75
 
 deploy:
   coolify:

@@ -88,7 +88,7 @@ task cli:run      # Build and run
 | `task test-gen` | Generate test stubs for public API |
 | `task check` | go mod tidy + tests + review |
 | `task review` | CodeRabbit review |
-| `task cov` | Generate coverage.txt |
+| `task cov` | Run tests with coverage report |
 | `task cov-view` | Open HTML coverage report |
 | `task sync` | Update public API Go files |
 
