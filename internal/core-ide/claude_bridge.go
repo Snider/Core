@@ -78,7 +78,7 @@ func (cb *ClaudeBridge) connectToMCP() {
 				log.Printf("Claude bridge MCP read error: %v", err)
 				break
 			}
-				select {
+			select {
 			case cb.broadcast <- message:
 			default:
 				log.Printf("Claude bridge: broadcast channel full, dropping message")

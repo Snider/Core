@@ -175,7 +175,6 @@ func (c *SSHClient) Connect(ctx context.Context) error {
 		return log.E("ssh.Connect", fmt.Sprintf("ssh connect %s", addr), err)
 	}
 
-
 	c.client = ssh.NewClient(sshConn, chans, reqs)
 	return nil
 }
@@ -300,11 +299,11 @@ func (c *SSHClient) Upload(ctx context.Context, local io.Reader, remote string, 
 
 	// Use cat to write the file (simpler than SCP)
 	writeCmd := fmt.Sprintf("cat > %q && chmod %o %q", remote, mode, remote)
-	
+
 	// If become is needed, we construct a command that reads password then content from stdin
 	// But we need to be careful with handling stdin for sudo + cat.
 	// We'll use a session with piped stdin.
-	
+
 	session2, err := c.client.NewSession()
 	if err != nil {
 		return log.E("ssh.Upload", "new session for write", err)

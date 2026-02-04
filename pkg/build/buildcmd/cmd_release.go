@@ -14,10 +14,10 @@ import (
 
 // Flag variables for release command
 var (
-	releaseVersion      string
-	releaseDraft        bool
-	releasePrerelease   bool
-	releaseGoForLaunch  bool
+	releaseVersion     string
+	releaseDraft       bool
+	releasePrerelease  bool
+	releaseGoForLaunch bool
 )
 
 var releaseCmd = &cli.Command{
