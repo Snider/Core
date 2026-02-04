@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ func TestPIDFile(t *testing.T) {
 		tmpDir := t.TempDir()
 		pidPath := filepath.Join(tmpDir, "test.pid")
 
-		pid := NewPIDFile(pidPath)
+		pid := NewPIDFile(io.Local, pidPath)
 
 		// Acquire should succeed
 		err := pid.Acquire()
@@ -58,7 +59,7 @@ func TestPIDFile(t *testing.T) {
 		err := os.WriteFile(pidPath, []byte("999999999"), 0644)
 		require.NoError(t, err)
 
-		pid := NewPIDFile(pidPath)
+		pid := NewPIDFile(io.Local, pidPath)
 
 		// Should acquire successfully (stale PID removed)
 		err = pid.Acquire()
@@ -72,7 +73,7 @@ func TestPIDFile(t *testing.T) {
 		tmpDir := t.TempDir()
 		pidPath := filepath.Join(tmpDir, "subdir", "nested", "test.pid")
 
-		pid := NewPIDFile(pidPath)
+		pid := NewPIDFile(io.Local, pidPath)
 
 		err := pid.Acquire()
 		require.NoError(t, err)
@@ -85,8 +86,25 @@ func TestPIDFile(t *testing.T) {
 	})
 
 	t.Run("path getter", func(t *testing.T) {
-		pid := NewPIDFile("/tmp/test.pid")
+		pid := NewPIDFile(io.Local, "/tmp/test.pid")
 		assert.Equal(t, "/tmp/test.pid", pid.Path())
+	})
+
+	t.Run("with mock medium", func(t *testing.T) {
+		mock := io.NewMockMedium()
+		pidPath := "/tmp/mock.pid"
+		pid := NewPIDFile(mock, pidPath)
+
+		err := pid.Acquire()
+		require.NoError(t, err)
+
+		assert.True(t, mock.Exists(pidPath))
+		data, _ := mock.Read(pidPath)
+		assert.NotEmpty(t, data)
+
+		err = pid.Release()
+		require.NoError(t, err)
+		assert.False(t, mock.Exists(pidPath))
 	})
 }
 
@@ -243,6 +261,26 @@ func TestDaemon(t *testing.T) {
 	t.Run("default shutdown timeout", func(t *testing.T) {
 		d := NewDaemon(DaemonOptions{})
 		assert.Equal(t, 30*time.Second, d.opts.ShutdownTimeout)
+	})
+
+	t.Run("with mock medium", func(t *testing.T) {
+		mock := io.NewMockMedium()
+		pidPath := "/tmp/daemon.pid"
+
+		d := NewDaemon(DaemonOptions{
+			Medium:     mock,
+			PIDFile:    pidPath,
+			HealthAddr: "127.0.0.1:0",
+		})
+
+		err := d.Start()
+		require.NoError(t, err)
+
+		assert.True(t, mock.Exists(pidPath))
+
+		err = d.Stop()
+		require.NoError(t, err)
+		assert.False(t, mock.Exists(pidPath))
 	})
 }
 

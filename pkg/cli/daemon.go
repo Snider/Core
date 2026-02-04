@@ -74,13 +74,14 @@ func IsStderrTTY() bool {
 
 // PIDFile manages a process ID file for single-instance enforcement.
 type PIDFile struct {
-	path string
-	mu   sync.Mutex
+	medium io.Medium
+	path   string
+	mu     sync.Mutex
 }
 
 // NewPIDFile creates a PID file manager.
-func NewPIDFile(path string) *PIDFile {
-	return &PIDFile{path: path}
+func NewPIDFile(m io.Medium, path string) *PIDFile {
+	return &PIDFile{medium: m, path: path}
 }
 
 // Acquire writes the current PID to the file.
@@ -90,7 +91,7 @@ func (p *PIDFile) Acquire() error {
 	defer p.mu.Unlock()
 
 	// Check if PID file exists
-	if data, err := io.Local.Read(p.path); err == nil {
+	if data, err := p.medium.Read(p.path); err == nil {
 		pid, err := strconv.Atoi(data)
 		if err == nil && pid > 0 {
 			// Check if process is still running
@@ -101,19 +102,19 @@ func (p *PIDFile) Acquire() error {
 			}
 		}
 		// Stale PID file, remove it
-		_ = io.Local.Delete(p.path)
+		_ = p.medium.Delete(p.path)
 	}
 
 	// Ensure directory exists
 	if dir := filepath.Dir(p.path); dir != "." {
-		if err := io.Local.EnsureDir(dir); err != nil {
+		if err := p.medium.EnsureDir(dir); err != nil {
 			return fmt.Errorf("failed to create PID directory: %w", err)
 		}
 	}
 
 	// Write current PID
 	pid := os.Getpid()
-	if err := io.Local.Write(p.path, strconv.Itoa(pid)); err != nil {
+	if err := p.medium.Write(p.path, strconv.Itoa(pid)); err != nil {
 		return fmt.Errorf("failed to write PID file: %w", err)
 	}
 
@@ -124,7 +125,7 @@ func (p *PIDFile) Acquire() error {
 func (p *PIDFile) Release() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return io.Local.Delete(p.path)
+	return p.medium.Delete(p.path)
 }
 
 // Path returns the PID file path.
@@ -246,6 +247,9 @@ func (h *HealthServer) Addr() string {
 
 // DaemonOptions configures daemon mode execution.
 type DaemonOptions struct {
+	// Medium is the filesystem abstraction.
+	Medium io.Medium
+
 	// PIDFile path for single-instance enforcement.
 	// Leave empty to skip PID file management.
 	PIDFile string
@@ -283,13 +287,17 @@ func NewDaemon(opts DaemonOptions) *Daemon {
 		opts.ShutdownTimeout = 30 * time.Second
 	}
 
+	if opts.Medium == nil {
+		opts.Medium = io.Local
+	}
+
 	d := &Daemon{
 		opts:   opts,
 		reload: make(chan struct{}, 1),
 	}
 
 	if opts.PIDFile != "" {
-		d.pid = NewPIDFile(opts.PIDFile)
+		d.pid = NewPIDFile(opts.Medium, opts.PIDFile)
 	}
 
 	if opts.HealthAddr != "" {
