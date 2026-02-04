@@ -19,9 +19,9 @@ const (
 
 // NewFromConfig creates a Gitea client using the standard config resolution:
 //
-//  1. GITEA_TOKEN + GITEA_URL environment variables
-//  2. ~/.core/config.yaml keys: gitea.token, gitea.url
-//  3. Provided flag overrides (pass empty to skip)
+//  1. ~/.core/config.yaml keys: gitea.token, gitea.url
+//  2. GITEA_TOKEN + GITEA_URL environment variables (override config file)
+//  3. Provided flag overrides (highest priority; pass empty to skip)
 func NewFromConfig(flagURL, flagToken string) (*Client, error) {
 	url, token, err := ResolveConfig(flagURL, flagToken)
 	if err != nil {

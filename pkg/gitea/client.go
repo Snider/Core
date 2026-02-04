@@ -1,11 +1,11 @@
 // Package gitea provides a thin wrapper around the Gitea Go SDK
 // for managing repositories, issues, and pull requests on a Gitea instance.
 //
-// Authentication is resolved from environment variables, config file, or flags:
+// Authentication is resolved from config file, environment variables, or flag overrides:
 //
-//  1. GITEA_TOKEN + GITEA_URL environment variables
-//  2. ~/.core/config.yaml keys: gitea.token, gitea.url
-//  3. CLI flags: --gitea-url, --gitea-token
+//  1. ~/.core/config.yaml keys: gitea.token, gitea.url
+//  2. GITEA_TOKEN + GITEA_URL environment variables (override config file)
+//  3. Flag overrides via core gitea config --url/--token (highest priority)
 package gitea
 
 import (

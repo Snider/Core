@@ -34,6 +34,8 @@ type Comment struct {
 	UpdatedAt time.Time
 }
 
+const commentPageSize = 50
+
 // GetPRMeta returns structural signals for a pull request.
 // This is the Gitea side of the dual MetaReader described in the pipeline design.
 func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
@@ -70,11 +72,24 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 		meta.Assignees = append(meta.Assignees, assignee.UserName)
 	}
 
-	// Fetch comment count from the issue side (PRs are issues in Gitea)
-	comments, _, err := c.api.ListIssueComments(owner, repo, pr, gitea.ListIssueCommentOptions{})
-	if err == nil {
-		meta.CommentCount = len(comments)
+	// Fetch comment count from the issue side (PRs are issues in Gitea).
+	// Paginate to get an accurate count.
+	count := 0
+	page := 1
+	for {
+		comments, _, listErr := c.api.ListIssueComments(owner, repo, pr, gitea.ListIssueCommentOptions{
+			ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
+		})
+		if listErr != nil {
+			break
+		}
+		count += len(comments)
+		if len(comments) < commentPageSize {
+			break
+		}
+		page++
 	}
+	meta.CommentCount = count
 
 	return meta, nil
 }
@@ -82,23 +97,38 @@ func (c *Client) GetPRMeta(owner, repo string, pr int64) (*PRMeta, error) {
 // GetCommentBodies returns all comment bodies for a pull request.
 // This reads full content, which is safe on the home lab Gitea instance.
 func (c *Client) GetCommentBodies(owner, repo string, pr int64) ([]Comment, error) {
-	raw, _, err := c.api.ListIssueComments(owner, repo, pr, gitea.ListIssueCommentOptions{})
-	if err != nil {
-		return nil, log.E("gitea.GetCommentBodies", "failed to get PR comments", err)
-	}
+	var comments []Comment
+	page := 1
 
-	comments := make([]Comment, 0, len(raw))
-	for _, c := range raw {
-		comment := Comment{
-			ID:        c.ID,
-			Body:      c.Body,
-			CreatedAt: c.Created,
-			UpdatedAt: c.Updated,
+	for {
+		raw, _, err := c.api.ListIssueComments(owner, repo, pr, gitea.ListIssueCommentOptions{
+			ListOptions: gitea.ListOptions{Page: page, PageSize: commentPageSize},
+		})
+		if err != nil {
+			return nil, log.E("gitea.GetCommentBodies", "failed to get PR comments", err)
 		}
-		if c.Poster != nil {
-			comment.Author = c.Poster.UserName
+
+		if len(raw) == 0 {
+			break
 		}
-		comments = append(comments, comment)
+
+		for _, rc := range raw {
+			comment := Comment{
+				ID:        rc.ID,
+				Body:      rc.Body,
+				CreatedAt: rc.Created,
+				UpdatedAt: rc.Updated,
+			}
+			if rc.Poster != nil {
+				comment.Author = rc.Poster.UserName
+			}
+			comments = append(comments, comment)
+		}
+
+		if len(raw) < commentPageSize {
+			break
+		}
+		page++
 	}
 
 	return comments, nil

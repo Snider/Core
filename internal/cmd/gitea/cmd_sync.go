@@ -2,6 +2,7 @@ package gitea
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -61,8 +62,11 @@ func runSync(args []string) error {
 	// Expand base path
 	basePath := syncBasePath
 	if strings.HasPrefix(basePath, "~/") {
-		home, _ := exec.Command("sh", "-c", "echo $HOME").Output()
-		basePath = strings.TrimSpace(string(home)) + basePath[1:]
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to resolve home directory: %w", err)
+		}
+		basePath = filepath.Join(home, basePath[2:])
 	}
 
 	// Build repo list: either from args or from the Gitea org
@@ -182,7 +186,13 @@ func runSyncSetup(client *gt.Client, repos []repoEntry, giteaURL string) error {
 		cli.Print("     Creating main branch... ")
 		err = createMainFromUpstream(client, syncOrg, repo.name)
 		if err != nil {
-			cli.Print("%s\n", dimStyle.Render("exists"))
+			if strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "409") {
+				cli.Print("%s\n", dimStyle.Render("exists"))
+			} else {
+				cli.Print("%s\n", errorStyle.Render(err.Error()))
+				failed++
+				continue
+			}
 		} else {
 			cli.Print("%s\n", successStyle.Render("done"))
 		}

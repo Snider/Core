@@ -3,6 +3,7 @@ module github.com/host-uk/core
 go 1.25.5
 
 require (
+	code.gitea.io/sdk/gitea v0.23.2
 	github.com/Snider/Borg v0.2.0
 	github.com/getkin/kin-openapi v0.133.0
 	github.com/host-uk/core/internal/core-ide v0.0.0-20260204004957-989b7e1e6555
@@ -28,7 +29,6 @@ require (
 require (
 	aead.dev/minisign v0.3.0 // indirect
 	cloud.google.com/go v0.123.0 // indirect
-	code.gitea.io/sdk/gitea v0.23.2 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect

@@ -70,7 +70,10 @@ func showConfig() error {
 	cli.Print("  %s %s\n", dimStyle.Render("URL:"), valueStyle.Render(url))
 
 	if token != "" {
-		masked := token[:4] + "..." + token[len(token)-4:]
+		masked := token
+		if len(token) >= 8 {
+			masked = token[:4] + "..." + token[len(token)-4:]
+		}
 		cli.Print("  %s %s\n", dimStyle.Render("Token:"), valueStyle.Render(masked))
 	} else {
 		cli.Print("  %s %s\n", dimStyle.Render("Token:"), warningStyle.Render("not set"))
