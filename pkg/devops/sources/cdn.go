@@ -54,7 +54,7 @@ func (s *CDNSource) LatestVersion(ctx context.Context) (string, error) {
 }
 
 // Download downloads the image from CDN.
-func (s *CDNSource) Download(ctx context.Context, dest string, progress func(downloaded, total int64)) error {
+func (s *CDNSource) Download(ctx context.Context, m io.Medium, dest string, progress func(downloaded, total int64)) error {
 	url := fmt.Sprintf("%s/%s", s.config.CDNURL, s.config.ImageName)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -73,7 +73,7 @@ func (s *CDNSource) Download(ctx context.Context, dest string, progress func(dow
 	}
 
 	// Ensure dest directory exists
-	if err := io.Local.EnsureDir(dest); err != nil {
+	if err := m.EnsureDir(dest); err != nil {
 		return fmt.Errorf("cdn.Download: %w", err)
 	}
 
