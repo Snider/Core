@@ -20,6 +20,7 @@
 //   - test: Test runner with coverage
 //   - qa: Quality assurance workflows
 //   - monitor: Security monitoring aggregation
+//   - gitea: Gitea instance management (repos, issues, PRs, mirrors)
 
 package variants
 
@@ -32,6 +33,7 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/crypt"
 	_ "github.com/host-uk/core/internal/cmd/deploy"
 	_ "github.com/host-uk/core/internal/cmd/dev"
+	_ "github.com/host-uk/core/internal/cmd/gitea"
 	_ "github.com/host-uk/core/internal/cmd/docs"
 	_ "github.com/host-uk/core/internal/cmd/doctor"
 	_ "github.com/host-uk/core/internal/cmd/gitcmd"
