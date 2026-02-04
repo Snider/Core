@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/host-uk/core/pkg/crypt/openpgp"
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/log"
+	"github.com/host-uk/core/pkg/mcp"
 	"github.com/host-uk/core/pkg/workspace"
 	"github.com/spf13/cobra"
 )
@@ -35,18 +37,39 @@ func Main() {
 		}
 	}()
 
+	// Manual flag parsing for daemon mode before Init()
+	// This ensures MCP settings from CLI flags are available to services
+	if len(os.Args) > 1 && os.Args[1] == "daemon" {
+		for i := 2; i < len(os.Args); i++ {
+			arg := os.Args[i]
+			if strings.HasPrefix(arg, "--mcp-transport=") {
+				os.Setenv("CORE_MCP_TRANSPORT", strings.TrimPrefix(arg, "--mcp-transport="))
+			} else if strings.HasPrefix(arg, "--mcp-addr=") {
+				os.Setenv("CORE_MCP_ADDR", strings.TrimPrefix(arg, "--mcp-addr="))
+			}
+		}
+	}
+
+	// Build service list
+	services := []framework.Option{
+		framework.WithName("i18n", NewI18nService(I18nOptions{})),
+		framework.WithName("log", NewLogService(log.Options{
+			Level: log.LevelInfo,
+		})),
+		framework.WithName("crypt", openpgp.New),
+		framework.WithName("workspace", workspace.New),
+	}
+
+	// Auto-start MCP in daemon mode
+	if DetectMode() == ModeDaemon {
+		services = append(services, framework.WithName("mcp", mcp.NewMCPService))
+	}
+
 	// Initialise CLI runtime with services
 	if err := Init(Options{
-		AppName: AppName,
-		Version: AppVersion,
-		Services: []framework.Option{
-			framework.WithName("i18n", NewI18nService(I18nOptions{})),
-			framework.WithName("log", NewLogService(log.Options{
-				Level: log.LevelInfo,
-			})),
-			framework.WithName("crypt", openpgp.New),
-			framework.WithName("workspace", workspace.New),
-		},
+		AppName:  AppName,
+		Version:  AppVersion,
+		Services: services,
 	}); err != nil {
 		Error(err.Error())
 		os.Exit(1)

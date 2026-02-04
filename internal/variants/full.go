@@ -32,6 +32,7 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/collect"
 	_ "github.com/host-uk/core/internal/cmd/config"
 	_ "github.com/host-uk/core/internal/cmd/crypt"
+	_ "github.com/host-uk/core/internal/cmd/daemon"
 	_ "github.com/host-uk/core/internal/cmd/deploy"
 	_ "github.com/host-uk/core/internal/cmd/dev"
 	_ "github.com/host-uk/core/internal/cmd/docs"

@@ -17,6 +17,13 @@ func TestDetectMode(t *testing.T) {
 		assert.Equal(t, ModeDaemon, DetectMode())
 	})
 
+	t.Run("daemon_mode_from_args", func(t *testing.T) {
+		oldArgs := os.Args
+		os.Args = []string{"core", "daemon"}
+		defer func() { os.Args = oldArgs }()
+		assert.Equal(t, ModeDaemon, DetectMode())
+	})
+
 	t.Run("mode string", func(t *testing.T) {
 		assert.Equal(t, "interactive", ModeInteractive.String())
 		assert.Equal(t, "pipe", ModePipe.String())

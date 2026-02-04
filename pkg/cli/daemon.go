@@ -44,9 +44,13 @@ func (m Mode) String() string {
 }
 
 // DetectMode determines the execution mode based on environment.
-// Checks CORE_DAEMON env var first, then TTY status.
+// Checks CORE_DAEMON env var first, then the 'daemon' command, then TTY status.
 func DetectMode() Mode {
 	if os.Getenv("CORE_DAEMON") == "1" {
+		return ModeDaemon
+	}
+	// Check if 'daemon' command is being run
+	if len(os.Args) > 1 && os.Args[1] == "daemon" {
 		return ModeDaemon
 	}
 	if !IsTTY() {

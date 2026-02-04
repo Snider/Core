@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"os"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -14,44 +15,38 @@ import (
 // maxMCPMessageSize is the maximum size for MCP JSON-RPC messages (10 MB).
 const maxMCPMessageSize = 10 * 1024 * 1024
 
-// TCPTransport manages a TCP listener for MCP.
-type TCPTransport struct {
-	addr     string
-	listener net.Listener
-}
-
-// NewTCPTransport creates a new TCP transport listener.
-// It listens on the provided address (e.g. "localhost:9100").
-func NewTCPTransport(addr string) (*TCPTransport, error) {
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
-	return &TCPTransport{addr: addr, listener: listener}, nil
-}
-
-// ServeTCP starts a TCP server for the MCP service.
+// Serve starts a TCP or Unix server for the MCP service.
 // It accepts connections and spawns a new MCP server session for each connection.
-func (s *Service) ServeTCP(ctx context.Context, addr string) error {
-	t, err := NewTCPTransport(addr)
+func (s *Service) Serve(ctx context.Context, network, addr string) error {
+	if network == "unix" {
+		// Clean up existing socket file
+		_ = os.Remove(addr)
+	}
+
+	listener, err := net.Listen(network, addr)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = t.listener.Close() }()
+	defer func() {
+		_ = listener.Close()
+		if network == "unix" {
+			_ = os.Remove(addr)
+		}
+	}()
 
 	// Close listener when context is cancelled to unblock Accept
 	go func() {
 		<-ctx.Done()
-		_ = t.listener.Close()
+		_ = listener.Close()
 	}()
 
-	if addr == "" {
-		addr = t.listener.Addr().String()
+	if addr == "" || network == "unix" {
+		addr = listener.Addr().String()
 	}
-	log.Info("MCP TCP server listening", "addr", addr)
+	log.Info("MCP server listening", "network", network, "addr", addr)
 
 	for {
-		conn, err := t.listener.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -136,5 +131,5 @@ func (c *connConnection) Close() error {
 }
 
 func (c *connConnection) SessionID() string {
-	return "tcp-session" // Unique ID might be better, but optional
+	return "net-session"
 }

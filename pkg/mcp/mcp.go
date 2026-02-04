@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/io/local"
 	"github.com/host-uk/core/pkg/log"
@@ -484,15 +485,55 @@ func detectLanguageFromPath(path string) string {
 	}
 }
 
+// OnStartup starts the MCP server in the background.
+func (s *Service) OnStartup(ctx context.Context) error {
+	go func() {
+		if err := s.Run(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
+		}
+	}()
+	return nil
+}
+
+// OnShutdown performs cleanup for the MCP server.
+func (s *Service) OnShutdown(ctx context.Context) error {
+	return nil
+}
+
+// NewMCPService is a framework-compatible factory for the MCP service.
+func NewMCPService(c *framework.Core) (any, error) {
+	return New()
+}
+
 // Run starts the MCP server.
-// If MCP_ADDR is set, it starts a TCP server.
-// Otherwise, it starts a Stdio server.
+// Transport and address are configured via environment variables:
+//   - CORE_MCP_TRANSPORT: "stdio" (default), "tcp", or "socket"/"unix"
+//   - CORE_MCP_ADDR: address for tcp/unix (e.g. ":9100" or "/tmp/mcp.sock")
+//
+// Legacy MCP_ADDR is also supported for TCP.
 func (s *Service) Run(ctx context.Context) error {
-	addr := os.Getenv("MCP_ADDR")
-	if addr != "" {
-		return s.ServeTCP(ctx, addr)
+	transport := os.Getenv("CORE_MCP_TRANSPORT")
+	addr := os.Getenv("CORE_MCP_ADDR")
+
+	// Support legacy MCP_ADDR
+	if addr == "" {
+		addr = os.Getenv("MCP_ADDR")
 	}
-	return s.server.Run(ctx, &mcp.StdioTransport{})
+
+	switch transport {
+	case "tcp":
+		return s.Serve(ctx, "tcp", addr)
+	case "socket", "unix":
+		return s.Serve(ctx, "unix", addr)
+	case "stdio":
+		return s.server.Run(ctx, &mcp.StdioTransport{})
+	default:
+		// Default behavior
+		if addr != "" {
+			return s.Serve(ctx, "tcp", addr)
+		}
+		return s.server.Run(ctx, &mcp.StdioTransport{})
+	}
 }
 
 // Server returns the underlying MCP server for advanced configuration.
