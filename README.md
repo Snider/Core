@@ -25,9 +25,9 @@ Core is an **opinionated Web3 desktop application framework** providing:
 ## Quick Start
 
 ```go
-import core "github.com/host-uk/core"
+import core "github.com/host-uk/core/pkg/framework/core"
 
-app := core.New(
+app, err := core.New(
   core.WithServiceLock(),
 )
 ```
@@ -81,21 +81,20 @@ task cli:run      # Build and run
 
 ```
 .
-├── core.go              # Facade re-exporting pkg/core
+├── main.go              # CLI application entry point
 ├── pkg/
-│   ├── core/            # Service container, DI, Runtime[T]
-│   ├── config/          # JSON persistence, XDG paths
-│   ├── display/         # Windows, tray, menus (Wails)
+│   ├── framework/core/  # Service container, DI, Runtime[T]
 │   ├── crypt/           # Hashing, checksums, PGP
-│   │   └── openpgp/     # Full PGP implementation
 │   ├── io/              # Medium interface + backends
-│   ├── workspace/       # Encrypted workspace management
 │   ├── help/            # In-app documentation
-│   └── i18n/            # Internationalization
-├── cmd/
-│   ├── core/            # CLI application
-│   └── core-gui/        # Wails GUI application
-└── go.work              # Links root, cmd/core, cmd/core-gui
+│   ├── i18n/            # Internationalization
+│   ├── repos/           # Multi-repo registry & management
+│   ├── agentic/         # AI agent task management
+│   └── mcp/             # Model Context Protocol service
+├── internal/
+│   ├── cmd/             # CLI command implementations
+│   └── variants/        # Build variants (full, minimal, etc.)
+└── go.mod               # Go module definition
 ```
 
 ### Service Pattern (Dual-Constructor DI)
@@ -152,6 +151,26 @@ Service("workspace")     // Get service by name (returns any)
 
 **NOT exposed:** Direct calls like `workspace.CreateWorkspace()` or `crypt.Hash()`.
 
+## Configuration Management
+
+Core uses a decentralized configuration approach based on YAML files. Configuration is split between project-level settings and global user settings.
+
+### Configuration Locations
+
+- **Project Configuration** (in the `.core/` directory of the project root):
+    - `build.yaml`: Build targets, flags, and project metadata.
+    - `release.yaml`: Release automation, changelog settings, and publishing targets.
+    - `ci.yaml`: CI pipeline configuration.
+- **Global Configuration** (in the `~/.core/` directory):
+    - `config.yaml`: Global framework settings and defaults.
+    - `agentic.yaml`: Configuration for agentic services (BaseURL, Token, etc.).
+- **Registry Configuration**:
+    - `repos.yaml`: Multi-repo registry definition.
+
+### Format
+
+All configuration files use YAML format for readability and nested structure support.
+
 ### The IPC Bridge Pattern (Chosen Architecture)
 
 Sub-services are accessed via Core's **IPC/ACTION system**, not direct Wails bindings:
@@ -192,16 +211,15 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 
 ### Generating Bindings
 
+Wails v3 bindings are typically generated in the GUI repository (e.g., `core-gui`).
+
 ```bash
-cd cmd/core-gui
 wails3 generate bindings    # Regenerate after Go changes
 ```
 
-Bindings output to `cmd/core-gui/public/bindings/github.com/host-uk/core/` mirroring Go package structure.
-
 ---
 
-### Service Interfaces (`pkg/core/interfaces.go`)
+### Service Interfaces (`pkg/framework/core/interfaces.go`)
 
 ```go
 type Config interface {
@@ -234,54 +252,26 @@ type Crypt interface {
 
 | Package | Notes |
 |---------|-------|
-| `pkg/core` | Service container, DI, thread-safe - solid |
-| `pkg/config` | JSON persistence, XDG paths - solid |
-| `pkg/crypt` | Hashing, checksums, PGP - solid, well-tested |
-| `pkg/help` | Embedded docs, Show/ShowAt - solid |
+| `pkg/framework/core` | Service container, DI, thread-safe - solid |
+| `pkg/crypt` | Hashing, checksums, symmetric/asymmetric - solid, well-tested |
+| `pkg/help` | Embedded docs, full-text search - solid |
 | `pkg/i18n` | Multi-language with go-i18n - solid |
 | `pkg/io` | Medium interface + local backend - solid |
-| `pkg/workspace` | Workspace creation, switching, file ops - functional |
-
-### Partial
-
-| Package | Issues |
-|---------|--------|
-| `pkg/display` | Window creation works; menu/tray handlers are TODOs |
-
----
-
-## Priority Work Items
-
-### 1. IMPLEMENT: System Tray Brand Support
-
-`pkg/display/tray.go:52-63` - Commented brand-specific menu items need implementation.
-
-### 2. ADD: Integration Tests
-
-| Package | Notes |
-|---------|-------|
-| `pkg/display` | Integration tests requiring Wails runtime (27% unit coverage) |
+| `pkg/repos` | Multi-repo registry & management - solid |
+| `pkg/agentic` | AI agent task management - solid |
+| `pkg/mcp` | Model Context Protocol service - solid |
 
 ---
 
 ## Package Deep Dives
 
-### pkg/workspace - The Core Feature
+### pkg/crypt
 
-Each workspace is:
-1. Identified by LTHN hash of user identifier
-2. Has directory structure: `config/`, `log/`, `data/`, `files/`, `keys/`
-3. Gets a PGP keypair generated on creation
-4. Files accessed via obfuscated paths
-
-The `workspaceList` maps workspace IDs to public keys.
-
-### pkg/crypt/openpgp
-
-Full PGP using `github.com/ProtonMail/go-crypto`:
-- `CreateKeyPair(name, passphrase)` - RSA-4096 with revocation cert
-- `EncryptPGP()` - Encrypt + optional signing
-- `DecryptPGP()` - Decrypt + optional signature verification
+The crypt package provides a comprehensive suite of cryptographic primitives:
+- **Hashing & Checksums**: SHA-256, SHA-512, and CRC32 support.
+- **Symmetric Encryption**: AES-GCM for secure data at rest.
+- **Asymmetric Encryption**: PGP implementation using `github.com/ProtonMail/go-crypto`.
+- **Key Derivation**: Argon2id for secure password hashing.
 
 ### pkg/io - Storage Abstraction
 
@@ -349,5 +339,4 @@ Implementations: `local/`, `sftp/`, `webdav/`
 1. Run `task test` to verify all tests pass
 2. Follow TDD: `task test-gen` creates stubs, implement to pass
 3. The dual-constructor pattern is intentional: `New(deps)` for tests, `Register()` for runtime
-4. See `cmd/core-gui/main.go` for how services wire together
-5. IPC handlers in each service's `HandleIPCEvents()` are the frontend bridge
+4. IPC handlers in each service's `HandleIPCEvents()` are the frontend bridge
