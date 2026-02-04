@@ -2,6 +2,7 @@ package help
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/help"
