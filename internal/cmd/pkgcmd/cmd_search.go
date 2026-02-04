@@ -73,7 +73,7 @@ func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error 
 		cacheDir = filepath.Join(filepath.Dir(regPath), ".core", "cache")
 	}
 
-	c, err := cache.New(cacheDir, 0)
+	c, err := cache.New(nil, cacheDir, 0)
 	if err != nil {
 		c = nil
 	}
