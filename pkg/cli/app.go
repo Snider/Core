@@ -3,8 +3,10 @@ package cli
 import (
 	"os"
 
+	"github.com/host-uk/core/pkg/crypt/openpgp"
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/log"
+	"github.com/host-uk/core/pkg/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +33,8 @@ func Main() {
 			framework.WithName("log", NewLogService(log.Options{
 				Level: log.LevelInfo,
 			})),
+			framework.WithService(openpgp.New),
+			framework.WithService(workspace.New),
 		},
 	}); err != nil {
 		Fatal(err)

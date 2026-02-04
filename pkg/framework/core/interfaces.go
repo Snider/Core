@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"embed"
+	goio "io"
 )
 
 // This file defines the public API contracts (interfaces) for the services
@@ -96,6 +97,28 @@ type WindowOption interface {
 type Display interface {
 	// OpenWindow creates a new window with the given options.
 	OpenWindow(opts ...WindowOption) error
+}
+
+// Workspace provides management for encrypted user workspaces.
+type Workspace interface {
+	// CreateWorkspace creates a new encrypted workspace.
+	CreateWorkspace(identifier, password string) (string, error)
+	// SwitchWorkspace changes the active workspace.
+	SwitchWorkspace(name string) error
+	// WorkspaceFileGet retrieves the content of a file from the active workspace.
+	WorkspaceFileGet(filename string) (string, error)
+	// WorkspaceFileSet saves content to a file in the active workspace.
+	WorkspaceFileSet(filename, content string) error
+}
+
+// Crypt provides PGP-based encryption, signing, and key management.
+type Crypt interface {
+	// CreateKeyPair generates a new PGP keypair.
+	CreateKeyPair(name, passphrase string) (string, error)
+	// EncryptPGP encrypts data for a recipient.
+	EncryptPGP(writer goio.Writer, recipientPath, data string, opts ...any) (string, error)
+	// DecryptPGP decrypts a PGP message.
+	DecryptPGP(recipientPath, message, passphrase string, opts ...any) (string, error)
 }
 
 // ActionServiceStartup is a message sent when the application's services are starting up.
