@@ -70,7 +70,7 @@ func TestIsInstalled_Bad(t *testing.T) {
 		t.Setenv("CORE_IMAGES_DIR", tempDir)
 
 		// Create devops instance manually to avoid loading real config/images
-		d := &DevOps{medium: io.Local, }
+		d := &DevOps{medium: io.Local}
 		assert.False(t, d.IsInstalled())
 	})
 }
@@ -85,7 +85,7 @@ func TestIsInstalled_Good(t *testing.T) {
 		err := os.WriteFile(imagePath, []byte("fake image data"), 0644)
 		require.NoError(t, err)
 
-		d := &DevOps{medium: io.Local, }
+		d := &DevOps{medium: io.Local}
 		assert.True(t, d.IsInstalled())
 	})
 }
