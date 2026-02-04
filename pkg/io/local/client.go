@@ -48,7 +48,6 @@ func (m *Medium) path(p string) string {
 		return clean
 	}
 
-
 	// Join cleaned relative path with root
 	return filepath.Join(m.root, clean)
 }
