@@ -38,17 +38,27 @@ var builtinTemplates = []Template{
 	},
 }
 
+// TemplateManager manages LinuxKit templates using a storage medium.
+type TemplateManager struct {
+	medium io.Medium
+}
+
+// NewTemplateManager creates a new TemplateManager instance.
+func NewTemplateManager(m io.Medium) *TemplateManager {
+	return &TemplateManager{medium: m}
+}
+
 // ListTemplates returns all available LinuxKit templates.
 // It combines embedded templates with any templates found in the user's
 // .core/linuxkit directory.
-func ListTemplates() []Template {
+func (tm *TemplateManager) ListTemplates() []Template {
 	templates := make([]Template, len(builtinTemplates))
 	copy(templates, builtinTemplates)
 
 	// Check for user templates in .core/linuxkit/
-	userTemplatesDir := getUserTemplatesDir()
+	userTemplatesDir := tm.getUserTemplatesDir()
 	if userTemplatesDir != "" {
-		userTemplates := scanUserTemplates(userTemplatesDir)
+		userTemplates := tm.scanUserTemplates(userTemplatesDir)
 		templates = append(templates, userTemplates...)
 	}
 
@@ -57,7 +67,7 @@ func ListTemplates() []Template {
 
 // GetTemplate returns the content of a template by name.
 // It first checks embedded templates, then user templates.
-func GetTemplate(name string) (string, error) {
+func (tm *TemplateManager) GetTemplate(name string) (string, error) {
 	// Check embedded templates first
 	for _, t := range builtinTemplates {
 		if t.Name == name {
@@ -70,11 +80,11 @@ func GetTemplate(name string) (string, error) {
 	}
 
 	// Check user templates
-	userTemplatesDir := getUserTemplatesDir()
+	userTemplatesDir := tm.getUserTemplatesDir()
 	if userTemplatesDir != "" {
 		templatePath := filepath.Join(userTemplatesDir, name+".yml")
-		if io.Local.IsFile(templatePath) {
-			content, err := io.Local.Read(templatePath)
+		if tm.medium.IsFile(templatePath) {
+			content, err := tm.medium.Read(templatePath)
 			if err != nil {
 				return "", fmt.Errorf("failed to read user template %s: %w", name, err)
 			}
@@ -86,11 +96,8 @@ func GetTemplate(name string) (string, error) {
 }
 
 // ApplyTemplate applies variable substitution to a template.
-// It supports two syntaxes:
-//   - ${VAR} - required variable, returns error if not provided
-//   - ${VAR:-default} - variable with default value
-func ApplyTemplate(name string, vars map[string]string) (string, error) {
-	content, err := GetTemplate(name)
+func (tm *TemplateManager) ApplyTemplate(name string, vars map[string]string) (string, error) {
+	content, err := tm.GetTemplate(name)
 	if err != nil {
 		return "", err
 	}
@@ -191,12 +198,12 @@ func ExtractVariables(content string) (required []string, optional map[string]st
 
 // getUserTemplatesDir returns the path to user templates directory.
 // Returns empty string if the directory doesn't exist.
-func getUserTemplatesDir() string {
+func (tm *TemplateManager) getUserTemplatesDir() string {
 	// Try workspace-relative .core/linuxkit first
 	cwd, err := os.Getwd()
 	if err == nil {
 		wsDir := filepath.Join(cwd, ".core", "linuxkit")
-		if io.Local.IsDir(wsDir) {
+		if tm.medium.IsDir(wsDir) {
 			return wsDir
 		}
 	}
@@ -208,7 +215,7 @@ func getUserTemplatesDir() string {
 	}
 
 	homeDir := filepath.Join(home, ".core", "linuxkit")
-	if io.Local.IsDir(homeDir) {
+	if tm.medium.IsDir(homeDir) {
 		return homeDir
 	}
 
@@ -216,10 +223,10 @@ func getUserTemplatesDir() string {
 }
 
 // scanUserTemplates scans a directory for .yml template files.
-func scanUserTemplates(dir string) []Template {
+func (tm *TemplateManager) scanUserTemplates(dir string) []Template {
 	var templates []Template
 
-	entries, err := io.Local.List(dir)
+	entries, err := tm.medium.List(dir)
 	if err != nil {
 		return templates
 	}
@@ -250,7 +257,7 @@ func scanUserTemplates(dir string) []Template {
 		}
 
 		// Read file to extract description from comments
-		description := extractTemplateDescription(filepath.Join(dir, name))
+		description := tm.extractTemplateDescription(filepath.Join(dir, name))
 		if description == "" {
 			description = "User-defined template"
 		}
@@ -267,8 +274,8 @@ func scanUserTemplates(dir string) []Template {
 
 // extractTemplateDescription reads the first comment block from a YAML file
 // to use as a description.
-func extractTemplateDescription(path string) string {
-	content, err := io.Local.Read(path)
+func (tm *TemplateManager) extractTemplateDescription(path string) string {
+	content, err := tm.medium.Read(path)
 	if err != nil {
 		return ""
 	}

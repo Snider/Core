@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/container"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -107,9 +108,9 @@ func TestDevOps_Status_Good(t *testing.T) {
 
 	// Setup mock container manager
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -147,9 +148,9 @@ func TestDevOps_Status_Good_NotInstalled(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -178,9 +179,9 @@ func TestDevOps_Status_Good_NoContainer(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -204,9 +205,9 @@ func TestDevOps_IsRunning_Good(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -237,9 +238,9 @@ func TestDevOps_IsRunning_Bad_NotRunning(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -260,9 +261,9 @@ func TestDevOps_IsRunning_Bad_ContainerStopped(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -293,9 +294,9 @@ func TestDevOps_findContainer_Good(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -328,9 +329,9 @@ func TestDevOps_findContainer_Bad_NotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -351,9 +352,9 @@ func TestDevOps_Stop_Bad_NotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -408,9 +409,9 @@ func TestDevOps_Boot_Bad_NotInstalled(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -436,9 +437,9 @@ func TestDevOps_Boot_Bad_AlreadyRunning(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -481,9 +482,9 @@ func TestDevOps_Status_Good_WithImageVersion(t *testing.T) {
 	}
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		config:    cfg,
@@ -506,9 +507,9 @@ func TestDevOps_findContainer_Good_MultipleContainers(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -551,9 +552,9 @@ func TestDevOps_Status_Good_ContainerWithUptime(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -588,9 +589,9 @@ func TestDevOps_IsRunning_Bad_DifferentContainerName(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -630,9 +631,9 @@ func TestDevOps_Boot_Good_FreshFlag(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -672,9 +673,9 @@ func TestDevOps_Stop_Bad_ContainerNotRunning(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -714,9 +715,9 @@ func TestDevOps_Boot_Good_FreshWithNoExisting(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,
@@ -796,9 +797,9 @@ func TestDevOps_Boot_Good_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	statePath := filepath.Join(tempDir, "containers.json")
-	state := container.NewState(statePath)
+	state := container.NewState(io.Local, statePath)
 	h := &mockHypervisor{}
-	cm := container.NewLinuxKitManagerWithHypervisor(state, h)
+	cm := container.NewLinuxKitManagerWithHypervisor(io.Local, state, h)
 
 	d := &DevOps{
 		images:    mgr,

@@ -15,6 +15,7 @@ type State struct {
 	Containers map[string]*Container `json:"containers"`
 
 	mu       sync.RWMutex
+	medium   io.Medium
 	filePath string
 }
 
@@ -46,24 +47,25 @@ func DefaultLogsDir() (string, error) {
 }
 
 // NewState creates a new State instance.
-func NewState(filePath string) *State {
+func NewState(m io.Medium, filePath string) *State {
 	return &State{
 		Containers: make(map[string]*Container),
+		medium:     m,
 		filePath:   filePath,
 	}
 }
 
 // LoadState loads the state from the given file path.
 // If the file doesn't exist, returns an empty state.
-func LoadState(filePath string) (*State, error) {
-	state := NewState(filePath)
+func LoadState(m io.Medium, filePath string) (*State, error) {
+	state := NewState(m, filePath)
 
 	absPath, err := filepath.Abs(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	content, err := io.Local.Read(absPath)
+	content, err := m.Read(absPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return state, nil
@@ -93,8 +95,8 @@ func (s *State) SaveState() error {
 		return err
 	}
 
-	// io.Local.Write creates parent directories automatically
-	return io.Local.Write(absPath, string(data))
+	// s.medium.Write creates parent directories automatically
+	return s.medium.Write(absPath, string(data))
 }
 
 // Add adds a container to the state and persists it.
@@ -168,10 +170,10 @@ func LogPath(id string) (string, error) {
 }
 
 // EnsureLogsDir ensures the logs directory exists.
-func EnsureLogsDir() error {
+func EnsureLogsDir(m io.Medium) error {
 	logsDir, err := DefaultLogsDir()
 	if err != nil {
 		return err
 	}
-	return io.Local.EnsureDir(logsDir)
+	return m.EnsureDir(logsDir)
 }

@@ -17,16 +17,17 @@ import (
 type LinuxKitManager struct {
 	state      *State
 	hypervisor Hypervisor
+	medium     io.Medium
 }
 
 // NewLinuxKitManager creates a new LinuxKit manager with auto-detected hypervisor.
-func NewLinuxKitManager() (*LinuxKitManager, error) {
+func NewLinuxKitManager(m io.Medium) (*LinuxKitManager, error) {
 	statePath, err := DefaultStatePath()
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine state path: %w", err)
 	}
 
-	state, err := LoadState(statePath)
+	state, err := LoadState(m, statePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load state: %w", err)
 	}
@@ -39,21 +40,23 @@ func NewLinuxKitManager() (*LinuxKitManager, error) {
 	return &LinuxKitManager{
 		state:      state,
 		hypervisor: hypervisor,
+		medium:     m,
 	}, nil
 }
 
 // NewLinuxKitManagerWithHypervisor creates a manager with a specific hypervisor.
-func NewLinuxKitManagerWithHypervisor(state *State, hypervisor Hypervisor) *LinuxKitManager {
+func NewLinuxKitManagerWithHypervisor(m io.Medium, state *State, hypervisor Hypervisor) *LinuxKitManager {
 	return &LinuxKitManager{
 		state:      state,
 		hypervisor: hypervisor,
+		medium:     m,
 	}
 }
 
 // Run starts a new LinuxKit VM from the given image.
 func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions) (*Container, error) {
 	// Validate image exists
-	if !io.Local.IsFile(image) {
+	if !m.medium.IsFile(image) {
 		return nil, fmt.Errorf("image not found: %s", image)
 	}
 
@@ -87,7 +90,7 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 	}
 
 	// Ensure logs directory exists
-	if err := EnsureLogsDir(); err != nil {
+	if err := EnsureLogsDir(m.medium); err != nil {
 		return nil, fmt.Errorf("failed to create logs directory: %w", err)
 	}
 
@@ -329,12 +332,14 @@ func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (goi
 		return nil, fmt.Errorf("failed to determine log path: %w", err)
 	}
 
-	if !io.Local.IsFile(logPath) {
+	if !m.medium.IsFile(logPath) {
 		return nil, fmt.Errorf("no logs available for container: %s", id)
 	}
 
 	if !follow {
 		// Simple case: just open and return the file
+		// Note: io.Medium doesn't have Open, and LinuxKit currently assumes local execution
+		// for hypervisors and logs.
 		return os.Open(logPath)
 	}
 

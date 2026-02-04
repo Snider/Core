@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,11 +64,11 @@ func newTestManager(t *testing.T) (*LinuxKitManager, *MockHypervisor, string) {
 
 	statePath := filepath.Join(tmpDir, "containers.json")
 
-	state, err := LoadState(statePath)
+	state, err := LoadState(io.Local, statePath)
 	require.NoError(t, err)
 
 	mock := NewMockHypervisor()
-	manager := NewLinuxKitManagerWithHypervisor(state, mock)
+	manager := NewLinuxKitManagerWithHypervisor(io.Local, state, mock)
 
 	return manager, mock, tmpDir
 }
@@ -75,10 +76,10 @@ func newTestManager(t *testing.T) (*LinuxKitManager, *MockHypervisor, string) {
 func TestNewLinuxKitManagerWithHypervisor_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, _ := LoadState(statePath)
+	state, _ := LoadState(io.Local, statePath)
 	mock := NewMockHypervisor()
 
-	manager := NewLinuxKitManagerWithHypervisor(state, mock)
+	manager := NewLinuxKitManagerWithHypervisor(io.Local, state, mock)
 
 	assert.NotNil(t, manager)
 	assert.Equal(t, state, manager.State())
@@ -213,9 +214,9 @@ func TestLinuxKitManager_Stop_Bad_NotFound(t *testing.T) {
 func TestLinuxKitManager_Stop_Bad_NotRunning(t *testing.T) {
 	_, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, err := LoadState(statePath)
+	state, err := LoadState(io.Local, statePath)
 	require.NoError(t, err)
-	manager := NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
+	manager := NewLinuxKitManagerWithHypervisor(io.Local, state, NewMockHypervisor())
 
 	container := &Container{
 		ID:     "abc12345",
@@ -233,9 +234,9 @@ func TestLinuxKitManager_Stop_Bad_NotRunning(t *testing.T) {
 func TestLinuxKitManager_List_Good(t *testing.T) {
 	_, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, err := LoadState(statePath)
+	state, err := LoadState(io.Local, statePath)
 	require.NoError(t, err)
-	manager := NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
+	manager := NewLinuxKitManagerWithHypervisor(io.Local, state, NewMockHypervisor())
 
 	_ = state.Add(&Container{ID: "aaa11111", Status: StatusStopped})
 	_ = state.Add(&Container{ID: "bbb22222", Status: StatusStopped})
@@ -250,9 +251,9 @@ func TestLinuxKitManager_List_Good(t *testing.T) {
 func TestLinuxKitManager_List_Good_VerifiesRunningStatus(t *testing.T) {
 	_, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state, err := LoadState(statePath)
+	state, err := LoadState(io.Local, statePath)
 	require.NoError(t, err)
-	manager := NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
+	manager := NewLinuxKitManagerWithHypervisor(io.Local, state, NewMockHypervisor())
 
 	// Add a "running" container with a fake PID that doesn't exist
 	_ = state.Add(&Container{

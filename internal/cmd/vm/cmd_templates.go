@@ -12,6 +12,7 @@ import (
 
 	"github.com/host-uk/core/pkg/container"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +69,8 @@ func addTemplatesVarsCommand(parent *cobra.Command) {
 }
 
 func listTemplates() error {
-	templates := container.ListTemplates()
+	tm := container.NewTemplateManager(io.Local)
+	templates := tm.ListTemplates()
 
 	if len(templates) == 0 {
 		fmt.Println(i18n.T("cmd.vm.templates.no_templates"))
@@ -99,7 +101,8 @@ func listTemplates() error {
 }
 
 func showTemplate(name string) error {
-	content, err := container.GetTemplate(name)
+	tm := container.NewTemplateManager(io.Local)
+	content, err := tm.GetTemplate(name)
 	if err != nil {
 		return err
 	}
@@ -111,7 +114,8 @@ func showTemplate(name string) error {
 }
 
 func showTemplateVars(name string) error {
-	content, err := container.GetTemplate(name)
+	tm := container.NewTemplateManager(io.Local)
+	content, err := tm.GetTemplate(name)
 	if err != nil {
 		return err
 	}
@@ -148,7 +152,8 @@ func showTemplateVars(name string) error {
 // RunFromTemplate builds and runs a LinuxKit image from a template.
 func RunFromTemplate(templateName string, vars map[string]string, runOpts container.RunOptions) error {
 	// Apply template with variables
-	content, err := container.ApplyTemplate(templateName, vars)
+	tm := container.NewTemplateManager(io.Local)
+	content, err := tm.ApplyTemplate(templateName, vars)
 	if err != nil {
 		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "apply template"})+": %w", err)
 	}
@@ -185,7 +190,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	fmt.Println()
 
 	// Run the image
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
