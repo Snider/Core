@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -147,6 +148,7 @@ type CheckResult struct {
 	Duration string `json:"duration"`
 	Error    string `json:"error,omitempty"`
 	Output   string `json:"output,omitempty"`
+	FixHint  string `json:"fix_hint,omitempty"`
 }
 
 func runGoQA(cmd *cli.Command, args []string) error {
@@ -218,12 +220,16 @@ func runGoQA(cmd *cli.Command, args []string) error {
 			if qaVerbose {
 				result.Output = output
 			}
+			result.FixHint = fixHintFor(check.Name, output)
 			failed++
 
 			if !qaJSON && !qaQuiet {
 				cli.Print("  %s %s\n", cli.ErrorStyle.Render(cli.Glyph(":cross:")), err.Error())
 				if qaVerbose && output != "" {
 					cli.Text(output)
+				}
+				if result.FixHint != "" {
+					cli.Hint("fix", result.FixHint)
 				}
 			}
 
@@ -260,6 +266,7 @@ func runGoQA(cmd *cli.Command, args []string) error {
 				if !qaJSON && !qaQuiet {
 					cli.Print("  %s Coverage %.1f%% below threshold %.1f%%\n",
 						cli.ErrorStyle.Render(cli.Glyph(":cross:")), cov, qaThreshold)
+					cli.Hint("fix", "Run 'core go cov --open' to see uncovered lines, then add tests.")
 				}
 			}
 		}
@@ -434,6 +441,47 @@ func buildCheck(name string) QACheck {
 	default:
 		return QACheck{}
 	}
+}
+
+// fixHintFor returns an actionable fix instruction for a given check failure.
+func fixHintFor(checkName, output string) string {
+	switch checkName {
+	case "format", "fmt":
+		return "Run 'core go qa fmt --fix' to auto-format."
+	case "vet":
+		return "Fix the issues reported by go vet — typically genuine bugs."
+	case "lint":
+		return "Run 'core go qa lint --fix' for auto-fixable issues."
+	case "test":
+		if name := extractFailingTest(output); name != "" {
+			return fmt.Sprintf("Run 'go test -run %s -v ./...' to debug.", name)
+		}
+		return "Run 'go test -run <TestName> -v ./path/' to debug."
+	case "race":
+		return "Data race detected. Add mutex, channel, or atomic to synchronise shared state."
+	case "bench":
+		return "Benchmark regression. Run 'go test -bench=. -benchmem' to reproduce."
+	case "vuln":
+		return "Run 'govulncheck ./...' for details. Update affected deps with 'go get -u'."
+	case "sec":
+		return "Review gosec findings. Common fixes: validate inputs, parameterised queries."
+	case "fuzz":
+		return "Add a regression test for the crashing input in testdata/fuzz/<Target>/."
+	case "docblock":
+		return "Add doc comments to exported symbols: '// Name does X.' before each declaration."
+	default:
+		return ""
+	}
+}
+
+var failTestRe = regexp.MustCompile(`--- FAIL: (\w+)`)
+
+// extractFailingTest parses the first failing test name from go test output.
+func extractFailingTest(output string) string {
+	if m := failTestRe.FindStringSubmatch(output); len(m) > 1 {
+		return m[1]
+	}
+	return ""
 }
 
 func runCheckCapture(ctx context.Context, dir string, check QACheck) (string, error) {

@@ -1,0 +1,42 @@
+name: PR Gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  org-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check org membership or approval label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const author = context.payload.pull_request.user.login;
+
+            // Check if author is an org member
+            try {
+              await github.rest.orgs.checkMembershipForUser({
+                org: owner,
+                username: author,
+              });
+              core.info(`${author} is an org member — gate passed`);
+              return;
+            } catch {
+              core.info(`${author} is not an org member — checking for label`);
+            }
+
+            // Check for external-approved label
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            if (labels.includes('external-approved')) {
+              core.info('external-approved label present — gate passed');
+              return;
+            }
+
+            core.setFailed(
+              `External PR from ${author} requires an org member to add the "external-approved" label before merge.`
+            );
