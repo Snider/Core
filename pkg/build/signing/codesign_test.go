@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,17 +35,19 @@ func TestMacOSSigner_Sign_Bad(t *testing.T) {
 		if runtime.GOOS == "darwin" {
 			t.Skip("skipping on macOS")
 		}
+		fs := io.Local
 		s := NewMacOSSigner(MacOSConfig{Identity: "test"})
-		err := s.Sign(context.Background(), "test")
+		err := s.Sign(context.Background(), fs, "test")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not available")
 	})
 }
 
 func TestMacOSSigner_Notarize_Bad(t *testing.T) {
+	fs := io.Local
 	t.Run("fails with missing credentials", func(t *testing.T) {
 		s := NewMacOSSigner(MacOSConfig{})
-		err := s.Notarize(context.Background(), "test")
+		err := s.Notarize(context.Background(), fs, "test")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "missing Apple credentials")
 	})

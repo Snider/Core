@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
+	goio "io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/host-uk/core/pkg/container"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +69,7 @@ func addVMRunCommand(parent *cobra.Command) {
 }
 
 func runContainer(image, name string, detach bool, memory, cpus, sshPort int) error {
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.init", "container manager")+": %w", err)
 	}
@@ -126,7 +127,7 @@ func addVMPsCommand(parent *cobra.Command) {
 }
 
 func listContainers(all bool) error {
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.init", "container manager")+": %w", err)
 	}
@@ -221,7 +222,7 @@ func addVMStopCommand(parent *cobra.Command) {
 }
 
 func stopContainer(id string) error {
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.init", "container manager")+": %w", err)
 	}
@@ -290,7 +291,7 @@ func addVMLogsCommand(parent *cobra.Command) {
 }
 
 func viewLogs(id string, follow bool) error {
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.init", "container manager")+": %w", err)
 	}
@@ -307,7 +308,7 @@ func viewLogs(id string, follow bool) error {
 	}
 	defer func() { _ = reader.Close() }()
 
-	_, err = io.Copy(os.Stdout, reader)
+	_, err = goio.Copy(os.Stdout, reader)
 	return err
 }
 
@@ -329,7 +330,7 @@ func addVMExecCommand(parent *cobra.Command) {
 }
 
 func execInContainer(id string, cmd []string) error {
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.init", "container manager")+": %w", err)
 	}

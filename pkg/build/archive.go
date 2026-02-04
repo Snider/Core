@@ -8,11 +8,11 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/Snider/Borg/pkg/compress"
+	io_interface "github.com/host-uk/core/pkg/io"
 )
 
 // ArchiveFormat specifies the compression format for archives.
@@ -31,28 +31,28 @@ const (
 // Uses tar.gz for linux/darwin and zip for windows.
 // The archive is created alongside the binary (e.g., dist/myapp_linux_amd64.tar.gz).
 // Returns a new Artifact with Path pointing to the archive.
-func Archive(artifact Artifact) (Artifact, error) {
-	return ArchiveWithFormat(artifact, ArchiveFormatGzip)
+func Archive(fs io_interface.Medium, artifact Artifact) (Artifact, error) {
+	return ArchiveWithFormat(fs, artifact, ArchiveFormatGzip)
 }
 
 // ArchiveXZ creates an archive for a single artifact using xz compression.
 // Uses tar.xz for linux/darwin and zip for windows.
 // Returns a new Artifact with Path pointing to the archive.
-func ArchiveXZ(artifact Artifact) (Artifact, error) {
-	return ArchiveWithFormat(artifact, ArchiveFormatXZ)
+func ArchiveXZ(fs io_interface.Medium, artifact Artifact) (Artifact, error) {
+	return ArchiveWithFormat(fs, artifact, ArchiveFormatXZ)
 }
 
 // ArchiveWithFormat creates an archive for a single artifact with the specified format.
 // Uses tar.gz or tar.xz for linux/darwin and zip for windows.
 // The archive is created alongside the binary (e.g., dist/myapp_linux_amd64.tar.xz).
 // Returns a new Artifact with Path pointing to the archive.
-func ArchiveWithFormat(artifact Artifact, format ArchiveFormat) (Artifact, error) {
+func ArchiveWithFormat(fs io_interface.Medium, artifact Artifact, format ArchiveFormat) (Artifact, error) {
 	if artifact.Path == "" {
 		return Artifact{}, fmt.Errorf("build.Archive: artifact path is empty")
 	}
 
 	// Verify the source file exists
-	info, err := os.Stat(artifact.Path)
+	info, err := fs.Stat(artifact.Path)
 	if err != nil {
 		return Artifact{}, fmt.Errorf("build.Archive: source file not found: %w", err)
 	}
@@ -62,7 +62,7 @@ func ArchiveWithFormat(artifact Artifact, format ArchiveFormat) (Artifact, error
 
 	// Determine archive type based on OS and format
 	var archivePath string
-	var archiveFunc func(src, dst string) error
+	var archiveFunc func(fs io_interface.Medium, src, dst string) error
 
 	if artifact.OS == "windows" {
 		archivePath = archiveFilename(artifact, ".zip")
@@ -79,7 +79,7 @@ func ArchiveWithFormat(artifact Artifact, format ArchiveFormat) (Artifact, error
 	}
 
 	// Create the archive
-	if err := archiveFunc(artifact.Path, archivePath); err != nil {
+	if err := archiveFunc(fs, artifact.Path, archivePath); err != nil {
 		return Artifact{}, fmt.Errorf("build.Archive: failed to create archive: %w", err)
 	}
 
@@ -93,26 +93,26 @@ func ArchiveWithFormat(artifact Artifact, format ArchiveFormat) (Artifact, error
 
 // ArchiveAll archives all artifacts using gzip compression.
 // Returns a slice of new artifacts pointing to the archives.
-func ArchiveAll(artifacts []Artifact) ([]Artifact, error) {
-	return ArchiveAllWithFormat(artifacts, ArchiveFormatGzip)
+func ArchiveAll(fs io_interface.Medium, artifacts []Artifact) ([]Artifact, error) {
+	return ArchiveAllWithFormat(fs, artifacts, ArchiveFormatGzip)
 }
 
 // ArchiveAllXZ archives all artifacts using xz compression.
 // Returns a slice of new artifacts pointing to the archives.
-func ArchiveAllXZ(artifacts []Artifact) ([]Artifact, error) {
-	return ArchiveAllWithFormat(artifacts, ArchiveFormatXZ)
+func ArchiveAllXZ(fs io_interface.Medium, artifacts []Artifact) ([]Artifact, error) {
+	return ArchiveAllWithFormat(fs, artifacts, ArchiveFormatXZ)
 }
 
 // ArchiveAllWithFormat archives all artifacts with the specified format.
 // Returns a slice of new artifacts pointing to the archives.
-func ArchiveAllWithFormat(artifacts []Artifact, format ArchiveFormat) ([]Artifact, error) {
+func ArchiveAllWithFormat(fs io_interface.Medium, artifacts []Artifact, format ArchiveFormat) ([]Artifact, error) {
 	if len(artifacts) == 0 {
 		return nil, nil
 	}
 
 	var archived []Artifact
 	for _, artifact := range artifacts {
-		arch, err := ArchiveWithFormat(artifact, format)
+		arch, err := ArchiveWithFormat(fs, artifact, format)
 		if err != nil {
 			return archived, fmt.Errorf("build.ArchiveAll: failed to archive %s: %w", artifact.Path, err)
 		}
@@ -142,9 +142,9 @@ func archiveFilename(artifact Artifact, ext string) string {
 
 // createTarXzArchive creates a tar.xz archive containing a single file.
 // Uses Borg's compress package for xz compression.
-func createTarXzArchive(src, dst string) error {
+func createTarXzArchive(fs io_interface.Medium, src, dst string) error {
 	// Open the source file
-	srcFile, err := os.Open(src)
+	srcFile, err := fs.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
@@ -185,7 +185,13 @@ func createTarXzArchive(src, dst string) error {
 	}
 
 	// Write to destination file
-	if err := os.WriteFile(dst, xzData, 0644); err != nil {
+	dstFile, err := fs.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to create archive file: %w", err)
+	}
+	defer func() { _ = dstFile.Close() }()
+
+	if _, err := dstFile.Write(xzData); err != nil {
 		return fmt.Errorf("failed to write archive file: %w", err)
 	}
 
@@ -193,9 +199,9 @@ func createTarXzArchive(src, dst string) error {
 }
 
 // createTarGzArchive creates a tar.gz archive containing a single file.
-func createTarGzArchive(src, dst string) error {
+func createTarGzArchive(fs io_interface.Medium, src, dst string) error {
 	// Open the source file
-	srcFile, err := os.Open(src)
+	srcFile, err := fs.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
@@ -207,7 +213,7 @@ func createTarGzArchive(src, dst string) error {
 	}
 
 	// Create the destination file
-	dstFile, err := os.Create(dst)
+	dstFile, err := fs.Create(dst)
 	if err != nil {
 		return fmt.Errorf("failed to create archive file: %w", err)
 	}
@@ -243,9 +249,9 @@ func createTarGzArchive(src, dst string) error {
 }
 
 // createZipArchive creates a zip archive containing a single file.
-func createZipArchive(src, dst string) error {
+func createZipArchive(fs io_interface.Medium, src, dst string) error {
 	// Open the source file
-	srcFile, err := os.Open(src)
+	srcFile, err := fs.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
@@ -257,7 +263,7 @@ func createZipArchive(src, dst string) error {
 	}
 
 	// Create the destination file
-	dstFile, err := os.Create(dst)
+	dstFile, err := fs.Create(dst)
 	if err != nil {
 		return fmt.Errorf("failed to create archive file: %w", err)
 	}

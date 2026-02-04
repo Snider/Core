@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 )
 
 //go:embed templates/aur/*.tmpl
@@ -90,10 +91,10 @@ func (p *AURPublisher) Publish(ctx context.Context, release *Release, pubCfg Pub
 	}
 
 	if dryRun {
-		return p.dryRunPublish(data, cfg)
+		return p.dryRunPublish(release.FS, data, cfg)
 	}
 
-	return p.executePublish(ctx, release.ProjectDir, data, cfg)
+	return p.executePublish(ctx, release.ProjectDir, data, cfg, release)
 }
 
 type aurTemplateData struct {
@@ -131,7 +132,7 @@ func (p *AURPublisher) parseConfig(pubCfg PublisherConfig, relCfg ReleaseConfig)
 	return cfg
 }
 
-func (p *AURPublisher) dryRunPublish(data aurTemplateData, cfg AURConfig) error {
+func (p *AURPublisher) dryRunPublish(m io.Medium, data aurTemplateData, cfg AURConfig) error {
 	fmt.Println()
 	fmt.Println("=== DRY RUN: AUR Publish ===")
 	fmt.Println()
@@ -141,7 +142,7 @@ func (p *AURPublisher) dryRunPublish(data aurTemplateData, cfg AURConfig) error 
 	fmt.Printf("Repository: %s\n", data.Repository)
 	fmt.Println()
 
-	pkgbuild, err := p.renderTemplate("templates/aur/PKGBUILD.tmpl", data)
+	pkgbuild, err := p.renderTemplate(m, "templates/aur/PKGBUILD.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("aur.dryRunPublish: %w", err)
 	}
@@ -151,7 +152,7 @@ func (p *AURPublisher) dryRunPublish(data aurTemplateData, cfg AURConfig) error 
 	fmt.Println("---")
 	fmt.Println()
 
-	srcinfo, err := p.renderTemplate("templates/aur/.SRCINFO.tmpl", data)
+	srcinfo, err := p.renderTemplate(m, "templates/aur/.SRCINFO.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("aur.dryRunPublish: %w", err)
 	}
@@ -168,13 +169,13 @@ func (p *AURPublisher) dryRunPublish(data aurTemplateData, cfg AURConfig) error 
 	return nil
 }
 
-func (p *AURPublisher) executePublish(ctx context.Context, projectDir string, data aurTemplateData, cfg AURConfig) error {
-	pkgbuild, err := p.renderTemplate("templates/aur/PKGBUILD.tmpl", data)
+func (p *AURPublisher) executePublish(ctx context.Context, projectDir string, data aurTemplateData, cfg AURConfig, release *Release) error {
+	pkgbuild, err := p.renderTemplate(release.FS, "templates/aur/PKGBUILD.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("aur.Publish: failed to render PKGBUILD: %w", err)
 	}
 
-	srcinfo, err := p.renderTemplate("templates/aur/.SRCINFO.tmpl", data)
+	srcinfo, err := p.renderTemplate(release.FS, "templates/aur/.SRCINFO.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("aur.Publish: failed to render .SRCINFO: %w", err)
 	}
@@ -188,17 +189,17 @@ func (p *AURPublisher) executePublish(ctx context.Context, projectDir string, da
 			output = filepath.Join(projectDir, output)
 		}
 
-		if err := os.MkdirAll(output, 0755); err != nil {
+		if err := release.FS.EnsureDir(output); err != nil {
 			return fmt.Errorf("aur.Publish: failed to create output directory: %w", err)
 		}
 
 		pkgbuildPath := filepath.Join(output, "PKGBUILD")
-		if err := os.WriteFile(pkgbuildPath, []byte(pkgbuild), 0644); err != nil {
+		if err := release.FS.Write(pkgbuildPath, pkgbuild); err != nil {
 			return fmt.Errorf("aur.Publish: failed to write PKGBUILD: %w", err)
 		}
 
 		srcinfoPath := filepath.Join(output, ".SRCINFO")
-		if err := os.WriteFile(srcinfoPath, []byte(srcinfo), 0644); err != nil {
+		if err := release.FS.Write(srcinfoPath, srcinfo); err != nil {
 			return fmt.Errorf("aur.Publish: failed to write .SRCINFO: %w", err)
 		}
 		fmt.Printf("Wrote AUR files: %s\n", output)
@@ -274,10 +275,25 @@ func (p *AURPublisher) pushToAUR(ctx context.Context, data aurTemplateData, pkgb
 	return nil
 }
 
-func (p *AURPublisher) renderTemplate(name string, data aurTemplateData) (string, error) {
-	content, err := aurTemplates.ReadFile(name)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", name, err)
+func (p *AURPublisher) renderTemplate(m io.Medium, name string, data aurTemplateData) (string, error) {
+	var content []byte
+	var err error
+
+	// Try custom template from medium
+	customPath := filepath.Join(".core", name)
+	if m != nil && m.IsFile(customPath) {
+		customContent, err := m.Read(customPath)
+		if err == nil {
+			content = []byte(customContent)
+		}
+	}
+
+	// Fallback to embedded template
+	if content == nil {
+		content, err = aurTemplates.ReadFile(name)
+		if err != nil {
+			return "", fmt.Errorf("failed to read template %s: %w", name, err)
+		}
 	}
 
 	tmpl, err := template.New(filepath.Base(name)).Parse(string(content))

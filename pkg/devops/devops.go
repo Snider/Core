@@ -15,29 +15,31 @@ import (
 
 // DevOps manages the portable development environment.
 type DevOps struct {
+	medium    io.Medium
 	config    *Config
 	images    *ImageManager
 	container *container.LinuxKitManager
 }
 
-// New creates a new DevOps instance.
-func New() (*DevOps, error) {
-	cfg, err := LoadConfig()
+// New creates a new DevOps instance using the provided medium.
+func New(m io.Medium) (*DevOps, error) {
+	cfg, err := LoadConfig(m)
 	if err != nil {
 		return nil, fmt.Errorf("devops.New: failed to load config: %w", err)
 	}
 
-	images, err := NewImageManager(cfg)
+	images, err := NewImageManager(m, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("devops.New: failed to create image manager: %w", err)
 	}
 
-	mgr, err := container.NewLinuxKitManager()
+	mgr, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return nil, fmt.Errorf("devops.New: failed to create container manager: %w", err)
 	}
 
 	return &DevOps{
+		medium:    m,
 		config:    cfg,
 		images:    images,
 		container: mgr,
@@ -76,7 +78,7 @@ func (d *DevOps) IsInstalled() bool {
 	if err != nil {
 		return false
 	}
-	return io.Local.IsFile(path)
+	return d.medium.IsFile(path)
 }
 
 // Install downloads and installs the dev image.

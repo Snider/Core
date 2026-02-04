@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,7 +91,7 @@ func TestGitHubPublisher_Name_Good(t *testing.T) {
 
 func TestNewRelease_Good(t *testing.T) {
 	t.Run("creates release struct", func(t *testing.T) {
-		r := NewRelease("v1.0.0", nil, "changelog", "/project")
+		r := NewRelease("v1.0.0", nil, "changelog", "/project", io.Local)
 		assert.Equal(t, "v1.0.0", r.Version)
 		assert.Equal(t, "changelog", r.Changelog)
 		assert.Equal(t, "/project", r.ProjectDir)
@@ -122,6 +123,7 @@ func TestBuildCreateArgs_Good(t *testing.T) {
 		release := &Release{
 			Version:   "v1.0.0",
 			Changelog: "## v1.0.0\n\nChanges",
+			FS:        io.Local,
 		}
 		cfg := PublisherConfig{
 			Type: "github",
@@ -141,6 +143,7 @@ func TestBuildCreateArgs_Good(t *testing.T) {
 	t.Run("with draft flag", func(t *testing.T) {
 		release := &Release{
 			Version: "v1.0.0",
+			FS:      io.Local,
 		}
 		cfg := PublisherConfig{
 			Type:  "github",
@@ -155,6 +158,7 @@ func TestBuildCreateArgs_Good(t *testing.T) {
 	t.Run("with prerelease flag", func(t *testing.T) {
 		release := &Release{
 			Version: "v1.0.0",
+			FS:      io.Local,
 		}
 		cfg := PublisherConfig{
 			Type:       "github",
@@ -170,6 +174,7 @@ func TestBuildCreateArgs_Good(t *testing.T) {
 		release := &Release{
 			Version:   "v1.0.0",
 			Changelog: "",
+			FS:        io.Local,
 		}
 		cfg := PublisherConfig{
 			Type: "github",
@@ -183,6 +188,7 @@ func TestBuildCreateArgs_Good(t *testing.T) {
 	t.Run("with draft and prerelease flags", func(t *testing.T) {
 		release := &Release{
 			Version: "v1.0.0-alpha",
+			FS:      io.Local,
 		}
 		cfg := PublisherConfig{
 			Type:       "github",
@@ -200,6 +206,7 @@ func TestBuildCreateArgs_Good(t *testing.T) {
 		release := &Release{
 			Version:   "v2.0.0",
 			Changelog: "Some changes",
+			FS:        io.Local,
 		}
 		cfg := PublisherConfig{
 			Type: "github",
@@ -226,6 +233,7 @@ func TestGitHubPublisher_DryRunPublish_Good(t *testing.T) {
 			Version:    "v1.0.0",
 			Changelog:  "## Changes\n\n- Feature A\n- Bug fix B",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		cfg := PublisherConfig{
 			Type:       "github",
@@ -264,6 +272,7 @@ func TestGitHubPublisher_DryRunPublish_Good(t *testing.T) {
 			Version:    "v1.0.0",
 			Changelog:  "Changes",
 			ProjectDir: "/project",
+			FS:         io.Local,
 			Artifacts: []build.Artifact{
 				{Path: "/dist/myapp-darwin-amd64.tar.gz"},
 				{Path: "/dist/myapp-linux-amd64.tar.gz"},
@@ -295,6 +304,7 @@ func TestGitHubPublisher_DryRunPublish_Good(t *testing.T) {
 			Version:    "v1.0.0-beta",
 			Changelog:  "Beta release",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		cfg := PublisherConfig{
 			Type:       "github",
@@ -331,6 +341,7 @@ func TestGitHubPublisher_Publish_Good(t *testing.T) {
 			Version:    "v1.0.0",
 			Changelog:  "Changes",
 			ProjectDir: "/tmp",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "github"}
 		relCfg := &mockReleaseConfig{repository: "custom/repo"}
@@ -363,6 +374,7 @@ func TestGitHubPublisher_Publish_Bad(t *testing.T) {
 			Version:    "v1.0.0",
 			Changelog:  "Changes",
 			ProjectDir: "/nonexistent",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "github"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
@@ -383,6 +395,7 @@ func TestGitHubPublisher_Publish_Bad(t *testing.T) {
 			Version:    "v1.0.0",
 			Changelog:  "Changes",
 			ProjectDir: tmpDir,
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "github"}
 		relCfg := &mockReleaseConfig{repository: ""} // Empty repository
@@ -504,6 +517,7 @@ func TestGitHubPublisher_ExecutePublish_Good(t *testing.T) {
 			Version:    "v999.999.999-test-nonexistent",
 			Changelog:  "Test changelog",
 			ProjectDir: "/tmp",
+			FS:         io.Local,
 			Artifacts: []build.Artifact{
 				{Path: "/tmp/nonexistent-artifact.tar.gz"},
 			},

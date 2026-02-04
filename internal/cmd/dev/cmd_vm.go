@@ -9,6 +9,7 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/devops"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // addVMCommands adds the dev environment VM commands to the dev parent command.
@@ -40,7 +41,7 @@ func addVMInstallCommand(parent *cli.Command) {
 }
 
 func runVMInstall() error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func addVMBootCommand(parent *cli.Command) {
 }
 
 func runVMBoot(memory, cpus int, fresh bool) error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -163,7 +164,7 @@ func addVMStopCommand(parent *cli.Command) {
 }
 
 func runVMStop() error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -204,7 +205,7 @@ func addVMStatusCommand(parent *cli.Command) {
 }
 
 func runVMStatus() error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -283,7 +284,7 @@ func addVMShellCommand(parent *cli.Command) {
 }
 
 func runVMShell(console bool, command []string) error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -321,7 +322,7 @@ func addVMServeCommand(parent *cli.Command) {
 }
 
 func runVMServe(port int, path string) error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -360,7 +361,7 @@ func addVMTestCommand(parent *cli.Command) {
 }
 
 func runVMTest(name string, command []string) error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -405,7 +406,7 @@ func addVMClaudeCommand(parent *cli.Command) {
 }
 
 func runVMClaude(noAuth bool, model string, authFlags []string) error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}
@@ -445,7 +446,7 @@ func addVMUpdateCommand(parent *cli.Command) {
 }
 
 func runVMUpdate(apply bool) error {
-	d, err := devops.New()
+	d, err := devops.New(io.Local)
 	if err != nil {
 		return err
 	}

@@ -62,15 +62,15 @@ func ConfigPath() (string, error) {
 	return filepath.Join(home, ".core", "config.yaml"), nil
 }
 
-// LoadConfig loads configuration from ~/.core/config.yaml.
+// LoadConfig loads configuration from ~/.core/config.yaml using the provided medium.
 // Returns default config if file doesn't exist.
-func LoadConfig() (*Config, error) {
+func LoadConfig(m io.Medium) (*Config, error) {
 	configPath, err := ConfigPath()
 	if err != nil {
 		return DefaultConfig(), nil
 	}
 
-	content, err := io.Local.Read(configPath)
+	content, err := m.Read(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return DefaultConfig(), nil

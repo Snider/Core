@@ -9,6 +9,7 @@ import (
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/framework/core"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/release"
 )
 
@@ -50,7 +51,7 @@ func runRelease(ctx context.Context, dryRun bool, version string, draft, prerele
 	}
 
 	// Check for release config
-	if !release.ConfigExists(projectDir) {
+	if !release.ConfigExists(io.Local, projectDir) {
 		cli.Print("%s %s\n",
 			buildErrorStyle.Render(i18n.Label("error")),
 			i18n.T("cmd.build.release.error.no_config"),
@@ -60,7 +61,7 @@ func runRelease(ctx context.Context, dryRun bool, version string, draft, prerele
 	}
 
 	// Load configuration
-	cfg, err := release.LoadConfig(projectDir)
+	cfg, err := release.LoadConfig(io.Local, projectDir)
 	if err != nil {
 		return core.E("release", "load config", err)
 	}

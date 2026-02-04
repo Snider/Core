@@ -12,8 +12,11 @@ import (
 
 	"github.com/host-uk/core/pkg/container"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/spf13/cobra"
 )
+
+var templateManager = container.NewTemplateManager(io.Local)
 
 // addVMTemplatesCommand adds the 'templates' command under vm.
 func addVMTemplatesCommand(parent *cobra.Command) {
@@ -68,7 +71,7 @@ func addTemplatesVarsCommand(parent *cobra.Command) {
 }
 
 func listTemplates() error {
-	templates := container.ListTemplates()
+	templates := templateManager.ListTemplates()
 
 	if len(templates) == 0 {
 		fmt.Println(i18n.T("cmd.vm.templates.no_templates"))
@@ -99,7 +102,7 @@ func listTemplates() error {
 }
 
 func showTemplate(name string) error {
-	content, err := container.GetTemplate(name)
+	content, err := templateManager.GetTemplate(name)
 	if err != nil {
 		return err
 	}
@@ -111,7 +114,7 @@ func showTemplate(name string) error {
 }
 
 func showTemplateVars(name string) error {
-	content, err := container.GetTemplate(name)
+	content, err := templateManager.GetTemplate(name)
 	if err != nil {
 		return err
 	}
@@ -148,7 +151,7 @@ func showTemplateVars(name string) error {
 // RunFromTemplate builds and runs a LinuxKit image from a template.
 func RunFromTemplate(templateName string, vars map[string]string, runOpts container.RunOptions) error {
 	// Apply template with variables
-	content, err := container.ApplyTemplate(templateName, vars)
+	content, err := templateManager.ApplyTemplate(templateName, vars)
 	if err != nil {
 		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "apply template"})+": %w", err)
 	}
@@ -185,7 +188,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	fmt.Println()
 
 	// Run the image
-	manager, err := container.NewLinuxKitManager()
+	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "initialize container manager"})+": %w", err)
 	}
@@ -196,7 +199,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	ctx := context.Background()
 	c, err := manager.Run(ctx, imagePath, runOpts)
 	if err != nil {
-		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "run container"})+": %w", err)
+		return fmt.Errorf(i18n.T("i18n.fail.run", "container")+": %w", err)
 	}
 
 	if runOpts.Detach {

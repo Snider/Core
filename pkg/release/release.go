@@ -25,6 +25,8 @@ type Release struct {
 	Changelog string
 	// ProjectDir is the root directory of the project.
 	ProjectDir string
+	// FS is the medium for file operations.
+	FS io.Medium
 }
 
 // Publish publishes pre-built artifacts from dist/ to configured targets.
@@ -34,6 +36,8 @@ func Publish(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("release.Publish: config is nil")
 	}
+
+	m := io.Local
 
 	projectDir := cfg.projectDir
 	if projectDir == "" {
@@ -57,7 +61,7 @@ func Publish(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 
 	// Step 2: Find pre-built artifacts in dist/
 	distDir := filepath.Join(absProjectDir, "dist")
-	artifacts, err := findArtifacts(distDir)
+	artifacts, err := findArtifacts(m, distDir)
 	if err != nil {
 		return nil, fmt.Errorf("release.Publish: %w", err)
 	}
@@ -78,11 +82,12 @@ func Publish(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 		Artifacts:  artifacts,
 		Changelog:  changelog,
 		ProjectDir: absProjectDir,
+		FS:         m,
 	}
 
 	// Step 4: Publish to configured targets
 	if len(cfg.Publishers) > 0 {
-		pubRelease := publishers.NewRelease(release.Version, release.Artifacts, release.Changelog, release.ProjectDir)
+		pubRelease := publishers.NewRelease(release.Version, release.Artifacts, release.Changelog, release.ProjectDir, release.FS)
 
 		for _, pubCfg := range cfg.Publishers {
 			publisher, err := getPublisher(pubCfg.Type)
@@ -102,14 +107,14 @@ func Publish(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 }
 
 // findArtifacts discovers pre-built artifacts in the dist directory.
-func findArtifacts(distDir string) ([]build.Artifact, error) {
-	if !io.Local.IsDir(distDir) {
+func findArtifacts(m io.Medium, distDir string) ([]build.Artifact, error) {
+	if !m.IsDir(distDir) {
 		return nil, fmt.Errorf("dist/ directory not found")
 	}
 
 	var artifacts []build.Artifact
 
-	entries, err := io.Local.List(distDir)
+	entries, err := m.List(distDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read dist/: %w", err)
 	}
@@ -143,6 +148,8 @@ func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 		return nil, fmt.Errorf("release.Run: config is nil")
 	}
 
+	m := io.Local
+
 	projectDir := cfg.projectDir
 	if projectDir == "" {
 		projectDir = "."
@@ -171,7 +178,7 @@ func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 	}
 
 	// Step 3: Build artifacts
-	artifacts, err := buildArtifacts(ctx, cfg, absProjectDir, version)
+	artifacts, err := buildArtifacts(ctx, m, cfg, absProjectDir, version)
 	if err != nil {
 		return nil, fmt.Errorf("release.Run: build failed: %w", err)
 	}
@@ -181,12 +188,13 @@ func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 		Artifacts:  artifacts,
 		Changelog:  changelog,
 		ProjectDir: absProjectDir,
+		FS:         m,
 	}
 
 	// Step 4: Publish to configured targets
 	if len(cfg.Publishers) > 0 {
 		// Convert to publisher types
-		pubRelease := publishers.NewRelease(release.Version, release.Artifacts, release.Changelog, release.ProjectDir)
+		pubRelease := publishers.NewRelease(release.Version, release.Artifacts, release.Changelog, release.ProjectDir, release.FS)
 
 		for _, pubCfg := range cfg.Publishers {
 			publisher, err := getPublisher(pubCfg.Type)
@@ -207,9 +215,9 @@ func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 }
 
 // buildArtifacts builds all artifacts for the release.
-func buildArtifacts(ctx context.Context, cfg *Config, projectDir, version string) ([]build.Artifact, error) {
+func buildArtifacts(ctx context.Context, fs io.Medium, cfg *Config, projectDir, version string) ([]build.Artifact, error) {
 	// Load build configuration
-	buildCfg, err := build.LoadConfig(projectDir)
+	buildCfg, err := build.LoadConfig(fs, projectDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load build config: %w", err)
 	}
@@ -248,7 +256,7 @@ func buildArtifacts(ctx context.Context, cfg *Config, projectDir, version string
 	outputDir := filepath.Join(projectDir, "dist")
 
 	// Get builder (detect project type)
-	projectType, err := build.PrimaryType(projectDir)
+	projectType, err := build.PrimaryType(fs, projectDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect project type: %w", err)
 	}
@@ -260,6 +268,7 @@ func buildArtifacts(ctx context.Context, cfg *Config, projectDir, version string
 
 	// Build configuration
 	buildConfig := &build.Config{
+		FS:         fs,
 		ProjectDir: projectDir,
 		OutputDir:  outputDir,
 		Name:       binaryName,
@@ -274,20 +283,20 @@ func buildArtifacts(ctx context.Context, cfg *Config, projectDir, version string
 	}
 
 	// Archive artifacts
-	archivedArtifacts, err := build.ArchiveAll(artifacts)
+	archivedArtifacts, err := build.ArchiveAll(fs, artifacts)
 	if err != nil {
 		return nil, fmt.Errorf("archive failed: %w", err)
 	}
 
 	// Compute checksums
-	checksummedArtifacts, err := build.ChecksumAll(archivedArtifacts)
+	checksummedArtifacts, err := build.ChecksumAll(fs, archivedArtifacts)
 	if err != nil {
 		return nil, fmt.Errorf("checksum failed: %w", err)
 	}
 
 	// Write CHECKSUMS.txt
 	checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
-	if err := build.WriteChecksumFile(checksummedArtifacts, checksumPath); err != nil {
+	if err := build.WriteChecksumFile(fs, checksummedArtifacts, checksumPath); err != nil {
 		return nil, fmt.Errorf("failed to write checksums file: %w", err)
 	}
 
