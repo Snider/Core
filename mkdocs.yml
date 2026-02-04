@@ -43,31 +43,35 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - Installation: getting-started/installation.md
-    - Quick Start: getting-started/quickstart.md
-    - Architecture: getting-started/architecture.md
-  - Core Framework:
-    - Overview: core/overview.md
-    - Services: core/services.md
-    - Lifecycle: core/lifecycle.md
-    - IPC & Actions: core/ipc.md
-  - Services:
-    - Config: services/config.md
-    - Display: services/display.md
-    - WebView: services/webview.md
-    - MCP: services/mcp.md
-    - Crypt: services/crypt.md
-    - I18n: services/i18n.md
-    - IO: services/io.md
-    - Workspace: services/workspace.md
-    - Help: services/help.md
-  - Extensions:
-    - Plugin System: extensions/plugins.md
-    - Module System: extensions/modules.md
-  - GUI Application:
-    - Overview: gui/overview.md
-    - MCP Bridge: gui/mcp-bridge.md
-  - API Reference:
-    - Core: api/core.md
-    - Display: api/display.md
+  - User Guide:
+    - Introduction: user-guide.md
+    - Getting Started: getting-started.md
+    - Workflows: workflows.md
+    - FAQ: faq.md
+    - Troubleshooting: troubleshooting.md
+  - Command Reference:
+    - Overview: cmd/index.md
+    - AI: cmd/ai/index.md
+    - Build: cmd/build/index.md
+    - CI: cmd/ci/index.md
+    - Dev: cmd/dev/index.md
+    - Go: cmd/go/index.md
+    - PHP: cmd/php/index.md
+    - SDK: cmd/sdk/index.md
+    - Setup: cmd/setup/index.md
+    - Doctor: cmd/doctor/index.md
+    - Test: cmd/test/index.md
+    - VM: cmd/vm/index.md
+    - Pkg: cmd/pkg/index.md
+    - Docs: cmd/docs/index.md
+  - Development:
+    - Package Standards: pkg/PACKAGE_STANDARDS.md
+    - Internationalization:
+      - Overview: pkg/i18n/README.md
+      - Grammar: pkg/i18n/GRAMMAR.md
+      - Extending: pkg/i18n/EXTENDING.md
+    - Claude Skill: skill/index.md
+  - Reference:
+    - Configuration: configuration.md
+    - Migration: migration.md
+    - Glossary: glossary.md
