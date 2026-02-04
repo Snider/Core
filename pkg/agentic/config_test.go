@@ -146,7 +146,7 @@ func TestSaveConfig_Good(t *testing.T) {
 	data, err := m.Read(configPath)
 	require.NoError(t, err)
 	assert.Contains(t, data, "saved.api.com")
-	assert.Contains(t, string(data), "saved-token")
+	assert.Contains(t, data, "saved-token")
 }
 
 func TestConfigPath_Good(t *testing.T) {
