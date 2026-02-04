@@ -1,4 +1,5 @@
-name: Auto Label Issues
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
+name: "Auto Label: Issue Created/Edited"
 
 on:
   issues:

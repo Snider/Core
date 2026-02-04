@@ -304,6 +304,9 @@ func TestConfig_SetProjectDir_Good(t *testing.T) {
 
 func TestWriteConfig_Bad(t *testing.T) {
 	t.Run("returns error for unwritable directory", func(t *testing.T) {
+		if os.Geteuid() == 0 {
+			t.Skip("root can write to any directory")
+		}
 		dir := t.TempDir()
 
 		// Create .core directory and make it unwritable

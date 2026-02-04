@@ -1,0 +1,89 @@
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+name: "PR Build: Manual"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to build'
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: read
+
+env:
+  NEXT_VERSION: "0.0.4"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
+        uses: host-uk/build@v3
+        with:
+          build-name: core
+          build-platform: ${{ matrix.platform }}
+          build: true
+          package: true
+          sign: false
+
+  draft-release:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      PR_NUM: ${{ inputs.pr_number }}
+      PR_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          cp dist/* release/ 2>/dev/null || true
+          ls -la release/
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ env.NEXT_VERSION }}.pr.${PR_NUM}.bid.${{ github.run_id }}"
+
+          # Delete existing draft for this PR if it exists
+          gh release delete "$TAG" -y 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+
+          gh release create "$TAG" \
+            --title "Draft: PR #${PR_NUM}" \
+            --notes "Draft build for PR #${PR_NUM}.
+
+          **Version:** $TAG
+          **PR:** #${PR_NUM}
+          **Commit:** ${PR_SHA}
+          **Built:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          **Run:** ${{ github.run_id }}
+
+          ## Channel: Draft
+
+          This is a draft build for testing PR changes before merge.
+          Not intended for production use.
+
+          Build artifacts available for download and testing.
+          " \
+            --draft \
+            --prerelease \
+            release/*

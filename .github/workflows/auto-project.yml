@@ -1,4 +1,5 @@
-name: Auto-add to Project
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
+name: "Auto Project: Issue Created/Labeled"
 
 on:
   issues:

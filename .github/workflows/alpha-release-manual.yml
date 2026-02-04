@@ -1,0 +1,92 @@
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+name: "Alpha Release: Manual"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+env:
+  NEXT_VERSION: "0.0.4"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+          - os: ubuntu-latest
+            platform: linux/arm64
+          - os: macos-latest
+            platform: darwin/universal
+          - os: windows-latest
+            platform: windows/amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
+        uses: host-uk/build@v3
+        with:
+          build-name: core
+          build-platform: ${{ matrix.platform }}
+          build: true
+          package: true
+          sign: false
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          cp dist/* release/ 2>/dev/null || true
+          ls -la release/
+
+      - name: Create alpha release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v${{ env.NEXT_VERSION }}-alpha.${{ github.run_number }}"
+
+          gh release create "$VERSION" \
+            --title "Alpha: $VERSION" \
+            --notes "Canary build from dev branch.
+
+          **Version:** $VERSION
+          **Commit:** ${{ github.sha }}
+          **Built:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          **Run:** ${{ github.run_id }}
+
+          ## Channel: Alpha (Canary)
+
+          This is an automated pre-release for early testing.
+
+          - Systems and early adopters can test breaking changes
+          - Quality scoring determines promotion to beta
+          - Use stable releases for production
+
+          ## Installation
+
+          \`\`\`bash
+          # macOS/Linux
+          curl -fsSL https://github.com/host-uk/core/releases/download/$VERSION/core-linux-amd64 -o core
+          chmod +x core && sudo mv core /usr/local/bin/
+          \`\`\`
+          " \
+            --prerelease \
+            --target dev \
+            release/*

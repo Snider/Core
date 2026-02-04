@@ -1,4 +1,5 @@
-name: Agent Verification Workflow
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
+name: "Agent Verification: Issue Labeled"
 
 on:
   issues:

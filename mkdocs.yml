@@ -2,8 +2,8 @@ site_name: Core Framework
 site_url: https://core.help
 site_description: 'A Web3 Framework for building Go desktop applications with Wails v3'
 site_author: 'Snider'
-repo_url: 'https://github.com/Snider/Core'
-repo_name: 'Snider/Core'
+repo_url: 'https://github.com/host-uk/core'
+repo_name: 'host-uk/core'
 
 theme:
   name: material
