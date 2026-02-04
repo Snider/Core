@@ -33,8 +33,8 @@ func Main() {
 			framework.WithName("log", NewLogService(log.Options{
 				Level: log.LevelInfo,
 			})),
-			framework.WithService(openpgp.New),
-			framework.WithService(workspace.New),
+			framework.WithName("crypt", openpgp.New),
+			framework.WithName("workspace", workspace.New),
 		},
 	}); err != nil {
 		Fatal(err)

@@ -3,8 +3,6 @@ package workspace
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
-	goio "io"
 	"os"
 	"path/filepath"
 	"sync"
