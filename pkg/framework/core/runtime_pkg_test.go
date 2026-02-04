@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -103,12 +104,12 @@ func TestRuntime_Lifecycle_Good(t *testing.T) {
 	// ServiceStartup & ServiceShutdown
 	// These are simple wrappers around the core methods, which are tested in core_test.go.
 	// We call them here to ensure coverage.
-	rt.ServiceStartup(nil, nil)
-	rt.ServiceShutdown(nil)
+	rt.ServiceStartup(context.TODO(), nil)
+	rt.ServiceShutdown(context.TODO())
 
 	// Test shutdown with nil core
 	rt.Core = nil
-	rt.ServiceShutdown(nil)
+	rt.ServiceShutdown(context.TODO())
 }
 
 func TestNewServiceRuntime_Good(t *testing.T) {

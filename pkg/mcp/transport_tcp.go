@@ -38,12 +38,12 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 	if err != nil {
 		return err
 	}
-	defer t.listener.Close()
+	defer func() { _ = t.listener.Close() }()
 
 	// Close listener when context is cancelled to unblock Accept
 	go func() {
 		<-ctx.Done()
-		t.listener.Close()
+		_ = t.listener.Close()
 	}()
 
 	if addr == "" {

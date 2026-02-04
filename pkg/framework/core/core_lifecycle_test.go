@@ -113,8 +113,8 @@ func TestCore_LifecycleErrors(t *testing.T) {
 	s1 := &MockStartable{err: assert.AnError}
 	s2 := &MockStoppable{err: assert.AnError}
 
-	c.RegisterService("s1", s1)
-	c.RegisterService("s2", s2)
+	_ = c.RegisterService("s1", s1)
+	_ = c.RegisterService("s2", s2)
 
 	err = c.ServiceStartup(context.Background(), nil)
 	assert.Error(t, err)

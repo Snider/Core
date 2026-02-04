@@ -85,8 +85,8 @@ func TestIsDir(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.Mkdir(filepath.Join(root, "mydir"), 0755)
-	os.WriteFile(filepath.Join(root, "myfile"), []byte("x"), 0644)
+	_ = os.Mkdir(filepath.Join(root, "mydir"), 0755)
+	_ = os.WriteFile(filepath.Join(root, "myfile"), []byte("x"), 0644)
 
 	assert.True(t, m.IsDir("mydir"))
 	assert.False(t, m.IsDir("myfile"))
@@ -98,8 +98,8 @@ func TestIsFile(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.Mkdir(filepath.Join(root, "mydir"), 0755)
-	os.WriteFile(filepath.Join(root, "myfile"), []byte("x"), 0644)
+	_ = os.Mkdir(filepath.Join(root, "mydir"), 0755)
+	_ = os.WriteFile(filepath.Join(root, "myfile"), []byte("x"), 0644)
 
 	assert.True(t, m.IsFile("myfile"))
 	assert.False(t, m.IsFile("mydir"))
@@ -111,7 +111,7 @@ func TestExists(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.WriteFile(filepath.Join(root, "exists"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(root, "exists"), []byte("x"), 0644)
 
 	assert.True(t, m.Exists("exists"))
 	assert.False(t, m.Exists("nope"))
@@ -121,9 +121,9 @@ func TestList(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.WriteFile(filepath.Join(root, "a.txt"), []byte("a"), 0644)
-	os.WriteFile(filepath.Join(root, "b.txt"), []byte("b"), 0644)
-	os.Mkdir(filepath.Join(root, "subdir"), 0755)
+	_ = os.WriteFile(filepath.Join(root, "a.txt"), []byte("a"), 0644)
+	_ = os.WriteFile(filepath.Join(root, "b.txt"), []byte("b"), 0644)
+	_ = os.Mkdir(filepath.Join(root, "subdir"), 0755)
 
 	entries, err := m.List("")
 	assert.NoError(t, err)
@@ -134,7 +134,7 @@ func TestStat(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.WriteFile(filepath.Join(root, "file"), []byte("content"), 0644)
+	_ = os.WriteFile(filepath.Join(root, "file"), []byte("content"), 0644)
 
 	info, err := m.Stat("file")
 	assert.NoError(t, err)
@@ -145,7 +145,7 @@ func TestDelete(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.WriteFile(filepath.Join(root, "todelete"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(root, "todelete"), []byte("x"), 0644)
 	assert.True(t, m.Exists("todelete"))
 
 	err := m.Delete("todelete")
@@ -157,8 +157,8 @@ func TestDeleteAll(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.MkdirAll(filepath.Join(root, "dir/sub"), 0755)
-	os.WriteFile(filepath.Join(root, "dir/sub/file"), []byte("x"), 0644)
+	_ = os.MkdirAll(filepath.Join(root, "dir/sub"), 0755)
+	_ = os.WriteFile(filepath.Join(root, "dir/sub/file"), []byte("x"), 0644)
 
 	err := m.DeleteAll("dir")
 	assert.NoError(t, err)
@@ -169,7 +169,7 @@ func TestRename(t *testing.T) {
 	root := t.TempDir()
 	m, _ := New(root)
 
-	os.WriteFile(filepath.Join(root, "old"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(root, "old"), []byte("x"), 0644)
 
 	err := m.Rename("old", "new")
 	assert.NoError(t, err)
@@ -192,7 +192,7 @@ func TestFileGetFileSet(t *testing.T) {
 func TestDelete_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_delete_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -217,7 +217,7 @@ func TestDelete_Good(t *testing.T) {
 func TestDelete_Bad_NotEmpty(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_delete_notempty_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -234,7 +234,7 @@ func TestDelete_Bad_NotEmpty(t *testing.T) {
 func TestDeleteAll_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_deleteall_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -256,7 +256,7 @@ func TestDeleteAll_Good(t *testing.T) {
 func TestRename_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_rename_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -277,7 +277,7 @@ func TestRename_Good(t *testing.T) {
 func TestRename_Traversal_Sanitized(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_rename_traversal_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -296,7 +296,7 @@ func TestRename_Traversal_Sanitized(t *testing.T) {
 func TestList_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_list_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -326,7 +326,7 @@ func TestList_Good(t *testing.T) {
 func TestStat_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_stat_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -352,7 +352,7 @@ func TestStat_Good(t *testing.T) {
 func TestExists_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_exists_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)
@@ -371,7 +371,7 @@ func TestExists_Good(t *testing.T) {
 func TestIsDir_Good(t *testing.T) {
 	testRoot, err := os.MkdirTemp("", "local_isdir_test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(testRoot)
+	defer func() { _ = os.RemoveAll(testRoot) }()
 
 	medium, err := New(testRoot)
 	assert.NoError(t, err)

@@ -338,11 +338,11 @@ func verifyTarGzContent(t *testing.T, archivePath, expectedName string) {
 
 	file, err := os.Open(archivePath)
 	require.NoError(t, err)
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzReader, err := gzip.NewReader(file)
 	require.NoError(t, err)
-	defer gzReader.Close()
+	defer func() { _ = gzReader.Close() }()
 
 	tarReader := tar.NewReader(gzReader)
 
@@ -361,7 +361,7 @@ func verifyZipContent(t *testing.T, archivePath, expectedName string) {
 
 	reader, err := zip.OpenReader(archivePath)
 	require.NoError(t, err)
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	require.Len(t, reader.File, 1)
 	assert.Equal(t, expectedName, reader.File[0].Name)

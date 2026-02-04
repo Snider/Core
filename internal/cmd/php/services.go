@@ -123,7 +123,7 @@ func (s *baseService) startProcess(ctx context.Context, cmdName string, args []s
 	setSysProcAttr(s.cmd)
 
 	if err := s.cmd.Start(); err != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		s.lastError = err
 		return cli.WrapVerb(err, "start", s.name)
 	}
@@ -140,7 +140,7 @@ func (s *baseService) startProcess(ctx context.Context, cmdName string, args []s
 			s.lastError = err
 		}
 		if s.logFile != nil {
-			s.logFile.Close()
+			_ = s.logFile.Close()
 		}
 		s.mu.Unlock()
 	}()
@@ -157,12 +157,12 @@ func (s *baseService) stopProcess() error {
 	}
 
 	// Send termination signal to process (group on Unix)
-	signalProcessGroup(s.cmd, termSignal())
+	_ = signalProcessGroup(s.cmd, termSignal())
 
 	// Wait for graceful shutdown with timeout
 	done := make(chan struct{})
 	go func() {
-		s.cmd.Wait()
+		_ = s.cmd.Wait()
 		close(done)
 	}()
 
@@ -171,7 +171,7 @@ func (s *baseService) stopProcess() error {
 		// Process exited gracefully
 	case <-time.After(5 * time.Second):
 		// Force kill
-		signalProcessGroup(s.cmd, killSignal())
+		_ = signalProcessGroup(s.cmd, killSignal())
 	}
 
 	s.running = false
@@ -333,7 +333,7 @@ func (s *HorizonService) Stop() error {
 	// Horizon has its own terminate command
 	cmd := exec.Command("php", "artisan", "horizon:terminate")
 	cmd.Dir = s.dir
-	cmd.Run() // Ignore errors, will also kill via signal
+	_ = cmd.Run() // Ignore errors, will also kill via signal
 
 	return s.stopProcess()
 }
@@ -427,7 +427,7 @@ func (s *RedisService) Start(ctx context.Context) error {
 func (s *RedisService) Stop() error {
 	// Try graceful shutdown via redis-cli
 	cmd := exec.Command("redis-cli", "-p", cli.Sprintf("%d", s.port), "shutdown", "nosave")
-	cmd.Run() // Ignore errors
+	_ = cmd.Run() // Ignore errors
 
 	return s.stopProcess()
 }

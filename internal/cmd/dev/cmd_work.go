@@ -53,7 +53,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	if err := bundle.Start(ctx); err != nil {
 		return err
 	}
-	defer bundle.Stop(ctx)
+	defer func() { _ = bundle.Stop(ctx) }()
 
 	// Load registry and get paths
 	paths, names, err := func() ([]string, map[string]string, error) {

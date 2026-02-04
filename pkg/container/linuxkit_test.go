@@ -211,11 +211,11 @@ func TestLinuxKitManager_Stop_Bad_NotFound(t *testing.T) {
 }
 
 func TestLinuxKitManager_Stop_Bad_NotRunning(t *testing.T) {
-	manager, _, tmpDir := newTestManager(t)
+	_, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
 	state, err := LoadState(statePath)
 	require.NoError(t, err)
-	manager = NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
+	manager := NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
 
 	container := &Container{
 		ID:     "abc12345",
@@ -231,11 +231,11 @@ func TestLinuxKitManager_Stop_Bad_NotRunning(t *testing.T) {
 }
 
 func TestLinuxKitManager_List_Good(t *testing.T) {
-	manager, _, tmpDir := newTestManager(t)
+	_, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
 	state, err := LoadState(statePath)
 	require.NoError(t, err)
-	manager = NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
+	manager := NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
 
 	_ = state.Add(&Container{ID: "aaa11111", Status: StatusStopped})
 	_ = state.Add(&Container{ID: "bbb22222", Status: StatusStopped})
@@ -248,11 +248,11 @@ func TestLinuxKitManager_List_Good(t *testing.T) {
 }
 
 func TestLinuxKitManager_List_Good_VerifiesRunningStatus(t *testing.T) {
-	manager, _, tmpDir := newTestManager(t)
+	_, _, tmpDir := newTestManager(t)
 	statePath := filepath.Join(tmpDir, "containers.json")
 	state, err := LoadState(statePath)
 	require.NoError(t, err)
-	manager = NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
+	manager := NewLinuxKitManagerWithHypervisor(state, NewMockHypervisor())
 
 	// Add a "running" container with a fake PID that doesn't exist
 	_ = state.Add(&Container{
@@ -292,7 +292,7 @@ func TestLinuxKitManager_Logs_Good(t *testing.T) {
 	reader, err := manager.Logs(ctx, "abc12345", false)
 
 	require.NoError(t, err)
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	buf := make([]byte, 1024)
 	n, _ := reader.Read(buf)
@@ -323,7 +323,7 @@ func TestLinuxKitManager_Logs_Bad_NoLogFile(t *testing.T) {
 
 	// If logs existed somehow, clean up the reader
 	if reader != nil {
-		reader.Close()
+		_ = reader.Close()
 	}
 
 	assert.Error(t, err)
@@ -477,7 +477,7 @@ func TestFollowReader_Read_Good_WithData(t *testing.T) {
 
 	reader, err := newFollowReader(ctx, logPath)
 	require.NoError(t, err)
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// The followReader seeks to end, so we need to append more content
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY, 0644)
@@ -685,7 +685,7 @@ func TestFollowReader_Read_Good_ReaderError(t *testing.T) {
 	require.NoError(t, err)
 
 	// Close the underlying file to cause read errors
-	reader.file.Close()
+	_ = reader.file.Close()
 
 	// Read should return an error
 	buf := make([]byte, 1024)

@@ -195,7 +195,7 @@ func (d *DevServer) Start(ctx context.Context, opts Options) error {
 	if len(startErrors) > 0 {
 		// Stop any services that did start
 		for _, svc := range d.services {
-			svc.Stop()
+			_ = svc.Stop()
 		}
 		return cli.Err("failed to start services: %v", startErrors)
 	}
@@ -296,7 +296,7 @@ func (d *DevServer) unifiedLogs(follow bool) (io.ReadCloser, error) {
 		if err != nil {
 			// Close any readers we already opened
 			for _, r := range readers {
-				r.Close()
+				_ = r.Close()
 			}
 			return nil, cli.Err("failed to get logs for %s: %v", svc.Name(), err)
 		}

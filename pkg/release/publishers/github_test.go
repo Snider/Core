@@ -235,7 +235,7 @@ func TestGitHubPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(release, cfg, "owner/repo")
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -273,7 +273,7 @@ func TestGitHubPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(release, cfg, "owner/repo")
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -304,7 +304,7 @@ func TestGitHubPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(release, cfg, "owner/repo")
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -336,9 +336,9 @@ func TestGitHubPublisher_Publish_Good(t *testing.T) {
 		relCfg := &mockReleaseConfig{repository: "custom/repo"}
 
 		// Dry run should succeed without needing gh CLI
-		err := p.Publish(nil, release, pubCfg, relCfg, true)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, true)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -377,7 +377,7 @@ func TestGitHubPublisher_Publish_Bad(t *testing.T) {
 		// Create a temp directory that is NOT a git repo
 		tmpDir, err := os.MkdirTemp("", "github-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		release := &Release{
 			Version:    "v1.0.0",
@@ -400,7 +400,7 @@ func TestDetectRepository_Good(t *testing.T) {
 		// Create a temp git repo
 		tmpDir, err := os.MkdirTemp("", "git-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		// Initialize git repo and set remote
 		cmd := exec.Command("git", "init")
@@ -419,7 +419,7 @@ func TestDetectRepository_Good(t *testing.T) {
 	t.Run("detects repository from HTTPS remote", func(t *testing.T) {
 		tmpDir, err := os.MkdirTemp("", "git-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		cmd := exec.Command("git", "init")
 		cmd.Dir = tmpDir
@@ -439,7 +439,7 @@ func TestDetectRepository_Bad(t *testing.T) {
 	t.Run("fails when not a git repository", func(t *testing.T) {
 		tmpDir, err := os.MkdirTemp("", "no-git-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		_, err = detectRepository(tmpDir)
 		assert.Error(t, err)
@@ -454,7 +454,7 @@ func TestDetectRepository_Bad(t *testing.T) {
 	t.Run("fails when remote is not GitHub", func(t *testing.T) {
 		tmpDir, err := os.MkdirTemp("", "git-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		cmd := exec.Command("git", "init")
 		cmd.Dir = tmpDir

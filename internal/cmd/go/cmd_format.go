@@ -67,11 +67,11 @@ func addGoFmtCommand(parent *cli.Command) {
 			if fmtCheck {
 				output, err := execCmd.CombinedOutput()
 				if err != nil {
-					os.Stderr.Write(output)
+					_, _ = os.Stderr.Write(output)
 					return err
 				}
 				if len(output) > 0 {
-					os.Stdout.Write(output)
+					_, _ = os.Stdout.Write(output)
 					return cli.Err("files need formatting (use --fix)")
 				}
 				return nil

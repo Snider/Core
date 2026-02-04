@@ -2,6 +2,7 @@ package publishers
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -191,7 +192,7 @@ func TestChocolateyPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -229,7 +230,7 @@ func TestChocolateyPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -247,17 +248,17 @@ func TestChocolateyPublisher_ExecutePublish_Bad(t *testing.T) {
 	t.Run("fails when CHOCOLATEY_API_KEY not set for push", func(t *testing.T) {
 		// Ensure CHOCOLATEY_API_KEY is not set
 		oldKey := os.Getenv("CHOCOLATEY_API_KEY")
-		os.Unsetenv("CHOCOLATEY_API_KEY")
+		_ = os.Unsetenv("CHOCOLATEY_API_KEY")
 		defer func() {
 			if oldKey != "" {
-				os.Setenv("CHOCOLATEY_API_KEY", oldKey)
+				_ = os.Setenv("CHOCOLATEY_API_KEY", oldKey)
 			}
 		}()
 
 		// Create a temp directory for the test
 		tmpDir, err := os.MkdirTemp("", "choco-test-*")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		data := chocolateyTemplateData{
 			PackageName: "testpkg",
@@ -269,7 +270,7 @@ func TestChocolateyPublisher_ExecutePublish_Bad(t *testing.T) {
 			Checksums:   ChecksumMap{},
 		}
 
-		err = p.pushToChocolatey(nil, tmpDir, data)
+		err = p.pushToChocolatey(context.TODO(), tmpDir, data)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "CHOCOLATEY_API_KEY environment variable is required")
 	})

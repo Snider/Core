@@ -117,7 +117,7 @@ func scanRepoDocs(repo *repos.Repo) RepoDocInfo {
 	docsDir := filepath.Join(repo.Path, "docs")
 	// Check if directory exists by listing it
 	if _, err := io.Local.List(docsDir); err == nil {
-		filepath.WalkDir(docsDir, func(path string, d fs.DirEntry, err error) error {
+		_ = filepath.WalkDir(docsDir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return nil
 			}

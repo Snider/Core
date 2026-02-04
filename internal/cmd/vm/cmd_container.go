@@ -158,8 +158,8 @@ func listContainers(all bool) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, i18n.T("cmd.vm.ps.header"))
-	fmt.Fprintln(w, "--\t----\t-----\t------\t-------\t---")
+	_, _ = fmt.Fprintln(w, i18n.T("cmd.vm.ps.header"))
+	_, _ = fmt.Fprintln(w, "--\t----\t-----\t------\t-------\t---")
 
 	for _, c := range containers {
 		// Shorten image path
@@ -182,11 +182,11 @@ func listContainers(all bool) error {
 			status = errorStyle.Render(status)
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
 			c.ID[:8], c.Name, imageName, status, duration, c.PID)
 	}
 
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -305,7 +305,7 @@ func viewLogs(id string, follow bool) error {
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.get", "logs")+": %w", err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	_, err = io.Copy(os.Stdout, reader)
 	return err

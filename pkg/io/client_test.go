@@ -255,6 +255,6 @@ func TestLocalGlobal_Good(t *testing.T) {
 	assert.NotNil(t, Local, "io.Local should be initialized")
 
 	// Should be able to use it as a Medium
-	var m Medium = Local
+	var m = Local
 	assert.NotNil(t, m)
 }

@@ -148,7 +148,7 @@ func (l *Logger) log(level Level, prefix, msg string, keyvals ...any) {
 		}
 	}
 
-	fmt.Fprintf(output, "%s %s %s%s\n", timestamp, prefix, msg, kvStr)
+	_, _ = fmt.Fprintf(output, "%s %s %s%s\n", timestamp, prefix, msg, kvStr)
 }
 
 // Debug logs a debug message with optional key-value pairs.

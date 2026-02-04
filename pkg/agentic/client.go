@@ -86,7 +86,7 @@ func (c *Client) ListTasks(ctx context.Context, opts ListOptions) ([]Task, error
 	if err != nil {
 		return nil, log.E(op, "request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := c.checkResponse(resp); err != nil {
 		return nil, log.E(op, "API error", err)
@@ -121,7 +121,7 @@ func (c *Client) GetTask(ctx context.Context, id string) (*Task, error) {
 	if err != nil {
 		return nil, log.E(op, "request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := c.checkResponse(resp); err != nil {
 		return nil, log.E(op, "API error", err)
@@ -166,7 +166,7 @@ func (c *Client) ClaimTask(ctx context.Context, id string) (*Task, error) {
 	if err != nil {
 		return nil, log.E(op, "request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := c.checkResponse(resp); err != nil {
 		return nil, log.E(op, "API error", err)
@@ -220,7 +220,7 @@ func (c *Client) UpdateTask(ctx context.Context, id string, update TaskUpdate) e
 	if err != nil {
 		return log.E(op, "request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := c.checkResponse(resp); err != nil {
 		return log.E(op, "API error", err)
@@ -256,7 +256,7 @@ func (c *Client) CompleteTask(ctx context.Context, id string, result TaskResult)
 	if err != nil {
 		return log.E(op, "request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := c.checkResponse(resp); err != nil {
 		return log.E(op, "API error", err)
@@ -312,7 +312,7 @@ func (c *Client) Ping(ctx context.Context) error {
 	if err != nil {
 		return log.E(op, "request failed", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		return log.E(op, fmt.Sprintf("server returned status %d", resp.StatusCode), nil)

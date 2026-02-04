@@ -166,7 +166,7 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 	// Tee output to both log file and stdout
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
 	}
 
@@ -412,8 +412,8 @@ func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) err
 	// Build SSH command
 	sshArgs := []string{
 		"-p", fmt.Sprintf("%d", sshPort),
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
+		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
 		"root@localhost",
 	}

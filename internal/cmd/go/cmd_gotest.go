@@ -154,7 +154,7 @@ func parseOverallCoverage(output string) float64 {
 	var total float64
 	for _, m := range matches {
 		var cov float64
-		fmt.Sscanf(m[1], "%f", &cov)
+		_, _ = fmt.Sscanf(m[1], "%f", &cov)
 		total += cov
 	}
 	return total / float64(len(matches))
@@ -192,8 +192,8 @@ func addGoCovCommand(parent *cli.Command) {
 				return cli.Wrap(err, i18n.T("i18n.fail.create", "coverage file"))
 			}
 			covPath := covFile.Name()
-			covFile.Close()
-			defer os.Remove(covPath)
+			_ = covFile.Close()
+			defer func() { _ = os.Remove(covPath) }()
 
 			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("coverage")), i18n.ProgressSubject("run", "tests"))
 			// Truncate package list if too long for display
@@ -236,7 +236,7 @@ func addGoCovCommand(parent *cli.Command) {
 					parts := strings.Fields(lastLine)
 					if len(parts) >= 3 {
 						covStr := strings.TrimSuffix(parts[len(parts)-1], "%")
-						fmt.Sscanf(covStr, "%f", &totalCov)
+						_, _ = fmt.Sscanf(covStr, "%f", &totalCov)
 					}
 				}
 			}
@@ -266,7 +266,7 @@ func addGoCovCommand(parent *cli.Command) {
 						cli.Print("  %s\n", dimStyle.Render("Open coverage.html in your browser"))
 					}
 					if openCmd != nil {
-						openCmd.Run()
+						_ = openCmd.Run()
 					}
 				}
 			}

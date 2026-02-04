@@ -2,7 +2,6 @@ package dev
 
 import (
 	"bytes"
-	"context"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -16,25 +15,6 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
-
-// syncInternalToPublic handles the synchronization of internal packages to public-facing directories.
-// This function is a placeholder for future implementation.
-func syncInternalToPublic(ctx context.Context, publicDir string) error {
-	// 1. Clean public/internal
-	// 2. Copy relevant files from internal/ to public/internal/
-	//    Usually just shared logic, not private stuff.
-
-	// For now, let's assume we copy specific safe packages
-	// Logic to be refined.
-
-	// Example migration of os calls:
-	// internalDirs, err := os.ReadDir(pkgDir) -> coreio.Local.List(pkgDir)
-	// os.Stat -> coreio.Local.IsFile (returns bool) or List for existence check
-	// os.MkdirAll -> coreio.Local.EnsureDir
-	// os.WriteFile -> coreio.Local.Write
-
-	return nil
-}
 
 // addSyncCommand adds the 'sync' command to the given parent command.
 func addSyncCommand(parent *cli.Command) {

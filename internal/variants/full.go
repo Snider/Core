@@ -27,6 +27,9 @@ import (
 	// Commands via self-registration
 	_ "github.com/host-uk/core/internal/cmd/ai"
 	_ "github.com/host-uk/core/internal/cmd/ci"
+	_ "github.com/host-uk/core/internal/cmd/collect"
+	_ "github.com/host-uk/core/internal/cmd/config"
+	_ "github.com/host-uk/core/internal/cmd/crypt"
 	_ "github.com/host-uk/core/internal/cmd/deploy"
 	_ "github.com/host-uk/core/internal/cmd/dev"
 	_ "github.com/host-uk/core/internal/cmd/docs"
@@ -37,6 +40,7 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/monitor"
 	_ "github.com/host-uk/core/internal/cmd/php"
 	_ "github.com/host-uk/core/internal/cmd/pkgcmd"
+	_ "github.com/host-uk/core/internal/cmd/plugin"
 	_ "github.com/host-uk/core/internal/cmd/qa"
 	_ "github.com/host-uk/core/internal/cmd/sdk"
 	_ "github.com/host-uk/core/internal/cmd/security"

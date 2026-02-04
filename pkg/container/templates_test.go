@@ -404,7 +404,7 @@ kernel:
 	require.NoError(t, err)
 	err = os.Chdir(tmpDir)
 	require.NoError(t, err)
-	defer os.Chdir(oldWd)
+	defer func() { _ = os.Chdir(oldWd) }()
 
 	templates := ListTemplates()
 
@@ -445,7 +445,7 @@ services:
 	require.NoError(t, err)
 	err = os.Chdir(tmpDir)
 	require.NoError(t, err)
-	defer os.Chdir(oldWd)
+	defer func() { _ = os.Chdir(oldWd) }()
 
 	content, err := GetTemplate("my-user-template")
 
@@ -557,7 +557,7 @@ func TestGetUserTemplatesDir_Good_NoDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 	err = os.Chdir(tmpDir)
 	require.NoError(t, err)
-	defer os.Chdir(oldWd)
+	defer func() { _ = os.Chdir(oldWd) }()
 
 	dir := getUserTemplatesDir()
 

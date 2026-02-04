@@ -220,7 +220,7 @@ func ExampleCheckForUpdatesHTTP() {
 	// Create a mock HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/latest.json" {
-			fmt.Fprintln(w, `{"version": "1.1.0", "url": "http://example.com/update"}`)
+			_, _ = fmt.Fprintln(w, `{"version": "1.1.0", "url": "http://example.com/update"}`)
 		}
 	}))
 	defer server.Close()
@@ -247,7 +247,7 @@ func ExampleCheckOnlyHTTP() {
 	// Create a mock HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/latest.json" {
-			fmt.Fprintln(w, `{"version": "1.1.0", "url": "http://example.com/update"}`)
+			_, _ = fmt.Fprintln(w, `{"version": "1.1.0", "url": "http://example.com/update"}`)
 		}
 	}))
 	defer server.Close()

@@ -224,7 +224,7 @@ func runPkgOutdated() error {
 		}
 
 		// Fetch updates
-		exec.Command("git", "-C", repoPath, "fetch", "--quiet").Run()
+		_ = exec.Command("git", "-C", repoPath, "fetch", "--quiet").Run()
 
 		// Check if behind
 		cmd := exec.Command("git", "-C", repoPath, "rev-list", "--count", "HEAD..@{u}")

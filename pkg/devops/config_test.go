@@ -28,7 +28,7 @@ func TestLoadConfig_Good(t *testing.T) {
 		tempHome := t.TempDir()
 		origHome := os.Getenv("HOME")
 		t.Setenv("HOME", tempHome)
-		defer os.Setenv("HOME", origHome)
+		defer func() { _ = os.Setenv("HOME", origHome) }()
 
 		cfg, err := LoadConfig()
 		assert.NoError(t, err)
@@ -250,5 +250,5 @@ func TestLoadConfig_Bad_UnreadableFile(t *testing.T) {
 	assert.Error(t, err)
 
 	// Restore permissions so cleanup works
-	os.Chmod(configPath, 0644)
+	_ = os.Chmod(configPath, 0644)
 }

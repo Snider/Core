@@ -18,7 +18,7 @@ func TestGetLatestUpdateFromURL(t *testing.T) {
 		{
 			name: "Valid latest.json",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, `{"version": "v1.1.0", "url": "http://example.com/release.zip"}`)
+				_, _ = fmt.Fprintln(w, `{"version": "v1.1.0", "url": "http://example.com/release.zip"}`)
 			},
 			expectedVersion: "v1.1.0",
 			expectedURL:     "http://example.com/release.zip",
@@ -26,21 +26,21 @@ func TestGetLatestUpdateFromURL(t *testing.T) {
 		{
 			name: "Invalid JSON",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, `{"version": "v1.1.0", "url": "http://example.com/release.zip"`) // Missing closing brace
+				_, _ = fmt.Fprintln(w, `{"version": "v1.1.0", "url": "http://example.com/release.zip"`) // Missing closing brace
 			},
 			expectError: true,
 		},
 		{
 			name: "Missing version",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, `{"url": "http://example.com/release.zip"}`)
+				_, _ = fmt.Fprintln(w, `{"url": "http://example.com/release.zip"}`)
 			},
 			expectError: true,
 		},
 		{
 			name: "Missing URL",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, `{"version": "v1.1.0"}`)
+				_, _ = fmt.Fprintln(w, `{"version": "v1.1.0"}`)
 			},
 			expectError: true,
 		},

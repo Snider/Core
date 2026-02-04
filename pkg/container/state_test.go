@@ -109,7 +109,7 @@ func TestState_Update_Good(t *testing.T) {
 		ID:     "abc12345",
 		Status: StatusRunning,
 	}
-	state.Add(container)
+	_ = state.Add(container)
 
 	// Update status
 	container.Status = StatusStopped
@@ -130,7 +130,7 @@ func TestState_Remove_Good(t *testing.T) {
 	container := &Container{
 		ID: "abc12345",
 	}
-	state.Add(container)
+	_ = state.Add(container)
 
 	err := state.Remove("abc12345")
 	require.NoError(t, err)
@@ -151,9 +151,9 @@ func TestState_All_Good(t *testing.T) {
 	statePath := filepath.Join(tmpDir, "containers.json")
 	state := NewState(statePath)
 
-	state.Add(&Container{ID: "aaa11111"})
-	state.Add(&Container{ID: "bbb22222"})
-	state.Add(&Container{ID: "ccc33333"})
+	_ = state.Add(&Container{ID: "aaa11111"})
+	_ = state.Add(&Container{ID: "bbb22222"})
+	_ = state.Add(&Container{ID: "ccc33333"})
 
 	all := state.All()
 	assert.Len(t, all, 3)
@@ -164,7 +164,7 @@ func TestState_SaveState_Good_CreatesDirectory(t *testing.T) {
 	nestedPath := filepath.Join(tmpDir, "nested", "dir", "containers.json")
 	state := NewState(nestedPath)
 
-	state.Add(&Container{ID: "abc12345"})
+	_ = state.Add(&Container{ID: "abc12345"})
 
 	err := state.SaveState()
 	require.NoError(t, err)

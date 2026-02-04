@@ -148,7 +148,7 @@ func createTarXzArchive(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	srcInfo, err := srcFile.Stat()
 	if err != nil {
@@ -199,7 +199,7 @@ func createTarGzArchive(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	srcInfo, err := srcFile.Stat()
 	if err != nil {
@@ -211,15 +211,15 @@ func createTarGzArchive(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create archive file: %w", err)
 	}
-	defer dstFile.Close()
+	defer func() { _ = dstFile.Close() }()
 
 	// Create gzip writer
 	gzWriter := gzip.NewWriter(dstFile)
-	defer gzWriter.Close()
+	defer func() { _ = gzWriter.Close() }()
 
 	// Create tar writer
 	tarWriter := tar.NewWriter(gzWriter)
-	defer tarWriter.Close()
+	defer func() { _ = tarWriter.Close() }()
 
 	// Create tar header
 	header, err := tar.FileInfoHeader(srcInfo, "")
@@ -249,7 +249,7 @@ func createZipArchive(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	srcInfo, err := srcFile.Stat()
 	if err != nil {
@@ -261,11 +261,11 @@ func createZipArchive(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create archive file: %w", err)
 	}
-	defer dstFile.Close()
+	defer func() { _ = dstFile.Close() }()
 
 	// Create zip writer
 	zipWriter := zip.NewWriter(dstFile)
-	defer zipWriter.Close()
+	defer func() { _ = zipWriter.Close() }()
 
 	// Create zip header
 	header, err := zip.FileInfoHeader(srcInfo)

@@ -218,7 +218,7 @@ func runPHPLogs(service string, follow bool) error {
 	if err != nil {
 		return cli.Err("%s: %w", i18n.T("i18n.fail.get", "logs"), err)
 	}
-	defer logsReader.Close()
+	defer func() { _ = logsReader.Close() }()
 
 	// Handle interrupt
 	ctx, cancel := context.WithCancel(context.Background())

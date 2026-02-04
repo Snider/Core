@@ -35,7 +35,7 @@ func runCollections(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to Qdrant: %w", err)
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	// Handle delete
 	if deleteCollection != "" {

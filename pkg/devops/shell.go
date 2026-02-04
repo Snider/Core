@@ -33,8 +33,8 @@ func (d *DevOps) Shell(ctx context.Context, opts ShellOptions) error {
 // sshShell connects via SSH.
 func (d *DevOps) sshShell(ctx context.Context, command []string) error {
 	args := []string{
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
+		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
 		"-A", // Agent forwarding
 		"-p", "2222",

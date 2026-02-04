@@ -242,7 +242,7 @@ func (p *HomebrewPublisher) commitToTap(ctx context.Context, tap string, data ho
 	if err != nil {
 		return fmt.Errorf("homebrew.Publish: failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Clone the tap
 	fmt.Printf("Cloning tap %s...\n", tap)

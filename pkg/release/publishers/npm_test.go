@@ -2,6 +2,7 @@ package publishers
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -165,7 +166,7 @@ func TestNpmPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -203,7 +204,7 @@ func TestNpmPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -227,7 +228,7 @@ func TestNpmPublisher_Publish_Bad(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "npm"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "package name is required")
 	})
@@ -235,10 +236,10 @@ func TestNpmPublisher_Publish_Bad(t *testing.T) {
 	t.Run("fails when NPM_TOKEN not set in non-dry-run", func(t *testing.T) {
 		// Ensure NPM_TOKEN is not set
 		oldToken := os.Getenv("NPM_TOKEN")
-		os.Unsetenv("NPM_TOKEN")
+		_ = os.Unsetenv("NPM_TOKEN")
 		defer func() {
 			if oldToken != "" {
-				os.Setenv("NPM_TOKEN", oldToken)
+				_ = os.Setenv("NPM_TOKEN", oldToken)
 			}
 		}()
 
@@ -254,7 +255,7 @@ func TestNpmPublisher_Publish_Bad(t *testing.T) {
 		}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "NPM_TOKEN environment variable is required")
 	})

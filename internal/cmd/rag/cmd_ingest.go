@@ -43,10 +43,10 @@ func runIngest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to Qdrant: %w", err)
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	if err := qdrantClient.HealthCheck(ctx); err != nil {
-		return fmt.Errorf("Qdrant health check failed: %w", err)
+		return fmt.Errorf("qdrant health check failed: %w", err)
 	}
 
 	// Connect to Ollama
@@ -122,10 +122,10 @@ func IngestDirectory(ctx context.Context, directory, collectionName string, recr
 	if err != nil {
 		return err
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	if err := qdrantClient.HealthCheck(ctx); err != nil {
-		return fmt.Errorf("Qdrant health check failed: %w", err)
+		return fmt.Errorf("qdrant health check failed: %w", err)
 	}
 
 	ollamaClient, err := rag.NewOllamaClient(rag.DefaultOllamaConfig())
@@ -152,10 +152,10 @@ func IngestFile(ctx context.Context, filePath, collectionName string) (int, erro
 	if err != nil {
 		return 0, err
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	if err := qdrantClient.HealthCheck(ctx); err != nil {
-		return 0, fmt.Errorf("Qdrant health check failed: %w", err)
+		return 0, fmt.Errorf("qdrant health check failed: %w", err)
 	}
 
 	ollamaClient, err := rag.NewOllamaClient(rag.DefaultOllamaConfig())

@@ -39,7 +39,11 @@ func (m *Medium) path(p string) string {
 		// Otherwise, sandbox absolute paths by stripping volume + leading separators
 		vol := filepath.VolumeName(clean)
 		clean = strings.TrimPrefix(clean, vol)
-		clean = strings.TrimLeft(clean, string(os.PathSeparator)+"/")
+		cutset := string(os.PathSeparator)
+		if os.PathSeparator != '/' {
+			cutset += "/"
+		}
+		clean = strings.TrimLeft(clean, cutset)
 		return filepath.Join(m.root, clean)
 	}
 	return filepath.Join(m.root, clean)

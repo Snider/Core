@@ -107,7 +107,7 @@ func readMetricsFile(path string, since time.Time) ([]Event, error) {
 		}
 		return nil, fmt.Errorf("open metrics file %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var events []Event
 	scanner := bufio.NewScanner(f)

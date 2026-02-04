@@ -105,13 +105,13 @@ func TestHealthServer(t *testing.T) {
 		resp, err := http.Get("http://" + addr + "/health")
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Ready should be OK by default
 		resp, err = http.Get("http://" + addr + "/ready")
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Set not ready
 		hs.SetReady(false)
@@ -119,7 +119,7 @@ func TestHealthServer(t *testing.T) {
 		resp, err = http.Get("http://" + addr + "/ready")
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	})
 
 	t.Run("with health checks", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestHealthServer(t *testing.T) {
 		resp, err := http.Get("http://" + addr + "/health")
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Make unhealthy
 		healthy = false
@@ -151,7 +151,7 @@ func TestHealthServer(t *testing.T) {
 		resp, err = http.Get("http://" + addr + "/health")
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	})
 }
 
@@ -175,7 +175,7 @@ func TestDaemon(t *testing.T) {
 		resp, err := http.Get("http://" + addr + "/health")
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Stop should succeed
 		err = d.Stop()
@@ -225,14 +225,14 @@ func TestDaemon(t *testing.T) {
 		// Initially ready
 		resp, _ := http.Get("http://" + addr + "/ready")
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Set not ready
 		d.SetReady(false)
 
 		resp, _ = http.Get("http://" + addr + "/ready")
 		assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	})
 
 	t.Run("no health addr returns empty", func(t *testing.T) {

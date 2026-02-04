@@ -308,7 +308,7 @@ func getBuilder(projectType build.ProjectType) (build.Builder, error) {
 	case build.ProjectTypeGo:
 		return builders.NewGoBuilder(), nil
 	case build.ProjectTypeNode:
-		return nil, fmt.Errorf("Node.js builder not yet implemented")
+		return nil, fmt.Errorf("node.js builder not yet implemented")
 	case build.ProjectTypePHP:
 		return nil, fmt.Errorf("PHP builder not yet implemented")
 	default:

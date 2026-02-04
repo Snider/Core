@@ -38,7 +38,7 @@ func runQuery(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to Qdrant: %w", err)
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	// Connect to Ollama
 	ollamaClient, err := rag.NewOllamaClient(rag.OllamaConfig{
@@ -86,7 +86,7 @@ func QueryDocs(ctx context.Context, question, collectionName string, topK int) (
 	if err != nil {
 		return nil, err
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	ollamaClient, err := rag.NewOllamaClient(rag.DefaultOllamaConfig())
 	if err != nil {

@@ -100,13 +100,13 @@ func (r *Runtime) ServiceName() string {
 // ServiceStartup is called by the GUI runtime at application startup.
 // This is where the Core's startup lifecycle is initiated.
 func (r *Runtime) ServiceStartup(ctx context.Context, options any) {
-	r.Core.ServiceStartup(ctx, options)
+	_ = r.Core.ServiceStartup(ctx, options)
 }
 
 // ServiceShutdown is called by the GUI runtime at application shutdown.
 // This is where the Core's shutdown lifecycle is initiated.
 func (r *Runtime) ServiceShutdown(ctx context.Context) {
 	if r.Core != nil {
-		r.Core.ServiceShutdown(ctx)
+		_ = r.Core.ServiceShutdown(ctx)
 	}
 }

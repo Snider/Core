@@ -78,17 +78,17 @@ func listTemplates() error {
 	fmt.Printf("%s\n\n", repoNameStyle.Render(i18n.T("cmd.vm.templates.title")))
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, i18n.T("cmd.vm.templates.header"))
-	fmt.Fprintln(w, "----\t-----------")
+	_, _ = fmt.Fprintln(w, i18n.T("cmd.vm.templates.header"))
+	_, _ = fmt.Fprintln(w, "----\t-----------")
 
 	for _, tmpl := range templates {
 		desc := tmpl.Description
 		if len(desc) > 60 {
 			desc = desc[:57] + "..."
 		}
-		fmt.Fprintf(w, "%s\t%s\n", repoNameStyle.Render(tmpl.Name), desc)
+		_, _ = fmt.Fprintf(w, "%s\t%s\n", repoNameStyle.Render(tmpl.Name), desc)
 	}
-	w.Flush()
+	_ = w.Flush()
 
 	fmt.Println()
 	fmt.Printf("%s %s\n", i18n.T("cmd.vm.templates.hint.show"), dimStyle.Render("core vm templates show <name>"))
@@ -158,7 +158,7 @@ func RunFromTemplate(templateName string, vars map[string]string, runOpts contai
 	if err != nil {
 		return fmt.Errorf(i18n.T("common.error.failed", map[string]any{"Action": "create temp directory"})+": %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Write the YAML file
 	yamlPath := filepath.Join(tmpDir, templateName+".yml")

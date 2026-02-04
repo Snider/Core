@@ -26,8 +26,8 @@ func TestImagesDir(t *testing.T) {
 	t.Run("default directory", func(t *testing.T) {
 		// Unset env if it exists
 		orig := os.Getenv("CORE_IMAGES_DIR")
-		os.Unsetenv("CORE_IMAGES_DIR")
-		defer os.Setenv("CORE_IMAGES_DIR", orig)
+		_ = os.Unsetenv("CORE_IMAGES_DIR")
+		defer func() { _ = os.Setenv("CORE_IMAGES_DIR", orig) }()
 
 		dir, err := ImagesDir()
 		assert.NoError(t, err)
@@ -617,7 +617,7 @@ func TestDevOps_IsRunning_Bad_DifferentContainerName(t *testing.T) {
 func TestDevOps_Boot_Good_FreshFlag(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "devops-test-*")
 	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
 	t.Setenv("CORE_IMAGES_DIR", tempDir)
 
 	// Create fake image
@@ -701,7 +701,7 @@ func TestDevOps_Stop_Bad_ContainerNotRunning(t *testing.T) {
 func TestDevOps_Boot_Good_FreshWithNoExisting(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "devops-boot-fresh-*")
 	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
 	t.Setenv("CORE_IMAGES_DIR", tempDir)
 
 	// Create fake image
@@ -783,7 +783,7 @@ func TestDevOps_CheckUpdate_Delegates(t *testing.T) {
 func TestDevOps_Boot_Good_Success(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "devops-boot-success-*")
 	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
 	t.Setenv("CORE_IMAGES_DIR", tempDir)
 
 	// Create fake image

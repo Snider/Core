@@ -236,7 +236,7 @@ func TestConfigExists_Good(t *testing.T) {
 func TestLoadConfig_Good_SignConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	coreDir := filepath.Join(tmpDir, ".core")
-	os.MkdirAll(coreDir, 0755)
+	_ = os.MkdirAll(coreDir, 0755)
 
 	configContent := `version: 1
 sign:
@@ -247,7 +247,7 @@ sign:
     identity: "Developer ID Application: Test"
     notarize: true
 `
-	os.WriteFile(filepath.Join(coreDir, "build.yaml"), []byte(configContent), 0644)
+	_ = os.WriteFile(filepath.Join(coreDir, "build.yaml"), []byte(configContent), 0644)
 
 	cfg, err := LoadConfig(tmpDir)
 	if err != nil {

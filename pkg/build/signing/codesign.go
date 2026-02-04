@@ -73,7 +73,7 @@ func (s *MacOSSigner) Notarize(ctx context.Context, binary string) error {
 	if output, err := zipCmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("codesign.Notarize: failed to create zip: %w\nOutput: %s", err, string(output))
 	}
-	defer os.Remove(zipPath)
+	defer func() { _ = os.Remove(zipPath) }()
 
 	// Submit to Apple and wait
 	submitCmd := exec.CommandContext(ctx, "xcrun", "notarytool", "submit",

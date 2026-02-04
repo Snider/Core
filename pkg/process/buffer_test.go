@@ -20,10 +20,10 @@ func TestRingBuffer(t *testing.T) {
 	t.Run("overflow wraps around", func(t *testing.T) {
 		rb := NewRingBuffer(5)
 
-		rb.Write([]byte("hello"))
+		_, _ = rb.Write([]byte("hello"))
 		assert.Equal(t, "hello", rb.String())
 
-		rb.Write([]byte("world"))
+		_, _ = rb.Write([]byte("world"))
 		// Should contain "world" (overwrote "hello")
 		assert.Equal(t, 5, rb.Len())
 		assert.Equal(t, "world", rb.String())
@@ -32,8 +32,8 @@ func TestRingBuffer(t *testing.T) {
 	t.Run("partial overflow", func(t *testing.T) {
 		rb := NewRingBuffer(10)
 
-		rb.Write([]byte("hello"))
-		rb.Write([]byte("worldx"))
+		_, _ = rb.Write([]byte("hello"))
+		_, _ = rb.Write([]byte("worldx"))
 		// Should contain "lloworldx" (11 chars, buffer is 10)
 		assert.Equal(t, 10, rb.Len())
 	})
@@ -47,7 +47,7 @@ func TestRingBuffer(t *testing.T) {
 
 	t.Run("reset", func(t *testing.T) {
 		rb := NewRingBuffer(10)
-		rb.Write([]byte("hello"))
+		_, _ = rb.Write([]byte("hello"))
 		rb.Reset()
 		assert.Equal(t, "", rb.String())
 		assert.Equal(t, 0, rb.Len())
@@ -60,7 +60,7 @@ func TestRingBuffer(t *testing.T) {
 
 	t.Run("bytes returns copy", func(t *testing.T) {
 		rb := NewRingBuffer(10)
-		rb.Write([]byte("hello"))
+		_, _ = rb.Write([]byte("hello"))
 
 		bytes := rb.Bytes()
 		assert.Equal(t, []byte("hello"), bytes)

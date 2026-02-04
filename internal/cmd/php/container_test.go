@@ -230,7 +230,7 @@ func TestServeProduction_Bad(t *testing.T) {
 
 func TestShell_Bad(t *testing.T) {
 	t.Run("fails without container ID", func(t *testing.T) {
-		err := Shell(nil, "")
+		err := Shell(context.TODO(), "")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "container ID is required")
 	})

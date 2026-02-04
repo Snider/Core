@@ -52,7 +52,7 @@ func TestNewUpdateService(t *testing.T) {
 func TestUpdateService_Start(t *testing.T) {
 	// Setup a mock server for HTTP tests
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"version": "v1.1.0", "url": "http://example.com/release.zip"}`))
+		_, _ = w.Write([]byte(`{"version": "v1.1.0", "url": "http://example.com/release.zip"}`))
 	}))
 	defer server.Close()
 

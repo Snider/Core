@@ -2,6 +2,7 @@ package publishers
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -171,7 +172,7 @@ func TestAURPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -202,7 +203,7 @@ func TestAURPublisher_Publish_Bad(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "aur"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "maintainer is required")
 	})

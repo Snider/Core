@@ -238,7 +238,7 @@ func TestFormat_Bad(t *testing.T) {
 		dir := t.TempDir()
 		opts := FormatOptions{Dir: dir}
 
-		err := Format(nil, opts)
+		err := Format(context.TODO(), opts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "no formatter found")
 	})
@@ -247,7 +247,7 @@ func TestFormat_Bad(t *testing.T) {
 		// When no formatter found in cwd, should still fail with "no formatter found"
 		opts := FormatOptions{Dir: ""}
 
-		err := Format(nil, opts)
+		err := Format(context.TODO(), opts)
 		// May or may not find a formatter depending on cwd, but function should not panic
 		if err != nil {
 			// Expected - no formatter in cwd
@@ -274,7 +274,7 @@ func TestAnalyse_Bad(t *testing.T) {
 		dir := t.TempDir()
 		opts := AnalyseOptions{Dir: dir}
 
-		err := Analyse(nil, opts)
+		err := Analyse(context.TODO(), opts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "no static analyser found")
 	})
@@ -282,7 +282,7 @@ func TestAnalyse_Bad(t *testing.T) {
 	t.Run("uses cwd when dir not specified", func(t *testing.T) {
 		opts := AnalyseOptions{Dir: ""}
 
-		err := Analyse(nil, opts)
+		err := Analyse(context.TODO(), opts)
 		// May or may not find an analyser depending on cwd
 		if err != nil {
 			assert.Contains(t, err.Error(), "no static analyser")

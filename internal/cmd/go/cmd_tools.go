@@ -223,7 +223,7 @@ func addGoWorkCommand(parent *cli.Command) {
 
 func findGoModules(root string) []string {
 	var modules []string
-	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}

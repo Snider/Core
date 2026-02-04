@@ -41,8 +41,8 @@ paths:
 `
 	basePath := filepath.Join(tmpDir, "base.yaml")
 	revPath := filepath.Join(tmpDir, "rev.yaml")
-	os.WriteFile(basePath, []byte(baseSpec), 0644)
-	os.WriteFile(revPath, []byte(revSpec), 0644)
+	_ = os.WriteFile(basePath, []byte(baseSpec), 0644)
+	_ = os.WriteFile(revPath, []byte(revSpec), 0644)
 
 	result, err := Diff(basePath, revPath)
 	if err != nil {
@@ -88,8 +88,8 @@ paths:
 `
 	basePath := filepath.Join(tmpDir, "base.yaml")
 	revPath := filepath.Join(tmpDir, "rev.yaml")
-	os.WriteFile(basePath, []byte(baseSpec), 0644)
-	os.WriteFile(revPath, []byte(revSpec), 0644)
+	_ = os.WriteFile(basePath, []byte(baseSpec), 0644)
+	_ = os.WriteFile(revPath, []byte(revSpec), 0644)
 
 	result, err := Diff(basePath, revPath)
 	if err != nil {

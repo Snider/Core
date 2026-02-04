@@ -165,13 +165,13 @@ func TestMultiServiceReader_Good(t *testing.T) {
 		dir := t.TempDir()
 		file1, err := os.CreateTemp(dir, "log1-*.log")
 		require.NoError(t, err)
-		file1.WriteString("test1")
-		file1.Seek(0, 0)
+		_, _ = file1.WriteString("test1")
+		_, _ = file1.Seek(0, 0)
 
 		file2, err := os.CreateTemp(dir, "log2-*.log")
 		require.NoError(t, err)
-		file2.WriteString("test2")
-		file2.Seek(0, 0)
+		_, _ = file2.WriteString("test2")
+		_, _ = file2.Seek(0, 0)
 
 		// Create mock services
 		services := []Service{
@@ -202,8 +202,8 @@ func TestMultiServiceReader_Read_Good(t *testing.T) {
 		dir := t.TempDir()
 		file1, err := os.CreateTemp(dir, "log-*.log")
 		require.NoError(t, err)
-		file1.WriteString("log content")
-		file1.Seek(0, 0)
+		_, _ = file1.WriteString("log content")
+		_, _ = file1.Seek(0, 0)
 
 		services := []Service{
 			&FrankenPHPService{baseService: baseService{name: "TestService"}},
@@ -224,7 +224,7 @@ func TestMultiServiceReader_Read_Good(t *testing.T) {
 		dir := t.TempDir()
 		file1, err := os.CreateTemp(dir, "log-*.log")
 		require.NoError(t, err)
-		file1.Close() // Empty file
+		_ = file1.Close() // Empty file
 
 		file1, err = os.Open(file1.Name())
 		require.NoError(t, err)
@@ -355,7 +355,7 @@ func TestDevServer_Logs_Good(t *testing.T) {
 		reader, err := server.Logs("TestService", false)
 		assert.NoError(t, err)
 		assert.NotNil(t, reader)
-		reader.Close()
+		_ = reader.Close()
 	})
 }
 
@@ -462,7 +462,7 @@ func TestMultiServiceReader_CloseError(t *testing.T) {
 		file1, err := os.CreateTemp(dir, "log-*.log")
 		require.NoError(t, err)
 		file1Name := file1.Name()
-		file1.Close()
+		_ = file1.Close()
 
 		// Reopen for reading
 		file1, err = os.Open(file1Name)
@@ -489,7 +489,7 @@ func TestMultiServiceReader_FollowMode(t *testing.T) {
 		file1, err := os.CreateTemp(dir, "log-*.log")
 		require.NoError(t, err)
 		file1Name := file1.Name()
-		file1.Close()
+		_ = file1.Close()
 
 		// Reopen for reading (empty file)
 		file1, err = os.Open(file1Name)
@@ -520,7 +520,7 @@ func TestMultiServiceReader_FollowMode(t *testing.T) {
 			// Also acceptable - follow mode is waiting
 		}
 
-		reader.Close()
+		_ = reader.Close()
 	})
 }
 

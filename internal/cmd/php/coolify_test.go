@@ -225,7 +225,7 @@ func TestCoolifyClient_TriggerDeploy_Good(t *testing.T) {
 				Status:    "queued",
 				CreatedAt: time.Now(),
 			}
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		}))
 		defer server.Close()
 
@@ -240,11 +240,11 @@ func TestCoolifyClient_TriggerDeploy_Good(t *testing.T) {
 	t.Run("triggers deployment with force", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var body map[string]interface{}
-			json.NewDecoder(r.Body).Decode(&body)
+			_ = json.NewDecoder(r.Body).Decode(&body)
 			assert.Equal(t, true, body["force"])
 
 			resp := CoolifyDeployment{ID: "dep-456", Status: "queued"}
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		}))
 		defer server.Close()
 
@@ -256,7 +256,7 @@ func TestCoolifyClient_TriggerDeploy_Good(t *testing.T) {
 	t.Run("handles minimal response", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Return an invalid JSON response to trigger the fallback
-			w.Write([]byte("not json"))
+			_, _ = w.Write([]byte("not json"))
 		}))
 		defer server.Close()
 
@@ -273,7 +273,7 @@ func TestCoolifyClient_TriggerDeploy_Bad(t *testing.T) {
 	t.Run("fails on HTTP error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Internal error"})
+			_ = json.NewEncoder(w).Encode(map[string]string{"message": "Internal error"})
 		}))
 		defer server.Close()
 
@@ -297,7 +297,7 @@ func TestCoolifyClient_GetDeployment_Good(t *testing.T) {
 				CommitSHA: "abc123",
 				Branch:    "main",
 			}
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		}))
 		defer server.Close()
 
@@ -315,7 +315,7 @@ func TestCoolifyClient_GetDeployment_Bad(t *testing.T) {
 	t.Run("fails on 404", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Not found"})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Not found"})
 		}))
 		defer server.Close()
 
@@ -337,7 +337,7 @@ func TestCoolifyClient_ListDeployments_Good(t *testing.T) {
 				{ID: "dep-1", Status: "finished"},
 				{ID: "dep-2", Status: "failed"},
 			}
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		}))
 		defer server.Close()
 
@@ -353,7 +353,7 @@ func TestCoolifyClient_ListDeployments_Good(t *testing.T) {
 	t.Run("lists without limit", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "", r.URL.Query().Get("limit"))
-			json.NewEncoder(w).Encode([]CoolifyDeployment{})
+			_ = json.NewEncoder(w).Encode([]CoolifyDeployment{})
 		}))
 		defer server.Close()
 
@@ -370,14 +370,14 @@ func TestCoolifyClient_Rollback_Good(t *testing.T) {
 			assert.Equal(t, "POST", r.Method)
 
 			var body map[string]string
-			json.NewDecoder(r.Body).Decode(&body)
+			_ = json.NewDecoder(r.Body).Decode(&body)
 			assert.Equal(t, "dep-old", body["deployment_id"])
 
 			resp := CoolifyDeployment{
 				ID:     "dep-new",
 				Status: "rolling_back",
 			}
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		}))
 		defer server.Close()
 
@@ -402,7 +402,7 @@ func TestCoolifyClient_GetApp_Good(t *testing.T) {
 				FQDN:   "https://myapp.example.com",
 				Status: "running",
 			}
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		}))
 		defer server.Close()
 
@@ -433,7 +433,7 @@ func TestCoolifyClient_ParseError(t *testing.T) {
 	t.Run("parses message field", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Bad request message"})
+			_ = json.NewEncoder(w).Encode(map[string]string{"message": "Bad request message"})
 		}))
 		defer server.Close()
 
@@ -447,7 +447,7 @@ func TestCoolifyClient_ParseError(t *testing.T) {
 	t.Run("parses error field", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Error message"})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "Error message"})
 		}))
 		defer server.Close()
 
@@ -461,7 +461,7 @@ func TestCoolifyClient_ParseError(t *testing.T) {
 	t.Run("returns raw body when no JSON fields", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Raw error message"))
+			_, _ = w.Write([]byte("Raw error message"))
 		}))
 		defer server.Close()
 
@@ -486,12 +486,12 @@ COOLIFY_TOKEN=file-token`
 		origURL := os.Getenv("COOLIFY_URL")
 		origToken := os.Getenv("COOLIFY_TOKEN")
 		defer func() {
-			os.Setenv("COOLIFY_URL", origURL)
-			os.Setenv("COOLIFY_TOKEN", origToken)
+			_ = os.Setenv("COOLIFY_URL", origURL)
+			_ = os.Setenv("COOLIFY_TOKEN", origToken)
 		}()
 
-		os.Setenv("COOLIFY_URL", "https://from-env.com")
-		os.Setenv("COOLIFY_TOKEN", "env-token")
+		_ = os.Setenv("COOLIFY_URL", "https://from-env.com")
+		_ = os.Setenv("COOLIFY_TOKEN", "env-token")
 
 		config, err := LoadCoolifyConfig(dir)
 		assert.NoError(t, err)

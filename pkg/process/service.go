@@ -159,7 +159,7 @@ func (s *Service) StartWithOptions(ctx context.Context, opts RunOptions) (*Proce
 	s.mu.Unlock()
 
 	// Broadcast start
-	s.Core().ACTION(ActionProcessStarted{
+	_ = s.Core().ACTION(ActionProcessStarted{
 		ID:      id,
 		Command: opts.Command,
 		Args:    opts.Args,
@@ -214,7 +214,7 @@ func (s *Service) StartWithOptions(ctx context.Context, opts RunOptions) (*Proce
 		if status == StatusFailed {
 			exitErr = err
 		}
-		s.Core().ACTION(ActionProcessExited{
+		_ = s.Core().ACTION(ActionProcessExited{
 			ID:       id,
 			ExitCode: exitCode,
 			Duration: duration,
@@ -236,11 +236,11 @@ func (s *Service) streamOutput(proc *Process, r io.Reader, stream Stream) {
 
 		// Write to ring buffer
 		if proc.output != nil {
-			proc.output.Write([]byte(line + "\n"))
+			_, _ = proc.output.Write([]byte(line + "\n"))
 		}
 
 		// Broadcast output
-		s.Core().ACTION(ActionProcessOutput{
+		_ = s.Core().ACTION(ActionProcessOutput{
 			ID:     proc.ID,
 			Line:   line,
 			Stream: stream,
@@ -297,7 +297,7 @@ func (s *Service) Kill(id string) error {
 		return err
 	}
 
-	s.Core().ACTION(ActionProcessKilled{
+	_ = s.Core().ACTION(ActionProcessKilled{
 		ID:     id,
 		Signal: "SIGKILL",
 	})

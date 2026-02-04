@@ -81,7 +81,7 @@ func (g *githubClient) getPublicReposWithAPIURL(ctx context.Context, apiURL, use
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			// Try organization endpoint
 			url = fmt.Sprintf("%s/orgs/%s/repos", apiURL, userOrOrg)
 			req, err = http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -96,16 +96,16 @@ func (g *githubClient) getPublicReposWithAPIURL(ctx context.Context, apiURL, use
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return nil, fmt.Errorf("failed to fetch repos: %s", resp.Status)
 		}
 
 		var repos []Repo
 		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return nil, err
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		for _, repo := range repos {
 			allCloneURLs = append(allCloneURLs, repo.CloneURL)
@@ -152,7 +152,7 @@ func (g *githubClient) GetLatestRelease(ctx context.Context, owner, repo, channe
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch releases: %s", resp.Status)
@@ -207,7 +207,7 @@ func (g *githubClient) GetReleaseByPullRequest(ctx context.Context, owner, repo 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch releases: %s", resp.Status)

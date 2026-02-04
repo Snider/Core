@@ -225,7 +225,7 @@ func (c *SSHClient) Run(ctx context.Context, cmd string) (stdout, stderr string,
 				return "", "", -1, log.E("ssh.Run", "stdin pipe", err)
 			}
 			go func() {
-				defer stdin.Close()
+				defer func() { _ = stdin.Close() }()
 				_, _ = io.WriteString(stdin, c.becomePass+"\n")
 			}()
 		} else if c.password != "" {
@@ -236,7 +236,7 @@ func (c *SSHClient) Run(ctx context.Context, cmd string) (stdout, stderr string,
 				return "", "", -1, log.E("ssh.Run", "stdin pipe", err)
 			}
 			go func() {
-				defer stdin.Close()
+				defer func() { _ = stdin.Close() }()
 				_, _ = io.WriteString(stdin, c.password+"\n")
 			}()
 		} else {
@@ -344,7 +344,7 @@ func (c *SSHClient) Upload(ctx context.Context, local io.Reader, remote string, 
 		}
 
 		go func() {
-			defer stdin.Close()
+			defer func() { _ = stdin.Close() }()
 			if pass != "" {
 				_, _ = io.WriteString(stdin, pass+"\n")
 			}
@@ -357,7 +357,7 @@ func (c *SSHClient) Upload(ctx context.Context, local io.Reader, remote string, 
 		}
 
 		go func() {
-			defer stdin.Close()
+			defer func() { _ = stdin.Close() }()
 			_, _ = stdin.Write(content)
 		}()
 	}

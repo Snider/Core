@@ -1428,10 +1428,7 @@ func (e *Executor) moduleDockerCompose(ctx context.Context, client *SSHClient, a
 	}
 
 	// Heuristic for changed
-	changed := true
-	if strings.Contains(stdout, "Up to date") || strings.Contains(stderr, "Up to date") {
-		changed = false
-	}
+	changed := !strings.Contains(stdout, "Up to date") && !strings.Contains(stderr, "Up to date")
 
 	return &TaskResult{Changed: changed, Stdout: stdout}, nil
 }

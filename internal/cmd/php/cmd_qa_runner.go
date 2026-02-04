@@ -146,7 +146,7 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		pestBin := filepath.Join(r.dir, "vendor", "bin", "pest")
 		phpunitBin := filepath.Join(r.dir, "vendor", "bin", "phpunit")
 
-		cmd := "pest"
+		var cmd string
 		if _, err := os.Stat(pestBin); err == nil {
 			cmd = pestBin
 		} else if _, err := os.Stat(phpunitBin); err == nil {

@@ -74,7 +74,7 @@ func TestClient_ListTasks_Good(t *testing.T) {
 		assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testTasks)
+		_ = json.NewEncoder(w).Encode(testTasks)
 	}))
 	defer server.Close()
 
@@ -97,7 +97,7 @@ func TestClient_ListTasks_Good_WithFilters(t *testing.T) {
 		assert.Equal(t, "bug,urgent", query.Get("labels"))
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode([]Task{testTask})
+		_ = json.NewEncoder(w).Encode([]Task{testTask})
 	}))
 	defer server.Close()
 
@@ -119,7 +119,7 @@ func TestClient_ListTasks_Good_WithFilters(t *testing.T) {
 func TestClient_ListTasks_Bad_ServerError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(APIError{Message: "internal error"})
+		_ = json.NewEncoder(w).Encode(APIError{Message: "internal error"})
 	}))
 	defer server.Close()
 
@@ -137,7 +137,7 @@ func TestClient_GetTask_Good(t *testing.T) {
 		assert.Equal(t, "/api/tasks/task-123", r.URL.Path)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testTask)
+		_ = json.NewEncoder(w).Encode(testTask)
 	}))
 	defer server.Close()
 
@@ -162,7 +162,7 @@ func TestClient_GetTask_Bad_EmptyID(t *testing.T) {
 func TestClient_GetTask_Bad_NotFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(APIError{Message: "task not found"})
+		_ = json.NewEncoder(w).Encode(APIError{Message: "task not found"})
 	}))
 	defer server.Close()
 
@@ -184,7 +184,7 @@ func TestClient_ClaimTask_Good(t *testing.T) {
 		assert.Equal(t, "/api/tasks/task-123/claim", r.URL.Path)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ClaimResponse{Task: &claimedTask})
+		_ = json.NewEncoder(w).Encode(ClaimResponse{Task: &claimedTask})
 	}))
 	defer server.Close()
 
@@ -204,7 +204,7 @@ func TestClient_ClaimTask_Good_SimpleResponse(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(claimedTask)
+		_ = json.NewEncoder(w).Encode(claimedTask)
 	}))
 	defer server.Close()
 
@@ -227,7 +227,7 @@ func TestClient_ClaimTask_Bad_EmptyID(t *testing.T) {
 func TestClient_ClaimTask_Bad_AlreadyClaimed(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(APIError{Message: "task already claimed"})
+		_ = json.NewEncoder(w).Encode(APIError{Message: "task already claimed"})
 	}))
 	defer server.Close()
 

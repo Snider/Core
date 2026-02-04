@@ -168,7 +168,7 @@ func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData,
 	if err != nil {
 		return fmt.Errorf("npm.Publish: failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create bin directory
 	binDir := filepath.Join(tmpDir, "bin")

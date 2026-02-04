@@ -66,7 +66,7 @@ func TestBaseService_Logs_Good(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, reader)
-		reader.Close()
+		_ = reader.Close()
 	})
 
 	t.Run("returns tail reader in follow mode", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestBaseService_Logs_Good(t *testing.T) {
 		// Verify it's a tailReader by checking it implements ReadCloser
 		_, ok := reader.(*tailReader)
 		assert.True(t, ok)
-		reader.Close()
+		_ = reader.Close()
 	})
 }
 
@@ -113,7 +113,7 @@ func TestTailReader_Good(t *testing.T) {
 
 		file, err := os.Open(logPath)
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		reader := newTailReader(file)
 		assert.NotNil(t, reader)
@@ -147,7 +147,7 @@ func TestTailReader_Good(t *testing.T) {
 		require.NoError(t, err)
 
 		reader := newTailReader(file)
-		reader.Close()
+		_ = reader.Close()
 
 		buf := make([]byte, 100)
 		n, _ := reader.Read(buf)

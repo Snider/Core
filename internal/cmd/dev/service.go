@@ -176,7 +176,7 @@ func (s *Service) runWork(task TaskWork) error {
 	cli.Blank()
 	cli.Print("Push all? [y/N] ")
 	var answer string
-	cli.Scanln(&answer)
+	_, _ = cli.Scanln(&answer)
 	if strings.ToLower(answer) != "y" {
 		cli.Println("Aborted")
 		return nil

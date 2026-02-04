@@ -23,7 +23,7 @@ func Checksum(artifact Artifact) (Artifact, error) {
 	if err != nil {
 		return Artifact{}, fmt.Errorf("build.Checksum: failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Compute SHA256 hash
 	hasher := sha256.New()

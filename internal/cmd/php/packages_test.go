@@ -506,7 +506,7 @@ func TestUpdatePackages_Good(t *testing.T) {
 		err := os.WriteFile(filepath.Join(projectDir, "composer.json"), []byte(`{"name":"test/project"}`), 0644)
 		require.NoError(t, err)
 
-		err = UpdatePackages(projectDir, []string{"vendor/package"})
+		_ = UpdatePackages(projectDir, []string{"vendor/package"})
 		// This will fail because composer update needs real dependencies
 		// but it validates the command runs
 	})

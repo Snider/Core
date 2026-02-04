@@ -2,6 +2,7 @@ package publishers
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -246,7 +247,7 @@ func TestDockerPublisher_Publish_Bad(t *testing.T) {
 		}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Dockerfile not found")
 	})
@@ -293,7 +294,7 @@ func TestDockerPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(release, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -338,7 +339,7 @@ func TestDockerPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(release, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -371,7 +372,7 @@ func TestDockerPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(release, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -569,7 +570,7 @@ func TestDockerPublisher_Publish_DryRun_Good(t *testing.T) {
 		// Create temp directory with Dockerfile
 		tmpDir, err := os.MkdirTemp("", "docker-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		dockerfilePath := filepath.Join(tmpDir, "Dockerfile")
 		err = os.WriteFile(dockerfilePath, []byte("FROM alpine:latest\n"), 0644)
@@ -586,9 +587,9 @@ func TestDockerPublisher_Publish_DryRun_Good(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err = p.Publish(nil, release, pubCfg, relCfg, true)
+		err = p.Publish(context.TODO(), release, pubCfg, relCfg, true)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -602,7 +603,7 @@ func TestDockerPublisher_Publish_DryRun_Good(t *testing.T) {
 		// Create temp directory with custom Dockerfile
 		tmpDir, err := os.MkdirTemp("", "docker-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		customDir := filepath.Join(tmpDir, "docker")
 		err = os.MkdirAll(customDir, 0755)
@@ -628,9 +629,9 @@ func TestDockerPublisher_Publish_DryRun_Good(t *testing.T) {
 		}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err = p.Publish(nil, release, pubCfg, relCfg, true)
+		err = p.Publish(context.TODO(), release, pubCfg, relCfg, true)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -656,7 +657,7 @@ func TestDockerPublisher_Publish_Validation_Bad(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Dockerfile not found")
 	})
@@ -673,7 +674,7 @@ func TestDockerPublisher_Publish_Validation_Bad(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "docker CLI not found")
 	})
@@ -701,7 +702,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 	t.Run("dry run succeeds with all config options", func(t *testing.T) {
 		tmpDir, err := os.MkdirTemp("", "docker-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		dockerfilePath := filepath.Join(tmpDir, "Dockerfile")
 		err = os.WriteFile(dockerfilePath, []byte("FROM alpine:latest\n"), 0644)
@@ -727,9 +728,9 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 		}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err = p.Publish(nil, release, pubCfg, relCfg, true)
+		err = p.Publish(context.TODO(), release, pubCfg, relCfg, true)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -744,7 +745,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 	t.Run("dry run with nil relCfg uses extended image", func(t *testing.T) {
 		tmpDir, err := os.MkdirTemp("", "docker-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		dockerfilePath := filepath.Join(tmpDir, "Dockerfile")
 		err = os.WriteFile(dockerfilePath, []byte("FROM alpine:latest\n"), 0644)
@@ -765,9 +766,9 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 			},
 		}
 
-		err = p.Publish(nil, release, pubCfg, nil, true) // nil relCfg
+		err = p.Publish(context.TODO(), release, pubCfg, nil, true) // nil relCfg
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -780,7 +781,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 	t.Run("fails with non-existent Dockerfile in non-dry-run", func(t *testing.T) {
 		tmpDir, err := os.MkdirTemp("", "docker-test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		// Don't create a Dockerfile
 		release := &Release{
@@ -790,7 +791,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err = p.Publish(nil, release, pubCfg, relCfg, false)
+		err = p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Dockerfile not found")
 	})

@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -142,7 +143,7 @@ func handleDevUpdate(currentVersion string) error {
 	client := NewGithubClient()
 
 	// Fetch the dev release directly by tag
-	release, err := client.GetLatestRelease(nil, repoOwner, repoName, "beta")
+	release, err := client.GetLatestRelease(context.TODO(), repoOwner, repoName, "beta")
 	if err != nil {
 		// Try fetching the "dev" tag directly
 		return handleDevTagUpdate(currentVersion)

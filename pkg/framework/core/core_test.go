@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"embed"
 	"io"
 	"testing"
@@ -123,9 +124,6 @@ func TestFeatures_IsEnabled_Good(t *testing.T) {
 	assert.False(t, c.Features.IsEnabled("feature3"))
 }
 
-type startupMessage struct{}
-type shutdownMessage struct{}
-
 func TestCore_ServiceLifecycle_Good(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
@@ -138,12 +136,12 @@ func TestCore_ServiceLifecycle_Good(t *testing.T) {
 	c.RegisterAction(handler)
 
 	// Test Startup
-	_ = c.ServiceStartup(nil, nil)
+	_ = c.ServiceStartup(context.TODO(), nil)
 	_, ok := messageReceived.(ActionServiceStartup)
 	assert.True(t, ok, "expected ActionServiceStartup message")
 
 	// Test Shutdown
-	_ = c.ServiceShutdown(nil)
+	_ = c.ServiceShutdown(context.TODO())
 	_, ok = messageReceived.(ActionServiceShutdown)
 	assert.True(t, ok, "expected ActionServiceShutdown message")
 }
@@ -164,7 +162,7 @@ func TestCore_WithAssets_Good(t *testing.T) {
 	assets := c.Assets()
 	file, err := assets.Open("testdata/test.txt")
 	assert.NoError(t, err)
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	content, err := io.ReadAll(file)
 	assert.NoError(t, err)
 	assert.Equal(t, "hello from testdata\n", string(content))

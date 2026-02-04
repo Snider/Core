@@ -32,7 +32,7 @@ func QueryRAGForTask(task TaskInfo) string {
 	if err != nil {
 		return ""
 	}
-	defer qdrantClient.Close()
+	defer func() { _ = qdrantClient.Close() }()
 
 	ollamaCfg := rag.DefaultOllamaConfig()
 	ollamaClient, err := rag.NewOllamaClient(ollamaCfg)

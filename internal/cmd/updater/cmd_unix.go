@@ -36,10 +36,8 @@ func spawnWatcher() error {
 // watchAndRestart waits for the given PID to exit, then restarts the binary.
 func watchAndRestart(pid int) error {
 	// Wait for the parent process to die
-	for {
-		if !isProcessRunning(pid) {
-			break
-		}
+	for isProcessRunning(pid) {
+
 		time.Sleep(100 * time.Millisecond)
 	}
 

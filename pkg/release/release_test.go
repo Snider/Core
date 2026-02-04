@@ -175,7 +175,7 @@ func TestGetBuilder_Bad(t *testing.T) {
 	t.Run("returns error for Node project type", func(t *testing.T) {
 		_, err := getBuilder(build.ProjectTypeNode)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Node.js builder not yet implemented")
+		assert.Contains(t, err.Error(), "node.js builder not yet implemented")
 	})
 
 	t.Run("returns error for PHP project type", func(t *testing.T) {

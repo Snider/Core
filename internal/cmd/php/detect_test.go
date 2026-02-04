@@ -197,7 +197,7 @@ return [
 		octanePath := filepath.Join(configDir, "octane.php")
 		err = os.WriteFile(octanePath, []byte("<?php return [];"), 0000)
 		require.NoError(t, err)
-		defer os.Chmod(octanePath, 0644) // Clean up
+		defer func() { _ = os.Chmod(octanePath, 0644) }() // Clean up
 
 		// Should return true (assume frankenphp if unreadable)
 		assert.True(t, IsFrankenPHPProject(dir))

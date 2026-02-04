@@ -196,7 +196,7 @@ func (p *ScoopPublisher) commitToBucket(ctx context.Context, bucket string, data
 	if err != nil {
 		return fmt.Errorf("scoop.Publish: failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	fmt.Printf("Cloning bucket %s...\n", bucket)
 	cmd := exec.CommandContext(ctx, "gh", "repo", "clone", bucket, tmpDir, "--", "--depth=1")

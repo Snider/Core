@@ -2,6 +2,7 @@ package publishers
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -235,7 +236,7 @@ func TestHomebrewPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -272,7 +273,7 @@ func TestHomebrewPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -301,7 +302,7 @@ func TestHomebrewPublisher_DryRunPublish_Good(t *testing.T) {
 
 		err := p.dryRunPublish(data, cfg)
 
-		w.Close()
+		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = buf.ReadFrom(r)
 		os.Stdout = oldStdout
@@ -323,7 +324,7 @@ func TestHomebrewPublisher_Publish_Bad(t *testing.T) {
 		pubCfg := PublisherConfig{Type: "homebrew"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
 
-		err := p.Publish(nil, release, pubCfg, relCfg, false)
+		err := p.Publish(context.TODO(), release, pubCfg, relCfg, false)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "tap is required")
 	})
