@@ -19,6 +19,12 @@ jobs:
             const { owner, repo } = context.repo;
             const author = context.payload.pull_request.user.login;
 
+            // Allow internal PRs (branches in the same repository)
+            if (context.payload.pull_request.head.repo.full_name === owner + '/' + repo) {
+              core.info('Internal PR from same repository — gate passed');
+              return;
+            }
+
             // Check if author is an org member
             try {
               await github.rest.orgs.checkMembershipForUser({
