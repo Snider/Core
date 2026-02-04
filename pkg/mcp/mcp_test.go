@@ -144,9 +144,12 @@ func TestSandboxing_Traversal_Sanitized(t *testing.T) {
 		t.Error("Expected error (file not found)")
 	}
 
-	// Absolute paths are allowed through - they access the real filesystem.
-	// This is intentional for full filesystem access. Callers wanting sandboxing
-	// should validate inputs before calling Medium.
+	// Absolute paths are also sandboxed under the root directory.
+	// For example, /etc/passwd becomes <root>/etc/passwd.
+	_, err = s.medium.Read("/etc/passwd")
+	if err == nil {
+		t.Error("Expected error (file not found in sandbox)")
+	}
 }
 
 func TestSandboxing_Symlinks_Blocked(t *testing.T) {
