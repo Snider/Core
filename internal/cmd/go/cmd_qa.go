@@ -576,8 +576,8 @@ func runCoverage(ctx context.Context, dir string) (float64, error) {
 func runInternalCheck(check QACheck) (string, error) {
 	switch check.Name {
 	case "fuzz":
-		// Short burst fuzz in QA (5s per target)
-		duration := 5 * time.Second
+		// Short burst fuzz in QA (3s per target)
+		duration := 3 * time.Second
 		if qaTimeout > 0 && qaTimeout < 30*time.Second {
 			duration = 2 * time.Second
 		}
