@@ -55,10 +55,6 @@ func NewLinuxKitManagerWithHypervisor(m io.Medium, state *State, hypervisor Hype
 
 // Run starts a new LinuxKit VM from the given image.
 func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions) (*Container, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	// Validate image exists
 	if !m.medium.IsFile(image) {
 		return nil, fmt.Errorf("image not found: %s", image)
@@ -239,10 +235,6 @@ func (m *LinuxKitManager) waitForExit(id string, cmd *exec.Cmd) {
 
 // Stop stops a running container by sending SIGTERM.
 func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
 	container, ok := m.state.Get(id)
 	if !ok {
 		return fmt.Errorf("container not found: %s", id)
@@ -301,10 +293,6 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 
 // List returns all known containers, verifying process state.
 func (m *LinuxKitManager) List(ctx context.Context) ([]*Container, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	containers := m.state.All()
 
 	// Verify each running container's process is still alive
@@ -334,10 +322,6 @@ func isProcessRunning(pid int) bool {
 
 // Logs returns a reader for the container's log output.
 func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (goio.ReadCloser, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	_, ok := m.state.Get(id)
 	if !ok {
 		return nil, fmt.Errorf("container not found: %s", id)
@@ -354,31 +338,30 @@ func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (goi
 
 	if !follow {
 		// Simple case: just open and return the file
-		// Note: io.Medium doesn't have Open, and LinuxKit currently assumes local execution
-		// for hypervisors and logs.
-		return os.Open(logPath)
+		return m.medium.Open(logPath)
 	}
 
 	// Follow mode: create a reader that tails the file
-	return newFollowReader(ctx, logPath)
+	return newFollowReader(ctx, m.medium, logPath)
 }
 
 // followReader implements goio.ReadCloser for following log files.
 type followReader struct {
-	file   *os.File
+	file   goio.ReadCloser
 	ctx    context.Context
 	cancel context.CancelFunc
 	reader *bufio.Reader
+	medium io.Medium
+	path   string
 }
 
-func newFollowReader(ctx context.Context, path string) (*followReader, error) {
-	file, err := os.Open(path)
+func newFollowReader(ctx context.Context, m io.Medium, path string) (*followReader, error) {
+	file, err := m.Open(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Seek to end
-	_, _ = file.Seek(0, goio.SeekEnd)
+	// Note: We don't seek here because Medium.Open doesn't guarantee Seekability.
 
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -387,6 +370,8 @@ func newFollowReader(ctx context.Context, path string) (*followReader, error) {
 		ctx:    ctx,
 		cancel: cancel,
 		reader: bufio.NewReader(file),
+		medium: m,
+		path:   path,
 	}, nil
 }
 
@@ -424,10 +409,6 @@ func (f *followReader) Close() error {
 
 // Exec executes a command inside the container via SSH.
 func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
 	container, ok := m.state.Get(id)
 	if !ok {
 		return fmt.Errorf("container not found: %s", id)

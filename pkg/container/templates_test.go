@@ -400,7 +400,6 @@ func TestVariablePatternEdgeCases_Good(t *testing.T) {
 }
 
 func TestListTemplates_Good_WithUserTemplates(t *testing.T) {
-	tm := NewTemplateManager(io.Local)
 	// Create a workspace directory with user templates
 	tmpDir := t.TempDir()
 	coreDir := filepath.Join(tmpDir, ".core", "linuxkit")
@@ -415,13 +414,7 @@ kernel:
 	err = os.WriteFile(filepath.Join(coreDir, "user-custom.yml"), []byte(templateContent), 0644)
 	require.NoError(t, err)
 
-	// Change to the temp directory
-	oldWd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(tmpDir)
-	require.NoError(t, err)
-	defer func() { _ = os.Chdir(oldWd) }()
-
+	tm := NewTemplateManager(io.Local).WithWorkingDir(tmpDir)
 	templates := tm.ListTemplates()
 
 	// Should have at least the builtin templates plus the user template
@@ -440,7 +433,6 @@ kernel:
 }
 
 func TestGetTemplate_Good_UserTemplate(t *testing.T) {
-	tm := NewTemplateManager(io.Local)
 	// Create a workspace directory with user templates
 	tmpDir := t.TempDir()
 	coreDir := filepath.Join(tmpDir, ".core", "linuxkit")
@@ -457,18 +449,35 @@ services:
 	err = os.WriteFile(filepath.Join(coreDir, "my-user-template.yml"), []byte(templateContent), 0644)
 	require.NoError(t, err)
 
-	// Change to the temp directory
-	oldWd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(tmpDir)
-	require.NoError(t, err)
-	defer func() { _ = os.Chdir(oldWd) }()
-
+	tm := NewTemplateManager(io.Local).WithWorkingDir(tmpDir)
 	content, err := tm.GetTemplate("my-user-template")
 
 	require.NoError(t, err)
 	assert.Contains(t, content, "kernel:")
 	assert.Contains(t, content, "My user template")
+}
+
+func TestGetTemplate_Good_UserTemplate_YamlExtension(t *testing.T) {
+	// Create a workspace directory with user templates
+	tmpDir := t.TempDir()
+	coreDir := filepath.Join(tmpDir, ".core", "linuxkit")
+	err := os.MkdirAll(coreDir, 0755)
+	require.NoError(t, err)
+
+	// Create a user template with .yaml extension
+	templateContent := `# My yaml template
+kernel:
+  image: linuxkit/kernel:6.6
+`
+	err = os.WriteFile(filepath.Join(coreDir, "my-yaml-template.yaml"), []byte(templateContent), 0644)
+	require.NoError(t, err)
+
+	tm := NewTemplateManager(io.Local).WithWorkingDir(tmpDir)
+	content, err := tm.GetTemplate("my-yaml-template")
+
+	require.NoError(t, err)
+	assert.Contains(t, content, "kernel:")
+	assert.Contains(t, content, "My yaml template")
 }
 
 func TestScanUserTemplates_Good_SkipsBuiltinNames(t *testing.T) {
@@ -571,22 +580,10 @@ kernel:
 }
 
 func TestGetUserTemplatesDir_Good_NoDirectory(t *testing.T) {
-	tm := NewTemplateManager(io.Local)
-	// Save current working directory
-	oldWd, err := os.Getwd()
-	require.NoError(t, err)
-
-	// Create a temp directory without .core/linuxkit
-	tmpDir := t.TempDir()
-	err = os.Chdir(tmpDir)
-	require.NoError(t, err)
-	defer func() { _ = os.Chdir(oldWd) }()
-
+	tm := NewTemplateManager(io.Local).WithWorkingDir("/tmp/nonexistent-wd").WithHomeDir("/tmp/nonexistent-home")
 	dir := tm.getUserTemplatesDir()
 
-	// Should return empty string since no templates dir exists
-	// (unless home dir has one)
-	assert.True(t, dir == "" || strings.Contains(dir, "linuxkit"))
+	assert.Empty(t, dir)
 }
 
 func TestScanUserTemplates_Good_DefaultDescription(t *testing.T) {

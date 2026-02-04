@@ -40,12 +40,37 @@ var builtinTemplates = []Template{
 
 // TemplateManager manages LinuxKit templates using a storage medium.
 type TemplateManager struct {
-	medium io.Medium
+	medium     io.Medium
+	workingDir string
+	homeDir    string
 }
 
 // NewTemplateManager creates a new TemplateManager instance.
 func NewTemplateManager(m io.Medium) *TemplateManager {
-	return &TemplateManager{medium: m}
+	tm := &TemplateManager{medium: m}
+
+	// Default working and home directories from local system
+	// These can be overridden if needed.
+	if wd, err := os.Getwd(); err == nil {
+		tm.workingDir = wd
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		tm.homeDir = home
+	}
+
+	return tm
+}
+
+// WithWorkingDir sets the working directory for user template discovery.
+func (tm *TemplateManager) WithWorkingDir(wd string) *TemplateManager {
+	tm.workingDir = wd
+	return tm
+}
+
+// WithHomeDir sets the home directory for user template discovery.
+func (tm *TemplateManager) WithHomeDir(home string) *TemplateManager {
+	tm.homeDir = home
+	return tm
 }
 
 // ListTemplates returns all available LinuxKit templates.
@@ -82,13 +107,16 @@ func (tm *TemplateManager) GetTemplate(name string) (string, error) {
 	// Check user templates
 	userTemplatesDir := tm.getUserTemplatesDir()
 	if userTemplatesDir != "" {
-		templatePath := filepath.Join(userTemplatesDir, name+".yml")
-		if tm.medium.IsFile(templatePath) {
-			content, err := tm.medium.Read(templatePath)
-			if err != nil {
-				return "", fmt.Errorf("failed to read user template %s: %w", name, err)
+		// Check both .yml and .yaml extensions
+		for _, ext := range []string{".yml", ".yaml"} {
+			templatePath := filepath.Join(userTemplatesDir, name+ext)
+			if tm.medium.IsFile(templatePath) {
+				content, err := tm.medium.Read(templatePath)
+				if err != nil {
+					return "", fmt.Errorf("failed to read user template %s: %w", name, err)
+				}
+				return content, nil
 			}
-			return content, nil
 		}
 	}
 
@@ -200,23 +228,19 @@ func ExtractVariables(content string) (required []string, optional map[string]st
 // Returns empty string if the directory doesn't exist.
 func (tm *TemplateManager) getUserTemplatesDir() string {
 	// Try workspace-relative .core/linuxkit first
-	cwd, err := os.Getwd()
-	if err == nil {
-		wsDir := filepath.Join(cwd, ".core", "linuxkit")
+	if tm.workingDir != "" {
+		wsDir := filepath.Join(tm.workingDir, ".core", "linuxkit")
 		if tm.medium.IsDir(wsDir) {
 			return wsDir
 		}
 	}
 
 	// Try home directory
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-
-	homeDir := filepath.Join(home, ".core", "linuxkit")
-	if tm.medium.IsDir(homeDir) {
-		return homeDir
+	if tm.homeDir != "" {
+		homeDir := filepath.Join(tm.homeDir, ".core", "linuxkit")
+		if tm.medium.IsDir(homeDir) {
+			return homeDir
+		}
 	}
 
 	return ""

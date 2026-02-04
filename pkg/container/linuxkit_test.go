@@ -476,7 +476,7 @@ func TestFollowReader_Read_Good_WithData(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	reader, err := newFollowReader(ctx, logPath)
+	reader, err := newFollowReader(ctx, io.Local, logPath)
 	require.NoError(t, err)
 	defer func() { _ = reader.Close() }()
 
@@ -507,7 +507,7 @@ func TestFollowReader_Read_Good_ContextCancel(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	reader, err := newFollowReader(ctx, logPath)
+	reader, err := newFollowReader(ctx, io.Local, logPath)
 	require.NoError(t, err)
 
 	// Cancel the context
@@ -529,7 +529,7 @@ func TestFollowReader_Close_Good(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	reader, err := newFollowReader(ctx, logPath)
+	reader, err := newFollowReader(ctx, io.Local, logPath)
 	require.NoError(t, err)
 
 	err = reader.Close()
@@ -543,7 +543,7 @@ func TestFollowReader_Close_Good(t *testing.T) {
 
 func TestNewFollowReader_Bad_FileNotFound(t *testing.T) {
 	ctx := context.Background()
-	_, err := newFollowReader(ctx, "/nonexistent/path/to/file.log")
+	_, err := newFollowReader(ctx, io.Local, "/nonexistent/path/to/file.log")
 
 	assert.Error(t, err)
 }
@@ -682,7 +682,7 @@ func TestFollowReader_Read_Bad_ReaderError(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	reader, err := newFollowReader(ctx, logPath)
+	reader, err := newFollowReader(ctx, io.Local, logPath)
 	require.NoError(t, err)
 
 	// Close the underlying file to cause read errors

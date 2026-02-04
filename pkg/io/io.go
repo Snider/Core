@@ -1,6 +1,7 @@
 package io
 
 import (
+	goio "io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -20,6 +21,9 @@ type Medium interface {
 
 	// Write saves the given content to a file, overwriting it if it exists.
 	Write(path, content string) error
+
+	// Open opens a file for reading.
+	Open(path string) (goio.ReadCloser, error)
 
 	// EnsureDir makes sure a directory exists, creating it if necessary.
 	EnsureDir(path string) error
@@ -167,6 +171,15 @@ func (m *MockMedium) Read(path string) (string, error) {
 func (m *MockMedium) Write(path, content string) error {
 	m.Files[path] = content
 	return nil
+}
+
+// Open opens a file for reading in the mock filesystem.
+func (m *MockMedium) Open(path string) (goio.ReadCloser, error) {
+	content, ok := m.Files[path]
+	if !ok {
+		return nil, coreerr.E("io.MockMedium.Open", "file not found: "+path, os.ErrNotExist)
+	}
+	return goio.NopCloser(strings.NewReader(content)), nil
 }
 
 // EnsureDir records that a directory exists in the mock filesystem.
