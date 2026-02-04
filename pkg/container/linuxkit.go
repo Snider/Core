@@ -17,16 +17,17 @@ import (
 type LinuxKitManager struct {
 	state      *State
 	hypervisor Hypervisor
+	medium     io.Medium
 }
 
 // NewLinuxKitManager creates a new LinuxKit manager with auto-detected hypervisor.
-func NewLinuxKitManager() (*LinuxKitManager, error) {
+func NewLinuxKitManager(m io.Medium) (*LinuxKitManager, error) {
 	statePath, err := DefaultStatePath()
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine state path: %w", err)
 	}
 
-	state, err := LoadState(statePath)
+	state, err := LoadState(m, statePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load state: %w", err)
 	}
@@ -39,21 +40,23 @@ func NewLinuxKitManager() (*LinuxKitManager, error) {
 	return &LinuxKitManager{
 		state:      state,
 		hypervisor: hypervisor,
+		medium:     m,
 	}, nil
 }
 
 // NewLinuxKitManagerWithHypervisor creates a manager with a specific hypervisor.
-func NewLinuxKitManagerWithHypervisor(state *State, hypervisor Hypervisor) *LinuxKitManager {
+func NewLinuxKitManagerWithHypervisor(m io.Medium, state *State, hypervisor Hypervisor) *LinuxKitManager {
 	return &LinuxKitManager{
 		state:      state,
 		hypervisor: hypervisor,
+		medium:     m,
 	}
 }
 
 // Run starts a new LinuxKit VM from the given image.
 func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions) (*Container, error) {
 	// Validate image exists
-	if !io.Local.IsFile(image) {
+	if !m.medium.IsFile(image) {
 		return nil, fmt.Errorf("image not found: %s", image)
 	}
 
@@ -87,7 +90,7 @@ func (m *LinuxKitManager) Run(ctx context.Context, image string, opts RunOptions
 	}
 
 	// Ensure logs directory exists
-	if err := EnsureLogsDir(); err != nil {
+	if err := EnsureLogsDir(m.medium); err != nil {
 		return nil, fmt.Errorf("failed to create logs directory: %w", err)
 	}
 
@@ -329,35 +332,36 @@ func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (goi
 		return nil, fmt.Errorf("failed to determine log path: %w", err)
 	}
 
-	if !io.Local.IsFile(logPath) {
+	if !m.medium.IsFile(logPath) {
 		return nil, fmt.Errorf("no logs available for container: %s", id)
 	}
 
 	if !follow {
 		// Simple case: just open and return the file
-		return os.Open(logPath)
+		return m.medium.Open(logPath)
 	}
 
 	// Follow mode: create a reader that tails the file
-	return newFollowReader(ctx, logPath)
+	return newFollowReader(ctx, m.medium, logPath)
 }
 
 // followReader implements goio.ReadCloser for following log files.
 type followReader struct {
-	file   *os.File
+	file   goio.ReadCloser
 	ctx    context.Context
 	cancel context.CancelFunc
 	reader *bufio.Reader
+	medium io.Medium
+	path   string
 }
 
-func newFollowReader(ctx context.Context, path string) (*followReader, error) {
-	file, err := os.Open(path)
+func newFollowReader(ctx context.Context, m io.Medium, path string) (*followReader, error) {
+	file, err := m.Open(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Seek to end
-	_, _ = file.Seek(0, goio.SeekEnd)
+	// Note: We don't seek here because Medium.Open doesn't guarantee Seekability.
 
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -366,6 +370,8 @@ func newFollowReader(ctx context.Context, path string) (*followReader, error) {
 		ctx:    ctx,
 		cancel: cancel,
 		reader: bufio.NewReader(file),
+		medium: m,
+		path:   path,
 	}, nil
 }
 

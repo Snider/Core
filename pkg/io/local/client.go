@@ -2,6 +2,7 @@
 package local
 
 import (
+	goio "io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -104,6 +105,11 @@ func (m *Medium) Write(p, content string) error {
 		return err
 	}
 	return os.WriteFile(full, []byte(content), 0644)
+}
+
+// Open opens a file for reading.
+func (m *Medium) Open(p string) (goio.ReadCloser, error) {
+	return os.Open(m.path(p))
 }
 
 // EnsureDir creates directory if it doesn't exist.

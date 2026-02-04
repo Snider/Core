@@ -6,12 +6,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListTemplates_Good(t *testing.T) {
-	templates := ListTemplates()
+	tm := NewTemplateManager(io.Local)
+	templates := tm.ListTemplates()
 
 	// Should have at least the builtin templates
 	assert.GreaterOrEqual(t, len(templates), 2)
@@ -42,7 +44,8 @@ func TestListTemplates_Good(t *testing.T) {
 }
 
 func TestGetTemplate_Good_CoreDev(t *testing.T) {
-	content, err := GetTemplate("core-dev")
+	tm := NewTemplateManager(io.Local)
+	content, err := tm.GetTemplate("core-dev")
 
 	require.NoError(t, err)
 	assert.NotEmpty(t, content)
@@ -53,7 +56,8 @@ func TestGetTemplate_Good_CoreDev(t *testing.T) {
 }
 
 func TestGetTemplate_Good_ServerPhp(t *testing.T) {
-	content, err := GetTemplate("server-php")
+	tm := NewTemplateManager(io.Local)
+	content, err := tm.GetTemplate("server-php")
 
 	require.NoError(t, err)
 	assert.NotEmpty(t, content)
@@ -64,7 +68,8 @@ func TestGetTemplate_Good_ServerPhp(t *testing.T) {
 }
 
 func TestGetTemplate_Bad_NotFound(t *testing.T) {
-	_, err := GetTemplate("nonexistent-template")
+	tm := NewTemplateManager(io.Local)
+	_, err := tm.GetTemplate("nonexistent-template")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "template not found")
@@ -162,11 +167,12 @@ func TestApplyVariables_Bad_MultipleMissing(t *testing.T) {
 }
 
 func TestApplyTemplate_Good(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	vars := map[string]string{
 		"SSH_KEY": "ssh-rsa AAAA... user@host",
 	}
 
-	result, err := ApplyTemplate("core-dev", vars)
+	result, err := tm.ApplyTemplate("core-dev", vars)
 
 	require.NoError(t, err)
 	assert.NotEmpty(t, result)
@@ -176,21 +182,23 @@ func TestApplyTemplate_Good(t *testing.T) {
 }
 
 func TestApplyTemplate_Bad_TemplateNotFound(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	vars := map[string]string{
 		"SSH_KEY": "test",
 	}
 
-	_, err := ApplyTemplate("nonexistent", vars)
+	_, err := tm.ApplyTemplate("nonexistent", vars)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "template not found")
 }
 
 func TestApplyTemplate_Bad_MissingVariable(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	// server-php requires SSH_KEY
 	vars := map[string]string{} // Missing required SSH_KEY
 
-	_, err := ApplyTemplate("server-php", vars)
+	_, err := tm.ApplyTemplate("server-php", vars)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing required variables")
@@ -239,6 +247,7 @@ func TestExtractVariables_Good_OnlyDefaults(t *testing.T) {
 }
 
 func TestScanUserTemplates_Good(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	// Create a temporary directory with template files
 	tmpDir := t.TempDir()
 
@@ -255,7 +264,7 @@ kernel:
 	err = os.WriteFile(filepath.Join(tmpDir, "readme.txt"), []byte("Not a template"), 0644)
 	require.NoError(t, err)
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	assert.Len(t, templates, 1)
 	assert.Equal(t, "custom", templates[0].Name)
@@ -263,6 +272,7 @@ kernel:
 }
 
 func TestScanUserTemplates_Good_MultipleTemplates(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 
 	// Create multiple template files
@@ -271,7 +281,7 @@ func TestScanUserTemplates_Good_MultipleTemplates(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "db.yaml"), []byte("# Database Server\nkernel:"), 0644)
 	require.NoError(t, err)
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	assert.Len(t, templates, 2)
 
@@ -285,20 +295,23 @@ func TestScanUserTemplates_Good_MultipleTemplates(t *testing.T) {
 }
 
 func TestScanUserTemplates_Good_EmptyDirectory(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	assert.Empty(t, templates)
 }
 
 func TestScanUserTemplates_Bad_NonexistentDirectory(t *testing.T) {
-	templates := scanUserTemplates("/nonexistent/path/to/templates")
+	tm := NewTemplateManager(io.Local)
+	templates := tm.scanUserTemplates("/nonexistent/path/to/templates")
 
 	assert.Empty(t, templates)
 }
 
 func TestExtractTemplateDescription_Good(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "test.yml")
 
@@ -310,12 +323,13 @@ kernel:
 	err := os.WriteFile(path, []byte(content), 0644)
 	require.NoError(t, err)
 
-	desc := extractTemplateDescription(path)
+	desc := tm.extractTemplateDescription(path)
 
 	assert.Equal(t, "My Template Description", desc)
 }
 
 func TestExtractTemplateDescription_Good_NoComments(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "test.yml")
 
@@ -325,13 +339,14 @@ func TestExtractTemplateDescription_Good_NoComments(t *testing.T) {
 	err := os.WriteFile(path, []byte(content), 0644)
 	require.NoError(t, err)
 
-	desc := extractTemplateDescription(path)
+	desc := tm.extractTemplateDescription(path)
 
 	assert.Empty(t, desc)
 }
 
 func TestExtractTemplateDescription_Bad_FileNotFound(t *testing.T) {
-	desc := extractTemplateDescription("/nonexistent/file.yml")
+	tm := NewTemplateManager(io.Local)
+	desc := tm.extractTemplateDescription("/nonexistent/file.yml")
 
 	assert.Empty(t, desc)
 }
@@ -399,14 +414,8 @@ kernel:
 	err = os.WriteFile(filepath.Join(coreDir, "user-custom.yml"), []byte(templateContent), 0644)
 	require.NoError(t, err)
 
-	// Change to the temp directory
-	oldWd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(tmpDir)
-	require.NoError(t, err)
-	defer func() { _ = os.Chdir(oldWd) }()
-
-	templates := ListTemplates()
+	tm := NewTemplateManager(io.Local).WithWorkingDir(tmpDir)
+	templates := tm.ListTemplates()
 
 	// Should have at least the builtin templates plus the user template
 	assert.GreaterOrEqual(t, len(templates), 3)
@@ -440,21 +449,39 @@ services:
 	err = os.WriteFile(filepath.Join(coreDir, "my-user-template.yml"), []byte(templateContent), 0644)
 	require.NoError(t, err)
 
-	// Change to the temp directory
-	oldWd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(tmpDir)
-	require.NoError(t, err)
-	defer func() { _ = os.Chdir(oldWd) }()
-
-	content, err := GetTemplate("my-user-template")
+	tm := NewTemplateManager(io.Local).WithWorkingDir(tmpDir)
+	content, err := tm.GetTemplate("my-user-template")
 
 	require.NoError(t, err)
 	assert.Contains(t, content, "kernel:")
 	assert.Contains(t, content, "My user template")
 }
 
+func TestGetTemplate_Good_UserTemplate_YamlExtension(t *testing.T) {
+	// Create a workspace directory with user templates
+	tmpDir := t.TempDir()
+	coreDir := filepath.Join(tmpDir, ".core", "linuxkit")
+	err := os.MkdirAll(coreDir, 0755)
+	require.NoError(t, err)
+
+	// Create a user template with .yaml extension
+	templateContent := `# My yaml template
+kernel:
+  image: linuxkit/kernel:6.6
+`
+	err = os.WriteFile(filepath.Join(coreDir, "my-yaml-template.yaml"), []byte(templateContent), 0644)
+	require.NoError(t, err)
+
+	tm := NewTemplateManager(io.Local).WithWorkingDir(tmpDir)
+	content, err := tm.GetTemplate("my-yaml-template")
+
+	require.NoError(t, err)
+	assert.Contains(t, content, "kernel:")
+	assert.Contains(t, content, "My yaml template")
+}
+
 func TestScanUserTemplates_Good_SkipsBuiltinNames(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 
 	// Create a template with a builtin name (should be skipped)
@@ -465,7 +492,7 @@ func TestScanUserTemplates_Good_SkipsBuiltinNames(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "unique.yml"), []byte("# Unique\nkernel:"), 0644)
 	require.NoError(t, err)
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	// Should only have the unique template, not the builtin name
 	assert.Len(t, templates, 1)
@@ -473,6 +500,7 @@ func TestScanUserTemplates_Good_SkipsBuiltinNames(t *testing.T) {
 }
 
 func TestScanUserTemplates_Good_SkipsDirectories(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 
 	// Create a subdirectory (should be skipped)
@@ -483,13 +511,14 @@ func TestScanUserTemplates_Good_SkipsDirectories(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "valid.yml"), []byte("# Valid\nkernel:"), 0644)
 	require.NoError(t, err)
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	assert.Len(t, templates, 1)
 	assert.Equal(t, "valid", templates[0].Name)
 }
 
 func TestScanUserTemplates_Good_YamlExtension(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 
 	// Create templates with both extensions
@@ -498,7 +527,7 @@ func TestScanUserTemplates_Good_YamlExtension(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "template2.yaml"), []byte("# Template 2\nkernel:"), 0644)
 	require.NoError(t, err)
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	assert.Len(t, templates, 2)
 
@@ -511,6 +540,7 @@ func TestScanUserTemplates_Good_YamlExtension(t *testing.T) {
 }
 
 func TestExtractTemplateDescription_Good_EmptyComment(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "test.yml")
 
@@ -523,12 +553,13 @@ kernel:
 	err := os.WriteFile(path, []byte(content), 0644)
 	require.NoError(t, err)
 
-	desc := extractTemplateDescription(path)
+	desc := tm.extractTemplateDescription(path)
 
 	assert.Equal(t, "Actual description here", desc)
 }
 
 func TestExtractTemplateDescription_Good_MultipleEmptyComments(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "test.yml")
 
@@ -543,30 +574,20 @@ kernel:
 	err := os.WriteFile(path, []byte(content), 0644)
 	require.NoError(t, err)
 
-	desc := extractTemplateDescription(path)
+	desc := tm.extractTemplateDescription(path)
 
 	assert.Equal(t, "Real description", desc)
 }
 
 func TestGetUserTemplatesDir_Good_NoDirectory(t *testing.T) {
-	// Save current working directory
-	oldWd, err := os.Getwd()
-	require.NoError(t, err)
+	tm := NewTemplateManager(io.Local).WithWorkingDir("/tmp/nonexistent-wd").WithHomeDir("/tmp/nonexistent-home")
+	dir := tm.getUserTemplatesDir()
 
-	// Create a temp directory without .core/linuxkit
-	tmpDir := t.TempDir()
-	err = os.Chdir(tmpDir)
-	require.NoError(t, err)
-	defer func() { _ = os.Chdir(oldWd) }()
-
-	dir := getUserTemplatesDir()
-
-	// Should return empty string since no templates dir exists
-	// (unless home dir has one)
-	assert.True(t, dir == "" || strings.Contains(dir, "linuxkit"))
+	assert.Empty(t, dir)
 }
 
 func TestScanUserTemplates_Good_DefaultDescription(t *testing.T) {
+	tm := NewTemplateManager(io.Local)
 	tmpDir := t.TempDir()
 
 	// Create a template without comments
@@ -576,7 +597,7 @@ func TestScanUserTemplates_Good_DefaultDescription(t *testing.T) {
 	err := os.WriteFile(filepath.Join(tmpDir, "nocomment.yml"), []byte(content), 0644)
 	require.NoError(t, err)
 
-	templates := scanUserTemplates(tmpDir)
+	templates := tm.scanUserTemplates(tmpDir)
 
 	assert.Len(t, templates, 1)
 	assert.Equal(t, "User-defined template", templates[0].Description)

@@ -6,12 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewState_Good(t *testing.T) {
-	state := NewState("/tmp/test-state.json")
+	state := NewState(io.Local, "/tmp/test-state.json")
 
 	assert.NotNil(t, state)
 	assert.NotNil(t, state.Containers)
@@ -23,7 +24,7 @@ func TestLoadState_Good_NewFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	statePath := filepath.Join(tmpDir, "containers.json")
 
-	state, err := LoadState(statePath)
+	state, err := LoadState(io.Local, statePath)
 
 	require.NoError(t, err)
 	assert.NotNil(t, state)
@@ -50,7 +51,7 @@ func TestLoadState_Good_ExistingFile(t *testing.T) {
 	err := os.WriteFile(statePath, []byte(content), 0644)
 	require.NoError(t, err)
 
-	state, err := LoadState(statePath)
+	state, err := LoadState(io.Local, statePath)
 
 	require.NoError(t, err)
 	assert.Len(t, state.Containers, 1)
@@ -69,14 +70,14 @@ func TestLoadState_Bad_InvalidJSON(t *testing.T) {
 	err := os.WriteFile(statePath, []byte("invalid json{"), 0644)
 	require.NoError(t, err)
 
-	_, err = LoadState(statePath)
+	_, err = LoadState(io.Local, statePath)
 	assert.Error(t, err)
 }
 
 func TestState_Add_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state := NewState(statePath)
+	state := NewState(io.Local, statePath)
 
 	container := &Container{
 		ID:        "abc12345",
@@ -103,7 +104,7 @@ func TestState_Add_Good(t *testing.T) {
 func TestState_Update_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state := NewState(statePath)
+	state := NewState(io.Local, statePath)
 
 	container := &Container{
 		ID:     "abc12345",
@@ -125,7 +126,7 @@ func TestState_Update_Good(t *testing.T) {
 func TestState_Remove_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state := NewState(statePath)
+	state := NewState(io.Local, statePath)
 
 	container := &Container{
 		ID: "abc12345",
@@ -140,7 +141,7 @@ func TestState_Remove_Good(t *testing.T) {
 }
 
 func TestState_Get_Bad_NotFound(t *testing.T) {
-	state := NewState("/tmp/test-state.json")
+	state := NewState(io.Local, "/tmp/test-state.json")
 
 	_, ok := state.Get("nonexistent")
 	assert.False(t, ok)
@@ -149,7 +150,7 @@ func TestState_Get_Bad_NotFound(t *testing.T) {
 func TestState_All_Good(t *testing.T) {
 	tmpDir := t.TempDir()
 	statePath := filepath.Join(tmpDir, "containers.json")
-	state := NewState(statePath)
+	state := NewState(io.Local, statePath)
 
 	_ = state.Add(&Container{ID: "aaa11111"})
 	_ = state.Add(&Container{ID: "bbb22222"})
@@ -162,7 +163,7 @@ func TestState_All_Good(t *testing.T) {
 func TestState_SaveState_Good_CreatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 	nestedPath := filepath.Join(tmpDir, "nested", "dir", "containers.json")
-	state := NewState(nestedPath)
+	state := NewState(io.Local, nestedPath)
 
 	_ = state.Add(&Container{ID: "abc12345"})
 
@@ -200,7 +201,7 @@ func TestLogPath_Good(t *testing.T) {
 
 func TestEnsureLogsDir_Good(t *testing.T) {
 	// This test creates real directories - skip in CI if needed
-	err := EnsureLogsDir()
+	err := EnsureLogsDir(io.Local)
 	assert.NoError(t, err)
 
 	logsDir, _ := DefaultLogsDir()

@@ -33,7 +33,7 @@ func New(m io.Medium) (*DevOps, error) {
 		return nil, fmt.Errorf("devops.New: failed to create image manager: %w", err)
 	}
 
-	mgr, err := container.NewLinuxKitManager()
+	mgr, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return nil, fmt.Errorf("devops.New: failed to create container manager: %w", err)
 	}
