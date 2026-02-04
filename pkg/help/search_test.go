@@ -209,8 +209,8 @@ Finally, some closing remarks about the configuration.`
 
 	t.Run("finds match and extracts context", func(t *testing.T) {
 		snippet := extractSnippet(content, []string{"installation"})
-		assert.Contains(t, snippet, "installation")
-		assert.True(t, len(snippet) <= 200, "Snippet should be reasonably short")
+		assert.Contains(t, snippet, "**installation**")
+		assert.True(t, len(snippet) <= 250, "Snippet should be reasonably short")
 	})
 
 	t.Run("no query words returns start", func(t *testing.T) {
@@ -221,6 +221,35 @@ Finally, some closing remarks about the configuration.`
 	t.Run("empty content", func(t *testing.T) {
 		snippet := extractSnippet("", []string{"test"})
 		assert.Empty(t, snippet)
+	})
+}
+
+func TestExtractSnippet_Highlighting(t *testing.T) {
+	content := "The quick brown fox jumps over the lazy dog."
+
+	t.Run("simple highlighting", func(t *testing.T) {
+		snippet := extractSnippet(content, []string{"quick", "fox"})
+		assert.Contains(t, snippet, "**quick**")
+		assert.Contains(t, snippet, "**fox**")
+	})
+
+	t.Run("case insensitive highlighting", func(t *testing.T) {
+		snippet := extractSnippet(content, []string{"QUICK", "Fox"})
+		assert.Contains(t, snippet, "**quick**")
+		assert.Contains(t, snippet, "**fox**")
+	})
+
+	t.Run("partial word matching", func(t *testing.T) {
+		content := "The configuration is complete."
+		snippet := extractSnippet(content, []string{"config"})
+		assert.Contains(t, snippet, "**config**uration")
+	})
+
+	t.Run("overlapping matches", func(t *testing.T) {
+		content := "Searching for something."
+		// Both "search" and "searching" match
+		snippet := extractSnippet(content, []string{"search", "searching"})
+		assert.Equal(t, "**Searching** for something.", snippet)
 	})
 }
 
