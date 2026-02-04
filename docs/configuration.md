@@ -355,3 +355,23 @@ If no configuration exists, sensible defaults are used:
 - **Targets**: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64
 - **Publishers**: GitHub only
 - **Changelog**: feat, fix, perf, refactor included
+
+## Logging
+
+Logging can be configured to rotate and retain logs automatically.
+
+Default retention policy:
+- **Max Size**: 100 MB
+- **Max Backups**: 5
+- **Max Age**: 28 days
+
+Example configuration:
+
+```yaml
+level: info
+rotation:
+  filename: "app.log"
+  max_size: 100    # megabytes
+  max_backups: 5   # number of old log files to retain
+  max_age: 28      # days to keep old log files
+```

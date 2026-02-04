@@ -201,6 +201,18 @@ func (m *Medium) Create(p string) (goio.WriteCloser, error) {
 	return os.Create(full)
 }
 
+// Append opens the named file for appending, creating it if it doesn't exist.
+func (m *Medium) Append(p string) (goio.WriteCloser, error) {
+	full, err := m.validatePath(p)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+		return nil, err
+	}
+	return os.OpenFile(full, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+}
+
 // Delete removes a file or empty directory.
 func (m *Medium) Delete(p string) error {
 	full, err := m.validatePath(p)

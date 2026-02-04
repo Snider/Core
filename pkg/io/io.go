@@ -55,6 +55,9 @@ type Medium interface {
 	// Create creates or truncates the named file.
 	Create(path string) (goio.WriteCloser, error)
 
+	// Append opens the named file for appending, creating it if it doesn't exist.
+	Append(path string) (goio.WriteCloser, error)
+
 	// Exists checks if a path exists (file or directory).
 	Exists(path string) bool
 
@@ -334,6 +337,16 @@ func (m *MockMedium) Create(path string) (goio.WriteCloser, error) {
 	}, nil
 }
 
+// Append opens a file for appending in the mock filesystem.
+func (m *MockMedium) Append(path string) (goio.WriteCloser, error) {
+	content := m.Files[path]
+	return &MockWriteCloser{
+		medium: m,
+		path:   path,
+		data:   []byte(content),
+	}, nil
+}
+
 // MockFile implements fs.File for MockMedium.
 type MockFile struct {
 	name    string
@@ -491,9 +504,10 @@ func (m *MockMedium) List(path string) ([]fs.DirEntry, error) {
 func (m *MockMedium) Stat(path string) (fs.FileInfo, error) {
 	if content, ok := m.Files[path]; ok {
 		return FileInfo{
-			name: filepath.Base(path),
-			size: int64(len(content)),
-			mode: 0644,
+			name:    filepath.Base(path),
+			size:    int64(len(content)),
+			mode:    0644,
+			modTime: time.Now(),
 		}, nil
 	}
 	if _, ok := m.Dirs[path]; ok {
