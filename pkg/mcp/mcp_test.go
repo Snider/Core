@@ -149,7 +149,7 @@ func TestSandboxing_Traversal_Sanitized(t *testing.T) {
 	// should validate inputs before calling Medium.
 }
 
-func TestSandboxing_Symlinks_Followed(t *testing.T) {
+func TestSandboxing_Symlinks_Blocked(t *testing.T) {
 	tmpDir := t.TempDir()
 	outsideDir := t.TempDir()
 
@@ -170,14 +170,15 @@ func TestSandboxing_Symlinks_Followed(t *testing.T) {
 		t.Fatalf("Failed to create service: %v", err)
 	}
 
-	// Symlinks are followed - no traversal blocking at Medium level.
-	// This is intentional for simplicity. Callers wanting to block symlinks
-	// should validate inputs before calling Medium.
-	content, err := s.medium.Read("link")
-	if err != nil {
-		t.Errorf("Expected symlink to be followed, got error: %v", err)
+	// Symlinks that escape the sandbox should be blocked.
+	_, err = s.medium.Read("link")
+	if err == nil {
+		t.Error("Expected error for symlink escaping sandbox, got nil")
 	}
-	if content != "secret" {
-		t.Errorf("Expected 'secret', got '%s'", content)
+
+	// Symlinks that escape the sandbox should be blocked even if target doesn't exist.
+	_, err = s.medium.Read("link/nonexistent")
+	if err == nil {
+		t.Error("Expected error for symlink/nonexistent escaping sandbox, got nil")
 	}
 }
