@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/log"
@@ -20,8 +22,17 @@ var AppVersion = "dev"
 
 // Main initialises and runs the CLI application.
 // This is the main entry point for the CLI.
-// Exits with code 1 on error.
+// Exits with code 1 on error or panic.
 func Main() {
+	// Recovery from panics
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("recovered from panic", "error", r, "stack", string(debug.Stack()))
+			Shutdown()
+			Fatal(fmt.Errorf("panic: %v", r))
+		}
+	}()
+
 	// Initialise CLI runtime with services
 	if err := Init(Options{
 		AppName: AppName,

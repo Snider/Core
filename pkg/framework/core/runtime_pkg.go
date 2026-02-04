@@ -34,7 +34,7 @@ func (r *ServiceRuntime[T]) Opts() T {
 
 // Config returns the registered Config service from the core application.
 // This is a convenience method for accessing the application's configuration.
-func (r *ServiceRuntime[T]) Config() Config {
+func (r *ServiceRuntime[T]) Config() (Config, error) {
 	return r.core.Config()
 }
 

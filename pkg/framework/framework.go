@@ -60,8 +60,8 @@ func ServiceFor[T any](c *Core, name string) (T, error) {
 	return core.ServiceFor[T](c, name)
 }
 
-// MustServiceFor retrieves a typed service or panics if not found.
-func MustServiceFor[T any](c *Core, name string) T {
+// MustServiceFor retrieves a typed service or returns an error if not found.
+func MustServiceFor[T any](c *Core, name string) (T, error) {
 	return core.MustServiceFor[T](c, name)
 }
 

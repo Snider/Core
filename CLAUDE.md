@@ -38,7 +38,7 @@ Run a single test: `go test -run TestName ./...`
 ### Core Framework (`core.go`, `interfaces.go`)
 
 The `Core` struct is the central application container managing:
-- **Services**: Named service registry with type-safe retrieval via `ServiceFor[T]()` and `MustServiceFor[T]()`
+- **Services**: Named service registry with type-safe retrieval via `ServiceFor[T]()`
 - **Actions/IPC**: Message-passing system where services communicate via `ACTION(msg Message)` and register handlers via `RegisterAction()`
 - **Lifecycle**: Services implementing `Startable` (OnStartup) and/or `Stoppable` (OnShutdown) interfaces are automatically called during app lifecycle
 
