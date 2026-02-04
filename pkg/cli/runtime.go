@@ -147,9 +147,9 @@ func Shutdown() {
 // --- Signal Service (internal) ---
 
 type signalService struct {
-	cancel     context.CancelFunc
-	sigChan    chan os.Signal
-	onReload   func() error
+	cancel       context.CancelFunc
+	sigChan      chan os.Signal
+	onReload     func() error
 	shutdownOnce sync.Once
 }
 
