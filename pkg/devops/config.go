@@ -4,37 +4,37 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/host-uk/core/pkg/config"
 	"github.com/host-uk/core/pkg/io"
-	"gopkg.in/yaml.v3"
 )
 
 // Config holds global devops configuration from ~/.core/config.yaml.
 type Config struct {
-	Version int          `yaml:"version"`
-	Images  ImagesConfig `yaml:"images"`
+	Version int          `yaml:"version" mapstructure:"version"`
+	Images  ImagesConfig `yaml:"images" mapstructure:"images"`
 }
 
 // ImagesConfig holds image source configuration.
 type ImagesConfig struct {
-	Source   string         `yaml:"source"` // auto, github, registry, cdn
-	GitHub   GitHubConfig   `yaml:"github,omitempty"`
-	Registry RegistryConfig `yaml:"registry,omitempty"`
-	CDN      CDNConfig      `yaml:"cdn,omitempty"`
+	Source   string         `yaml:"source" mapstructure:"source"` // auto, github, registry, cdn
+	GitHub   GitHubConfig   `yaml:"github,omitempty" mapstructure:"github,omitempty"`
+	Registry RegistryConfig `yaml:"registry,omitempty" mapstructure:"registry,omitempty"`
+	CDN      CDNConfig      `yaml:"cdn,omitempty" mapstructure:"cdn,omitempty"`
 }
 
 // GitHubConfig holds GitHub Releases configuration.
 type GitHubConfig struct {
-	Repo string `yaml:"repo"` // owner/repo format
+	Repo string `yaml:"repo" mapstructure:"repo"` // owner/repo format
 }
 
 // RegistryConfig holds container registry configuration.
 type RegistryConfig struct {
-	Image string `yaml:"image"` // e.g., ghcr.io/host-uk/core-devops
+	Image string `yaml:"image" mapstructure:"image"` // e.g., ghcr.io/host-uk/core-devops
 }
 
 // CDNConfig holds CDN/S3 configuration.
 type CDNConfig struct {
-	URL string `yaml:"url"` // base URL for downloads
+	URL string `yaml:"url" mapstructure:"url"` // base URL for downloads
 }
 
 // DefaultConfig returns sensible defaults.
@@ -70,16 +70,19 @@ func LoadConfig(m io.Medium) (*Config, error) {
 		return DefaultConfig(), nil
 	}
 
-	content, err := m.Read(configPath)
+	cfg := DefaultConfig()
+
+	if !m.IsFile(configPath) {
+		return cfg, nil
+	}
+
+	// Use centralized config service
+	c, err := config.New(config.WithMedium(m), config.WithPath(configPath))
 	if err != nil {
-		if os.IsNotExist(err) {
-			return DefaultConfig(), nil
-		}
 		return nil, err
 	}
 
-	cfg := DefaultConfig()
-	if err := yaml.Unmarshal([]byte(content), cfg); err != nil {
+	if err := c.Get("", cfg); err != nil {
 		return nil, err
 	}
 

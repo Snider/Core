@@ -4,12 +4,11 @@ package build
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/host-uk/core/pkg/build/signing"
+	"github.com/host-uk/core/pkg/config"
 	"github.com/host-uk/core/pkg/io"
-	"gopkg.in/yaml.v3"
 )
 
 // ConfigFileName is the name of the build configuration file.
@@ -22,48 +21,48 @@ const ConfigDir = ".core"
 // This is distinct from Config which holds runtime build parameters.
 type BuildConfig struct {
 	// Version is the config file format version.
-	Version int `yaml:"version"`
+	Version int `yaml:"version" mapstructure:"version"`
 	// Project contains project metadata.
-	Project Project `yaml:"project"`
+	Project Project `yaml:"project" mapstructure:"project"`
 	// Build contains build settings.
-	Build Build `yaml:"build"`
+	Build Build `yaml:"build" mapstructure:"build"`
 	// Targets defines the build targets.
-	Targets []TargetConfig `yaml:"targets"`
+	Targets []TargetConfig `yaml:"targets" mapstructure:"targets"`
 	// Sign contains code signing configuration.
-	Sign signing.SignConfig `yaml:"sign,omitempty"`
+	Sign signing.SignConfig `yaml:"sign,omitempty" mapstructure:"sign,omitempty"`
 }
 
 // Project holds project metadata.
 type Project struct {
 	// Name is the project name.
-	Name string `yaml:"name"`
+	Name string `yaml:"name" mapstructure:"name"`
 	// Description is a brief description of the project.
-	Description string `yaml:"description"`
+	Description string `yaml:"description" mapstructure:"description"`
 	// Main is the path to the main package (e.g., ./cmd/core).
-	Main string `yaml:"main"`
+	Main string `yaml:"main" mapstructure:"main"`
 	// Binary is the output binary name.
-	Binary string `yaml:"binary"`
+	Binary string `yaml:"binary" mapstructure:"binary"`
 }
 
 // Build holds build-time settings.
 type Build struct {
 	// CGO enables CGO for the build.
-	CGO bool `yaml:"cgo"`
+	CGO bool `yaml:"cgo" mapstructure:"cgo"`
 	// Flags are additional build flags (e.g., ["-trimpath"]).
-	Flags []string `yaml:"flags"`
+	Flags []string `yaml:"flags" mapstructure:"flags"`
 	// LDFlags are linker flags (e.g., ["-s", "-w"]).
-	LDFlags []string `yaml:"ldflags"`
+	LDFlags []string `yaml:"ldflags" mapstructure:"ldflags"`
 	// Env are additional environment variables.
-	Env []string `yaml:"env"`
+	Env []string `yaml:"env" mapstructure:"env"`
 }
 
 // TargetConfig defines a build target in the config file.
 // This is separate from Target to allow for additional config-specific fields.
 type TargetConfig struct {
 	// OS is the target operating system (e.g., "linux", "darwin", "windows").
-	OS string `yaml:"os"`
+	OS string `yaml:"os" mapstructure:"os"`
 	// Arch is the target architecture (e.g., "amd64", "arm64").
-	Arch string `yaml:"arch"`
+	Arch string `yaml:"arch" mapstructure:"arch"`
 }
 
 // LoadConfig loads build configuration from the .core/build.yaml file in the given directory.
@@ -72,24 +71,25 @@ type TargetConfig struct {
 func LoadConfig(fs io.Medium, dir string) (*BuildConfig, error) {
 	configPath := filepath.Join(dir, ConfigDir, ConfigFileName)
 
-	content, err := fs.Read(configPath)
+	if !fs.Exists(configPath) {
+		return DefaultConfig(), nil
+	}
+
+	// Use centralized config service
+	c, err := config.New(config.WithMedium(fs), config.WithPath(configPath))
 	if err != nil {
-		if os.IsNotExist(err) {
-			return DefaultConfig(), nil
-		}
-		return nil, fmt.Errorf("build.LoadConfig: failed to read config file: %w", err)
+		return nil, fmt.Errorf("build.LoadConfig: %w", err)
 	}
 
-	var cfg BuildConfig
-	data := []byte(content)
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("build.LoadConfig: failed to parse config file: %w", err)
+	cfg := DefaultConfig()
+	if err := c.Get("", cfg); err != nil {
+		return nil, fmt.Errorf("build.LoadConfig: %w", err)
 	}
 
-	// Apply defaults for any missing fields
-	applyDefaults(&cfg)
+	// Apply defaults for any missing fields (centralized Get might not fill everything)
+	applyDefaults(cfg)
 
-	return &cfg, nil
+	return cfg, nil
 }
 
 // DefaultConfig returns sensible defaults for Go projects.
@@ -156,7 +156,7 @@ func ConfigPath(dir string) string {
 
 // ConfigExists checks if a build config file exists in the given directory.
 func ConfigExists(fs io.Medium, dir string) bool {
-	return fileExists(fs, ConfigPath(dir))
+	return fs.IsFile(ConfigPath(dir))
 }
 
 // ToTargets converts TargetConfig slice to Target slice for use with builders.

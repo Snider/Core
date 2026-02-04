@@ -225,3 +225,53 @@ func TestSave_Good(t *testing.T) {
 	assert.NoError(t, readErr)
 	assert.Contains(t, content, "key: value")
 }
+
+func TestConfig_LoadFile_Env(t *testing.T) {
+	m := io.NewMockMedium()
+	m.Files["/.env"] = "FOO=bar\nBAZ=qux"
+
+	cfg, err := New(WithMedium(m), WithPath("/config.yaml"))
+	assert.NoError(t, err)
+
+	err = cfg.LoadFile(m, "/.env")
+	assert.NoError(t, err)
+
+	var foo string
+	err = cfg.Get("foo", &foo)
+	assert.NoError(t, err)
+	assert.Equal(t, "bar", foo)
+}
+
+func TestConfig_WithEnvPrefix(t *testing.T) {
+	t.Setenv("MYAPP_SETTING", "secret")
+
+	m := io.NewMockMedium()
+	cfg, err := New(WithMedium(m), WithEnvPrefix("MYAPP"))
+	assert.NoError(t, err)
+
+	var setting string
+	err = cfg.Get("setting", &setting)
+	assert.NoError(t, err)
+	assert.Equal(t, "secret", setting)
+}
+
+func TestConfig_Get_EmptyKey(t *testing.T) {
+	m := io.NewMockMedium()
+	m.Files["/config.yaml"] = "app:\n  name: test\nversion: 1"
+
+	cfg, err := New(WithMedium(m), WithPath("/config.yaml"))
+	assert.NoError(t, err)
+
+	type AppConfig struct {
+		App struct {
+			Name string `mapstructure:"name"`
+		} `mapstructure:"app"`
+		Version int `mapstructure:"version"`
+	}
+
+	var full AppConfig
+	err = cfg.Get("", &full)
+	assert.NoError(t, err)
+	assert.Equal(t, "test", full.App.Name)
+	assert.Equal(t, 1, full.Version)
+}

@@ -67,6 +67,14 @@ func (s *Service) Set(key string, v any) error {
 	return s.config.Set(key, v)
 }
 
+// LoadFile merges a configuration file into the central configuration.
+func (s *Service) LoadFile(m io.Medium, path string) error {
+	if s.config == nil {
+		return core.E("config.Service.LoadFile", "config not loaded", nil)
+	}
+	return s.config.LoadFile(m, path)
+}
+
 // Ensure Service implements core.Config and Startable at compile time.
 var (
 	_ core.Config    = (*Service)(nil)
