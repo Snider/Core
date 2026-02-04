@@ -1,6 +1,7 @@
 package help
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -208,7 +209,7 @@ The installation process is straightforward.
 Finally, some closing remarks about the configuration.`
 
 	t.Run("finds match and extracts context", func(t *testing.T) {
-		snippet := extractSnippet(content, []string{"installation"})
+		snippet := extractSnippet(content, compileRegexes([]string{"installation"}))
 		assert.Contains(t, snippet, "**installation**")
 		assert.True(t, len(snippet) <= 250, "Snippet should be reasonably short")
 	})
@@ -219,7 +220,7 @@ Finally, some closing remarks about the configuration.`
 	})
 
 	t.Run("empty content", func(t *testing.T) {
-		snippet := extractSnippet("", []string{"test"})
+		snippet := extractSnippet("", compileRegexes([]string{"test"}))
 		assert.Empty(t, snippet)
 	})
 }
@@ -228,27 +229,27 @@ func TestExtractSnippet_Highlighting(t *testing.T) {
 	content := "The quick brown fox jumps over the lazy dog."
 
 	t.Run("simple highlighting", func(t *testing.T) {
-		snippet := extractSnippet(content, []string{"quick", "fox"})
+		snippet := extractSnippet(content, compileRegexes([]string{"quick", "fox"}))
 		assert.Contains(t, snippet, "**quick**")
 		assert.Contains(t, snippet, "**fox**")
 	})
 
 	t.Run("case insensitive highlighting", func(t *testing.T) {
-		snippet := extractSnippet(content, []string{"QUICK", "Fox"})
+		snippet := extractSnippet(content, compileRegexes([]string{"QUICK", "Fox"}))
 		assert.Contains(t, snippet, "**quick**")
 		assert.Contains(t, snippet, "**fox**")
 	})
 
 	t.Run("partial word matching", func(t *testing.T) {
 		content := "The configuration is complete."
-		snippet := extractSnippet(content, []string{"config"})
+		snippet := extractSnippet(content, compileRegexes([]string{"config"}))
 		assert.Contains(t, snippet, "**config**uration")
 	})
 
 	t.Run("overlapping matches", func(t *testing.T) {
 		content := "Searching for something."
 		// Both "search" and "searching" match
-		snippet := extractSnippet(content, []string{"search", "searching"})
+		snippet := extractSnippet(content, compileRegexes([]string{"search", "searching"}))
 		assert.Equal(t, "**Searching** for something.", snippet)
 	})
 }
@@ -258,7 +259,7 @@ func TestExtractSnippet_Good_UTF8(t *testing.T) {
 	content := "日本語のテキストです。This contains Japanese text. 検索機能をテストします。"
 
 	t.Run("handles multi-byte characters without corruption", func(t *testing.T) {
-		snippet := extractSnippet(content, []string{"japanese"})
+		snippet := extractSnippet(content, compileRegexes([]string{"japanese"}))
 		// Should not panic or produce invalid UTF-8
 		assert.True(t, len(snippet) > 0)
 		// Verify the result is valid UTF-8
@@ -271,6 +272,17 @@ func TestExtractSnippet_Good_UTF8(t *testing.T) {
 		snippet := extractSnippet(longContent, nil)
 		assert.True(t, isValidUTF8(snippet), "Truncated snippet should be valid UTF-8")
 	})
+}
+
+// compileRegexes is a helper for tests.
+func compileRegexes(words []string) []*regexp.Regexp {
+	var res []*regexp.Regexp
+	for _, w := range words {
+		if re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(w)); err == nil {
+			res = append(res, re)
+		}
+	}
+	return res
 }
 
 // isValidUTF8 checks if a string is valid UTF-8

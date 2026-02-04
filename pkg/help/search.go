@@ -164,10 +164,20 @@ func (i *searchIndex) findBestMatch(topic *Topic, queryWords []string) (*Section
 	var bestSnippet string
 	bestScore := 0
 
+	// Pre-compile regexes for snippets
+	var res []*regexp.Regexp
+	for _, word := range queryWords {
+		if len(word) >= 2 {
+			if re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(word)); err == nil {
+				res = append(res, re)
+			}
+		}
+	}
+
 	// Check topic title
 	titleScore := countMatches(topic.Title, queryWords)
 	if titleScore > 0 {
-		bestSnippet = extractSnippet(topic.Content, queryWords)
+		bestSnippet = extractSnippet(topic.Content, res)
 	}
 
 	// Check sections
@@ -181,7 +191,7 @@ func (i *searchIndex) findBestMatch(topic *Topic, queryWords []string) (*Section
 			bestScore = totalScore
 			bestSection = section
 			if contentScore > 0 {
-				bestSnippet = extractSnippet(section.Content, queryWords)
+				bestSnippet = extractSnippet(section.Content, res)
 			} else {
 				bestSnippet = extractSnippet(section.Content, nil)
 			}
@@ -190,7 +200,7 @@ func (i *searchIndex) findBestMatch(topic *Topic, queryWords []string) (*Section
 
 	// If no section matched, use topic content
 	if bestSnippet == "" && topic.Content != "" {
-		bestSnippet = extractSnippet(topic.Content, queryWords)
+		bestSnippet = extractSnippet(topic.Content, res)
 	}
 
 	return bestSection, bestSnippet
@@ -235,16 +245,15 @@ func countMatches(text string, queryWords []string) int {
 }
 
 // extractSnippet extracts a short snippet around the first match and highlights matches.
-// Uses rune-based indexing to properly handle multi-byte UTF-8 characters.
-func extractSnippet(content string, queryWords []string) string {
+func extractSnippet(content string, res []*regexp.Regexp) string {
 	if content == "" {
 		return ""
 	}
 
 	const snippetLen = 150
 
-	// If no query words, return start of content without highlighting
-	if len(queryWords) == 0 {
+	// If no regexes, return start of content without highlighting
+	if len(res) == 0 {
 		lines := strings.Split(content, "\n")
 		for _, line := range lines {
 			line = strings.TrimSpace(line)
@@ -259,13 +268,9 @@ func extractSnippet(content string, queryWords []string) string {
 		return ""
 	}
 
-	// Find first match position (byte-based) using case-insensitive search
+	// Find first match position (byte-based)
 	matchPos := -1
-	for _, word := range queryWords {
-		re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(word))
-		if err != nil {
-			continue
-		}
+	for _, re := range res {
 		loc := re.FindStringIndex(content)
 		if loc != nil && (matchPos == -1 || loc[0] < matchPos) {
 			matchPos = loc[0]
@@ -324,14 +329,14 @@ func extractSnippet(content string, queryWords []string) string {
 	}
 
 	// Apply highlighting
-	highlighted := highlight(snippet, queryWords)
+	highlighted := highlight(snippet, res)
 
 	return prefix + highlighted + suffix
 }
 
 // highlight wraps matches in **bold**.
-func highlight(text string, queryWords []string) string {
-	if len(queryWords) == 0 {
+func highlight(text string, res []*regexp.Regexp) string {
+	if len(res) == 0 {
 		return text
 	}
 
@@ -340,14 +345,7 @@ func highlight(text string, queryWords []string) string {
 	}
 	var matches []match
 
-	for _, word := range queryWords {
-		if len(word) < 2 {
-			continue
-		}
-		re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(word))
-		if err != nil {
-			continue
-		}
+	for _, re := range res {
 		indices := re.FindAllStringIndex(text, -1)
 		for _, idx := range indices {
 			matches = append(matches, match{idx[0], idx[1]})
@@ -366,12 +364,12 @@ func highlight(text string, queryWords []string) string {
 		return matches[i].end > matches[j].end
 	})
 
-	// Merge overlapping matches
+	// Merge overlapping or adjacent matches
 	var merged []match
 	if len(matches) > 0 {
 		curr := matches[0]
 		for i := 1; i < len(matches); i++ {
-			if matches[i].start < curr.end {
+			if matches[i].start <= curr.end {
 				if matches[i].end > curr.end {
 					curr.end = matches[i].end
 				}
