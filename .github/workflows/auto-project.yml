@@ -1,31 +1,10 @@
-# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
-name: "Auto Project: Issue Created/Labeled"
+name: Auto Project
 
 on:
   issues:
     types: [opened, labeled]
 
 jobs:
-  add-to-project:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add to Workstation (agentic label)
-        if: contains(github.event.issue.labels.*.name, 'agentic')
-        uses: actions/add-to-project@v1.0.2
-        with:
-          project-url: https://github.com/orgs/host-uk/projects/2
-          github-token: ${{ secrets.PROJECT_TOKEN }}
-
-      - name: Add to Core.GO (lang:go label)
-        if: contains(github.event.issue.labels.*.name, 'lang:go')
-        uses: actions/add-to-project@v1.0.2
-        with:
-          project-url: https://github.com/orgs/host-uk/projects/4
-          github-token: ${{ secrets.PROJECT_TOKEN }}
-
-      - name: Add to Core.Framework (scope:arch label)
-        if: contains(github.event.issue.labels.*.name, 'scope:arch')
-        uses: actions/add-to-project@v1.0.2
-        with:
-          project-url: https://github.com/orgs/host-uk/projects/1
-          github-token: ${{ secrets.PROJECT_TOKEN }}
+  project:
+    uses: host-uk/.github/.github/workflows/auto-project.yml@main
+    secrets: inherit

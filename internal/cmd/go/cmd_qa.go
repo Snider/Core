@@ -42,7 +42,7 @@ func addGoQACommand(parent *cli.Command) {
 		Short: "Run QA checks",
 		Long: `Run comprehensive code quality checks for Go projects.
 
-Checks available: fmt, vet, lint, test, race, vuln, sec, bench, docblock
+Checks available: fmt, vet, lint, test, race, fuzz, vuln, sec, bench, docblock
 
 Examples:
   core go qa                    # Default: fmt, lint, test
@@ -64,7 +64,7 @@ Examples:
 	// Scope flags
 	qaCmd.PersistentFlags().BoolVar(&qaChanged, "changed", false, "Only check changed files (git-aware)")
 	qaCmd.PersistentFlags().BoolVar(&qaAll, "all", false, "Check all files (override git-aware)")
-	qaCmd.PersistentFlags().StringVar(&qaSkip, "skip", "", "Skip checks (comma-separated: fmt,vet,lint,test,race,vuln,sec,bench)")
+	qaCmd.PersistentFlags().StringVar(&qaSkip, "skip", "", "Skip checks (comma-separated: fmt,vet,lint,test,race,fuzz,vuln,sec,bench)")
 	qaCmd.PersistentFlags().StringVar(&qaOnly, "only", "", "Only run these checks (comma-separated)")
 
 	// Coverage flags
@@ -313,7 +313,7 @@ func determineChecks() []string {
 	}
 
 	// Default checks
-	checks := []string{"fmt", "lint", "test", "docblock"}
+	checks := []string{"fmt", "lint", "test", "fuzz", "docblock"}
 
 	// Add race if requested
 	if qaRace {
@@ -424,6 +424,9 @@ func buildCheck(name string) QACheck {
 	case "sec":
 		return QACheck{Name: "sec", Command: "gosec", Args: []string{"-quiet", "./..."}}
 
+	case "fuzz":
+		return QACheck{Name: "fuzz", Command: "_internal_"}
+
 	case "docblock":
 		// Special internal check - handled separately
 		return QACheck{Name: "docblock", Command: "_internal_"}
@@ -524,6 +527,14 @@ func runCoverage(ctx context.Context, dir string) (float64, error) {
 // runInternalCheck runs internal Go-based checks (not external commands).
 func runInternalCheck(check QACheck) (string, error) {
 	switch check.Name {
+	case "fuzz":
+		// Short burst fuzz in QA (5s per target)
+		duration := 5 * time.Second
+		if qaTimeout > 0 && qaTimeout < 30*time.Second {
+			duration = 2 * time.Second
+		}
+		return "", runGoFuzz(duration, "", "", qaVerbose)
+
 	case "docblock":
 		result, err := qa.CheckDocblockCoverage([]string{"./..."})
 		if err != nil {

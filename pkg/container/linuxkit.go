@@ -258,6 +258,12 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 		return nil
 	}
 
+	// Honour already-cancelled contexts before waiting
+	if err := ctx.Err(); err != nil {
+		_ = process.Signal(syscall.SIGKILL)
+		return err
+	}
+
 	// Wait for graceful shutdown with timeout
 	done := make(chan struct{})
 	go func() {

@@ -7,6 +7,12 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
+)
+
+var (
+	instance   *Core
+	instanceMu sync.RWMutex
 )
 
 // New initialises a Core instance using the provided options and performs the necessary setup.
@@ -20,18 +26,18 @@ import (
 //	)
 func New(opts ...Option) (*Core, error) {
 	c := &Core{
-		services: make(map[string]any),
 		Features: &Features{},
+		svc:      newServiceManager(),
 	}
+	c.bus = newMessageBus(c)
+
 	for _, o := range opts {
 		if err := o(c); err != nil {
 			return nil, err
 		}
 	}
 
-	if c.serviceLock {
-		c.servicesLocked = true
-	}
+	c.svc.applyLock()
 	return c, nil
 }
 
@@ -121,7 +127,7 @@ func WithAssets(fs embed.FS) Option {
 // prevent late-binding of services that could have unintended consequences.
 func WithServiceLock() Option {
 	return func(c *Core) error {
-		c.serviceLock = true
+		c.svc.enableLock()
 		return nil
 	}
 }
@@ -131,9 +137,7 @@ func WithServiceLock() Option {
 // ServiceStartup is the entry point for the Core service's startup lifecycle.
 // It is called by the GUI runtime when the application starts.
 func (c *Core) ServiceStartup(ctx context.Context, options any) error {
-	c.serviceMu.RLock()
-	startables := append([]Startable(nil), c.startables...)
-	c.serviceMu.RUnlock()
+	startables := c.svc.getStartables()
 
 	var agg error
 	for _, s := range startables {
@@ -157,10 +161,7 @@ func (c *Core) ServiceShutdown(ctx context.Context) error {
 		agg = errors.Join(agg, err)
 	}
 
-	c.serviceMu.RLock()
-	stoppables := append([]Stoppable(nil), c.stoppables...)
-	c.serviceMu.RUnlock()
-
+	stoppables := c.svc.getStoppables()
 	for i := len(stoppables) - 1; i >= 0; i-- {
 		if err := stoppables[i].OnShutdown(ctx); err != nil {
 			agg = errors.Join(agg, err)
@@ -173,135 +174,56 @@ func (c *Core) ServiceShutdown(ctx context.Context) error {
 // ACTION dispatches a message to all registered IPC handlers.
 // This is the primary mechanism for services to communicate with each other.
 func (c *Core) ACTION(msg Message) error {
-	c.ipcMu.RLock()
-	handlers := append([]func(*Core, Message) error(nil), c.ipcHandlers...)
-	c.ipcMu.RUnlock()
-
-	var agg error
-	for _, h := range handlers {
-		if err := h(c, msg); err != nil {
-			agg = fmt.Errorf("%w; %v", agg, err)
-		}
-	}
-	return agg
+	return c.bus.action(msg)
 }
 
 // RegisterAction adds a new IPC handler to the Core.
 func (c *Core) RegisterAction(handler func(*Core, Message) error) {
-	c.ipcMu.Lock()
-	c.ipcHandlers = append(c.ipcHandlers, handler)
-	c.ipcMu.Unlock()
+	c.bus.registerAction(handler)
 }
 
 // RegisterActions adds multiple IPC handlers to the Core.
 func (c *Core) RegisterActions(handlers ...func(*Core, Message) error) {
-	c.ipcMu.Lock()
-	c.ipcHandlers = append(c.ipcHandlers, handlers...)
-	c.ipcMu.Unlock()
+	c.bus.registerActions(handlers...)
 }
 
 // QUERY dispatches a query to handlers until one responds.
 // Returns (result, handled, error). If no handler responds, handled is false.
 func (c *Core) QUERY(q Query) (any, bool, error) {
-	c.queryMu.RLock()
-	handlers := append([]QueryHandler(nil), c.queryHandlers...)
-	c.queryMu.RUnlock()
-
-	for _, h := range handlers {
-		result, handled, err := h(c, q)
-		if handled {
-			return result, true, err
-		}
-	}
-	return nil, false, nil
+	return c.bus.query(q)
 }
 
 // QUERYALL dispatches a query to all handlers and collects all responses.
 // Returns all results from handlers that responded.
 func (c *Core) QUERYALL(q Query) ([]any, error) {
-	c.queryMu.RLock()
-	handlers := append([]QueryHandler(nil), c.queryHandlers...)
-	c.queryMu.RUnlock()
-
-	var results []any
-	var agg error
-	for _, h := range handlers {
-		result, handled, err := h(c, q)
-		if err != nil {
-			agg = errors.Join(agg, err)
-		}
-		if handled && result != nil {
-			results = append(results, result)
-		}
-	}
-	return results, agg
+	return c.bus.queryAll(q)
 }
 
 // PERFORM dispatches a task to handlers until one executes it.
 // Returns (result, handled, error). If no handler responds, handled is false.
 func (c *Core) PERFORM(t Task) (any, bool, error) {
-	c.taskMu.RLock()
-	handlers := append([]TaskHandler(nil), c.taskHandlers...)
-	c.taskMu.RUnlock()
-
-	for _, h := range handlers {
-		result, handled, err := h(c, t)
-		if handled {
-			return result, true, err
-		}
-	}
-	return nil, false, nil
+	return c.bus.perform(t)
 }
 
 // RegisterQuery adds a query handler to the Core.
 func (c *Core) RegisterQuery(handler QueryHandler) {
-	c.queryMu.Lock()
-	c.queryHandlers = append(c.queryHandlers, handler)
-	c.queryMu.Unlock()
+	c.bus.registerQuery(handler)
 }
 
 // RegisterTask adds a task handler to the Core.
 func (c *Core) RegisterTask(handler TaskHandler) {
-	c.taskMu.Lock()
-	c.taskHandlers = append(c.taskHandlers, handler)
-	c.taskMu.Unlock()
+	c.bus.registerTask(handler)
 }
 
 // RegisterService adds a new service to the Core.
 func (c *Core) RegisterService(name string, api any) error {
-	if c.servicesLocked {
-		return fmt.Errorf("core: service %q is not permitted by the serviceLock setting", name)
-	}
-	if name == "" {
-		return errors.New("core: service name cannot be empty")
-	}
-	c.serviceMu.Lock()
-	defer c.serviceMu.Unlock()
-	if _, exists := c.services[name]; exists {
-		return fmt.Errorf("core: service %q already registered", name)
-	}
-	c.services[name] = api
-
-	if s, ok := api.(Startable); ok {
-		c.startables = append(c.startables, s)
-	}
-	if s, ok := api.(Stoppable); ok {
-		c.stoppables = append(c.stoppables, s)
-	}
-
-	return nil
+	return c.svc.registerService(name, api)
 }
 
 // Service retrieves a registered service by name.
 // It returns nil if the service is not found.
 func (c *Core) Service(name string) any {
-	c.serviceMu.RLock()
-	api, ok := c.services[name]
-	c.serviceMu.RUnlock()
-	if !ok {
-		return nil
-	}
-	return api
+	return c.svc.service(name)
 }
 
 // ServiceFor retrieves a registered service by name and asserts its type to the given interface T.

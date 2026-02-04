@@ -32,4 +32,5 @@ func AddGoCommands(root *cli.Command) {
 	addGoInstallCommand(goCmd)
 	addGoModCommand(goCmd)
 	addGoWorkCommand(goCmd)
+	addGoFuzzCommand(goCmd)
 }

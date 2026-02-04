@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"embed"
-	"sync"
 )
 
 // This file defines the public API contracts (interfaces) for the services
@@ -73,27 +72,12 @@ type Stoppable interface {
 
 // Core is the central application object that manages services, assets, and communication.
 type Core struct {
-	App            any // GUI runtime (e.g., Wails App) - set by WithApp option
-	assets         embed.FS
-	Features       *Features
-	serviceLock    bool
-	ipcMu          sync.RWMutex
-	ipcHandlers    []func(*Core, Message) error
-	queryMu        sync.RWMutex
-	queryHandlers  []QueryHandler
-	taskMu         sync.RWMutex
-	taskHandlers   []TaskHandler
-	serviceMu      sync.RWMutex
-	services       map[string]any
-	servicesLocked bool
-	startables     []Startable
-	stoppables     []Stoppable
+	App      any // GUI runtime (e.g., Wails App) - set by WithApp option
+	assets   embed.FS
+	Features *Features
+	svc      *serviceManager
+	bus      *messageBus
 }
-
-var (
-	instance   *Core
-	instanceMu sync.RWMutex
-)
 
 // Config provides access to application configuration.
 type Config interface {
