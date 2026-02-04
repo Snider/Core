@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"embed"
+	"sync/atomic"
 )
 
 // This file defines the public API contracts (interfaces) for the services
@@ -77,6 +78,8 @@ type Core struct {
 	Features *Features
 	svc      *serviceManager
 	bus      *messageBus
+
+	taskIDCounter atomic.Uint64
 }
 
 // Config provides access to application configuration.
@@ -105,3 +108,25 @@ type ActionServiceStartup struct{}
 // ActionServiceShutdown is a message sent when the application is shutting down.
 // This allows services to perform cleanup tasks, such as saving state or closing resources.
 type ActionServiceShutdown struct{}
+
+// ActionTaskStarted is a message sent when a background task has started.
+type ActionTaskStarted struct {
+	TaskID string
+	Task   Task
+}
+
+// ActionTaskProgress is a message sent when a task has progress updates.
+type ActionTaskProgress struct {
+	TaskID   string
+	Task     Task
+	Progress float64 // 0.0 to 1.0
+	Message  string
+}
+
+// ActionTaskCompleted is a message sent when a task has completed.
+type ActionTaskCompleted struct {
+	TaskID string
+	Task   Task
+	Result any
+	Error  error
+}

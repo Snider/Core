@@ -564,3 +564,53 @@ When creating a new package, ensure:
 - **`pkg/i18n`** - Full reference with handlers, modes, hooks, grammar
 - **`pkg/process`** - Simpler example with ACTION events and runner orchestration
 - **`pkg/cli`** - Service integration with runtime lifecycle
+
+---
+
+## Background Operations
+
+For long-running operations that could block the UI, use the framework's background task mechanism.
+
+### Principles
+
+1. **Non-blocking**: Long-running operations must not block the main IPC thread.
+2. **Lifecycle Events**: Use `PerformAsync` to automatically broadcast start and completion events.
+3. **Progress Reporting**: Services should broadcast `ActionTaskProgress` for granular updates.
+
+### Using PerformAsync
+
+The `Core.PerformAsync(task)` method runs any registered task in a background goroutine and returns a unique `TaskID` immediately.
+
+```go
+// From the frontend or another service
+taskID := core.PerformAsync(git.TaskPush{Path: "/repo"})
+// taskID is returned immediately, e.g., "task-123"
+```
+
+The framework automatically broadcasts lifecycle actions:
+- `ActionTaskStarted`: When the background goroutine begins.
+- `ActionTaskCompleted`: When the task finishes (contains Result and Error).
+
+### Reporting Progress
+
+For very long operations, the service handler should broadcast progress:
+
+```go
+func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, error) {
+    switch m := t.(type) {
+    case MyLongTask:
+        // Optional: If you need to report progress, you might need to pass
+        // a TaskID or use a specific progress channel.
+        // For now, simple tasks just use ActionTaskCompleted.
+        return s.doLongWork(m), true, nil
+    }
+    return nil, false, nil
+}
+```
+
+### Implementing Background-Safe Handlers
+
+Ensure that handlers for long-running tasks:
+1. Use `context.Background()` or a long-lived context, as the request context might expire.
+2. Are thread-safe and don't hold global locks for the duration of the work.
+3. Do not use interactive CLI functions like `cli.Scanln` if they are intended for GUI use.

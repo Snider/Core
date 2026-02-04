@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -74,4 +75,45 @@ func TestIPC_Perform(t *testing.T) {
 	assert.True(t, handled)
 	assert.Error(t, err)
 	assert.Nil(t, res)
+}
+
+func TestIPC_PerformAsync(t *testing.T) {
+	c, _ := New()
+
+	type AsyncResult struct {
+		TaskID string
+		Result any
+		Error  error
+	}
+	done := make(chan AsyncResult, 1)
+
+	c.RegisterTask(func(c *Core, task Task) (any, bool, error) {
+		if tt, ok := task.(IPCTestTask); ok {
+			return tt.Value + "-done", true, nil
+		}
+		return nil, false, nil
+	})
+
+	c.RegisterAction(func(c *Core, msg Message) error {
+		if m, ok := msg.(ActionTaskCompleted); ok {
+			done <- AsyncResult{
+				TaskID: m.TaskID,
+				Result: m.Result,
+				Error:  m.Error,
+			}
+		}
+		return nil
+	})
+
+	taskID := c.PerformAsync(IPCTestTask{Value: "async"})
+	assert.NotEmpty(t, taskID)
+
+	select {
+	case res := <-done:
+		assert.Equal(t, taskID, res.TaskID)
+		assert.Equal(t, "async-done", res.Result)
+		assert.Nil(t, res.Error)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for task completion")
+	}
 }

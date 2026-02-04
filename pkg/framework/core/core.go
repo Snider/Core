@@ -205,6 +205,36 @@ func (c *Core) PERFORM(t Task) (any, bool, error) {
 	return c.bus.perform(t)
 }
 
+// PerformAsync dispatches a task to be executed in a background goroutine.
+// It returns a unique task ID that can be used to track the task's progress.
+// The result of the task will be broadcasted via an ActionTaskCompleted message.
+func (c *Core) PerformAsync(t Task) string {
+	taskID := fmt.Sprintf("task-%d", c.taskIDCounter.Add(1))
+
+	// Broadcast task started
+	_ = c.ACTION(ActionTaskStarted{
+		TaskID: taskID,
+		Task:   t,
+	})
+
+	go func() {
+		result, handled, err := c.PERFORM(t)
+		if !handled && err == nil {
+			err = fmt.Errorf("no handler found for task type %T", t)
+		}
+
+		// Broadcast task completed
+		_ = c.ACTION(ActionTaskCompleted{
+			TaskID: taskID,
+			Task:   t,
+			Result: result,
+			Error:  err,
+		})
+	}()
+
+	return taskID
+}
+
 // RegisterQuery adds a query handler to the Core.
 func (c *Core) RegisterQuery(handler QueryHandler) {
 	c.bus.registerQuery(handler)
