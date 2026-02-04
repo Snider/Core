@@ -3,6 +3,8 @@ package sources
 
 import (
 	"context"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // ImageSource defines the interface for downloading dev images.
@@ -15,7 +17,7 @@ type ImageSource interface {
 	LatestVersion(ctx context.Context) (string, error)
 	// Download downloads the image to the destination path.
 	// Reports progress via the callback if provided.
-	Download(ctx context.Context, dest string, progress func(downloaded, total int64)) error
+	Download(ctx context.Context, m io.Medium, dest string, progress func(downloaded, total int64)) error
 }
 
 // SourceConfig holds configuration for a source.
