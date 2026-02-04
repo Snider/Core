@@ -1,0 +1,32 @@
+# Core CLI build configuration
+# Used by: core build
+
+version: 1
+
+project:
+  name: core
+  description: Host UK Core CLI
+  main: "."
+  binary: core
+
+build:
+  cgo: false
+  flags:
+    - -trimpath
+  ldflags:
+    - -s
+    - -w
+    - -X main.Version={{.Version}}
+  env: []
+
+targets:
+  - os: linux
+    arch: amd64
+  - os: linux
+    arch: arm64
+  - os: darwin
+    arch: amd64
+  - os: darwin
+    arch: arm64
+  - os: windows
+    arch: amd64

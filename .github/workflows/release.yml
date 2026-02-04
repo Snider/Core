@@ -44,6 +44,7 @@ jobs:
           cache: true
 
       - name: Build CLI
+        shell: bash
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
@@ -51,8 +52,24 @@ jobs:
         run: |
           mkdir -p dist
           go build -ldflags="-s -w -X main.Version=${{ github.ref_name }}" \
-            -o dist/core-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} \
-            ./cmd/core
+            -o dist/core${{ matrix.ext }} \
+            .
+
+      - name: Create archive (Unix)
+        if: matrix.goos != 'windows'
+        shell: bash
+        run: |
+          cd dist
+          tar -czvf core-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz core
+          rm core
+
+      - name: Create archive (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          cd dist
+          Compress-Archive -Path core.exe -DestinationPath core-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+          Remove-Item core.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

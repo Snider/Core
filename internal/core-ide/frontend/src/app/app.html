@@ -1,0 +1,23 @@
+<div class="container">
+  <div>
+    <a (click)='openLink("https://v3alpha.wails.io")'>
+      <img src="/wails.png" class="logo" alt="Wails logo"/>
+    </a>
+    <a (click)='openLink("https://angular.io")'>
+      <img src="/angular.png" class="logo vanilla" alt="Angular logo"/>
+    </a>
+  </div>
+  <h1>Wails + Angular v20</h1>
+  <div class="card">
+    <div class="result">{{ result() }}</div>
+    <div class="input-box">
+      <input class="input" type="text" autocomplete="off" [value]="name()" (input)="name.set($event.target.value)"/>
+      <button class="btn" (click)="doGreet()">Greet</button>
+    </div>
+  </div>
+  <div class="footer">
+    <div><p>Click on the Wails logo to learn more</p></div>
+    <div><p>{{ time() }}</p></div>
+  </div>
+</div>
+<router-outlet />

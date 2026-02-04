@@ -4,19 +4,49 @@ package build
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Snider/Borg/pkg/compress"
 )
 
-// Archive creates an archive for a single artifact.
+// ArchiveFormat specifies the compression format for archives.
+type ArchiveFormat string
+
+const (
+	// ArchiveFormatGzip uses tar.gz (gzip compression) - widely compatible.
+	ArchiveFormatGzip ArchiveFormat = "gz"
+	// ArchiveFormatXZ uses tar.xz (xz/LZMA2 compression) - better compression ratio.
+	ArchiveFormatXZ ArchiveFormat = "xz"
+	// ArchiveFormatZip uses zip - for Windows.
+	ArchiveFormatZip ArchiveFormat = "zip"
+)
+
+// Archive creates an archive for a single artifact using gzip compression.
 // Uses tar.gz for linux/darwin and zip for windows.
 // The archive is created alongside the binary (e.g., dist/myapp_linux_amd64.tar.gz).
 // Returns a new Artifact with Path pointing to the archive.
 func Archive(artifact Artifact) (Artifact, error) {
+	return ArchiveWithFormat(artifact, ArchiveFormatGzip)
+}
+
+// ArchiveXZ creates an archive for a single artifact using xz compression.
+// Uses tar.xz for linux/darwin and zip for windows.
+// Returns a new Artifact with Path pointing to the archive.
+func ArchiveXZ(artifact Artifact) (Artifact, error) {
+	return ArchiveWithFormat(artifact, ArchiveFormatXZ)
+}
+
+// ArchiveWithFormat creates an archive for a single artifact with the specified format.
+// Uses tar.gz or tar.xz for linux/darwin and zip for windows.
+// The archive is created alongside the binary (e.g., dist/myapp_linux_amd64.tar.xz).
+// Returns a new Artifact with Path pointing to the archive.
+func ArchiveWithFormat(artifact Artifact, format ArchiveFormat) (Artifact, error) {
 	if artifact.Path == "" {
 		return Artifact{}, fmt.Errorf("build.Archive: artifact path is empty")
 	}
@@ -30,7 +60,7 @@ func Archive(artifact Artifact) (Artifact, error) {
 		return Artifact{}, fmt.Errorf("build.Archive: source path is a directory, expected file")
 	}
 
-	// Determine archive type based on OS
+	// Determine archive type based on OS and format
 	var archivePath string
 	var archiveFunc func(src, dst string) error
 
@@ -38,8 +68,14 @@ func Archive(artifact Artifact) (Artifact, error) {
 		archivePath = archiveFilename(artifact, ".zip")
 		archiveFunc = createZipArchive
 	} else {
-		archivePath = archiveFilename(artifact, ".tar.gz")
-		archiveFunc = createTarGzArchive
+		switch format {
+		case ArchiveFormatXZ:
+			archivePath = archiveFilename(artifact, ".tar.xz")
+			archiveFunc = createTarXzArchive
+		default:
+			archivePath = archiveFilename(artifact, ".tar.gz")
+			archiveFunc = createTarGzArchive
+		}
 	}
 
 	// Create the archive
@@ -55,16 +91,28 @@ func Archive(artifact Artifact) (Artifact, error) {
 	}, nil
 }
 
-// ArchiveAll archives all artifacts.
+// ArchiveAll archives all artifacts using gzip compression.
 // Returns a slice of new artifacts pointing to the archives.
 func ArchiveAll(artifacts []Artifact) ([]Artifact, error) {
+	return ArchiveAllWithFormat(artifacts, ArchiveFormatGzip)
+}
+
+// ArchiveAllXZ archives all artifacts using xz compression.
+// Returns a slice of new artifacts pointing to the archives.
+func ArchiveAllXZ(artifacts []Artifact) ([]Artifact, error) {
+	return ArchiveAllWithFormat(artifacts, ArchiveFormatXZ)
+}
+
+// ArchiveAllWithFormat archives all artifacts with the specified format.
+// Returns a slice of new artifacts pointing to the archives.
+func ArchiveAllWithFormat(artifacts []Artifact, format ArchiveFormat) ([]Artifact, error) {
 	if len(artifacts) == 0 {
 		return nil, nil
 	}
 
 	var archived []Artifact
 	for _, artifact := range artifacts {
-		arch, err := Archive(artifact)
+		arch, err := ArchiveWithFormat(artifact, format)
 		if err != nil {
 			return archived, fmt.Errorf("build.ArchiveAll: failed to archive %s: %w", artifact.Path, err)
 		}
@@ -90,6 +138,58 @@ func archiveFilename(artifact Artifact, ext string) string {
 	archiveName := fmt.Sprintf("%s_%s_%s%s", binaryName, artifact.OS, artifact.Arch, ext)
 
 	return filepath.Join(outputDir, archiveName)
+}
+
+// createTarXzArchive creates a tar.xz archive containing a single file.
+// Uses Borg's compress package for xz compression.
+func createTarXzArchive(src, dst string) error {
+	// Open the source file
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer srcFile.Close()
+
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat source file: %w", err)
+	}
+
+	// Create tar archive in memory
+	var tarBuf bytes.Buffer
+	tarWriter := tar.NewWriter(&tarBuf)
+
+	// Create tar header
+	header, err := tar.FileInfoHeader(srcInfo, "")
+	if err != nil {
+		return fmt.Errorf("failed to create tar header: %w", err)
+	}
+	header.Name = filepath.Base(src)
+
+	if err := tarWriter.WriteHeader(header); err != nil {
+		return fmt.Errorf("failed to write tar header: %w", err)
+	}
+
+	if _, err := io.Copy(tarWriter, srcFile); err != nil {
+		return fmt.Errorf("failed to write file content to tar: %w", err)
+	}
+
+	if err := tarWriter.Close(); err != nil {
+		return fmt.Errorf("failed to close tar writer: %w", err)
+	}
+
+	// Compress with xz using Borg
+	xzData, err := compress.Compress(tarBuf.Bytes(), "xz")
+	if err != nil {
+		return fmt.Errorf("failed to compress with xz: %w", err)
+	}
+
+	// Write to destination file
+	if err := os.WriteFile(dst, xzData, 0644); err != nil {
+		return fmt.Errorf("failed to write archive file: %w", err)
+	}
+
+	return nil
 }
 
 // createTarGzArchive creates a tar.gz archive containing a single file.

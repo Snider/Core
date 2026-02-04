@@ -22,6 +22,7 @@ func addDepsCommand(parent *cli.Command) {
 	cmd.Flags().StringVar(&securityRepo, "repo", "", i18n.T("cmd.security.flag.repo"))
 	cmd.Flags().StringVar(&securitySeverity, "severity", "", i18n.T("cmd.security.flag.severity"))
 	cmd.Flags().BoolVar(&securityJSON, "json", false, i18n.T("common.flag.json"))
+	cmd.Flags().StringVar(&securityTarget, "target", "", i18n.T("cmd.security.flag.target"))
 
 	parent.AddCommand(cmd)
 }
@@ -44,6 +45,11 @@ func runDeps() error {
 		return err
 	}
 
+	// External target mode: bypass registry entirely
+	if securityTarget != "" {
+		return runDepsForTarget(securityTarget)
+	}
+
 	reg, err := loadRegistry(securityRegistryPath)
 	if err != nil {
 		return err
@@ -62,6 +68,7 @@ func runDeps() error {
 
 		alerts, err := fetchDependabotAlerts(repoFullName)
 		if err != nil {
+			cli.Print("%s %s: %v\n", cli.WarningStyle.Render(">>"), repoFullName, err)
 			continue
 		}
 
@@ -120,6 +127,75 @@ func runDeps() error {
 			upgrade = fmt.Sprintf("%s -> %s", alert.Vulnerable, cli.SuccessStyle.Render(alert.PatchedVersion))
 		}
 
+		cli.Print("%-16s %s  %-16s %-30s %s\n",
+			cli.ValueStyle.Render(alert.Repo),
+			sevStyle.Render(fmt.Sprintf("%-8s", alert.Severity)),
+			alert.CVE,
+			alert.Package,
+			upgrade,
+		)
+	}
+	cli.Blank()
+
+	return nil
+}
+
+// runDepsForTarget runs dependency checks against an external repo target.
+func runDepsForTarget(target string) error {
+	repo, fullName := buildTargetRepo(target)
+	if repo == nil {
+		return cli.Err("invalid target format: use owner/repo (e.g. wailsapp/wails)")
+	}
+
+	var allAlerts []DepAlert
+	summary := &AlertSummary{}
+
+	alerts, err := fetchDependabotAlerts(fullName)
+	if err != nil {
+		return cli.Wrap(err, "fetch dependabot alerts for "+fullName)
+	}
+
+	for _, alert := range alerts {
+		if alert.State != "open" {
+			continue
+		}
+		severity := alert.Advisory.Severity
+		if !filterBySeverity(severity, securitySeverity) {
+			continue
+		}
+		summary.Add(severity)
+		allAlerts = append(allAlerts, DepAlert{
+			Repo:           repo.Name,
+			Severity:       severity,
+			CVE:            alert.Advisory.CVEID,
+			Package:        alert.Dependency.Package.Name,
+			Ecosystem:      alert.Dependency.Package.Ecosystem,
+			Vulnerable:     alert.SecurityVulnerability.VulnerableVersionRange,
+			PatchedVersion: alert.SecurityVulnerability.FirstPatchedVersion.Identifier,
+			Manifest:       alert.Dependency.ManifestPath,
+			Summary:        alert.Advisory.Summary,
+		})
+	}
+
+	if securityJSON {
+		output, err := json.MarshalIndent(allAlerts, "", "  ")
+		if err != nil {
+			return cli.Wrap(err, "marshal JSON output")
+		}
+		cli.Text(string(output))
+		return nil
+	}
+
+	cli.Blank()
+	cli.Print("%s %s\n", cli.DimStyle.Render("Dependabot ("+fullName+"):"), summary.String())
+	cli.Blank()
+
+	for _, alert := range allAlerts {
+		sevStyle := severityStyle(alert.Severity)
+		upgrade := alert.Vulnerable
+		if alert.PatchedVersion != "" {
+			upgrade = fmt.Sprintf("%s -> %s", alert.Vulnerable, cli.SuccessStyle.Render(alert.PatchedVersion))
+		}
 		cli.Print("%-16s %s  %-16s %-30s %s\n",
 			cli.ValueStyle.Render(alert.Repo),
 			sevStyle.Render(fmt.Sprintf("%-8s", alert.Severity)),

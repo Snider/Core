@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/ai"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 )
@@ -91,6 +92,13 @@ var taskCompleteCmd = &cli.Command{
 		if err := client.CompleteTask(ctx, taskID, result); err != nil {
 			return cli.WrapVerb(err, "complete", "task")
 		}
+
+		// Record task completion event
+		_ = ai.Record(ai.Event{
+			Type:    "task.completed",
+			AgentID: cfg.AgentID,
+			Data:    map[string]any{"task_id": taskID, "success": !taskCompleteFailed},
+		})
 
 		if taskCompleteFailed {
 			cli.Print("%s %s\n", errorStyle.Render(">>"), i18n.T("cmd.ai.task_complete.failed", map[string]interface{}{"ID": taskID}))

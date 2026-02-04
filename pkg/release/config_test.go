@@ -161,7 +161,7 @@ func TestDefaultConfig_Good(t *testing.T) {
 		assert.Empty(t, cfg.Project.Repository)
 
 		// Default targets
-		assert.Len(t, cfg.Build.Targets, 5)
+		assert.Len(t, cfg.Build.Targets, 4)
 		hasLinuxAmd64 := false
 		hasDarwinArm64 := false
 		hasWindowsAmd64 := false
