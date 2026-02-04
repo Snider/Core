@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strings"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -25,26 +24,7 @@ type TCPTransport struct {
 
 // NewTCPTransport creates a new TCP transport listener.
 // It listens on the provided address (e.g. "localhost:9100").
-// If addr is empty, it defaults to "127.0.0.1:9100".
 func NewTCPTransport(addr string) (*TCPTransport, error) {
-	if addr == "" {
-		addr = "127.0.0.1:9100"
-	}
-
-	// Security warning for binding to all interfaces
-	host, _, err := net.SplitHostPort(addr)
-	if err != nil {
-		// If SplitHostPort fails, it might be just a port or an invalid address.
-		// net.Listen will catch invalid addresses.
-		if !strings.Contains(addr, ":") {
-			host = addr
-		}
-	}
-
-	if host == "0.0.0.0" || host == "::" || host == "" {
-		fmt.Fprintf(os.Stderr, "WARNING: MCP TCP server binding to all interfaces (%s). This may be insecure. Consider using 127.0.0.1 for local-only access.\n", addr)
-	}
-
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err

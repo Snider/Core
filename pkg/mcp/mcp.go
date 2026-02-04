@@ -485,11 +485,11 @@ func detectLanguageFromPath(path string) string {
 }
 
 // Run starts the MCP server.
-// If the MCP_ADDR environment variable is set (even if empty), it starts a TCP server.
+// If MCP_ADDR is set, it starts a TCP server.
 // Otherwise, it starts a Stdio server.
 func (s *Service) Run(ctx context.Context) error {
-	addr, ok := os.LookupEnv("MCP_ADDR")
-	if ok {
+	addr := os.Getenv("MCP_ADDR")
+	if addr != "" {
 		return s.ServeTCP(ctx, addr)
 	}
 	return s.server.Run(ctx, &mcp.StdioTransport{})
