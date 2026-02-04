@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 //go:embed templates/npm/*.tmpl
@@ -88,10 +90,10 @@ func (p *NpmPublisher) Publish(ctx context.Context, release *Release, pubCfg Pub
 	}
 
 	if dryRun {
-		return p.dryRunPublish(data, &npmCfg)
+		return p.dryRunPublish(release.FS, data, &npmCfg)
 	}
 
-	return p.executePublish(ctx, data, &npmCfg)
+	return p.executePublish(ctx, release.FS, data, &npmCfg)
 }
 
 // parseConfig extracts npm-specific configuration from the publisher config.
@@ -127,7 +129,7 @@ type npmTemplateData struct {
 }
 
 // dryRunPublish shows what would be done without actually publishing.
-func (p *NpmPublisher) dryRunPublish(data npmTemplateData, cfg *NpmConfig) error {
+func (p *NpmPublisher) dryRunPublish(m io.Medium, data npmTemplateData, cfg *NpmConfig) error {
 	fmt.Println()
 	fmt.Println("=== DRY RUN: npm Publish ===")
 	fmt.Println()
@@ -139,7 +141,7 @@ func (p *NpmPublisher) dryRunPublish(data npmTemplateData, cfg *NpmConfig) error
 	fmt.Println()
 
 	// Generate and show package.json
-	pkgJSON, err := p.renderTemplate("templates/npm/package.json.tmpl", data)
+	pkgJSON, err := p.renderTemplate(m, "templates/npm/package.json.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("npm.dryRunPublish: %w", err)
 	}
@@ -157,7 +159,7 @@ func (p *NpmPublisher) dryRunPublish(data npmTemplateData, cfg *NpmConfig) error
 }
 
 // executePublish actually creates and publishes the npm package.
-func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData, cfg *NpmConfig) error {
+func (p *NpmPublisher) executePublish(ctx context.Context, m io.Medium, data npmTemplateData, cfg *NpmConfig) error {
 	// Check for NPM_TOKEN
 	if os.Getenv("NPM_TOKEN") == "" {
 		return fmt.Errorf("npm.Publish: NPM_TOKEN environment variable is required")
@@ -177,7 +179,7 @@ func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData,
 	}
 
 	// Generate package.json
-	pkgJSON, err := p.renderTemplate("templates/npm/package.json.tmpl", data)
+	pkgJSON, err := p.renderTemplate(m, "templates/npm/package.json.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("npm.Publish: failed to render package.json: %w", err)
 	}
@@ -186,7 +188,7 @@ func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData,
 	}
 
 	// Generate install.js
-	installJS, err := p.renderTemplate("templates/npm/install.js.tmpl", data)
+	installJS, err := p.renderTemplate(m, "templates/npm/install.js.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("npm.Publish: failed to render install.js: %w", err)
 	}
@@ -195,7 +197,7 @@ func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData,
 	}
 
 	// Generate run.js
-	runJS, err := p.renderTemplate("templates/npm/run.js.tmpl", data)
+	runJS, err := p.renderTemplate(m, "templates/npm/run.js.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("npm.Publish: failed to render run.js: %w", err)
 	}
@@ -228,10 +230,25 @@ func (p *NpmPublisher) executePublish(ctx context.Context, data npmTemplateData,
 }
 
 // renderTemplate renders an embedded template with the given data.
-func (p *NpmPublisher) renderTemplate(name string, data npmTemplateData) (string, error) {
-	content, err := npmTemplates.ReadFile(name)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", name, err)
+func (p *NpmPublisher) renderTemplate(m io.Medium, name string, data npmTemplateData) (string, error) {
+	var content []byte
+	var err error
+
+	// Try custom template from medium
+	customPath := filepath.Join(".core", name)
+	if m != nil && m.IsFile(customPath) {
+		customContent, err := m.Read(customPath)
+		if err == nil {
+			content = []byte(customContent)
+		}
+	}
+
+	// Fallback to embedded template
+	if content == nil {
+		content, err = npmTemplates.ReadFile(name)
+		if err != nil {
+			return "", fmt.Errorf("failed to read template %s: %w", name, err)
+		}
 	}
 
 	tmpl, err := template.New(filepath.Base(name)).Parse(string(content))

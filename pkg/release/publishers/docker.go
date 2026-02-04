@@ -50,7 +50,7 @@ func (p *DockerPublisher) Publish(ctx context.Context, release *Release, pubCfg 
 	dockerCfg := p.parseConfig(pubCfg, relCfg, release.ProjectDir)
 
 	// Validate Dockerfile exists
-	if _, err := os.Stat(dockerCfg.Dockerfile); err != nil {
+	if !release.FS.Exists(dockerCfg.Dockerfile) {
 		return fmt.Errorf("docker.Publish: Dockerfile not found: %s", dockerCfg.Dockerfile)
 	}
 

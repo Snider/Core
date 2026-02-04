@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -101,7 +103,7 @@ func TestNpmPublisher_RenderTemplate_Good(t *testing.T) {
 			Access:      "public",
 		}
 
-		result, err := p.renderTemplate("templates/npm/package.json.tmpl", data)
+		result, err := p.renderTemplate(io.Local, "templates/npm/package.json.tmpl", data)
 		require.NoError(t, err)
 
 		assert.Contains(t, result, `"name": "@myorg/mycli"`)
@@ -125,7 +127,7 @@ func TestNpmPublisher_RenderTemplate_Good(t *testing.T) {
 			Access:      "restricted",
 		}
 
-		result, err := p.renderTemplate("templates/npm/package.json.tmpl", data)
+		result, err := p.renderTemplate(io.Local, "templates/npm/package.json.tmpl", data)
 		require.NoError(t, err)
 
 		assert.Contains(t, result, `"access": "restricted"`)
@@ -137,7 +139,7 @@ func TestNpmPublisher_RenderTemplate_Bad(t *testing.T) {
 
 	t.Run("returns error for non-existent template", func(t *testing.T) {
 		data := npmTemplateData{}
-		_, err := p.renderTemplate("templates/npm/nonexistent.tmpl", data)
+		_, err := p.renderTemplate(io.Local, "templates/npm/nonexistent.tmpl", data)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to read template")
 	})
@@ -164,7 +166,7 @@ func TestNpmPublisher_DryRunPublish_Good(t *testing.T) {
 			Access:  "public",
 		}
 
-		err := p.dryRunPublish(data, cfg)
+		err := p.dryRunPublish(io.Local, data, cfg)
 
 		_ = w.Close()
 		var buf bytes.Buffer
@@ -202,7 +204,7 @@ func TestNpmPublisher_DryRunPublish_Good(t *testing.T) {
 			Access:  "restricted",
 		}
 
-		err := p.dryRunPublish(data, cfg)
+		err := p.dryRunPublish(io.Local, data, cfg)
 
 		_ = w.Close()
 		var buf bytes.Buffer
@@ -224,6 +226,7 @@ func TestNpmPublisher_Publish_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "npm"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
@@ -246,6 +249,7 @@ func TestNpmPublisher_Publish_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{
 			Type: "npm",

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +23,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app-linux-amd64.tar.gz"), []byte("test"), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app-darwin-arm64.tar.gz"), []byte("test"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Len(t, artifacts, 2)
@@ -35,7 +36,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app-windows-amd64.zip"), []byte("test"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Len(t, artifacts, 1)
@@ -49,7 +50,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "CHECKSUMS.txt"), []byte("checksums"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Len(t, artifacts, 1)
@@ -63,7 +64,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app.tar.gz.sig"), []byte("signature"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Len(t, artifacts, 1)
@@ -79,7 +80,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "CHECKSUMS.txt"), []byte("checksums"), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app.sig"), []byte("sig"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Len(t, artifacts, 4)
@@ -94,7 +95,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app.exe"), []byte("binary"), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app.tar.gz"), []byte("artifact"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Len(t, artifacts, 1)
@@ -110,7 +111,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "app.tar.gz"), []byte("artifact"), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(distDir, "subdir", "nested.tar.gz"), []byte("nested"), 0644))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		// Should only find the top-level artifact
@@ -122,7 +123,7 @@ func TestFindArtifacts_Good(t *testing.T) {
 		distDir := filepath.Join(dir, "dist")
 		require.NoError(t, os.MkdirAll(distDir, 0755))
 
-		artifacts, err := findArtifacts(distDir)
+		artifacts, err := findArtifacts(io.Local, distDir)
 		require.NoError(t, err)
 
 		assert.Empty(t, artifacts)
@@ -134,7 +135,7 @@ func TestFindArtifacts_Bad(t *testing.T) {
 		dir := t.TempDir()
 		distDir := filepath.Join(dir, "dist")
 
-		_, err := findArtifacts(distDir)
+		_, err := findArtifacts(io.Local, distDir)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "dist/ directory not found")
 	})
@@ -149,7 +150,7 @@ func TestFindArtifacts_Bad(t *testing.T) {
 		require.NoError(t, os.Chmod(distDir, 0000))
 		defer func() { _ = os.Chmod(distDir, 0755) }()
 
-		_, err := findArtifacts(distDir)
+		_, err := findArtifacts(io.Local, distDir)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to read dist/")
 	})
