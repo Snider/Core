@@ -80,6 +80,53 @@ task cli:build    # Build to cmd/core/bin/core
 task cli:run      # Build and run
 ```
 
+## Configuration
+
+Core uses a layered configuration system where values are resolved in the following priority:
+
+1.  **Command-line flags** (if applicable)
+2.  **Environment variables**
+3.  **Configuration file**
+4.  **Default values**
+
+### Configuration File
+
+The default configuration file is located at `~/.core/config.yaml`.
+
+#### Format
+
+The file uses YAML format and supports nested structures.
+
+```yaml
+# ~/.core/config.yaml
+dev:
+  editor: vim
+  debug: true
+
+log:
+  level: info
+```
+
+### Environment Variables
+
+#### Layered Configuration Mapping
+
+Any configuration value can be overridden using environment variables with the `CORE_CONFIG_` prefix. The variable name is converted to lowercase and underscores are replaced with dots to map to the configuration hierarchy.
+
+**Examples:**
+- `CORE_CONFIG_DEV_EDITOR=nano` maps to `dev.editor: nano`
+- `CORE_CONFIG_LOG_LEVEL=debug` maps to `log.level: debug`
+
+#### Common Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CORE_DAEMON` | Set to `1` to run the application in daemon mode. |
+| `NO_COLOR` | If set (to any value), disables ANSI color output. |
+| `MCP_ADDR` | Address for the MCP TCP server (e.g., `localhost:9100`). If not set, MCP uses Stdio. |
+| `COOLIFY_TOKEN` | API token for Coolify deployments. |
+| `AGENTIC_TOKEN` | API token for Agentic services. |
+
 ## All Tasks
 
 | Task | Description |
