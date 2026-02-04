@@ -18,8 +18,8 @@ import (
 
 	// CLI commands available via IPC
 	_ "github.com/host-uk/core/internal/cmd/ai"
-	_ "github.com/host-uk/core/internal/cmd/dev"
 	_ "github.com/host-uk/core/internal/cmd/deploy"
+	_ "github.com/host-uk/core/internal/cmd/dev"
 	_ "github.com/host-uk/core/internal/cmd/php"
 	_ "github.com/host-uk/core/internal/cmd/rag"
 )

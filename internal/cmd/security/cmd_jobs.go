@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	jobsTargets  []string
+	jobsTargets   []string
 	jobsIssueRepo string
-	jobsDryRun   bool
-	jobsCopies   int
+	jobsDryRun    bool
+	jobsCopies    int
 )
 
 func addJobsCommand(parent *cli.Command) {

@@ -22,7 +22,7 @@ func (e *Executor) executeModule(ctx context.Context, host string, client *SSHCl
 		oldPass := client.becomePass
 
 		client.SetBecome(true, task.BecomeUser, "")
-		
+
 		defer client.SetBecome(oldBecome, oldUser, oldPass)
 	}
 
