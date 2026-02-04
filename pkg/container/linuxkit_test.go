@@ -45,7 +45,10 @@ func (m *MockHypervisor) BuildCommand(ctx context.Context, image string, opts *H
 	if m.buildErr != nil {
 		return nil, m.buildErr
 	}
-	// Return a simple command that exits quickly
+	// Return a simple command. If command is sleep, give it a valid duration.
+	if m.commandToRun == "sleep" {
+		return exec.CommandContext(ctx, "sleep", "60"), nil
+	}
 	return exec.CommandContext(ctx, m.commandToRun, "test"), nil
 }
 
@@ -94,7 +97,7 @@ func TestLinuxKitManager_Run_Good_Detached(t *testing.T) {
 	err := os.WriteFile(imagePath, []byte("fake image"), 0644)
 	require.NoError(t, err)
 
-	// Use a command that runs briefly then exits
+	// Use a command that runs
 	mock.commandToRun = "sleep"
 
 	ctx := context.Background()
@@ -145,9 +148,6 @@ func TestLinuxKitManager_Run_Good_DefaultValues(t *testing.T) {
 
 	// Name should default to first 8 chars of ID
 	assert.Equal(t, container.ID[:8], container.Name)
-
-	// Wait for the mock process to complete to avoid temp dir cleanup issues
-	time.Sleep(50 * time.Millisecond)
 }
 
 func TestLinuxKitManager_Run_Bad_ImageNotFound(t *testing.T) {
