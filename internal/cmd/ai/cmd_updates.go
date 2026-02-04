@@ -10,6 +10,7 @@ import (
 	"github.com/host-uk/core/pkg/ai"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // task:update command flags
@@ -38,7 +39,7 @@ var taskUpdateCmd = &cli.Command{
 			return cli.Err("%s", i18n.T("cmd.ai.task_update.flag_required"))
 		}
 
-		cfg, err := agentic.LoadConfig("")
+		cfg, err := agentic.LoadConfig(io.Local, "")
 		if err != nil {
 			return cli.WrapVerb(err, "load", "config")
 		}
@@ -73,7 +74,7 @@ var taskCompleteCmd = &cli.Command{
 	RunE: func(cmd *cli.Command, args []string) error {
 		taskID := args[0]
 
-		cfg, err := agentic.LoadConfig("")
+		cfg, err := agentic.LoadConfig(io.Local, "")
 		if err != nil {
 			return cli.WrapVerb(err, "load", "config")
 		}

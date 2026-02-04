@@ -2,10 +2,12 @@ package agentic
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 	"gopkg.in/yaml.v3"
 )
@@ -40,7 +42,7 @@ const DefaultBaseURL = "https://api.core-agentic.dev"
 //   - AGENTIC_TOKEN: Authentication token
 //   - AGENTIC_PROJECT: Default project
 //   - AGENTIC_AGENT_ID: Agent identifier
-func LoadConfig(dir string) (*Config, error) {
+func LoadConfig(m io.Medium, dir string) (*Config, error) {
 	cfg := &Config{
 		BaseURL: DefaultBaseURL,
 	}
@@ -48,7 +50,7 @@ func LoadConfig(dir string) (*Config, error) {
 	// Try loading from .env file in the specified directory
 	if dir != "" {
 		envPath := filepath.Join(dir, envFileName)
-		if err := loadEnvFile(envPath, cfg); err == nil {
+		if err := loadEnvFile(m, envPath, cfg); err == nil {
 			// Successfully loaded from .env
 			applyEnvOverrides(cfg)
 			if cfg.Token != "" {
@@ -62,7 +64,7 @@ func LoadConfig(dir string) (*Config, error) {
 		cwd, err := os.Getwd()
 		if err == nil {
 			envPath := filepath.Join(cwd, envFileName)
-			if err := loadEnvFile(envPath, cfg); err == nil {
+			if err := loadEnvFile(m, envPath, cfg); err == nil {
 				applyEnvOverrides(cfg)
 				if cfg.Token != "" {
 					return cfg, nil
@@ -78,7 +80,7 @@ func LoadConfig(dir string) (*Config, error) {
 	}
 
 	configPath := filepath.Join(homeDir, ".core", configFileName)
-	if err := loadYAMLConfig(configPath, cfg); err != nil && !os.IsNotExist(err) {
+	if err := loadYAMLConfig(m, configPath, cfg); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, log.E("agentic.LoadConfig", "failed to load config", err)
 	}
 
@@ -94,14 +96,13 @@ func LoadConfig(dir string) (*Config, error) {
 }
 
 // loadEnvFile reads a .env file and extracts agentic configuration.
-func loadEnvFile(path string, cfg *Config) error {
-	file, err := os.Open(path)
+func loadEnvFile(m io.Medium, path string, cfg *Config) error {
+	content, err := m.Read(path)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = file.Close() }()
 
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(strings.NewReader(content))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
@@ -138,13 +139,13 @@ func loadEnvFile(path string, cfg *Config) error {
 }
 
 // loadYAMLConfig reads configuration from a YAML file.
-func loadYAMLConfig(path string, cfg *Config) error {
-	data, err := os.ReadFile(path)
+func loadYAMLConfig(m io.Medium, path string, cfg *Config) error {
+	data, err := m.Read(path)
 	if err != nil {
 		return err
 	}
 
-	return yaml.Unmarshal(data, cfg)
+	return yaml.Unmarshal([]byte(data), cfg)
 }
 
 // applyEnvOverrides applies environment variable overrides to the config.
@@ -164,14 +165,14 @@ func applyEnvOverrides(cfg *Config) {
 }
 
 // SaveConfig saves the configuration to ~/.core/agentic.yaml.
-func SaveConfig(cfg *Config) error {
+func SaveConfig(m io.Medium, cfg *Config) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return log.E("agentic.SaveConfig", "failed to get home directory", err)
 	}
 
 	configDir := filepath.Join(homeDir, ".core")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := m.EnsureDir(configDir); err != nil {
 		return log.E("agentic.SaveConfig", "failed to create config directory", err)
 	}
 
@@ -182,7 +183,7 @@ func SaveConfig(cfg *Config) error {
 		return log.E("agentic.SaveConfig", "failed to marshal config", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0600); err != nil {
+	if err := m.Write(configPath, string(data)); err != nil {
 		return log.E("agentic.SaveConfig", "failed to write config file", err)
 	}
 
@@ -190,7 +191,7 @@ func SaveConfig(cfg *Config) error {
 }
 
 // ConfigPath returns the path to the config file in the user's home directory.
-func ConfigPath() (string, error) {
+func ConfigPath(m io.Medium) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", log.E("agentic.ConfigPath", "failed to get home directory", err)

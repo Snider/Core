@@ -5,15 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLoadConfig_Good_FromEnvFile(t *testing.T) {
-	// Create temp directory with .env file
-	tmpDir, err := os.MkdirTemp("", "agentic-test")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	m := io.NewMockMedium()
+	tmpDir := "/tmp/agentic-test"
 
 	envContent := `
 AGENTIC_BASE_URL=https://test.api.com
@@ -21,10 +20,10 @@ AGENTIC_TOKEN=test-token-123
 AGENTIC_PROJECT=my-project
 AGENTIC_AGENT_ID=agent-001
 `
-	err = os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(envContent), 0644)
+	err := m.Write(filepath.Join(tmpDir, ".env"), envContent)
 	require.NoError(t, err)
 
-	cfg, err := LoadConfig(tmpDir)
+	cfg, err := LoadConfig(m, tmpDir)
 
 	require.NoError(t, err)
 	assert.Equal(t, "https://test.api.com", cfg.BaseURL)
@@ -34,15 +33,13 @@ AGENTIC_AGENT_ID=agent-001
 }
 
 func TestLoadConfig_Good_FromEnvVars(t *testing.T) {
-	// Create temp directory with .env file (partial config)
-	tmpDir, err := os.MkdirTemp("", "agentic-test")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	m := io.NewMockMedium()
+	tmpDir := "/tmp/agentic-test"
 
 	envContent := `
 AGENTIC_TOKEN=env-file-token
 `
-	err = os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(envContent), 0644)
+	err := m.Write(filepath.Join(tmpDir, ".env"), envContent)
 	require.NoError(t, err)
 
 	// Set environment variables that should override
@@ -53,7 +50,7 @@ AGENTIC_TOKEN=env-file-token
 		_ = os.Unsetenv("AGENTIC_TOKEN")
 	}()
 
-	cfg, err := LoadConfig(tmpDir)
+	cfg, err := LoadConfig(m, tmpDir)
 
 	require.NoError(t, err)
 	assert.Equal(t, "https://env-override.com", cfg.BaseURL)
@@ -61,39 +58,36 @@ AGENTIC_TOKEN=env-file-token
 }
 
 func TestLoadConfig_Bad_NoToken(t *testing.T) {
-	// Create temp directory without config
-	tmpDir, err := os.MkdirTemp("", "agentic-test")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	m := io.NewMockMedium()
+	tmpDir := "/tmp/agentic-test"
 
 	// Create empty .env
-	err = os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(""), 0644)
+	err := m.Write(filepath.Join(tmpDir, ".env"), "")
 	require.NoError(t, err)
 
 	// Ensure no env vars are set
 	_ = os.Unsetenv("AGENTIC_TOKEN")
 	_ = os.Unsetenv("AGENTIC_BASE_URL")
 
-	_, err = LoadConfig(tmpDir)
+	_, err = LoadConfig(m, tmpDir)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "no authentication token")
 }
 
 func TestLoadConfig_Good_EnvFileWithQuotes(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "agentic-test")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	m := io.NewMockMedium()
+	tmpDir := "/tmp/agentic-test"
 
 	// Test with quoted values
 	envContent := `
 AGENTIC_TOKEN="quoted-token"
 AGENTIC_BASE_URL='single-quoted-url'
 `
-	err = os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(envContent), 0644)
+	err := m.Write(filepath.Join(tmpDir, ".env"), envContent)
 	require.NoError(t, err)
 
-	cfg, err := LoadConfig(tmpDir)
+	cfg, err := LoadConfig(m, tmpDir)
 
 	require.NoError(t, err)
 	assert.Equal(t, "quoted-token", cfg.Token)
@@ -101,9 +95,8 @@ AGENTIC_BASE_URL='single-quoted-url'
 }
 
 func TestLoadConfig_Good_EnvFileWithComments(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "agentic-test")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	m := io.NewMockMedium()
+	tmpDir := "/tmp/agentic-test"
 
 	envContent := `
 # This is a comment
@@ -112,10 +105,10 @@ AGENTIC_TOKEN=token-with-comments
 # Another comment
 AGENTIC_PROJECT=commented-project
 `
-	err = os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(envContent), 0644)
+	err := m.Write(filepath.Join(tmpDir, ".env"), envContent)
 	require.NoError(t, err)
 
-	cfg, err := LoadConfig(tmpDir)
+	cfg, err := LoadConfig(m, tmpDir)
 
 	require.NoError(t, err)
 	assert.Equal(t, "token-with-comments", cfg.Token)
@@ -123,6 +116,8 @@ AGENTIC_PROJECT=commented-project
 }
 
 func TestSaveConfig_Good(t *testing.T) {
+	m := io.NewMockMedium()
+
 	// Create temp home directory
 	tmpHome, err := os.MkdirTemp("", "agentic-home")
 	require.NoError(t, err)
@@ -140,23 +135,23 @@ func TestSaveConfig_Good(t *testing.T) {
 		AgentID:        "saved-agent",
 	}
 
-	err = SaveConfig(cfg)
+	err = SaveConfig(m, cfg)
 	require.NoError(t, err)
 
 	// Verify file was created
 	configPath := filepath.Join(tmpHome, ".core", "agentic.yaml")
-	_, err = os.Stat(configPath)
-	assert.NoError(t, err)
+	assert.True(t, m.Exists(configPath))
 
 	// Read back the config
-	data, err := os.ReadFile(configPath)
+	data, err := m.Read(configPath)
 	require.NoError(t, err)
-	assert.Contains(t, string(data), "saved.api.com")
+	assert.Contains(t, data, "saved.api.com")
 	assert.Contains(t, string(data), "saved-token")
 }
 
 func TestConfigPath_Good(t *testing.T) {
-	path, err := ConfigPath()
+	m := io.NewMockMedium()
+	path, err := ConfigPath(m)
 
 	require.NoError(t, err)
 	assert.Contains(t, path, ".core")
@@ -164,21 +159,20 @@ func TestConfigPath_Good(t *testing.T) {
 }
 
 func TestLoadConfig_Good_DefaultBaseURL(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "agentic-test")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	m := io.NewMockMedium()
+	tmpDir := "/tmp/agentic-test"
 
 	// Only provide token, should use default base URL
 	envContent := `
 AGENTIC_TOKEN=test-token
 `
-	err = os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(envContent), 0644)
+	err := m.Write(filepath.Join(tmpDir, ".env"), envContent)
 	require.NoError(t, err)
 
 	// Clear any env overrides
 	_ = os.Unsetenv("AGENTIC_BASE_URL")
 
-	cfg, err := LoadConfig(tmpDir)
+	cfg, err := LoadConfig(m, tmpDir)
 
 	require.NoError(t, err)
 	assert.Equal(t, DefaultBaseURL, cfg.BaseURL)

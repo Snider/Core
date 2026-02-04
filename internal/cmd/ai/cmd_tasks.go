@@ -13,6 +13,7 @@ import (
 	"github.com/host-uk/core/pkg/ai"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // tasks command flags
@@ -41,7 +42,7 @@ var tasksCmd = &cli.Command{
 			limit = 20
 		}
 
-		cfg, err := agentic.LoadConfig("")
+		cfg, err := agentic.LoadConfig(io.Local, "")
 		if err != nil {
 			return cli.WrapVerb(err, "load", "config")
 		}
@@ -86,7 +87,7 @@ var taskCmd = &cli.Command{
 	Short: i18n.T("cmd.ai.task.short"),
 	Long:  i18n.T("cmd.ai.task.long"),
 	RunE: func(cmd *cli.Command, args []string) error {
-		cfg, err := agentic.LoadConfig("")
+		cfg, err := agentic.LoadConfig(io.Local, "")
 		if err != nil {
 			return cli.WrapVerb(err, "load", "config")
 		}
@@ -147,7 +148,7 @@ var taskCmd = &cli.Command{
 		// Show context if requested
 		if taskShowContext {
 			cwd, _ := os.Getwd()
-			taskCtx, err := agentic.BuildTaskContext(task, cwd)
+			taskCtx, err := agentic.BuildTaskContext(io.Local, task, cwd)
 			if err != nil {
 				cli.Print("%s %s: %s\n", errorStyle.Render(">>"), i18n.T("i18n.fail.build", "context"), err)
 			} else {

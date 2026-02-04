@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/ai"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 )
 
@@ -40,7 +41,7 @@ type TaskContext struct {
 }
 
 // BuildTaskContext gathers context for AI collaboration on a task.
-func BuildTaskContext(task *Task, dir string) (*TaskContext, error) {
+func BuildTaskContext(m io.Medium, task *Task, dir string) (*TaskContext, error) {
 	const op = "agentic.BuildTaskContext"
 
 	if task == nil {
@@ -60,7 +61,7 @@ func BuildTaskContext(task *Task, dir string) (*TaskContext, error) {
 	}
 
 	// Gather files mentioned in the task
-	files, err := GatherRelatedFiles(task, dir)
+	files, err := GatherRelatedFiles(m, task, dir)
 	if err != nil {
 		// Non-fatal: continue without files
 		files = nil
@@ -76,7 +77,7 @@ func BuildTaskContext(task *Task, dir string) (*TaskContext, error) {
 	ctx.RecentCommits = recentCommits
 
 	// Find related code by searching for keywords
-	relatedCode, err := findRelatedCode(task, dir)
+	relatedCode, err := findRelatedCode(m, task, dir)
 	if err != nil {
 		relatedCode = nil
 	}
@@ -93,7 +94,7 @@ func BuildTaskContext(task *Task, dir string) (*TaskContext, error) {
 }
 
 // GatherRelatedFiles reads files mentioned in the task.
-func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
+func GatherRelatedFiles(m io.Medium, task *Task, dir string) ([]FileContent, error) {
 	const op = "agentic.GatherRelatedFiles"
 
 	if task == nil {
@@ -106,7 +107,7 @@ func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
 	for _, relPath := range task.Files {
 		fullPath := filepath.Join(dir, relPath)
 
-		content, err := os.ReadFile(fullPath)
+		content, err := m.Read(fullPath)
 		if err != nil {
 			// Skip files that don't exist
 			continue
@@ -114,7 +115,7 @@ func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
 
 		files = append(files, FileContent{
 			Path:     relPath,
-			Content:  string(content),
+			Content:  content,
 			Language: detectLanguage(relPath),
 		})
 	}
@@ -123,7 +124,7 @@ func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
 }
 
 // findRelatedCode searches for code related to the task by keywords.
-func findRelatedCode(task *Task, dir string) ([]FileContent, error) {
+func findRelatedCode(m io.Medium, task *Task, dir string) ([]FileContent, error) {
 	const op = "agentic.findRelatedCode"
 
 	if task == nil {
@@ -164,20 +165,19 @@ func findRelatedCode(task *Task, dir string) ([]FileContent, error) {
 			}
 
 			fullPath := filepath.Join(dir, line)
-			content, err := os.ReadFile(fullPath)
+			content, err := m.Read(fullPath)
 			if err != nil {
 				continue
 			}
 
 			// Truncate large files
-			contentStr := string(content)
-			if len(contentStr) > 5000 {
-				contentStr = contentStr[:5000] + "\n... (truncated)"
+			if len(content) > 5000 {
+				content = content[:5000] + "\n... (truncated)"
 			}
 
 			files = append(files, FileContent{
 				Path:     line,
-				Content:  contentStr,
+				Content:  content,
 				Language: detectLanguage(line),
 			})
 		}
