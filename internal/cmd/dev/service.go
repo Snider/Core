@@ -20,10 +20,14 @@ type TaskWork struct {
 	AutoCommit   bool
 }
 
+func (TaskWork) Response() any { return nil }
+
 // TaskStatus displays git status for all repos.
 type TaskStatus struct {
 	RegistryPath string
 }
+
+func (TaskStatus) Response() any { return nil }
 
 // ServiceOptions for configuring the dev service.
 type ServiceOptions struct {
@@ -46,21 +50,19 @@ func NewService(opts ServiceOptions) func(*framework.Core) (any, error) {
 
 // OnStartup registers task handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterTask(s.handleTask)
+	framework.RegisterTask(s.Core(), s.handleTaskWork)
+	framework.RegisterTask(s.Core(), s.handleTaskStatus)
 	return nil
 }
 
-func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, error) {
-	switch m := t.(type) {
-	case TaskWork:
-		err := s.runWork(m)
-		return nil, true, err
+func (s *Service) handleTaskWork(c *framework.Core, t TaskWork) (any, bool, error) {
+	err := s.runWork(t)
+	return nil, true, err
+}
 
-	case TaskStatus:
-		err := s.runStatus(m)
-		return nil, true, err
-	}
-	return nil, false, nil
+func (s *Service) handleTaskStatus(c *framework.Core, t TaskStatus) (any, bool, error) {
+	err := s.runStatus(t)
+	return nil, true, err
 }
 
 func (s *Service) runWork(task TaskWork) error {
@@ -76,7 +78,7 @@ func (s *Service) runWork(task TaskWork) error {
 	}
 
 	// QUERY git status
-	result, handled, err := s.Core().QUERY(git.QueryStatus{
+	statuses, handled, err := framework.DispatchQuery(s.Core(), git.QueryStatus{
 		Paths: paths,
 		Names: names,
 	})
@@ -86,7 +88,6 @@ func (s *Service) runWork(task TaskWork) error {
 	if err != nil {
 		return err
 	}
-	statuses := result.([]git.RepoStatus)
 
 	// Sort by name
 	sort.Slice(statuses, func(i, j int) bool {
@@ -119,7 +120,7 @@ func (s *Service) runWork(task TaskWork) error {
 		cli.Blank()
 
 		for _, repo := range dirtyRepos {
-			_, handled, err := s.Core().PERFORM(agentic.TaskCommit{
+			_, handled, err := framework.DispatchTask(s.Core(), agentic.TaskCommit{
 				Path: repo.Path,
 				Name: repo.Name,
 			})
@@ -136,11 +137,10 @@ func (s *Service) runWork(task TaskWork) error {
 		}
 
 		// Re-query status after commits
-		result, _, _ = s.Core().QUERY(git.QueryStatus{
+		statuses, _, _ = framework.DispatchQuery(s.Core(), git.QueryStatus{
 			Paths: paths,
 			Names: names,
 		})
-		statuses = result.([]git.RepoStatus)
 
 		// Rebuild ahead repos list
 		aheadRepos = nil
@@ -186,7 +186,7 @@ func (s *Service) runWork(task TaskWork) error {
 
 	// Push each repo
 	for _, st := range aheadRepos {
-		_, handled, err := s.Core().PERFORM(git.TaskPush{
+		_, handled, err := framework.DispatchTask(s.Core(), git.TaskPush{
 			Path: st.Path,
 			Name: st.Name,
 		})
@@ -219,7 +219,7 @@ func (s *Service) runStatus(task TaskStatus) error {
 		return nil
 	}
 
-	result, handled, err := s.Core().QUERY(git.QueryStatus{
+	statuses, handled, err := framework.DispatchQuery(s.Core(), git.QueryStatus{
 		Paths: paths,
 		Names: names,
 	})
@@ -229,8 +229,6 @@ func (s *Service) runStatus(task TaskStatus) error {
 	if err != nil {
 		return err
 	}
-
-	statuses := result.([]git.RepoStatus)
 	sort.Slice(statuses, func(i, j int) bool {
 		return statuses[i].Name < statuses[j].Name
 	})

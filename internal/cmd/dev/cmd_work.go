@@ -9,6 +9,7 @@ import (
 
 	"github.com/host-uk/core/pkg/agentic"
 	"github.com/host-uk/core/pkg/cli"
+	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/git"
 	"github.com/host-uk/core/pkg/i18n"
 )
@@ -81,7 +82,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	}
 
 	// QUERY git status
-	result, handled, err := bundle.Core.QUERY(git.QueryStatus{
+	statuses, handled, err := framework.DispatchQuery(bundle.Core, git.QueryStatus{
 		Paths: paths,
 		Names: names,
 	})
@@ -91,7 +92,6 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	if err != nil {
 		return err
 	}
-	statuses := result.([]git.RepoStatus)
 
 	// Sort by repo name for consistent output
 	sort.Slice(statuses, func(i, j int) bool {
@@ -125,7 +125,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 
 		for _, s := range dirtyRepos {
 			// PERFORM commit via agentic service
-			_, handled, err := bundle.Core.PERFORM(agentic.TaskCommit{
+			_, handled, err := framework.DispatchTask(bundle.Core, agentic.TaskCommit{
 				Path: s.Path,
 				Name: s.Name,
 			})
@@ -141,11 +141,10 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 		}
 
 		// Re-QUERY status after commits
-		result, _, _ = bundle.Core.QUERY(git.QueryStatus{
+		statuses, _, _ = framework.DispatchQuery(bundle.Core, git.QueryStatus{
 			Paths: paths,
 			Names: names,
 		})
-		statuses = result.([]git.RepoStatus)
 
 		// Rebuild ahead repos list
 		aheadRepos = nil
@@ -190,7 +189,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 	var divergedRepos []git.RepoStatus
 
 	for _, s := range aheadRepos {
-		_, handled, err := bundle.Core.PERFORM(git.TaskPush{
+		_, handled, err := framework.DispatchTask(bundle.Core, git.TaskPush{
 			Path: s.Path,
 			Name: s.Name,
 		})
@@ -220,7 +219,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 				cli.Print("  %s %s...\n", dimStyle.Render("↓"), s.Name)
 
 				// PERFORM pull
-				_, _, err := bundle.Core.PERFORM(git.TaskPull{Path: s.Path, Name: s.Name})
+				_, _, err := framework.DispatchTask(bundle.Core, git.TaskPull{Path: s.Path, Name: s.Name})
 				if err != nil {
 					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 					continue
@@ -229,7 +228,7 @@ func runWork(registryPath string, statusOnly, autoCommit bool) error {
 				cli.Print("  %s %s...\n", dimStyle.Render("↑"), s.Name)
 
 				// PERFORM push
-				_, _, err = bundle.Core.PERFORM(git.TaskPush{Path: s.Path, Name: s.Name})
+				_, _, err = framework.DispatchTask(bundle.Core, git.TaskPush{Path: s.Path, Name: s.Name})
 				if err != nil {
 					cli.Print("  %s %s: %s\n", errorStyle.Render("x"), s.Name, err)
 					continue

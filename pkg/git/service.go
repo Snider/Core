@@ -14,11 +14,17 @@ type QueryStatus struct {
 	Names map[string]string
 }
 
+func (QueryStatus) Response() []RepoStatus { return nil }
+
 // QueryDirtyRepos requests repos with uncommitted changes.
 type QueryDirtyRepos struct{}
 
+func (QueryDirtyRepos) Response() []RepoStatus { return nil }
+
 // QueryAheadRepos requests repos with unpushed commits.
 type QueryAheadRepos struct{}
+
+func (QueryAheadRepos) Response() []RepoStatus { return nil }
 
 // Tasks for git service
 
@@ -28,17 +34,23 @@ type TaskPush struct {
 	Name string
 }
 
+func (TaskPush) Response() any { return nil }
+
 // TaskPull requests git pull for a path.
 type TaskPull struct {
 	Path string
 	Name string
 }
 
+func (TaskPull) Response() any { return nil }
+
 // TaskPushMultiple requests git push for multiple paths.
 type TaskPushMultiple struct {
 	Paths []string
 	Names map[string]string
 }
+
+func (TaskPushMultiple) Response() []PushResult { return nil }
 
 // ServiceOptions for configuring the git service.
 type ServiceOptions struct {
@@ -62,42 +74,42 @@ func NewService(opts ServiceOptions) func(*framework.Core) (any, error) {
 
 // OnStartup registers query and task handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
+	framework.RegisterQuery(s.Core(), s.handleQueryStatus)
+	framework.RegisterQuery(s.Core(), s.handleQueryDirtyRepos)
+	framework.RegisterQuery(s.Core(), s.handleQueryAheadRepos)
+	framework.RegisterTask(s.Core(), s.handleTaskPush)
+	framework.RegisterTask(s.Core(), s.handleTaskPull)
+	framework.RegisterTask(s.Core(), s.handleTaskPushMultiple)
 	return nil
 }
 
-func (s *Service) handleQuery(c *framework.Core, q framework.Query) (any, bool, error) {
-	switch m := q.(type) {
-	case QueryStatus:
-		statuses := Status(context.Background(), StatusOptions(m))
-		s.lastStatus = statuses
-		return statuses, true, nil
-
-	case QueryDirtyRepos:
-		return s.DirtyRepos(), true, nil
-
-	case QueryAheadRepos:
-		return s.AheadRepos(), true, nil
-	}
-	return nil, false, nil
+func (s *Service) handleQueryStatus(c *framework.Core, q QueryStatus) ([]RepoStatus, bool, error) {
+	statuses := Status(context.Background(), StatusOptions(q))
+	s.lastStatus = statuses
+	return statuses, true, nil
 }
 
-func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, error) {
-	switch m := t.(type) {
-	case TaskPush:
-		err := Push(context.Background(), m.Path)
-		return nil, true, err
+func (s *Service) handleQueryDirtyRepos(c *framework.Core, q QueryDirtyRepos) ([]RepoStatus, bool, error) {
+	return s.DirtyRepos(), true, nil
+}
 
-	case TaskPull:
-		err := Pull(context.Background(), m.Path)
-		return nil, true, err
+func (s *Service) handleQueryAheadRepos(c *framework.Core, q QueryAheadRepos) ([]RepoStatus, bool, error) {
+	return s.AheadRepos(), true, nil
+}
 
-	case TaskPushMultiple:
-		results := PushMultiple(context.Background(), m.Paths, m.Names)
-		return results, true, nil
-	}
-	return nil, false, nil
+func (s *Service) handleTaskPush(c *framework.Core, t TaskPush) (any, bool, error) {
+	err := Push(context.Background(), t.Path)
+	return nil, true, err
+}
+
+func (s *Service) handleTaskPull(c *framework.Core, t TaskPull) (any, bool, error) {
+	err := Pull(context.Background(), t.Path)
+	return nil, true, err
+}
+
+func (s *Service) handleTaskPushMultiple(c *framework.Core, t TaskPushMultiple) ([]PushResult, bool, error) {
+	results := PushMultiple(context.Background(), t.Paths, t.Names)
+	return results, true, nil
 }
 
 // Status returns last status result.

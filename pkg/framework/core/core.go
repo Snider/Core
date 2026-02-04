@@ -177,9 +177,24 @@ func (c *Core) ACTION(msg Message) error {
 	return c.bus.action(msg)
 }
 
+// Action dispatches a message of type T to all registered IPC handlers.
+func Action[T any](c *Core, msg T) error {
+	return c.ACTION(msg)
+}
+
 // RegisterAction adds a new IPC handler to the Core.
 func (c *Core) RegisterAction(handler func(*Core, Message) error) {
 	c.bus.registerAction(handler)
+}
+
+// RegisterAction adds a type-safe IPC handler to the Core.
+func RegisterAction[T any](c *Core, handler func(*Core, T) error) {
+	c.RegisterAction(func(c *Core, msg Message) error {
+		if m, ok := msg.(T); ok {
+			return handler(c, m)
+		}
+		return nil
+	})
 }
 
 // RegisterActions adds multiple IPC handlers to the Core.
@@ -193,10 +208,49 @@ func (c *Core) QUERY(q Query) (any, bool, error) {
 	return c.bus.query(q)
 }
 
+// Ask dispatches a query to handlers until one responds, returning a typed result.
+// If the result cannot be cast to R, an error is returned.
+func Ask[R any](c *Core, q any) (R, bool, error) {
+	res, handled, err := c.QUERY(q)
+	if err != nil || !handled {
+		var zero R
+		return zero, handled, err
+	}
+	typed, ok := res.(R)
+	if !ok {
+		var zero R
+		return zero, true, fmt.Errorf("ipc: expected response type %T, got %T", zero, res)
+	}
+	return typed, true, nil
+}
+
+// DispatchQuery dispatches a query that implements Request[R], using type inference for the result.
+func DispatchQuery[R any](c *Core, q Request[R]) (R, bool, error) {
+	return Ask[R](c, q)
+}
+
 // QUERYALL dispatches a query to all handlers and collects all responses.
 // Returns all results from handlers that responded.
 func (c *Core) QUERYALL(q Query) ([]any, error) {
 	return c.bus.queryAll(q)
+}
+
+// AskAll dispatches a query to all handlers and collects typed responses.
+func AskAll[R any](c *Core, q any) ([]R, error) {
+	results, err := c.QUERYALL(q)
+	if err != nil {
+		return nil, err
+	}
+	typedResults := make([]R, 0, len(results))
+	for _, res := range results {
+		if typed, ok := res.(R); ok {
+			typedResults = append(typedResults, typed)
+		} else {
+			var zero R
+			return nil, fmt.Errorf("ipc: expected response type %T, got %T", zero, res)
+		}
+	}
+	return typedResults, nil
 }
 
 // PERFORM dispatches a task to handlers until one executes it.
@@ -205,14 +259,54 @@ func (c *Core) PERFORM(t Task) (any, bool, error) {
 	return c.bus.perform(t)
 }
 
+// Perform dispatches a task to handlers until one responds, returning a typed result.
+func Perform[R any](c *Core, t any) (R, bool, error) {
+	res, handled, err := c.PERFORM(t)
+	if err != nil || !handled {
+		var zero R
+		return zero, handled, err
+	}
+	typed, ok := res.(R)
+	if !ok {
+		var zero R
+		return zero, true, fmt.Errorf("ipc: expected response type %T, got %T", zero, res)
+	}
+	return typed, true, nil
+}
+
+// DispatchTask dispatches a task that implements Request[R], using type inference for the result.
+func DispatchTask[R any](c *Core, t Request[R]) (R, bool, error) {
+	return Perform[R](c, t)
+}
+
 // RegisterQuery adds a query handler to the Core.
 func (c *Core) RegisterQuery(handler QueryHandler) {
 	c.bus.registerQuery(handler)
 }
 
+// RegisterQuery adds a type-safe query handler to the Core.
+func RegisterQuery[Q any, R any](c *Core, handler TypedQueryHandler[Q, R]) {
+	c.RegisterQuery(func(c *Core, q Query) (any, bool, error) {
+		if typedQ, ok := q.(Q); ok {
+			return handler(c, typedQ)
+		}
+		return nil, false, nil
+	})
+}
+
 // RegisterTask adds a task handler to the Core.
 func (c *Core) RegisterTask(handler TaskHandler) {
 	c.bus.registerTask(handler)
+}
+
+// RegisterTask adds a type-safe task handler to the Core.
+func RegisterTask[T any, R any](c *Core, handler TypedTaskHandler[T, R]) {
+	c.RegisterTask(func(c *Core, t Task) (any, bool, error) {
+		if typedT, ok := t.(T); ok {
+			return handler(c, typedT)
+		}
+		return nil, false, nil
+	})
 }
 
 // RegisterService adds a new service to the Core.
