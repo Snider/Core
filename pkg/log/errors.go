@@ -8,6 +8,7 @@ package log
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 )
 
 // Err represents a structured error with operational context.
@@ -40,6 +41,23 @@ func (e *Err) Error() string {
 // Unwrap returns the underlying error for use with errors.Is and errors.As.
 func (e *Err) Unwrap() error {
 	return e.Err
+}
+
+// LogValue implements slog.LogValuer to provide structured logging.
+func (e *Err) LogValue() slog.Value {
+	attrs := []slog.Attr{
+		slog.String("msg", e.Msg),
+	}
+	if e.Op != "" {
+		attrs = append(attrs, slog.String("op", e.Op))
+	}
+	if e.Code != "" {
+		attrs = append(attrs, slog.String("code", e.Code))
+	}
+	if e.Err != nil {
+		attrs = append(attrs, slog.Any("cause", e.Err))
+	}
+	return slog.GroupValue(attrs...)
 }
 
 // --- Error Creation Functions ---

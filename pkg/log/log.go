@@ -14,11 +14,13 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
+	"runtime"
 	"sync"
-	"time"
 )
 
 // Level defines logging verbosity.
@@ -38,6 +40,23 @@ const (
 	LevelDebug
 )
 
+func (l Level) slogLevel() slog.Level {
+	switch l {
+	case LevelDebug:
+		return slog.LevelDebug
+	case LevelInfo:
+		return slog.LevelInfo
+	case LevelWarn:
+		return slog.LevelWarn
+	case LevelError:
+		return slog.LevelError
+	case LevelQuiet:
+		return slog.Level(100)
+	default:
+		return slog.LevelInfo
+	}
+}
+
 // String returns the level name.
 func (l Level) String() string {
 	switch l {
@@ -56,11 +75,23 @@ func (l Level) String() string {
 	}
 }
 
+// LogFormat defines the output format.
+type LogFormat int
+
+const (
+	// FormatText outputs human-readable text.
+	FormatText LogFormat = iota
+	// FormatJSON outputs structured JSON.
+	FormatJSON
+)
+
 // Logger provides structured logging.
 type Logger struct {
 	mu     sync.RWMutex
 	level  Level
 	output io.Writer
+	format LogFormat
+	slog   *slog.Logger
 
 	// Style functions for formatting (can be overridden)
 	StyleTimestamp func(string) string
@@ -73,6 +104,7 @@ type Logger struct {
 // Options configures a Logger.
 type Options struct {
 	Level  Level
+	Format LogFormat
 	Output io.Writer // defaults to os.Stderr
 }
 
@@ -83,15 +115,93 @@ func New(opts Options) *Logger {
 		output = os.Stderr
 	}
 
-	return &Logger{
+	l := &Logger{
 		level:          opts.Level,
 		output:         output,
+		format:         opts.Format,
 		StyleTimestamp: identity,
 		StyleDebug:     identity,
 		StyleInfo:      identity,
 		StyleWarn:      identity,
 		StyleError:     identity,
 	}
+	l.updateSlog()
+	return l
+}
+
+func (l *Logger) updateSlog() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	var handler slog.Handler
+	if l.format == FormatJSON {
+		handler = slog.NewJSONHandler(l.output, &slog.HandlerOptions{
+			Level: l.level.slogLevel(),
+		})
+	} else {
+		handler = &textHandler{l: l}
+	}
+	l.slog = slog.New(handler)
+}
+
+type textHandler struct {
+	l     *Logger
+	attrs []slog.Attr
+}
+
+func (h *textHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return level >= h.l.Level().slogLevel()
+}
+
+func (h *textHandler) Handle(ctx context.Context, r slog.Record) error {
+	h.l.mu.RLock()
+	output := h.l.output
+	styleTimestamp := h.l.StyleTimestamp
+	styleDebug := h.l.StyleDebug
+	styleInfo := h.l.StyleInfo
+	styleWarn := h.l.StyleWarn
+	styleError := h.l.StyleError
+	h.l.mu.RUnlock()
+
+	timestamp := styleTimestamp(r.Time.Format("15:04:05"))
+
+	var prefix string
+	switch r.Level {
+	case slog.LevelDebug:
+		prefix = styleDebug("[DBG]")
+	case slog.LevelInfo:
+		prefix = styleInfo("[INF]")
+	case slog.LevelWarn:
+		prefix = styleWarn("[WRN]")
+	case slog.LevelError:
+		prefix = styleError("[ERR]")
+	default:
+		prefix = "[" + r.Level.String() + "]"
+	}
+
+	var kvStr string
+	for _, a := range h.attrs {
+		kvStr += fmt.Sprintf(" %s=%v", a.Key, a.Value.Any())
+	}
+	r.Attrs(func(a slog.Attr) bool {
+		kvStr += fmt.Sprintf(" %s=%v", a.Key, a.Value.Any())
+		return true
+	})
+
+	_, err := fmt.Fprintf(output, "%s %s %s%s\n", timestamp, prefix, r.Message, kvStr)
+	return err
+}
+
+func (h *textHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	newAttrs := make([]slog.Attr, len(h.attrs)+len(attrs))
+	copy(newAttrs, h.attrs)
+	copy(newAttrs[len(h.attrs):], attrs)
+	return &textHandler{l: h.l, attrs: newAttrs}
+}
+
+func (h *textHandler) WithGroup(name string) slog.Handler {
+	// Grouping not supported in simple text mode
+	return h
 }
 
 func identity(s string) string { return s }
@@ -101,6 +211,7 @@ func (l *Logger) SetLevel(level Level) {
 	l.mu.Lock()
 	l.level = level
 	l.mu.Unlock()
+	l.updateSlog()
 }
 
 // Level returns the current log level.
@@ -115,68 +226,58 @@ func (l *Logger) SetOutput(w io.Writer) {
 	l.mu.Lock()
 	l.output = w
 	l.mu.Unlock()
-}
-
-func (l *Logger) shouldLog(level Level) bool {
-	l.mu.RLock()
-	defer l.mu.RUnlock()
-	return level <= l.level
-}
-
-func (l *Logger) log(level Level, prefix, msg string, keyvals ...any) {
-	l.mu.RLock()
-	output := l.output
-	styleTimestamp := l.StyleTimestamp
-	l.mu.RUnlock()
-
-	timestamp := styleTimestamp(time.Now().Format("15:04:05"))
-
-	// Format key-value pairs
-	var kvStr string
-	if len(keyvals) > 0 {
-		kvStr = " "
-		for i := 0; i < len(keyvals); i += 2 {
-			if i > 0 {
-				kvStr += " "
-			}
-			key := keyvals[i]
-			var val any
-			if i+1 < len(keyvals) {
-				val = keyvals[i+1]
-			}
-			kvStr += fmt.Sprintf("%v=%v", key, val)
-		}
-	}
-
-	_, _ = fmt.Fprintf(output, "%s %s %s%s\n", timestamp, prefix, msg, kvStr)
+	l.updateSlog()
 }
 
 // Debug logs a debug message with optional key-value pairs.
 func (l *Logger) Debug(msg string, keyvals ...any) {
-	if l.shouldLog(LevelDebug) {
-		l.log(LevelDebug, l.StyleDebug("[DBG]"), msg, keyvals...)
-	}
+	l.slog.Debug(msg, keyvals...)
+}
+
+// DebugContext logs a debug message with optional key-value pairs.
+func (l *Logger) DebugContext(ctx context.Context, msg string, keyvals ...any) {
+	l.slog.DebugContext(ctx, msg, keyvals...)
 }
 
 // Info logs an info message with optional key-value pairs.
 func (l *Logger) Info(msg string, keyvals ...any) {
-	if l.shouldLog(LevelInfo) {
-		l.log(LevelInfo, l.StyleInfo("[INF]"), msg, keyvals...)
-	}
+	l.slog.Info(msg, keyvals...)
+}
+
+// InfoContext logs an info message with optional key-value pairs.
+func (l *Logger) InfoContext(ctx context.Context, msg string, keyvals ...any) {
+	l.slog.InfoContext(ctx, msg, keyvals...)
 }
 
 // Warn logs a warning message with optional key-value pairs.
 func (l *Logger) Warn(msg string, keyvals ...any) {
-	if l.shouldLog(LevelWarn) {
-		l.log(LevelWarn, l.StyleWarn("[WRN]"), msg, keyvals...)
-	}
+	l.slog.Warn(msg, keyvals...)
+}
+
+// WarnContext logs a warning message with optional key-value pairs.
+func (l *Logger) WarnContext(ctx context.Context, msg string, keyvals ...any) {
+	l.slog.WarnContext(ctx, msg, keyvals...)
 }
 
 // Error logs an error message with optional key-value pairs.
 func (l *Logger) Error(msg string, keyvals ...any) {
-	if l.shouldLog(LevelError) {
-		l.log(LevelError, l.StyleError("[ERR]"), msg, keyvals...)
+	l.ErrorContext(context.Background(), msg, keyvals...)
+}
+
+// ErrorContext logs an error message with optional key-value pairs.
+func (l *Logger) ErrorContext(ctx context.Context, msg string, keyvals ...any) {
+	l.mu.RLock()
+	format := l.format
+	hndlr := l.slog.Handler()
+	l.mu.RUnlock()
+
+	// Add stack trace for errors in JSON mode
+	if format == FormatJSON && hndlr.Enabled(ctx, slog.LevelError) {
+		buf := make([]byte, 2048)
+		n := runtime.Stack(buf, false)
+		keyvals = append(keyvals, slog.String("stack", string(buf[:n])))
 	}
+	l.slog.ErrorContext(ctx, msg, keyvals...)
 }
 
 // --- Default logger ---
@@ -203,9 +304,19 @@ func Debug(msg string, keyvals ...any) {
 	defaultLogger.Debug(msg, keyvals...)
 }
 
+// DebugContext logs to the default logger.
+func DebugContext(ctx context.Context, msg string, keyvals ...any) {
+	defaultLogger.DebugContext(ctx, msg, keyvals...)
+}
+
 // Info logs to the default logger.
 func Info(msg string, keyvals ...any) {
 	defaultLogger.Info(msg, keyvals...)
+}
+
+// InfoContext logs to the default logger.
+func InfoContext(ctx context.Context, msg string, keyvals ...any) {
+	defaultLogger.InfoContext(ctx, msg, keyvals...)
 }
 
 // Warn logs to the default logger.
@@ -213,7 +324,17 @@ func Warn(msg string, keyvals ...any) {
 	defaultLogger.Warn(msg, keyvals...)
 }
 
+// WarnContext logs to the default logger.
+func WarnContext(ctx context.Context, msg string, keyvals ...any) {
+	defaultLogger.WarnContext(ctx, msg, keyvals...)
+}
+
 // Error logs to the default logger.
 func Error(msg string, keyvals ...any) {
 	defaultLogger.Error(msg, keyvals...)
+}
+
+// ErrorContext logs to the default logger.
+func ErrorContext(ctx context.Context, msg string, keyvals ...any) {
+	defaultLogger.ErrorContext(ctx, msg, keyvals...)
 }
