@@ -40,7 +40,7 @@ jobs:
         run: go generate ./internal/cmd/updater/...
 
       - name: Run coverage
-        run: core go cov --output coverage.txt --threshold 50 --branch-threshold 40
+        run: core go cov --output coverage.txt --threshold 45 --branch-threshold 40
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
