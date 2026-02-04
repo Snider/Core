@@ -14,6 +14,7 @@ import (
 
 // ImageManager handles image downloads and updates.
 type ImageManager struct {
+	medium   io.Medium
 	config   *Config
 	manifest *Manifest
 	sources  []sources.ImageSource
@@ -21,6 +22,7 @@ type ImageManager struct {
 
 // Manifest tracks installed images.
 type Manifest struct {
+	medium io.Medium
 	Images map[string]ImageInfo `json:"images"`
 	path   string
 }
@@ -34,20 +36,20 @@ type ImageInfo struct {
 }
 
 // NewImageManager creates a new image manager.
-func NewImageManager(cfg *Config) (*ImageManager, error) {
+func NewImageManager(m io.Medium, cfg *Config) (*ImageManager, error) {
 	imagesDir, err := ImagesDir()
 	if err != nil {
 		return nil, err
 	}
 
 	// Ensure images directory exists
-	if err := io.Local.EnsureDir(imagesDir); err != nil {
+	if err := m.EnsureDir(imagesDir); err != nil {
 		return nil, err
 	}
 
 	// Load or create manifest
 	manifestPath := filepath.Join(imagesDir, "manifest.json")
-	manifest, err := loadManifest(manifestPath)
+	manifest, err := loadManifest(m, manifestPath)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +77,7 @@ func NewImageManager(cfg *Config) (*ImageManager, error) {
 	}
 
 	return &ImageManager{
+		medium:   m,
 		config:   cfg,
 		manifest: manifest,
 		sources:  srcs,
@@ -87,7 +90,7 @@ func (m *ImageManager) IsInstalled() bool {
 	if err != nil {
 		return false
 	}
-	return io.Local.IsFile(path)
+	return m.medium.IsFile(path)
 }
 
 // Install downloads and installs the dev image.
@@ -118,7 +121,7 @@ func (m *ImageManager) Install(ctx context.Context, progress func(downloaded, to
 	fmt.Printf("Downloading %s from %s...\n", ImageName(), src.Name())
 
 	// Download
-	if err := src.Download(ctx, imagesDir, progress); err != nil {
+	if err := src.Download(ctx, m.medium, imagesDir, progress); err != nil {
 		return err
 	}
 
@@ -161,26 +164,28 @@ func (m *ImageManager) CheckUpdate(ctx context.Context) (current, latest string,
 	return current, latest, hasUpdate, nil
 }
 
-func loadManifest(path string) (*Manifest, error) {
-	m := &Manifest{
+func loadManifest(m io.Medium, path string) (*Manifest, error) {
+	manifest := &Manifest{
+		medium: m,
 		Images: make(map[string]ImageInfo),
 		path:   path,
 	}
 
-	content, err := io.Local.Read(path)
+	content, err := m.Read(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return m, nil
+			return manifest, nil
 		}
 		return nil, err
 	}
 
-	if err := json.Unmarshal([]byte(content), m); err != nil {
+	if err := json.Unmarshal([]byte(content), manifest); err != nil {
 		return nil, err
 	}
-	m.path = path
+	manifest.medium = m
+	manifest.path = path
 
-	return m, nil
+	return manifest, nil
 }
 
 // Save writes the manifest to disk.
@@ -189,5 +194,5 @@ func (m *Manifest) Save() error {
 	if err != nil {
 		return err
 	}
-	return io.Local.Write(m.path, string(data))
+	return m.medium.Write(m.path, string(data))
 }
