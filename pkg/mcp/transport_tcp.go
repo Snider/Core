@@ -3,7 +3,6 @@ package mcp
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"net"
 
