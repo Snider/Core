@@ -44,6 +44,10 @@ func (m *MockHypervisor) BuildCommand(ctx context.Context, image string, opts *H
 	if m.buildErr != nil {
 		return nil, m.buildErr
 	}
+	// Return a command that stays alive if it's sleep
+	if m.commandToRun == "sleep" {
+		return exec.CommandContext(ctx, "sleep", "10"), nil
+	}
 	// Return a simple command that exits quickly
 	return exec.CommandContext(ctx, m.commandToRun, "test"), nil
 }
