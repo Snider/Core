@@ -33,14 +33,23 @@ func Main() {
 			})),
 		},
 	}); err != nil {
-		Fatal(err)
+		Error(err.Error())
+		os.Exit(1)
 	}
 	defer Shutdown()
 
 	// Add completion command to the CLI's root
 	RootCmd().AddCommand(completionCmd)
 
-	Fatal(Execute())
+	if err := Execute(); err != nil {
+		code := 1
+		var exitErr *ExitError
+		if As(err, &exitErr) {
+			code = exitErr.Code
+		}
+		Error(err.Error())
+		os.Exit(code)
+	}
 }
 
 // completionCmd generates shell completion scripts.
