@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/host-uk/core/pkg/ai"
 	"github.com/host-uk/core/pkg/log"
 )
 
@@ -34,6 +35,8 @@ type TaskContext struct {
 	RecentCommits string `json:"recent_commits"`
 	// RelatedCode contains code snippets related to the task.
 	RelatedCode []FileContent `json:"related_code"`
+	// RAGContext contains relevant documentation from the vector database.
+	RAGContext string `json:"rag_context,omitempty"`
 }
 
 // BuildTaskContext gathers context for AI collaboration on a task.
@@ -78,6 +81,13 @@ func BuildTaskContext(task *Task, dir string) (*TaskContext, error) {
 		relatedCode = nil
 	}
 	ctx.RelatedCode = relatedCode
+
+	// Query RAG for relevant documentation (graceful degradation)
+	ragCtx := ai.QueryRAGForTask(ai.TaskInfo{
+		Title:       task.Title,
+		Description: task.Description,
+	})
+	ctx.RAGContext = ragCtx
 
 	return ctx, nil
 }
@@ -329,6 +339,13 @@ func (tc *TaskContext) FormatContext() string {
 			sb.WriteString(f.Content)
 			sb.WriteString("\n```\n\n")
 		}
+	}
+
+	// Relevant documentation from RAG
+	if tc.RAGContext != "" {
+		sb.WriteString("## Relevant Documentation\n")
+		sb.WriteString(tc.RAGContext)
+		sb.WriteString("\n\n")
 	}
 
 	return sb.String()

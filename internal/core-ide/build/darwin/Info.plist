@@ -1,0 +1,27 @@
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundlePackageType</key>
+            <string>APPL</string>
+        <key>CFBundleName</key>
+            <string>Core IDE</string>
+        <key>CFBundleExecutable</key>
+            <string>core-ide</string>
+        <key>CFBundleIdentifier</key>
+            <string>com.lethean.core-ide</string>
+        <key>CFBundleVersion</key>
+            <string>0.1.0</string>
+        <key>CFBundleGetInfoString</key>
+            <string>Core IDE - Development Environment</string>
+        <key>CFBundleShortVersionString</key>
+            <string>0.1.0</string>
+        <key>CFBundleIconFile</key>
+            <string>icons</string>
+        <key>LSMinimumSystemVersion</key>
+            <string>10.15.0</string>
+        <key>NSHighResolutionCapable</key>
+            <true/>
+        <key>NSHumanReadableCopyright</key>
+            <string>© 2026 Lethean Community Interest Company. EUPL-1.2</string>
+    </dict>
+</plist>

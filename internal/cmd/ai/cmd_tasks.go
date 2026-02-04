@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/agentic"
+	"github.com/host-uk/core/pkg/ai"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
 )
@@ -164,6 +165,13 @@ var taskCmd = &cli.Command{
 			if err != nil {
 				return cli.WrapVerb(err, "claim", "task")
 			}
+
+			// Record task claim event
+			_ = ai.Record(ai.Event{
+				Type:    "task.claimed",
+				AgentID: cfg.AgentID,
+				Data:    map[string]any{"task_id": task.ID, "title": task.Title},
+			})
 
 			cli.Print("%s %s\n", successStyle.Render(">>"), i18n.T("i18n.done.claim", "task"))
 			cli.Print("   %s %s\n", i18n.Label("status"), formatTaskStatus(claimedTask.Status))

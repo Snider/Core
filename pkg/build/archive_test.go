@@ -3,12 +3,14 @@ package build
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Snider/Borg/pkg/compress"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -112,6 +114,64 @@ func TestArchive_Good(t *testing.T) {
 		result, err := Archive(artifact)
 		require.NoError(t, err)
 		assert.Equal(t, "abc123", result.Checksum)
+	})
+
+	t.Run("creates tar.xz for linux with ArchiveXZ", func(t *testing.T) {
+		binaryPath, outputDir := setupArchiveTestFile(t, "myapp", "linux", "amd64")
+
+		artifact := Artifact{
+			Path: binaryPath,
+			OS:   "linux",
+			Arch: "amd64",
+		}
+
+		result, err := ArchiveXZ(artifact)
+		require.NoError(t, err)
+
+		expectedPath := filepath.Join(outputDir, "myapp_linux_amd64.tar.xz")
+		assert.Equal(t, expectedPath, result.Path)
+		assert.FileExists(t, result.Path)
+
+		verifyTarXzContent(t, result.Path, "myapp")
+	})
+
+	t.Run("creates tar.xz for darwin with ArchiveWithFormat", func(t *testing.T) {
+		binaryPath, outputDir := setupArchiveTestFile(t, "myapp", "darwin", "arm64")
+
+		artifact := Artifact{
+			Path: binaryPath,
+			OS:   "darwin",
+			Arch: "arm64",
+		}
+
+		result, err := ArchiveWithFormat(artifact, ArchiveFormatXZ)
+		require.NoError(t, err)
+
+		expectedPath := filepath.Join(outputDir, "myapp_darwin_arm64.tar.xz")
+		assert.Equal(t, expectedPath, result.Path)
+		assert.FileExists(t, result.Path)
+
+		verifyTarXzContent(t, result.Path, "myapp")
+	})
+
+	t.Run("windows still uses zip even with xz format", func(t *testing.T) {
+		binaryPath, outputDir := setupArchiveTestFile(t, "myapp.exe", "windows", "amd64")
+
+		artifact := Artifact{
+			Path: binaryPath,
+			OS:   "windows",
+			Arch: "amd64",
+		}
+
+		result, err := ArchiveWithFormat(artifact, ArchiveFormatXZ)
+		require.NoError(t, err)
+
+		// Windows should still get .zip regardless of format
+		expectedPath := filepath.Join(outputDir, "myapp_windows_amd64.zip")
+		assert.Equal(t, expectedPath, result.Path)
+		assert.FileExists(t, result.Path)
+
+		verifyZipContent(t, result.Path, "myapp.exe")
 	})
 }
 
@@ -305,4 +365,28 @@ func verifyZipContent(t *testing.T, archivePath, expectedName string) {
 
 	require.Len(t, reader.File, 1)
 	assert.Equal(t, expectedName, reader.File[0].Name)
+}
+
+// verifyTarXzContent opens a tar.xz file and verifies it contains the expected file.
+func verifyTarXzContent(t *testing.T, archivePath, expectedName string) {
+	t.Helper()
+
+	// Read the xz-compressed file
+	xzData, err := os.ReadFile(archivePath)
+	require.NoError(t, err)
+
+	// Decompress with Borg
+	tarData, err := compress.Decompress(xzData)
+	require.NoError(t, err)
+
+	// Read tar archive
+	tarReader := tar.NewReader(bytes.NewReader(tarData))
+
+	header, err := tarReader.Next()
+	require.NoError(t, err)
+	assert.Equal(t, expectedName, header.Name)
+
+	// Verify there's only one file
+	_, err = tarReader.Next()
+	assert.Equal(t, io.EOF, err)
 }

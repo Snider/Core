@@ -210,7 +210,6 @@ func DefaultConfig() *Config {
 			Targets: []TargetConfig{
 				{OS: "linux", Arch: "amd64"},
 				{OS: "linux", Arch: "arm64"},
-				{OS: "darwin", Arch: "amd64"},
 				{OS: "darwin", Arch: "arm64"},
 				{OS: "windows", Arch: "amd64"},
 			},
