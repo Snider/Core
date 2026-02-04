@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // ServeOptions configures the dev server.
@@ -39,7 +41,7 @@ func (d *DevOps) Serve(ctx context.Context, projectDir string, opts ServeOptions
 	}
 
 	// Detect and run serve command
-	serveCmd := DetectServeCommand(servePath)
+	serveCmd := DetectServeCommand(d.medium, servePath)
 	fmt.Printf("Starting server: %s\n", serveCmd)
 	fmt.Printf("Listening on http://localhost:%d\n", opts.Port)
 
@@ -69,36 +71,36 @@ func (d *DevOps) mountProject(ctx context.Context, path string) error {
 }
 
 // DetectServeCommand auto-detects the serve command for a project.
-func DetectServeCommand(projectDir string) string {
+func DetectServeCommand(m io.Medium, projectDir string) string {
 	// Laravel/Octane
-	if hasFile(projectDir, "artisan") {
+	if hasFile(m, projectDir, "artisan") {
 		return "php artisan octane:start --host=0.0.0.0 --port=8000"
 	}
 
 	// Node.js with dev script
-	if hasFile(projectDir, "package.json") {
-		if hasPackageScript(projectDir, "dev") {
+	if hasFile(m, projectDir, "package.json") {
+		if hasPackageScript(m, projectDir, "dev") {
 			return "npm run dev -- --host 0.0.0.0"
 		}
-		if hasPackageScript(projectDir, "start") {
+		if hasPackageScript(m, projectDir, "start") {
 			return "npm start"
 		}
 	}
 
 	// PHP with composer
-	if hasFile(projectDir, "composer.json") {
+	if hasFile(m, projectDir, "composer.json") {
 		return "frankenphp php-server -l :8000"
 	}
 
 	// Go
-	if hasFile(projectDir, "go.mod") {
-		if hasFile(projectDir, "main.go") {
+	if hasFile(m, projectDir, "go.mod") {
+		if hasFile(m, projectDir, "main.go") {
 			return "go run ."
 		}
 	}
 
 	// Python Django
-	if hasFile(projectDir, "manage.py") {
+	if hasFile(m, projectDir, "manage.py") {
 		return "python manage.py runserver 0.0.0.0:8000"
 	}
 

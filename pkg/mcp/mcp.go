@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/io"
+	"github.com/host-uk/core/pkg/io/local"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -40,7 +41,7 @@ func WithWorkspaceRoot(root string) Option {
 		if err != nil {
 			return fmt.Errorf("invalid workspace root: %w", err)
 		}
-		m, err := io.NewSandboxed(abs)
+		m, err := local.New(abs)
 		if err != nil {
 			return fmt.Errorf("failed to create workspace medium: %w", err)
 		}
@@ -69,7 +70,7 @@ func New(opts ...Option) (*Service, error) {
 		return nil, fmt.Errorf("failed to get working directory: %w", err)
 	}
 	s.workspaceRoot = cwd
-	m, err := io.NewSandboxed(cwd)
+	m, err := local.New(cwd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sandboxed medium: %w", err)
 	}
@@ -310,11 +311,8 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 			size = info.Size()
 		}
 		result = append(result, DirectoryEntry{
-			Name: e.Name(),
-			Path: filepath.Join(input.Path, e.Name()), // Note: This might be relative path, client might expect absolute?
-			// Issue 103 says "Replace ... with local.Medium sandboxing".
-			// Previous code returned `filepath.Join(input.Path, e.Name())`.
-			// If input.Path is relative, this preserves it.
+			Name:  e.Name(),
+			Path:  filepath.Join(input.Path, e.Name()),
 			IsDir: e.IsDir(),
 			Size:  size,
 		})
@@ -344,21 +342,18 @@ func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, inpu
 }
 
 func (s *Service) fileExists(ctx context.Context, req *mcp.CallToolRequest, input FileExistsInput) (*mcp.CallToolResult, FileExistsOutput, error) {
-	exists := s.medium.IsFile(input.Path)
-	if exists {
-		return nil, FileExistsOutput{Exists: true, IsDir: false, Path: input.Path}, nil
+	info, err := s.medium.Stat(input.Path)
+	if err != nil {
+		// Any error from Stat (e.g., not found, permission denied) is treated as "does not exist"
+		// for the purpose of this tool.
+		return nil, FileExistsOutput{Exists: false, IsDir: false, Path: input.Path}, nil
 	}
-	// Check if it's a directory by attempting to list it
-	// List might fail if it's a file too (but we checked IsFile) or if doesn't exist.
-	_, err := s.medium.List(input.Path)
-	isDir := err == nil
 
-	// If List failed, it might mean it doesn't exist OR it's a special file or permissions.
-	// Assuming if List works, it's a directory.
-
-	// Refinement: If it doesn't exist, List returns error.
-
-	return nil, FileExistsOutput{Exists: isDir, IsDir: isDir, Path: input.Path}, nil
+	return nil, FileExistsOutput{
+		Exists: true,
+		IsDir:  info.IsDir(),
+		Path:   input.Path,
+	}, nil
 }
 
 func (s *Service) detectLanguage(ctx context.Context, req *mcp.CallToolRequest, input DetectLanguageInput) (*mcp.CallToolResult, DetectLanguageOutput, error) {
