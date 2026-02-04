@@ -68,6 +68,12 @@ nav:
   - GUI Application:
     - Overview: gui/overview.md
     - MCP Bridge: gui/mcp-bridge.md
+  - Architecture Decisions:
+    - Overview: adr/README.md
+    - "ADR 0001: Use Wails v3": adr/0001-use-wails-v3.md
+    - "ADR 0002: IPC Bridge Pattern": adr/0002-ipc-bridge-pattern.md
+    - "ADR 0003: Service Pattern": adr/0003-soa-dual-constructor-di.md
+    - "ADR 0004: Storage Abstraction": adr/0004-storage-abstraction-medium.md
   - API Reference:
     - Core: api/core.md
     - Display: api/display.md
