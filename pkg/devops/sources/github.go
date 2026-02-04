@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // GitHubSource downloads images from GitHub Releases.
@@ -52,7 +54,7 @@ func (s *GitHubSource) LatestVersion(ctx context.Context) (string, error) {
 }
 
 // Download downloads the image from the latest release.
-func (s *GitHubSource) Download(ctx context.Context, dest string, progress func(downloaded, total int64)) error {
+func (s *GitHubSource) Download(ctx context.Context, m io.Medium, dest string, progress func(downloaded, total int64)) error {
 	// Get release assets to find our image
 	cmd := exec.CommandContext(ctx, "gh", "release", "download",
 		"-R", s.config.GitHubRepo,

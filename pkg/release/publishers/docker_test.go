@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -238,6 +239,7 @@ func TestDockerPublisher_Publish_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/nonexistent",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{
 			Type: "docker",
@@ -282,6 +284,7 @@ func TestDockerPublisher_DryRunPublish_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		cfg := DockerConfig{
 			Registry:   "ghcr.io",
@@ -324,6 +327,7 @@ func TestDockerPublisher_DryRunPublish_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		cfg := DockerConfig{
 			Registry:   "docker.io",
@@ -360,6 +364,7 @@ func TestDockerPublisher_DryRunPublish_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v2.0.0",
 			ProjectDir: "/project",
+			FS:         io.Local,
 		}
 		cfg := DockerConfig{
 			Registry:   "ghcr.io",
@@ -583,6 +588,7 @@ func TestDockerPublisher_Publish_DryRun_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: tmpDir,
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
@@ -620,6 +626,7 @@ func TestDockerPublisher_Publish_DryRun_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: tmpDir,
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{
 			Type: "docker",
@@ -653,6 +660,7 @@ func TestDockerPublisher_Publish_Validation_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/nonexistent/path",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
@@ -670,6 +678,7 @@ func TestDockerPublisher_Publish_Validation_Bad(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: "/tmp",
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}
@@ -715,6 +724,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: tmpDir,
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{
 			Type: "docker",
@@ -758,6 +768,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: tmpDir,
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{
 			Type: "docker",
@@ -787,6 +798,7 @@ func TestDockerPublisher_Publish_WithCLI_Good(t *testing.T) {
 		release := &Release{
 			Version:    "v1.0.0",
 			ProjectDir: tmpDir,
+			FS:         io.Local,
 		}
 		pubCfg := PublisherConfig{Type: "docker"}
 		relCfg := &mockReleaseConfig{repository: "owner/repo"}

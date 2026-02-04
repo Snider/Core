@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,7 +72,7 @@ func TestCDNSource_Download_Good(t *testing.T) {
 	})
 
 	var progressCalled bool
-	err := src.Download(context.Background(), dest, func(downloaded, total int64) {
+	err := src.Download(context.Background(), io.Local, dest, func(downloaded, total int64) {
 		progressCalled = true
 	})
 
@@ -97,7 +98,7 @@ func TestCDNSource_Download_Bad(t *testing.T) {
 			ImageName: "test.img",
 		})
 
-		err := src.Download(context.Background(), dest, nil)
+		err := src.Download(context.Background(), io.Local, dest, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "HTTP 500")
 	})
@@ -109,7 +110,7 @@ func TestCDNSource_Download_Bad(t *testing.T) {
 			ImageName: "test.img",
 		})
 
-		err := src.Download(context.Background(), dest, nil)
+		err := src.Download(context.Background(), io.Local, dest, nil)
 		assert.Error(t, err)
 	})
 }
@@ -162,7 +163,7 @@ func TestCDNSource_Download_Good_NoProgress(t *testing.T) {
 	})
 
 	// nil progress callback should be handled gracefully
-	err := src.Download(context.Background(), dest, nil)
+	err := src.Download(context.Background(), io.Local, dest, nil)
 	assert.NoError(t, err)
 
 	data, err := os.ReadFile(filepath.Join(dest, "test.img"))
@@ -192,7 +193,7 @@ func TestCDNSource_Download_Good_LargeFile(t *testing.T) {
 
 	var progressCalls int
 	var lastDownloaded int64
-	err := src.Download(context.Background(), dest, func(downloaded, total int64) {
+	err := src.Download(context.Background(), io.Local, dest, func(downloaded, total int64) {
 		progressCalls++
 		lastDownloaded = downloaded
 	})
@@ -227,7 +228,7 @@ func TestCDNSource_Download_Bad_HTTPErrorCodes(t *testing.T) {
 				ImageName: "test.img",
 			})
 
-			err := src.Download(context.Background(), dest, nil)
+			err := src.Download(context.Background(), io.Local, dest, nil)
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), fmt.Sprintf("HTTP %d", tc.statusCode))
 		})
@@ -281,7 +282,7 @@ func TestCDNSource_Download_Good_CreatesDestDir(t *testing.T) {
 		ImageName: "test.img",
 	})
 
-	err := src.Download(context.Background(), dest, nil)
+	err := src.Download(context.Background(), io.Local, dest, nil)
 	assert.NoError(t, err)
 
 	// Verify nested dir was created

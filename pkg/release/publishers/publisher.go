@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // Release represents a release to be published.
@@ -17,6 +18,8 @@ type Release struct {
 	Changelog string
 	// ProjectDir is the root directory of the project.
 	ProjectDir string
+	// FS is the medium for file operations.
+	FS io.Medium
 }
 
 // PublisherConfig holds configuration for a publisher.
@@ -48,12 +51,13 @@ type Publisher interface {
 
 // NewRelease creates a Release from the release package's Release type.
 // This is a helper to convert between packages.
-func NewRelease(version string, artifacts []build.Artifact, changelog, projectDir string) *Release {
+func NewRelease(version string, artifacts []build.Artifact, changelog, projectDir string, fs io.Medium) *Release {
 	return &Release{
 		Version:    version,
 		Artifacts:  artifacts,
 		Changelog:  changelog,
 		ProjectDir: projectDir,
+		FS:         fs,
 	}
 }
 

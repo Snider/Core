@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func TestLoadConfig_Good(t *testing.T) {
 		t.Setenv("HOME", tempHome)
 		defer func() { _ = os.Setenv("HOME", origHome) }()
 
-		cfg, err := LoadConfig()
+		cfg, err := LoadConfig(io.Local)
 		assert.NoError(t, err)
 		assert.Equal(t, DefaultConfig(), cfg)
 	})
@@ -53,7 +54,7 @@ images:
 		err = os.WriteFile(filepath.Join(coreDir, "config.yaml"), []byte(configData), 0644)
 		require.NoError(t, err)
 
-		cfg, err := LoadConfig()
+		cfg, err := LoadConfig(io.Local)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, cfg.Version)
 		assert.Equal(t, "cdn", cfg.Images.Source)
@@ -73,7 +74,7 @@ func TestLoadConfig_Bad(t *testing.T) {
 		err = os.WriteFile(filepath.Join(coreDir, "config.yaml"), []byte("invalid: yaml: :"), 0644)
 		require.NoError(t, err)
 
-		_, err = LoadConfig()
+		_, err = LoadConfig(io.Local)
 		assert.Error(t, err)
 	})
 }
@@ -127,7 +128,7 @@ images:
 	err = os.WriteFile(filepath.Join(coreDir, "config.yaml"), []byte(configData), 0644)
 	require.NoError(t, err)
 
-	cfg, err := LoadConfig()
+	cfg, err := LoadConfig(io.Local)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, cfg.Version)
 	assert.Equal(t, "github", cfg.Images.Source)
@@ -197,7 +198,7 @@ images:
 			err = os.WriteFile(filepath.Join(coreDir, "config.yaml"), []byte(tt.config), 0644)
 			require.NoError(t, err)
 
-			cfg, err := LoadConfig()
+			cfg, err := LoadConfig(io.Local)
 			assert.NoError(t, err)
 			tt.check(t, cfg)
 		})
@@ -246,7 +247,7 @@ func TestLoadConfig_Bad_UnreadableFile(t *testing.T) {
 	err = os.WriteFile(configPath, []byte("version: 1"), 0000)
 	require.NoError(t, err)
 
-	_, err = LoadConfig()
+	_, err = LoadConfig(io.Local)
 	assert.Error(t, err)
 
 	// Restore permissions so cleanup works

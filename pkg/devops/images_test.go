@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/devops/sources"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,7 @@ func TestImageManager_Good_IsInstalled(t *testing.T) {
 	t.Setenv("CORE_IMAGES_DIR", tmpDir)
 
 	cfg := DefaultConfig()
-	mgr, err := NewImageManager(cfg)
+	mgr, err := NewImageManager(io.Local, cfg)
 	require.NoError(t, err)
 
 	// Not installed yet
@@ -40,7 +41,7 @@ func TestNewImageManager_Good(t *testing.T) {
 		cfg := DefaultConfig()
 		cfg.Images.Source = "cdn"
 
-		mgr, err := NewImageManager(cfg)
+		mgr, err := NewImageManager(io.Local, cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, mgr)
 		assert.Len(t, mgr.sources, 1)
@@ -54,7 +55,7 @@ func TestNewImageManager_Good(t *testing.T) {
 		cfg := DefaultConfig()
 		cfg.Images.Source = "github"
 
-		mgr, err := NewImageManager(cfg)
+		mgr, err := NewImageManager(io.Local, cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, mgr)
 		assert.Len(t, mgr.sources, 1)
@@ -67,6 +68,7 @@ func TestManifest_Save(t *testing.T) {
 	path := filepath.Join(tmpDir, "manifest.json")
 
 	m := &Manifest{
+		medium: io.Local,
 		Images: make(map[string]ImageInfo),
 		path:   path,
 	}
@@ -84,7 +86,7 @@ func TestManifest_Save(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Reload
-	m2, err := loadManifest(path)
+	m2, err := loadManifest(io.Local, path)
 	assert.NoError(t, err)
 	assert.Equal(t, "1.0.0", m2.Images["test.img"].Version)
 }
@@ -96,7 +98,7 @@ func TestLoadManifest_Bad(t *testing.T) {
 		err := os.WriteFile(path, []byte("invalid json"), 0644)
 		require.NoError(t, err)
 
-		_, err = loadManifest(path)
+		_, err = loadManifest(io.Local, path)
 		assert.Error(t, err)
 	})
 }
@@ -107,7 +109,7 @@ func TestCheckUpdate_Bad(t *testing.T) {
 		t.Setenv("CORE_IMAGES_DIR", tmpDir)
 
 		cfg := DefaultConfig()
-		mgr, err := NewImageManager(cfg)
+		mgr, err := NewImageManager(io.Local, cfg)
 		require.NoError(t, err)
 
 		_, _, _, err = mgr.CheckUpdate(context.Background())
@@ -123,7 +125,7 @@ func TestNewImageManager_Good_AutoSource(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Images.Source = "auto"
 
-	mgr, err := NewImageManager(cfg)
+	mgr, err := NewImageManager(io.Local, cfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	assert.Len(t, mgr.sources, 2) // github and cdn
@@ -136,7 +138,7 @@ func TestNewImageManager_Good_UnknownSourceFallsToAuto(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Images.Source = "unknown"
 
-	mgr, err := NewImageManager(cfg)
+	mgr, err := NewImageManager(io.Local, cfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	assert.Len(t, mgr.sources, 2) // falls to default (auto) which is github + cdn
@@ -146,7 +148,7 @@ func TestLoadManifest_Good_Empty(t *testing.T) {
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "nonexistent.json")
 
-	m, err := loadManifest(path)
+	m, err := loadManifest(io.Local, path)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotNil(t, m.Images)
@@ -162,7 +164,7 @@ func TestLoadManifest_Good_ExistingData(t *testing.T) {
 	err := os.WriteFile(path, []byte(data), 0644)
 	require.NoError(t, err)
 
-	m, err := loadManifest(path)
+	m, err := loadManifest(io.Local, path)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.Equal(t, "2.0.0", m.Images["test.img"].Version)
@@ -187,6 +189,7 @@ func TestManifest_Save_Good_CreatesDirs(t *testing.T) {
 	nestedPath := filepath.Join(tmpDir, "nested", "dir", "manifest.json")
 
 	m := &Manifest{
+		medium: io.Local,
 		Images: make(map[string]ImageInfo),
 		path:   nestedPath,
 	}
@@ -207,6 +210,7 @@ func TestManifest_Save_Good_Overwrite(t *testing.T) {
 
 	// First save
 	m1 := &Manifest{
+		medium: io.Local,
 		Images: make(map[string]ImageInfo),
 		path:   path,
 	}
@@ -216,6 +220,7 @@ func TestManifest_Save_Good_Overwrite(t *testing.T) {
 
 	// Second save with different data
 	m2 := &Manifest{
+		medium: io.Local,
 		Images: make(map[string]ImageInfo),
 		path:   path,
 	}
@@ -224,7 +229,7 @@ func TestManifest_Save_Good_Overwrite(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify second data
-	loaded, err := loadManifest(path)
+	loaded, err := loadManifest(io.Local, path)
 	assert.NoError(t, err)
 	assert.Equal(t, "2.0.0", loaded.Images["other.img"].Version)
 	_, exists := loaded.Images["test.img"]
@@ -237,8 +242,9 @@ func TestImageManager_Install_Bad_NoSourceAvailable(t *testing.T) {
 
 	// Create manager with empty sources
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  nil, // no sources
 	}
 
@@ -253,7 +259,7 @@ func TestNewImageManager_Good_CreatesDir(t *testing.T) {
 	t.Setenv("CORE_IMAGES_DIR", imagesDir)
 
 	cfg := DefaultConfig()
-	mgr, err := NewImageManager(cfg)
+	mgr, err := NewImageManager(io.Local, cfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 
@@ -277,7 +283,7 @@ func (m *mockImageSource) Available() bool { return m.available }
 func (m *mockImageSource) LatestVersion(ctx context.Context) (string, error) {
 	return m.latestVersion, m.latestErr
 }
-func (m *mockImageSource) Download(ctx context.Context, dest string, progress func(downloaded, total int64)) error {
+func (m *mockImageSource) Download(ctx context.Context, medium io.Medium, dest string, progress func(downloaded, total int64)) error {
 	if m.downloadErr != nil {
 		return m.downloadErr
 	}
@@ -297,8 +303,9 @@ func TestImageManager_Install_Good_WithMockSource(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  []sources.ImageSource{mock},
 	}
 
@@ -325,8 +332,9 @@ func TestImageManager_Install_Bad_DownloadError(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  []sources.ImageSource{mock},
 	}
 
@@ -345,8 +353,9 @@ func TestImageManager_Install_Bad_VersionError(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  []sources.ImageSource{mock},
 	}
 
@@ -370,8 +379,9 @@ func TestImageManager_Install_Good_SkipsUnavailableSource(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  []sources.ImageSource{unavailableMock, availableMock},
 	}
 
@@ -394,8 +404,10 @@ func TestImageManager_CheckUpdate_Good_WithMockSource(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium: io.Local,
 		config: DefaultConfig(),
 		manifest: &Manifest{
+			medium: io.Local,
 			Images: map[string]ImageInfo{
 				ImageName(): {Version: "v1.0.0", Source: "mock"},
 			},
@@ -422,8 +434,10 @@ func TestImageManager_CheckUpdate_Good_NoUpdate(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium: io.Local,
 		config: DefaultConfig(),
 		manifest: &Manifest{
+			medium: io.Local,
 			Images: map[string]ImageInfo{
 				ImageName(): {Version: "v1.0.0", Source: "mock"},
 			},
@@ -449,8 +463,10 @@ func TestImageManager_CheckUpdate_Bad_NoSource(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium: io.Local,
 		config: DefaultConfig(),
 		manifest: &Manifest{
+			medium: io.Local,
 			Images: map[string]ImageInfo{
 				ImageName(): {Version: "v1.0.0", Source: "mock"},
 			},
@@ -475,8 +491,10 @@ func TestImageManager_CheckUpdate_Bad_VersionError(t *testing.T) {
 	}
 
 	mgr := &ImageManager{
+		medium: io.Local,
 		config: DefaultConfig(),
 		manifest: &Manifest{
+			medium: io.Local,
 			Images: map[string]ImageInfo{
 				ImageName(): {Version: "v1.0.0", Source: "mock"},
 			},
@@ -495,8 +513,9 @@ func TestImageManager_Install_Bad_EmptySources(t *testing.T) {
 	t.Setenv("CORE_IMAGES_DIR", tmpDir)
 
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  []sources.ImageSource{}, // Empty slice, not nil
 	}
 
@@ -513,8 +532,9 @@ func TestImageManager_Install_Bad_AllUnavailable(t *testing.T) {
 	mock2 := &mockImageSource{name: "mock2", available: false}
 
 	mgr := &ImageManager{
+		medium:   io.Local,
 		config:   DefaultConfig(),
-		manifest: &Manifest{Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
+		manifest: &Manifest{medium: io.Local, Images: make(map[string]ImageInfo), path: filepath.Join(tmpDir, "manifest.json")},
 		sources:  []sources.ImageSource{mock1, mock2},
 	}
 
@@ -531,8 +551,10 @@ func TestImageManager_CheckUpdate_Good_FirstSourceUnavailable(t *testing.T) {
 	available := &mockImageSource{name: "available", available: true, latestVersion: "v2.0.0"}
 
 	mgr := &ImageManager{
+		medium: io.Local,
 		config: DefaultConfig(),
 		manifest: &Manifest{
+			medium: io.Local,
 			Images: map[string]ImageInfo{
 				ImageName(): {Version: "v1.0.0", Source: "available"},
 			},
