@@ -2,6 +2,8 @@ package signing
 
 import (
 	"context"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // WindowsSigner signs binaries using Windows signtool (placeholder).
@@ -28,7 +30,7 @@ func (s *WindowsSigner) Available() bool {
 }
 
 // Sign is a placeholder that does nothing.
-func (s *WindowsSigner) Sign(ctx context.Context, binary string) error {
+func (s *WindowsSigner) Sign(ctx context.Context, fs io.Medium, binary string) error {
 	// TODO: Implement Windows signing
 	return nil
 }

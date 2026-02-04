@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // TaskfileBuilder builds projects using Taskfile (https://taskfile.dev/).
@@ -27,7 +28,7 @@ func (b *TaskfileBuilder) Name() string {
 }
 
 // Detect checks if a Taskfile exists in the directory.
-func (b *TaskfileBuilder) Detect(dir string) (bool, error) {
+func (b *TaskfileBuilder) Detect(fs io.Medium, dir string) (bool, error) {
 	// Check for Taskfile.yml, Taskfile.yaml, or Taskfile
 	taskfiles := []string{
 		"Taskfile.yml",
@@ -38,7 +39,7 @@ func (b *TaskfileBuilder) Detect(dir string) (bool, error) {
 	}
 
 	for _, tf := range taskfiles {
-		if _, err := os.Stat(filepath.Join(dir, tf)); err == nil {
+		if fs.IsFile(filepath.Join(dir, tf)) {
 			return true, nil
 		}
 	}
@@ -57,7 +58,7 @@ func (b *TaskfileBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 	if outputDir == "" {
 		outputDir = filepath.Join(cfg.ProjectDir, "dist")
 	}
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := cfg.FS.EnsureDir(outputDir); err != nil {
 		return nil, fmt.Errorf("taskfile.Build: failed to create output directory: %w", err)
 	}
 
@@ -70,7 +71,7 @@ func (b *TaskfileBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 		}
 
 		// Try to find artifacts in output directory
-		found := b.findArtifacts(outputDir)
+		found := b.findArtifacts(cfg.FS, outputDir)
 		artifacts = append(artifacts, found...)
 	} else {
 		// Run build task for each target
@@ -80,7 +81,7 @@ func (b *TaskfileBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 			}
 
 			// Try to find artifacts for this target
-			found := b.findArtifactsForTarget(outputDir, target)
+			found := b.findArtifactsForTarget(cfg.FS, outputDir, target)
 			artifacts = append(artifacts, found...)
 		}
 	}
@@ -147,10 +148,10 @@ func (b *TaskfileBuilder) runTask(ctx context.Context, cfg *build.Config, goos, 
 }
 
 // findArtifacts searches for built artifacts in the output directory.
-func (b *TaskfileBuilder) findArtifacts(outputDir string) []build.Artifact {
+func (b *TaskfileBuilder) findArtifacts(fs io.Medium, outputDir string) []build.Artifact {
 	var artifacts []build.Artifact
 
-	entries, err := os.ReadDir(outputDir)
+	entries, err := fs.List(outputDir)
 	if err != nil {
 		return artifacts
 	}
@@ -177,13 +178,13 @@ func (b *TaskfileBuilder) findArtifacts(outputDir string) []build.Artifact {
 }
 
 // findArtifactsForTarget searches for built artifacts for a specific target.
-func (b *TaskfileBuilder) findArtifactsForTarget(outputDir string, target build.Target) []build.Artifact {
+func (b *TaskfileBuilder) findArtifactsForTarget(fs io.Medium, outputDir string, target build.Target) []build.Artifact {
 	var artifacts []build.Artifact
 
 	// 1. Look for platform-specific subdirectory: output/os_arch/
 	platformSubdir := filepath.Join(outputDir, fmt.Sprintf("%s_%s", target.OS, target.Arch))
-	if info, err := os.Stat(platformSubdir); err == nil && info.IsDir() {
-		entries, _ := os.ReadDir(platformSubdir)
+	if fs.IsDir(platformSubdir) {
+		entries, _ := fs.List(platformSubdir)
 		for _, entry := range entries {
 			if entry.IsDir() {
 				// Handle .app bundles on macOS
@@ -219,18 +220,22 @@ func (b *TaskfileBuilder) findArtifactsForTarget(outputDir string, target build.
 	}
 
 	for _, pattern := range patterns {
-		matches, _ := filepath.Glob(filepath.Join(outputDir, pattern))
-		for _, match := range matches {
-			info, err := os.Stat(match)
-			if err != nil || info.IsDir() {
-				continue
-			}
+		entries, _ := fs.List(outputDir)
+		for _, entry := range entries {
+			match := entry.Name()
+			// Simple glob matching
+			if b.matchPattern(match, pattern) {
+				fullPath := filepath.Join(outputDir, match)
+				if fs.IsDir(fullPath) {
+					continue
+				}
 
-			artifacts = append(artifacts, build.Artifact{
-				Path: match,
-				OS:   target.OS,
-				Arch: target.Arch,
-			})
+				artifacts = append(artifacts, build.Artifact{
+					Path: fullPath,
+					OS:   target.OS,
+					Arch: target.Arch,
+				})
+			}
 		}
 
 		if len(artifacts) > 0 {
@@ -239,6 +244,12 @@ func (b *TaskfileBuilder) findArtifactsForTarget(outputDir string, target build.
 	}
 
 	return artifacts
+}
+
+// matchPattern implements glob matching for Taskfile artifacts.
+func (b *TaskfileBuilder) matchPattern(name, pattern string) bool {
+	matched, _ := filepath.Match(pattern, name)
+	return matched
 }
 
 // validateTaskCli checks if the task CLI is available.

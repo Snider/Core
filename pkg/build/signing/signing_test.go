@@ -5,11 +5,13 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSignBinaries_Good_SkipsNonDarwin(t *testing.T) {
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: true,
 		MacOS: MacOSConfig{
@@ -23,7 +25,7 @@ func TestSignBinaries_Good_SkipsNonDarwin(t *testing.T) {
 	}
 
 	// Should not error even though binary doesn't exist (skips non-darwin)
-	err := SignBinaries(ctx, cfg, artifacts)
+	err := SignBinaries(ctx, fs, cfg, artifacts)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -31,6 +33,7 @@ func TestSignBinaries_Good_SkipsNonDarwin(t *testing.T) {
 
 func TestSignBinaries_Good_DisabledConfig(t *testing.T) {
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: false,
 	}
@@ -39,7 +42,7 @@ func TestSignBinaries_Good_DisabledConfig(t *testing.T) {
 		{Path: "/tmp/test-binary", OS: "darwin", Arch: "arm64"},
 	}
 
-	err := SignBinaries(ctx, cfg, artifacts)
+	err := SignBinaries(ctx, fs, cfg, artifacts)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -51,6 +54,7 @@ func TestSignBinaries_Good_SkipsOnNonMacOS(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: true,
 		MacOS: MacOSConfig{
@@ -62,7 +66,7 @@ func TestSignBinaries_Good_SkipsOnNonMacOS(t *testing.T) {
 		{Path: "/tmp/test-binary", OS: "darwin", Arch: "arm64"},
 	}
 
-	err := SignBinaries(ctx, cfg, artifacts)
+	err := SignBinaries(ctx, fs, cfg, artifacts)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -70,6 +74,7 @@ func TestSignBinaries_Good_SkipsOnNonMacOS(t *testing.T) {
 
 func TestNotarizeBinaries_Good_DisabledConfig(t *testing.T) {
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: false,
 	}
@@ -78,7 +83,7 @@ func TestNotarizeBinaries_Good_DisabledConfig(t *testing.T) {
 		{Path: "/tmp/test-binary", OS: "darwin", Arch: "arm64"},
 	}
 
-	err := NotarizeBinaries(ctx, cfg, artifacts)
+	err := NotarizeBinaries(ctx, fs, cfg, artifacts)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -86,6 +91,7 @@ func TestNotarizeBinaries_Good_DisabledConfig(t *testing.T) {
 
 func TestNotarizeBinaries_Good_NotarizeDisabled(t *testing.T) {
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: true,
 		MacOS: MacOSConfig{
@@ -97,7 +103,7 @@ func TestNotarizeBinaries_Good_NotarizeDisabled(t *testing.T) {
 		{Path: "/tmp/test-binary", OS: "darwin", Arch: "arm64"},
 	}
 
-	err := NotarizeBinaries(ctx, cfg, artifacts)
+	err := NotarizeBinaries(ctx, fs, cfg, artifacts)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -105,6 +111,7 @@ func TestNotarizeBinaries_Good_NotarizeDisabled(t *testing.T) {
 
 func TestSignChecksums_Good_SkipsNoKey(t *testing.T) {
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: true,
 		GPG: GPGConfig{
@@ -113,7 +120,7 @@ func TestSignChecksums_Good_SkipsNoKey(t *testing.T) {
 	}
 
 	// Should silently skip when no key
-	err := SignChecksums(ctx, cfg, "/tmp/CHECKSUMS.txt")
+	err := SignChecksums(ctx, fs, cfg, "/tmp/CHECKSUMS.txt")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -121,11 +128,12 @@ func TestSignChecksums_Good_SkipsNoKey(t *testing.T) {
 
 func TestSignChecksums_Good_Disabled(t *testing.T) {
 	ctx := context.Background()
+	fs := io.Local
 	cfg := SignConfig{
 		Enabled: false,
 	}
 
-	err := SignChecksums(ctx, cfg, "/tmp/CHECKSUMS.txt")
+	err := SignChecksums(ctx, fs, cfg, "/tmp/CHECKSUMS.txt")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -146,8 +154,9 @@ func TestSignConfig_ExpandEnv(t *testing.T) {
 }
 
 func TestWindowsSigner_Good(t *testing.T) {
+	fs := io.Local
 	s := NewWindowsSigner(WindowsConfig{})
 	assert.Equal(t, "signtool", s.Name())
 	assert.False(t, s.Available())
-	assert.NoError(t, s.Sign(context.Background(), "test.exe"))
+	assert.NoError(t, s.Sign(context.Background(), fs, "test.exe"))
 }

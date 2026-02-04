@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,6 +24,7 @@ func setupChecksumTestFile(t *testing.T, content string) string {
 }
 
 func TestChecksum_Good(t *testing.T) {
+	fs := io.Local
 	t.Run("computes SHA256 checksum", func(t *testing.T) {
 		// Known SHA256 of "Hello, World!\n"
 		path := setupChecksumTestFile(t, "Hello, World!\n")
@@ -34,7 +36,7 @@ func TestChecksum_Good(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Checksum(artifact)
+		result, err := Checksum(fs, artifact)
 		require.NoError(t, err)
 		assert.Equal(t, expectedChecksum, result.Checksum)
 	})
@@ -48,7 +50,7 @@ func TestChecksum_Good(t *testing.T) {
 			Arch: "arm64",
 		}
 
-		result, err := Checksum(artifact)
+		result, err := Checksum(fs, artifact)
 		require.NoError(t, err)
 
 		assert.Equal(t, path, result.Path)
@@ -62,7 +64,7 @@ func TestChecksum_Good(t *testing.T) {
 
 		artifact := Artifact{Path: path, OS: "linux", Arch: "amd64"}
 
-		result, err := Checksum(artifact)
+		result, err := Checksum(fs, artifact)
 		require.NoError(t, err)
 
 		// SHA256 produces 32 bytes = 64 hex characters
@@ -73,10 +75,10 @@ func TestChecksum_Good(t *testing.T) {
 		path1 := setupChecksumTestFile(t, "content one")
 		path2 := setupChecksumTestFile(t, "content two")
 
-		result1, err := Checksum(Artifact{Path: path1, OS: "linux", Arch: "amd64"})
+		result1, err := Checksum(fs, Artifact{Path: path1, OS: "linux", Arch: "amd64"})
 		require.NoError(t, err)
 
-		result2, err := Checksum(Artifact{Path: path2, OS: "linux", Arch: "amd64"})
+		result2, err := Checksum(fs, Artifact{Path: path2, OS: "linux", Arch: "amd64"})
 		require.NoError(t, err)
 
 		assert.NotEqual(t, result1.Checksum, result2.Checksum)
@@ -87,10 +89,10 @@ func TestChecksum_Good(t *testing.T) {
 		path1 := setupChecksumTestFile(t, content)
 		path2 := setupChecksumTestFile(t, content)
 
-		result1, err := Checksum(Artifact{Path: path1, OS: "linux", Arch: "amd64"})
+		result1, err := Checksum(fs, Artifact{Path: path1, OS: "linux", Arch: "amd64"})
 		require.NoError(t, err)
 
-		result2, err := Checksum(Artifact{Path: path2, OS: "linux", Arch: "amd64"})
+		result2, err := Checksum(fs, Artifact{Path: path2, OS: "linux", Arch: "amd64"})
 		require.NoError(t, err)
 
 		assert.Equal(t, result1.Checksum, result2.Checksum)
@@ -98,6 +100,7 @@ func TestChecksum_Good(t *testing.T) {
 }
 
 func TestChecksum_Bad(t *testing.T) {
+	fs := io.Local
 	t.Run("returns error for empty path", func(t *testing.T) {
 		artifact := Artifact{
 			Path: "",
@@ -105,7 +108,7 @@ func TestChecksum_Bad(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Checksum(artifact)
+		result, err := Checksum(fs, artifact)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "artifact path is empty")
 		assert.Empty(t, result.Checksum)
@@ -118,7 +121,7 @@ func TestChecksum_Bad(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Checksum(artifact)
+		result, err := Checksum(fs, artifact)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to open file")
 		assert.Empty(t, result.Checksum)
@@ -126,6 +129,7 @@ func TestChecksum_Bad(t *testing.T) {
 }
 
 func TestChecksumAll_Good(t *testing.T) {
+	fs := io.Local
 	t.Run("checksums multiple artifacts", func(t *testing.T) {
 		paths := []string{
 			setupChecksumTestFile(t, "content one"),
@@ -139,7 +143,7 @@ func TestChecksumAll_Good(t *testing.T) {
 			{Path: paths[2], OS: "windows", Arch: "amd64"},
 		}
 
-		results, err := ChecksumAll(artifacts)
+		results, err := ChecksumAll(fs, artifacts)
 		require.NoError(t, err)
 		require.Len(t, results, 3)
 
@@ -152,19 +156,20 @@ func TestChecksumAll_Good(t *testing.T) {
 	})
 
 	t.Run("returns nil for empty slice", func(t *testing.T) {
-		results, err := ChecksumAll([]Artifact{})
+		results, err := ChecksumAll(fs, []Artifact{})
 		assert.NoError(t, err)
 		assert.Nil(t, results)
 	})
 
 	t.Run("returns nil for nil slice", func(t *testing.T) {
-		results, err := ChecksumAll(nil)
+		results, err := ChecksumAll(fs, nil)
 		assert.NoError(t, err)
 		assert.Nil(t, results)
 	})
 }
 
 func TestChecksumAll_Bad(t *testing.T) {
+	fs := io.Local
 	t.Run("returns partial results on error", func(t *testing.T) {
 		path := setupChecksumTestFile(t, "valid content")
 
@@ -173,7 +178,7 @@ func TestChecksumAll_Bad(t *testing.T) {
 			{Path: "/nonexistent/file", OS: "linux", Arch: "arm64"}, // This will fail
 		}
 
-		results, err := ChecksumAll(artifacts)
+		results, err := ChecksumAll(fs, artifacts)
 		assert.Error(t, err)
 		// Should have the first successful result
 		assert.Len(t, results, 1)
@@ -182,6 +187,7 @@ func TestChecksumAll_Bad(t *testing.T) {
 }
 
 func TestWriteChecksumFile_Good(t *testing.T) {
+	fs := io.Local
 	t.Run("writes checksum file with correct format", func(t *testing.T) {
 		dir := t.TempDir()
 		checksumPath := filepath.Join(dir, "CHECKSUMS.txt")
@@ -191,7 +197,7 @@ func TestWriteChecksumFile_Good(t *testing.T) {
 			{Path: "/output/app_darwin_arm64.tar.gz", Checksum: "789xyz000111", OS: "darwin", Arch: "arm64"},
 		}
 
-		err := WriteChecksumFile(artifacts, checksumPath)
+		err := WriteChecksumFile(fs, artifacts, checksumPath)
 		require.NoError(t, err)
 
 		// Read and verify content
@@ -214,7 +220,7 @@ func TestWriteChecksumFile_Good(t *testing.T) {
 			{Path: "/output/app.tar.gz", Checksum: "abc123", OS: "linux", Arch: "amd64"},
 		}
 
-		err := WriteChecksumFile(artifacts, checksumPath)
+		err := WriteChecksumFile(fs, artifacts, checksumPath)
 		require.NoError(t, err)
 		assert.FileExists(t, checksumPath)
 	})
@@ -223,7 +229,7 @@ func TestWriteChecksumFile_Good(t *testing.T) {
 		dir := t.TempDir()
 		checksumPath := filepath.Join(dir, "CHECKSUMS.txt")
 
-		err := WriteChecksumFile([]Artifact{}, checksumPath)
+		err := WriteChecksumFile(fs, []Artifact{}, checksumPath)
 		require.NoError(t, err)
 
 		// File should not exist
@@ -235,7 +241,7 @@ func TestWriteChecksumFile_Good(t *testing.T) {
 		dir := t.TempDir()
 		checksumPath := filepath.Join(dir, "CHECKSUMS.txt")
 
-		err := WriteChecksumFile(nil, checksumPath)
+		err := WriteChecksumFile(fs, nil, checksumPath)
 		require.NoError(t, err)
 	})
 
@@ -247,7 +253,7 @@ func TestWriteChecksumFile_Good(t *testing.T) {
 			{Path: "/some/deep/nested/path/myapp_linux_amd64.tar.gz", Checksum: "checksum123", OS: "linux", Arch: "amd64"},
 		}
 
-		err := WriteChecksumFile(artifacts, checksumPath)
+		err := WriteChecksumFile(fs, artifacts, checksumPath)
 		require.NoError(t, err)
 
 		content, err := os.ReadFile(checksumPath)
@@ -260,6 +266,7 @@ func TestWriteChecksumFile_Good(t *testing.T) {
 }
 
 func TestWriteChecksumFile_Bad(t *testing.T) {
+	fs := io.Local
 	t.Run("returns error for artifact without checksum", func(t *testing.T) {
 		dir := t.TempDir()
 		checksumPath := filepath.Join(dir, "CHECKSUMS.txt")
@@ -268,7 +275,7 @@ func TestWriteChecksumFile_Bad(t *testing.T) {
 			{Path: "/output/app.tar.gz", Checksum: "", OS: "linux", Arch: "amd64"}, // No checksum
 		}
 
-		err := WriteChecksumFile(artifacts, checksumPath)
+		err := WriteChecksumFile(fs, artifacts, checksumPath)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "has no checksum")
 	})

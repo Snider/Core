@@ -6,20 +6,21 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
+
+	io_interface "github.com/host-uk/core/pkg/io"
 	"sort"
 	"strings"
 )
 
 // Checksum computes SHA256 for an artifact and returns the artifact with the Checksum field filled.
-func Checksum(artifact Artifact) (Artifact, error) {
+func Checksum(fs io_interface.Medium, artifact Artifact) (Artifact, error) {
 	if artifact.Path == "" {
 		return Artifact{}, fmt.Errorf("build.Checksum: artifact path is empty")
 	}
 
 	// Open the file
-	file, err := os.Open(artifact.Path)
+	file, err := fs.Open(artifact.Path)
 	if err != nil {
 		return Artifact{}, fmt.Errorf("build.Checksum: failed to open file: %w", err)
 	}
@@ -43,14 +44,14 @@ func Checksum(artifact Artifact) (Artifact, error) {
 
 // ChecksumAll computes checksums for all artifacts.
 // Returns a slice of artifacts with their Checksum fields filled.
-func ChecksumAll(artifacts []Artifact) ([]Artifact, error) {
+func ChecksumAll(fs io_interface.Medium, artifacts []Artifact) ([]Artifact, error) {
 	if len(artifacts) == 0 {
 		return nil, nil
 	}
 
 	var checksummed []Artifact
 	for _, artifact := range artifacts {
-		cs, err := Checksum(artifact)
+		cs, err := Checksum(fs, artifact)
 		if err != nil {
 			return checksummed, fmt.Errorf("build.ChecksumAll: failed to checksum %s: %w", artifact.Path, err)
 		}
@@ -67,7 +68,7 @@ func ChecksumAll(artifacts []Artifact) ([]Artifact, error) {
 //
 // The artifacts should have their Checksum fields filled (call ChecksumAll first).
 // Filenames are relative to the output directory (just the basename).
-func WriteChecksumFile(artifacts []Artifact, path string) error {
+func WriteChecksumFile(fs io_interface.Medium, artifacts []Artifact, path string) error {
 	if len(artifacts) == 0 {
 		return nil
 	}
@@ -87,14 +88,8 @@ func WriteChecksumFile(artifacts []Artifact, path string) error {
 
 	content := strings.Join(lines, "\n") + "\n"
 
-	// Ensure directory exists
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("build.WriteChecksumFile: failed to create directory: %w", err)
-	}
-
-	// Write the file
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	// Write the file using the medium (which handles directory creation in Write)
+	if err := fs.Write(path, content); err != nil {
 		return fmt.Errorf("build.WriteChecksumFile: failed to write file: %w", err)
 	}
 

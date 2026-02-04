@@ -30,6 +30,15 @@ func (m *Medium) path(p string) string {
 	if p == "" {
 		return m.root
 	}
+
+	// If the path is relative and the medium is rooted at "/",
+	// treat it as relative to the current working directory.
+	// This makes io.Local behave more like the standard 'os' package.
+	if m.root == "/" && !filepath.IsAbs(p) {
+		cwd, _ := os.Getwd()
+		return filepath.Join(cwd, p)
+	}
+
 	// Use filepath.Clean with a leading slash to resolve all .. and . internally
 	// before joining with the root. This is a standard way to sandbox paths.
 	clean := filepath.Clean("/" + p)
@@ -38,6 +47,7 @@ func (m *Medium) path(p string) string {
 	if m.root == "/" {
 		return clean
 	}
+
 
 	// Join cleaned relative path with root
 	return filepath.Join(m.root, clean)
@@ -107,11 +117,6 @@ func (m *Medium) Write(p, content string) error {
 	return os.WriteFile(full, []byte(content), 0644)
 }
 
-// Open opens a file for reading.
-func (m *Medium) Open(p string) (goio.ReadCloser, error) {
-	return os.Open(m.path(p))
-}
-
 // EnsureDir creates directory if it doesn't exist.
 func (m *Medium) EnsureDir(p string) error {
 	full, err := m.validatePath(p)
@@ -173,6 +178,27 @@ func (m *Medium) Stat(p string) (fs.FileInfo, error) {
 		return nil, err
 	}
 	return os.Stat(full)
+}
+
+// Open opens the named file for reading.
+func (m *Medium) Open(p string) (fs.File, error) {
+	full, err := m.validatePath(p)
+	if err != nil {
+		return nil, err
+	}
+	return os.Open(full)
+}
+
+// Create creates or truncates the named file.
+func (m *Medium) Create(p string) (goio.WriteCloser, error) {
+	full, err := m.validatePath(p)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+		return nil, err
+	}
+	return os.Create(full)
 }
 
 // Delete removes a file or empty directory.
