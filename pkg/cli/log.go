@@ -67,30 +67,30 @@ func Log() *LogService {
 	return svc
 }
 
-// LogDebug logs a debug message if log service is available.
-func LogDebug(msg string) {
+// LogDebug logs a debug message with optional key-value pairs if log service is available.
+func LogDebug(msg string, keyvals ...any) {
 	if l := Log(); l != nil {
-		l.Debug(msg)
+		l.Debug(msg, keyvals...)
 	}
 }
 
-// LogInfo logs an info message if log service is available.
-func LogInfo(msg string) {
+// LogInfo logs an info message with optional key-value pairs if log service is available.
+func LogInfo(msg string, keyvals ...any) {
 	if l := Log(); l != nil {
-		l.Info(msg)
+		l.Info(msg, keyvals...)
 	}
 }
 
-// LogWarn logs a warning message if log service is available.
-func LogWarn(msg string) {
+// LogWarn logs a warning message with optional key-value pairs if log service is available.
+func LogWarn(msg string, keyvals ...any) {
 	if l := Log(); l != nil {
-		l.Warn(msg)
+		l.Warn(msg, keyvals...)
 	}
 }
 
-// LogError logs an error message if log service is available.
-func LogError(msg string) {
+// LogError logs an error message with optional key-value pairs if log service is available.
+func LogError(msg string, keyvals ...any) {
 	if l := Log(); l != nil {
-		l.Error(msg)
+		l.Error(msg, keyvals...)
 	}
 }

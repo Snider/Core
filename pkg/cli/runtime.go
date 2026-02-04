@@ -15,7 +15,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -190,7 +189,7 @@ func (s *signalService) OnStartup(ctx context.Context) error {
 				case syscall.SIGHUP:
 					if s.onReload != nil {
 						if err := s.onReload(); err != nil {
-							LogError(fmt.Sprintf("reload failed: %v", err))
+							LogError("reload failed", "err", err)
 						} else {
 							LogInfo("configuration reloaded")
 						}

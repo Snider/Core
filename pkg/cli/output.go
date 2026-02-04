@@ -45,22 +45,24 @@ func Successf(format string, args ...any) {
 	Success(fmt.Sprintf(format, args...))
 }
 
-// Error prints an error message with cross (red).
+// Error prints an error message with cross (red) and logs it.
 func Error(msg string) {
+	LogError(msg)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
 }
 
-// Errorf prints a formatted error message.
+// Errorf prints a formatted error message and logs it.
 func Errorf(format string, args ...any) {
 	Error(fmt.Sprintf(format, args...))
 }
 
-// Warn prints a warning message with warning symbol (amber).
+// Warn prints a warning message with warning symbol (amber) and logs it.
 func Warn(msg string) {
+	LogWarn(msg)
 	fmt.Println(WarningStyle.Render(Glyph(":warn:") + " " + msg))
 }
 
-// Warnf prints a formatted warning message.
+// Warnf prints a formatted warning message and logs it.
 func Warnf(format string, args ...any) {
 	Warn(fmt.Sprintf(format, args...))
 }

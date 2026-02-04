@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -58,7 +59,7 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 			case <-ctx.Done():
 				return nil
 			default:
-				fmt.Fprintf(os.Stderr, "Accept error: %v\n", err)
+				log.Error("mcp: accept error", "err", err)
 				continue
 			}
 		}
@@ -84,7 +85,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	// Run server (blocks until connection closed)
 	// Server.Run calls Connect, then Read loop.
 	if err := server.Run(ctx, transport); err != nil {
-		fmt.Fprintf(os.Stderr, "Connection error: %v\n", err)
+		log.Error("mcp: connection error", "err", err, "remote", conn.RemoteAddr())
 	}
 }
 

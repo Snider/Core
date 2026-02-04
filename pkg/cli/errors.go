@@ -81,22 +81,24 @@ func Join(errs ...error) error {
 // Fatal Functions (print and exit)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Fatal prints an error message and exits with code 1.
+// Fatal prints an error message, logs it, and exits with code 1.
 func Fatal(err error) {
 	if err != nil {
+		LogError("Fatal error", "err", err)
 		fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + err.Error()))
 		os.Exit(1)
 	}
 }
 
-// Fatalf prints a formatted error message and exits with code 1.
+// Fatalf prints a formatted error message, logs it, and exits with code 1.
 func Fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
+	LogError("Fatal error: "+msg, "format", format)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
 	os.Exit(1)
 }
 
-// FatalWrap prints a wrapped error message and exits with code 1.
+// FatalWrap prints a wrapped error message, logs it, and exits with code 1.
 // Does nothing if err is nil.
 //
 //	cli.FatalWrap(err, "load config")  // Prints "✗ load config: <error>" and exits
@@ -104,12 +106,13 @@ func FatalWrap(err error, msg string) {
 	if err == nil {
 		return
 	}
+	LogError("Fatal error: "+msg, "err", err)
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
 	os.Exit(1)
 }
 
-// FatalWrapVerb prints a wrapped error using i18n grammar and exits with code 1.
+// FatalWrapVerb prints a wrapped error using i18n grammar, logs it, and exits with code 1.
 // Does nothing if err is nil.
 //
 //	cli.FatalWrapVerb(err, "load", "config")  // Prints "✗ Failed to load config: <error>" and exits
@@ -118,6 +121,7 @@ func FatalWrapVerb(err error, verb, subject string) {
 		return
 	}
 	msg := i18n.ActionFailed(verb, subject)
+	LogError("Fatal error: "+msg, "err", err, "verb", verb, "subject", subject)
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
 	os.Exit(1)

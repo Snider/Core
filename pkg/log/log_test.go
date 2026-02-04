@@ -71,6 +71,24 @@ func TestLogger_KeyValues(t *testing.T) {
 	}
 }
 
+func TestLogger_ErrorContext(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(Options{Output: &buf, Level: LevelInfo})
+
+	err := E("test.Op", "failed", NewError("root cause"))
+	err = Wrap(err, "outer.Op", "outer failed")
+
+	l.Error("something failed", "err", err)
+
+	got := buf.String()
+	if !strings.Contains(got, "op=outer.Op") {
+		t.Errorf("expected output to contain op=outer.Op, got %q", got)
+	}
+	if !strings.Contains(got, "stack=outer.Op -> test.Op") {
+		t.Errorf("expected output to contain stack=outer.Op -> test.Op, got %q", got)
+	}
+}
+
 func TestLogger_SetLevel(t *testing.T) {
 	l := New(Options{Level: LevelInfo})
 
