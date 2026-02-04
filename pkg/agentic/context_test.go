@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +29,7 @@ func TestBuildTaskContext_Good(t *testing.T) {
 		CreatedAt:   time.Now(),
 	}
 
-	ctx, err := BuildTaskContext(io.Local, task, tmpDir)
+	ctx, err := BuildTaskContext(task, tmpDir)
 	require.NoError(t, err)
 	assert.NotNil(t, ctx)
 	assert.Equal(t, task, ctx.Task)
@@ -40,7 +39,7 @@ func TestBuildTaskContext_Good(t *testing.T) {
 }
 
 func TestBuildTaskContext_Bad_NilTask(t *testing.T) {
-	ctx, err := BuildTaskContext(io.Local, nil, ".")
+	ctx, err := BuildTaskContext(nil, ".")
 	assert.Error(t, err)
 	assert.Nil(t, ctx)
 	assert.Contains(t, err.Error(), "task is required")
@@ -68,7 +67,7 @@ func TestGatherRelatedFiles_Good(t *testing.T) {
 		Files: []string{"app.go", "config.ts"},
 	}
 
-	gathered, err := GatherRelatedFiles(io.Local, task, tmpDir)
+	gathered, err := GatherRelatedFiles(task, tmpDir)
 	require.NoError(t, err)
 	assert.Len(t, gathered, 2)
 
@@ -90,7 +89,7 @@ func TestGatherRelatedFiles_Good(t *testing.T) {
 }
 
 func TestGatherRelatedFiles_Bad_NilTask(t *testing.T) {
-	files, err := GatherRelatedFiles(io.Local, nil, ".")
+	files, err := GatherRelatedFiles(nil, ".")
 	assert.Error(t, err)
 	assert.Nil(t, files)
 }
@@ -105,7 +104,7 @@ func TestGatherRelatedFiles_Good_MissingFiles(t *testing.T) {
 	}
 
 	// Should not error, just return empty list
-	gathered, err := GatherRelatedFiles(io.Local, task, tmpDir)
+	gathered, err := GatherRelatedFiles(task, tmpDir)
 	require.NoError(t, err)
 	assert.Empty(t, gathered)
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/host-uk/core/pkg/agentic"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/io"
 )
 
 // task:commit command flags
@@ -43,7 +42,7 @@ var taskCommitCmd = &cli.Command{
 			return cli.Err("commit message required")
 		}
 
-		cfg, err := agentic.LoadConfig(io.Local, "")
+		cfg, err := agentic.LoadConfig("")
 		if err != nil {
 			return cli.WrapVerb(err, "load", "config")
 		}
@@ -114,7 +113,7 @@ var taskPRCmd = &cli.Command{
 	RunE: func(cmd *cli.Command, args []string) error {
 		taskID := args[0]
 
-		cfg, err := agentic.LoadConfig(io.Local, "")
+		cfg, err := agentic.LoadConfig("")
 		if err != nil {
 			return cli.WrapVerb(err, "load", "config")
 		}

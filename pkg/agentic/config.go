@@ -2,12 +2,10 @@ package agentic
 
 import (
 	"bufio"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 	"gopkg.in/yaml.v3"
 )
@@ -42,7 +40,7 @@ const DefaultBaseURL = "https://api.core-agentic.dev"
 //   - AGENTIC_TOKEN: Authentication token
 //   - AGENTIC_PROJECT: Default project
 //   - AGENTIC_AGENT_ID: Agent identifier
-func LoadConfig(m io.Medium, dir string) (*Config, error) {
+func LoadConfig(dir string) (*Config, error) {
 	cfg := &Config{
 		BaseURL: DefaultBaseURL,
 	}
@@ -50,7 +48,7 @@ func LoadConfig(m io.Medium, dir string) (*Config, error) {
 	// Try loading from .env file in the specified directory
 	if dir != "" {
 		envPath := filepath.Join(dir, envFileName)
-		if err := loadEnvFile(m, envPath, cfg); err == nil {
+		if err := loadEnvFile(envPath, cfg); err == nil {
 			// Successfully loaded from .env
 			applyEnvOverrides(cfg)
 			if cfg.Token != "" {
@@ -64,7 +62,7 @@ func LoadConfig(m io.Medium, dir string) (*Config, error) {
 		cwd, err := os.Getwd()
 		if err == nil {
 			envPath := filepath.Join(cwd, envFileName)
-			if err := loadEnvFile(m, envPath, cfg); err == nil {
+			if err := loadEnvFile(envPath, cfg); err == nil {
 				applyEnvOverrides(cfg)
 				if cfg.Token != "" {
 					return cfg, nil
@@ -80,7 +78,7 @@ func LoadConfig(m io.Medium, dir string) (*Config, error) {
 	}
 
 	configPath := filepath.Join(homeDir, ".core", configFileName)
-	if err := loadYAMLConfig(m, configPath, cfg); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := loadYAMLConfig(configPath, cfg); err != nil && !os.IsNotExist(err) {
 		return nil, log.E("agentic.LoadConfig", "failed to load config", err)
 	}
 
@@ -96,13 +94,14 @@ func LoadConfig(m io.Medium, dir string) (*Config, error) {
 }
 
 // loadEnvFile reads a .env file and extracts agentic configuration.
-func loadEnvFile(m io.Medium, path string, cfg *Config) error {
-	content, err := m.Read(path)
+func loadEnvFile(path string, cfg *Config) error {
+	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = file.Close() }()
 
-	scanner := bufio.NewScanner(strings.NewReader(content))
+	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
@@ -139,13 +138,13 @@ func loadEnvFile(m io.Medium, path string, cfg *Config) error {
 }
 
 // loadYAMLConfig reads configuration from a YAML file.
-func loadYAMLConfig(m io.Medium, path string, cfg *Config) error {
-	data, err := m.Read(path)
+func loadYAMLConfig(path string, cfg *Config) error {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	return yaml.Unmarshal([]byte(data), cfg)
+	return yaml.Unmarshal(data, cfg)
 }
 
 // applyEnvOverrides applies environment variable overrides to the config.
@@ -165,14 +164,14 @@ func applyEnvOverrides(cfg *Config) {
 }
 
 // SaveConfig saves the configuration to ~/.core/agentic.yaml.
-func SaveConfig(m io.Medium, cfg *Config) error {
+func SaveConfig(cfg *Config) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return log.E("agentic.SaveConfig", "failed to get home directory", err)
 	}
 
 	configDir := filepath.Join(homeDir, ".core")
-	if err := m.EnsureDir(configDir); err != nil {
+	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return log.E("agentic.SaveConfig", "failed to create config directory", err)
 	}
 
@@ -183,7 +182,7 @@ func SaveConfig(m io.Medium, cfg *Config) error {
 		return log.E("agentic.SaveConfig", "failed to marshal config", err)
 	}
 
-	if err := m.Write(configPath, string(data)); err != nil {
+	if err := os.WriteFile(configPath, data, 0600); err != nil {
 		return log.E("agentic.SaveConfig", "failed to write config file", err)
 	}
 
@@ -191,7 +190,7 @@ func SaveConfig(m io.Medium, cfg *Config) error {
 }
 
 // ConfigPath returns the path to the config file in the user's home directory.
-func ConfigPath(m io.Medium) (string, error) {
+func ConfigPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", log.E("agentic.ConfigPath", "failed to get home directory", err)
