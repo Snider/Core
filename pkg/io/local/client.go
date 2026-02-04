@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/host-uk/core/pkg/log"
 )
 
 // Medium is a local filesystem storage backend.
@@ -83,6 +85,7 @@ func (m *Medium) validatePath(p string) (string, error) {
 		// Verify the resolved part is still within the root
 		rel, err := filepath.Rel(m.root, realNext)
 		if err != nil || strings.HasPrefix(rel, "..") {
+			log.Security("sandbox escape detected", "root", m.root, "path", p, "attempted", realNext, "user", os.Getenv("USER"))
 			return "", os.ErrPermission // Path escapes sandbox
 		}
 		current = realNext

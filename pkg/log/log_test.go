@@ -37,6 +37,9 @@ func TestLogger_Levels(t *testing.T) {
 		{"info at quiet", LevelQuiet, (*Logger).Info, false},
 		{"warn at quiet", LevelQuiet, (*Logger).Warn, false},
 		{"error at quiet", LevelQuiet, (*Logger).Error, false},
+
+		{"security at info", LevelInfo, (*Logger).Security, true},
+		{"security at error", LevelError, (*Logger).Security, false},
 	}
 
 	for _, tt := range tests {
@@ -121,6 +124,24 @@ func TestLevel_String(t *testing.T) {
 				t.Errorf("expected %q, got %q", tt.expected, got)
 			}
 		})
+	}
+}
+
+func TestLogger_Security(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(Options{Level: LevelInfo, Output: &buf})
+
+	l.Security("unauthorized access", "user", "admin")
+
+	output := buf.String()
+	if !strings.Contains(output, "[SEC]") {
+		t.Error("expected [SEC] prefix in security log")
+	}
+	if !strings.Contains(output, "unauthorized access") {
+		t.Error("expected message in security log")
+	}
+	if !strings.Contains(output, "user=admin") {
+		t.Error("expected context in security log")
 	}
 }
 

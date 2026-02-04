@@ -17,7 +17,15 @@ import (
 func GhAuthenticated() bool {
 	cmd := exec.Command("gh", "auth", "status")
 	output, _ := cmd.CombinedOutput()
-	return strings.Contains(string(output), "Logged in")
+	authenticated := strings.Contains(string(output), "Logged in")
+
+	if authenticated {
+		LogSecurity("GitHub CLI authenticated", "user", os.Getenv("USER"))
+	} else {
+		LogSecurity("GitHub CLI not authenticated", "user", os.Getenv("USER"))
+	}
+
+	return authenticated
 }
 
 // ConfirmOption configures Confirm behaviour.

@@ -50,8 +50,9 @@ const (
 var (
 	SuccessStyle = NewStyle().Bold().Foreground(ColourGreen500)
 	ErrorStyle   = NewStyle().Bold().Foreground(ColourRed500)
-	WarningStyle = NewStyle().Bold().Foreground(ColourAmber500)
-	InfoStyle    = NewStyle().Foreground(ColourBlue400)
+	WarningStyle  = NewStyle().Bold().Foreground(ColourAmber500)
+	InfoStyle     = NewStyle().Foreground(ColourBlue400)
+	SecurityStyle = NewStyle().Bold().Foreground(ColourPurple500)
 	DimStyle     = NewStyle().Dim().Foreground(ColourGray500)
 	MutedStyle   = NewStyle().Foreground(ColourGray600)
 	BoldStyle    = NewStyle().Bold()

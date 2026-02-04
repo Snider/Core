@@ -75,6 +75,7 @@ func runGitHubSetup() error {
 
 	// Check gh is authenticated
 	if !cli.GhAuthenticated() {
+		cli.LogSecurity("GitHub setup failed: not authenticated", "action", "setup github")
 		return errors.New(i18n.T("cmd.setup.github.error.not_authenticated"))
 	}
 

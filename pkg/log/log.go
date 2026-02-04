@@ -68,6 +68,7 @@ type Logger struct {
 	StyleInfo      func(string) string
 	StyleWarn      func(string) string
 	StyleError     func(string) string
+	StyleSecurity  func(string) string
 }
 
 // Options configures a Logger.
@@ -91,6 +92,7 @@ func New(opts Options) *Logger {
 		StyleInfo:      identity,
 		StyleWarn:      identity,
 		StyleError:     identity,
+		StyleSecurity:  identity,
 	}
 }
 
@@ -214,6 +216,14 @@ func (l *Logger) Error(msg string, keyvals ...any) {
 	}
 }
 
+// Security logs a security event with optional key-value pairs.
+// It uses LevelWarn as security events are generally significant.
+func (l *Logger) Security(msg string, keyvals ...any) {
+	if l.shouldLog(LevelWarn) {
+		l.log(LevelWarn, l.StyleSecurity("[SEC]"), msg, keyvals...)
+	}
+}
+
 // --- Default logger ---
 
 var defaultLogger = New(Options{Level: LevelInfo})
@@ -251,4 +261,9 @@ func Warn(msg string, keyvals ...any) {
 // Error logs to the default logger.
 func Error(msg string, keyvals ...any) {
 	defaultLogger.Error(msg, keyvals...)
+}
+
+// Security logs to the default logger.
+func Security(msg string, keyvals ...any) {
+	defaultLogger.Security(msg, keyvals...)
 }

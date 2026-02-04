@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"os"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -48,7 +49,7 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 	if addr == "" {
 		addr = t.listener.Addr().String()
 	}
-	log.Info("MCP TCP server listening", "addr", addr)
+	s.logger.Security("MCP TCP server listening", "addr", addr, "user", os.Getenv("USER"))
 
 	for {
 		conn, err := t.listener.Accept()
@@ -57,11 +58,12 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 			case <-ctx.Done():
 				return nil
 			default:
-				log.Error("mcp: accept error", "err", err)
+				s.logger.Security("MCP TCP accept error", "err", err, "user", os.Getenv("USER"))
 				continue
 			}
 		}
 
+		s.logger.Security("MCP TCP connection accepted", "remote", conn.RemoteAddr().String(), "user", os.Getenv("USER"))
 		go s.handleConnection(ctx, conn)
 	}
 }
