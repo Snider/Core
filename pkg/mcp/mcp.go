@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/io"
-	"github.com/host-uk/core/pkg/log"
 	"github.com/host-uk/core/pkg/io/local"
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
