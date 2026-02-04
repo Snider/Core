@@ -3,9 +3,9 @@
 //
 // Authentication is resolved from environment variables, config file, or flags:
 //
-//	1. GITEA_TOKEN + GITEA_URL environment variables
-//	2. ~/.core/config.yaml keys: gitea.token, gitea.url
-//	3. CLI flags: --gitea-url, --gitea-token
+//  1. GITEA_TOKEN + GITEA_URL environment variables
+//  2. ~/.core/config.yaml keys: gitea.token, gitea.url
+//  3. CLI flags: --gitea-url, --gitea-token
 package gitea
 
 import (

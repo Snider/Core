@@ -11,8 +11,8 @@ import (
 
 // Mirror command flags.
 var (
-	mirrorOrg       string
-	mirrorGHToken   string
+	mirrorOrg     string
+	mirrorGHToken string
 )
 
 // addMirrorCommand adds the 'mirror' subcommand for creating GitHub-to-Gitea mirrors.

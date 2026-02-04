@@ -24,9 +24,9 @@ var (
 	warningStyle = cli.WarningStyle
 	dimStyle     = cli.DimStyle
 	valueStyle   = cli.ValueStyle
-	repoStyle   = cli.RepoStyle
-	numberStyle = cli.NumberStyle
-	infoStyle   = cli.InfoStyle
+	repoStyle    = cli.RepoStyle
+	numberStyle  = cli.NumberStyle
+	infoStyle    = cli.InfoStyle
 )
 
 // AddGiteaCommands registers the 'gitea' command and all subcommands.
