@@ -30,7 +30,7 @@ func runSetupOrchestrator(registryPath, only string, dryRun, all bool, projectNa
 	if registryPath != "" {
 		foundRegistry = registryPath
 	} else {
-		foundRegistry, err = repos.FindRegistry()
+		foundRegistry, err = repos.FindRegistry(coreio.Local)
 	}
 
 	// If registry exists, use registry mode
@@ -128,7 +128,7 @@ func runBootstrap(ctx context.Context, only string, dryRun, all bool, projectNam
 		return nil
 	}
 
-	reg, err := repos.LoadRegistry(registryPath)
+	reg, err := repos.LoadRegistry(coreio.Local, registryPath)
 	if err != nil {
 		return fmt.Errorf("failed to load registry from %s: %w", devopsRepo, err)
 	}

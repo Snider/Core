@@ -8,6 +8,7 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -106,18 +107,18 @@ type SecretScanningAlert struct {
 // loadRegistry loads the repository registry.
 func loadRegistry(registryPath string) (*repos.Registry, error) {
 	if registryPath != "" {
-		reg, err := repos.LoadRegistry(registryPath)
+		reg, err := repos.LoadRegistry(io.Local, registryPath)
 		if err != nil {
 			return nil, cli.Wrap(err, "load registry")
 		}
 		return reg, nil
 	}
 
-	path, err := repos.FindRegistry()
+	path, err := repos.FindRegistry(io.Local)
 	if err != nil {
 		return nil, cli.Wrap(err, "find registry")
 	}
-	reg, err := repos.LoadRegistry(path)
+	reg, err := repos.LoadRegistry(io.Local, path)
 	if err != nil {
 		return nil, cli.Wrap(err, "load registry")
 	}

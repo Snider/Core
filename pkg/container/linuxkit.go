@@ -235,6 +235,9 @@ func (m *LinuxKitManager) waitForExit(id string, cmd *exec.Cmd) {
 
 // Stop stops a running container by sending SIGTERM.
 func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	container, ok := m.state.Get(id)
 	if !ok {
 		return fmt.Errorf("container not found: %s", id)
@@ -293,6 +296,9 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 
 // List returns all known containers, verifying process state.
 func (m *LinuxKitManager) List(ctx context.Context) ([]*Container, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	containers := m.state.All()
 
 	// Verify each running container's process is still alive
@@ -322,6 +328,9 @@ func isProcessRunning(pid int) bool {
 
 // Logs returns a reader for the container's log output.
 func (m *LinuxKitManager) Logs(ctx context.Context, id string, follow bool) (goio.ReadCloser, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	_, ok := m.state.Get(id)
 	if !ok {
 		return nil, fmt.Errorf("container not found: %s", id)
@@ -409,6 +418,9 @@ func (f *followReader) Close() error {
 
 // Exec executes a command inside the container via SSH.
 func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	container, ok := m.state.Get(id)
 	if !ok {
 		return fmt.Errorf("container not found: %s", id)

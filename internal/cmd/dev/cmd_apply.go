@@ -225,12 +225,12 @@ func runApply() error {
 // getApplyTargetRepos gets repos to apply command to
 func getApplyTargetRepos() ([]*repos.Repo, error) {
 	// Load registry
-	registryPath, err := repos.FindRegistry()
+	registryPath, err := repos.FindRegistry(io.Local)
 	if err != nil {
 		return nil, core.E("dev.apply", "failed to find registry", err)
 	}
 
-	registry, err := repos.LoadRegistry(registryPath)
+	registry, err := repos.LoadRegistry(io.Local, registryPath)
 	if err != nil {
 		return nil, core.E("dev.apply", "failed to load registry", err)
 	}
