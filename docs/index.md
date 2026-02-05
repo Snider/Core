@@ -85,6 +85,7 @@ And `repos.yaml` in workspace root for multi-repo management.
 ## Reference
 
 - [Configuration](configuration.md) - All config options
+- [Architecture Decisions (ADR)](adr/README.md) - Key architectural decisions
 - [Glossary](glossary.md) - Term definitions
 
 ## Claude Code Skill

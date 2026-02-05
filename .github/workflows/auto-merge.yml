@@ -1,25 +1,26 @@
+# This workflow is localized from host-uk/.github/.github/workflows/auto-merge.yml@dev
+# because the reusable version is currently failing due to missing git context.
+# See: https://github.com/host-uk/core/actions/runs/21697467567/job/62570690752
 name: Auto Merge
 
 on:
   pull_request:
     types: [opened, reopened, ready_for_review]
 
-# Fixed local version of auto-merge logic.
-# The shared reusable workflow was failing due to missing git repository context.
-# Added '-R' flag to 'gh pr merge' to explicitly specify the repository.
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   merge:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v4
-      - name: Auto-merge
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Auto Merge
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
+          github-token: ${{ github.token }}
           script: |
             const author = context.payload.pull_request.user.login;
             const association = context.payload.pull_request.author_association;
@@ -28,7 +29,7 @@ jobs:
             const trustedBots = ['google-labs-jules[bot]'];
             const isTrustedBot = trustedBots.includes(author);
 
-            // Check author association from webhook payload (no API call needed)
+            // Check author association
             const trusted = ['MEMBER', 'OWNER', 'COLLABORATOR'];
             if (!isTrustedBot && !trusted.includes(association)) {
               core.info(`${author} is ${association} — skipping auto-merge`);
@@ -38,7 +39,12 @@ jobs:
             await exec.exec('gh', [
               'pr', 'merge', process.env.PR_NUMBER,
               '--auto',
-              '--merge',
-              '-R', `${context.repo.owner}/${context.repo.repo}`
-            ]);
+              '--repo', `${context.repo.owner}/${context.repo.repo}`,
+              '--merge'
+            ], {
+              env: {
+                ...process.env,
+                GH_TOKEN: '${{ github.token }}'
+              }
+            });
             core.info(`Auto-merge enabled for #${process.env.PR_NUMBER}`);
