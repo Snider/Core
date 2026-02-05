@@ -3,8 +3,11 @@ package mcp
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"net"
+	"os"
+	"strings"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -20,9 +23,23 @@ type TCPTransport struct {
 	listener net.Listener
 }
 
+// DefaultTCPAddr is the default address for the MCP TCP transport.
+const DefaultTCPAddr = "127.0.0.1:9100"
+
 // NewTCPTransport creates a new TCP transport listener.
 // It listens on the provided address (e.g. "localhost:9100").
+// If addr is empty, it defaults to 127.0.0.1:9100.
+// A warning is printed to stderr if binding to 0.0.0.0 (all interfaces).
 func NewTCPTransport(addr string) (*TCPTransport, error) {
+	if addr == "" {
+		addr = DefaultTCPAddr
+	}
+
+	// Warn if binding to all interfaces
+	if strings.HasPrefix(addr, "0.0.0.0:") {
+		fmt.Fprintln(os.Stderr, "WARNING: MCP TCP server binding to all interfaces (0.0.0.0). This may expose the service to the network.")
+	}
+
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
