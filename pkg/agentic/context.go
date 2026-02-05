@@ -108,28 +108,19 @@ func GatherRelatedFiles(task *Task, dir string) ([]FileContent, error) {
 
 	// Read files explicitly mentioned in the task
 	for _, relPath := range task.Files {
-		// Use streaming API to read only what we need
-		f, err := io.Local.ReadStream(relPath)
-		if err != nil {
-			// Try with full path if relative fails (for backward compatibility if dir is provided)
-			fullPath := filepath.Join(dir, relPath)
-			f, err = io.Local.ReadStream(fullPath)
-			if err != nil {
-				continue
-			}
+		fullPath := relPath
+		if !filepath.IsAbs(relPath) {
+			fullPath = filepath.Join(dir, relPath)
 		}
 
-		// Read up to maxContextBytes + 1 to detect truncation
-		reader := goio.LimitReader(f, maxContextBytes+1)
-		content, err := goio.ReadAll(reader)
-		_ = f.Close()
+		content, truncated, err := readAndTruncate(fullPath)
 		if err != nil {
 			continue
 		}
 
 		contentStr := string(content)
-		if len(contentStr) > maxContextBytes {
-			contentStr = contentStr[:maxContextBytes] + "\n... (truncated)"
+		if truncated {
+			contentStr += "\n... (truncated)"
 		}
 
 		files = append(files, FileContent{
@@ -183,28 +174,19 @@ func findRelatedCode(task *Task, dir string) ([]FileContent, error) {
 				break
 			}
 
-			// Use streaming API to read only what we need
-			f, err := io.Local.ReadStream(line)
-			if err != nil {
-				// Try with full path if relative fails
-				fullPath := filepath.Join(dir, line)
-				f, err = io.Local.ReadStream(fullPath)
-				if err != nil {
-					continue
-				}
+			fullPath := line
+			if !filepath.IsAbs(line) {
+				fullPath = filepath.Join(dir, line)
 			}
 
-			// Read up to maxContextBytes + 1 to detect truncation
-			reader := goio.LimitReader(f, maxContextBytes+1)
-			content, err := goio.ReadAll(reader)
-			_ = f.Close()
+			content, truncated, err := readAndTruncate(fullPath)
 			if err != nil {
 				continue
 			}
 
 			contentStr := string(content)
-			if len(contentStr) > maxContextBytes {
-				contentStr = contentStr[:maxContextBytes] + "\n... (truncated)"
+			if truncated {
+				contentStr += "\n... (truncated)"
 			}
 
 			files = append(files, FileContent{
@@ -302,6 +284,30 @@ func detectLanguage(path string) string {
 		return lang
 	}
 	return "text"
+}
+
+// readAndTruncate reads up to maxContextBytes from a file.
+func readAndTruncate(path string) ([]byte, bool, error) {
+	f, err := io.Local.ReadStream(path)
+	if err != nil {
+		return nil, false, err
+	}
+	defer func() { _ = f.Close() }()
+
+	// Read up to maxContextBytes + 1 to detect truncation
+	reader := goio.LimitReader(f, maxContextBytes+1)
+	content, err := goio.ReadAll(reader)
+	if err != nil {
+		return nil, false, err
+	}
+
+	truncated := false
+	if len(content) > maxContextBytes {
+		content = content[:maxContextBytes]
+		truncated = true
+	}
+
+	return content, truncated, nil
 }
 
 // runGitCommand runs a git command and returns the output.

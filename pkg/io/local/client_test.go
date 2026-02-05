@@ -1,8 +1,10 @@
 package local
 
 import (
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -470,4 +472,38 @@ func TestEmptyPaths(t *testing.T) {
 	entries, err := m.List("")
 	assert.NoError(t, err)
 	assert.NotNil(t, entries)
+func TestReadStream(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	content := "streaming content"
+	err := m.Write("stream.txt", content)
+	assert.NoError(t, err)
+
+	reader, err := m.ReadStream("stream.txt")
+	assert.NoError(t, err)
+	defer reader.Close()
+
+	// Read only first 9 bytes
+	limitReader := io.LimitReader(reader, 9)
+	data, err := io.ReadAll(limitReader)
+	assert.NoError(t, err)
+	assert.Equal(t, "streaming", string(data))
+}
+
+func TestWriteStream(t *testing.T) {
+	root := t.TempDir()
+	m, _ := New(root)
+
+	writer, err := m.WriteStream("output.txt")
+	assert.NoError(t, err)
+
+	_, err = io.Copy(writer, strings.NewReader("piped data"))
+	assert.NoError(t, err)
+	err = writer.Close()
+	assert.NoError(t, err)
+
+	content, err := m.Read("output.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "piped data", content)
 }
