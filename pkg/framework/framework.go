@@ -63,14 +63,14 @@ func RegisterAction[T any](c *Core, handler func(*Core, T) error) {
 	core.RegisterAction(c, handler)
 }
 
-// Ask dispatches a query to handlers until one responds, returning a typed result.
-func Ask[R any](c *Core, q any) (R, bool, error) {
-	return core.Ask[R](c, q)
+// Query dispatches a query to handlers until one responds, returning a typed result.
+func Query[R any](c *Core, q any) (R, bool, error) {
+	return core.Query[R](c, q)
 }
 
-// AskAll dispatches a query to all handlers and collects typed responses.
-func AskAll[R any](c *Core, q any) ([]R, error) {
-	return core.AskAll[R](c, q)
+// QueryAll dispatches a query to all handlers and collects typed responses.
+func QueryAll[R any](c *Core, q any) ([]R, error) {
+	return core.QueryAll[R](c, q)
 }
 
 // RegisterQuery adds a type-safe query handler to the Core.

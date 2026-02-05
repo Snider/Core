@@ -212,8 +212,8 @@ func TestTypedIPC(t *testing.T) {
 		return "result-" + q.Value, true, nil
 	})
 
-	// Test Ask with type parameter
-	res, handled, err := Ask[string](c, TestQuery{Value: "query"})
+	// Test Query with type parameter
+	res, handled, err := Query[string](c, TestQuery{Value: "query"})
 	assert.NoError(t, err)
 	assert.True(t, handled)
 	assert.Equal(t, "result-query", res)
@@ -272,7 +272,7 @@ func TestTypedQueryAll(t *testing.T) {
 		return "two", true, nil
 	})
 
-	results, err := AskAll[string](c, TestQuery{})
+	results, err := QueryAll[string](c, TestQuery{})
 	assert.NoError(t, err)
 	assert.Len(t, results, 2)
 	assert.Contains(t, results, "one")

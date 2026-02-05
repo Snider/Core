@@ -86,8 +86,8 @@ func TestIPC_Typed(t *testing.T) {
 		return q.Value + "-typed", true, nil
 	})
 
-	// Using Ask
-	res, handled, err := Ask[string](c, IPCTestQuery{Value: "test"})
+	// Using Query
+	res, handled, err := Query[string](c, IPCTestQuery{Value: "test"})
 	assert.True(t, handled)
 	assert.Nil(t, err)
 	assert.Equal(t, "test-typed", res)

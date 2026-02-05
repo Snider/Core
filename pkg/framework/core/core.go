@@ -208,9 +208,9 @@ func (c *Core) QUERY(q Query) (any, bool, error) {
 	return c.bus.query(q)
 }
 
-// Ask dispatches a query to handlers until one responds, returning a typed result.
+// Query dispatches a query to handlers until one responds, returning a typed result.
 // If the result cannot be cast to R, an error is returned.
-func Ask[R any](c *Core, q any) (R, bool, error) {
+func Query[R any](c *Core, q any) (R, bool, error) {
 	res, handled, err := c.QUERY(q)
 	if err != nil || !handled {
 		var zero R
@@ -226,7 +226,7 @@ func Ask[R any](c *Core, q any) (R, bool, error) {
 
 // DispatchQuery dispatches a query that implements Request[R], using type inference for the result.
 func DispatchQuery[R any](c *Core, q Request[R]) (R, bool, error) {
-	return Ask[R](c, q)
+	return Query[R](c, q)
 }
 
 // QUERYALL dispatches a query to all handlers and collects all responses.
@@ -235,8 +235,8 @@ func (c *Core) QUERYALL(q Query) ([]any, error) {
 	return c.bus.queryAll(q)
 }
 
-// AskAll dispatches a query to all handlers and collects typed responses.
-func AskAll[R any](c *Core, q any) ([]R, error) {
+// QueryAll dispatches a query to all handlers and collects typed responses.
+func QueryAll[R any](c *Core, q any) ([]R, error) {
 	results, err := c.QUERYALL(q)
 	if err != nil {
 		return nil, err
