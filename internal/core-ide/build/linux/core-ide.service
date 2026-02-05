@@ -1,15 +1,32 @@
 [Unit]
-Description=Core IDE Job Runner
+Description=Core IDE Job Runner (Headless Mode)
+Documentation=https://github.com/host-uk/core
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/core-ide --headless
-Restart=always
+Restart=on-failure
 RestartSec=10
+TimeoutStopSec=30
+
+# Environment
 Environment=CORE_DAEMON=1
-Environment=GITHUB_TOKEN=
+# GitHub token should be set via systemctl edit or drop-in file
+# Environment=GITHUB_TOKEN=
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=core-ide
 
 [Install]
 WantedBy=multi-user.target
