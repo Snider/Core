@@ -5,6 +5,7 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/io/local"
 	"github.com/host-uk/core/pkg/log"
+	"github.com/host-uk/core/pkg/process"
+	"github.com/host-uk/core/pkg/ws"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -22,6 +25,12 @@ type Service struct {
 	workspaceRoot string      // Root directory for file operations (empty = unrestricted)
 	medium        io.Medium   // Filesystem medium for sandboxed operations
 	logger        *log.Logger // Logger for security events
+
+	// Optional services for extended functionality
+	processService *process.Service // Process management service (optional)
+	wsHub          *ws.Hub          // WebSocket hub for real-time events (optional)
+	wsServer       *http.Server     // WebSocket HTTP server (started by ws_start tool)
+	wsAddr         string           // Address the WebSocket server is listening on
 }
 
 // Option configures a Service.
@@ -57,6 +66,24 @@ func WithWorkspaceRoot(root string) Option {
 		}
 		s.workspaceRoot = abs
 		s.medium = m
+		return nil
+	}
+}
+
+// WithProcessService adds process management tools to the MCP server.
+// When combined with WithWSHub, process events are automatically forwarded to WebSocket clients.
+func WithProcessService(svc *process.Service) Option {
+	return func(s *Service) error {
+		s.processService = svc
+		return nil
+	}
+}
+
+// WithWSHub adds WebSocket tools to the MCP server.
+// Enables real-time streaming of process output and events to connected clients.
+func WithWSHub(hub *ws.Hub) Option {
+	return func(s *Service) error {
+		s.wsHub = hub
 		return nil
 	}
 }
@@ -160,6 +187,12 @@ func (s *Service) registerTools(server *mcp.Server) {
 
 	// Metrics operations
 	s.registerMetricsTools(server)
+
+	// Process management operations (optional)
+	s.registerProcessTools(server)
+
+	// WebSocket operations (optional)
+	s.registerWSTools(server)
 }
 
 // Tool input/output types for MCP file operations.
@@ -526,4 +559,26 @@ func (s *Service) Run(ctx context.Context) error {
 // Server returns the underlying MCP server for advanced configuration.
 func (s *Service) Server() *mcp.Server {
 	return s.server
+}
+
+// ProcessService returns the process service if configured.
+func (s *Service) ProcessService() *process.Service {
+	return s.processService
+}
+
+// WSHub returns the WebSocket hub if configured.
+func (s *Service) WSHub() *ws.Hub {
+	return s.wsHub
+}
+
+// Shutdown gracefully shuts down the MCP service, including the WebSocket server if running.
+func (s *Service) Shutdown(ctx context.Context) error {
+	if s.wsServer != nil {
+		if err := s.wsServer.Shutdown(ctx); err != nil {
+			return fmt.Errorf("failed to shutdown WebSocket server: %w", err)
+		}
+		s.wsServer = nil
+		s.wsAddr = ""
+	}
+	return nil
 }
