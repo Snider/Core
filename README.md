@@ -126,6 +126,8 @@ Any configuration value can be overridden using environment variables with the `
 | `MCP_ADDR` | Address for the MCP TCP server (e.g., `localhost:9100`). If not set, MCP uses Stdio. |
 | `COOLIFY_TOKEN` | API token for Coolify deployments. |
 | `AGENTIC_TOKEN` | API token for Agentic services. |
+| `UNIFI_URL` | URL of the UniFi controller (e.g., `https://192.168.1.1`). |
+| `UNIFI_INSECURE` | Set to `1` or `true` to skip UniFi TLS verification. |
 
 ## All Tasks
 
