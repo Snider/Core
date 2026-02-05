@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
 )
 
 // Medium is a local filesystem storage backend.
