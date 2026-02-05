@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
