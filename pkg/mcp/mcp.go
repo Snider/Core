@@ -154,6 +154,9 @@ func (s *Service) registerTools(server *mcp.Server) {
 		Name:        "lang_list",
 		Description: "Get list of supported programming languages",
 	}, s.getSupportedLanguages)
+
+	// RAG operations
+	s.registerRAGTools(server)
 }
 
 // Tool input/output types for MCP file operations.
