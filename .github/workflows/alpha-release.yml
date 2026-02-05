@@ -171,8 +171,11 @@ jobs:
           LINUX_AMD64=$(cat dist/core-linux-amd64.tar.gz.sha256)
           LINUX_ARM64=$(cat dist/core-linux-arm64.tar.gz.sha256)
 
-          # Clone tap repo
+          # Clone tap repo (configure auth for push)
           gh repo clone host-uk/homebrew-tap /tmp/tap -- --depth=1
+          cd /tmp/tap
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/host-uk/homebrew-tap.git"
+          cd -
           mkdir -p /tmp/tap/Formula
 
           # Write formula
