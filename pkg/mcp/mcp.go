@@ -27,9 +27,6 @@ type Service struct {
 // Option configures a Service.
 type Option func(*Service) error
 
-// WithWorkspaceRoot restricts file operations to the given directory.
-// All paths are validated to be within this directory.
-// An empty string disables the restriction (not recommended).
 // WithLogger sets the logger for the MCP service.
 func WithLogger(l *log.Logger) Option {
 	return func(s *Service) error {
@@ -38,6 +35,9 @@ func WithLogger(l *log.Logger) Option {
 	}
 }
 
+// WithWorkspaceRoot restricts file operations to the given directory.
+// All paths are validated to be within this directory.
+// An empty string disables the restriction (not recommended).
 func WithWorkspaceRoot(root string) Option {
 	return func(s *Service) error {
 		if root == "" {
@@ -292,7 +292,7 @@ type EditDiffOutput struct {
 // Tool handlers
 
 func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input ReadFileInput) (*mcp.CallToolResult, ReadFileOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "file_read", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Info("MCP tool execution", "tool", "file_read", "path", input.Path, "user", log.Username())
 	content, err := s.medium.Read(input.Path)
 	if err != nil {
 		log.Error("mcp: read file failed", "path", input.Path, "err", err)
@@ -306,7 +306,7 @@ func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input 
 }
 
 func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input WriteFileInput) (*mcp.CallToolResult, WriteFileOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "file_write", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Security("MCP tool execution", "tool", "file_write", "path", input.Path, "user", log.Username())
 	// Medium.Write creates parent directories automatically
 	if err := s.medium.Write(input.Path, input.Content); err != nil {
 		log.Error("mcp: write file failed", "path", input.Path, "err", err)
@@ -316,7 +316,7 @@ func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input
 }
 
 func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, input ListDirectoryInput) (*mcp.CallToolResult, ListDirectoryOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "dir_list", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Info("MCP tool execution", "tool", "dir_list", "path", input.Path, "user", log.Username())
 	entries, err := s.medium.List(input.Path)
 	if err != nil {
 		log.Error("mcp: list directory failed", "path", input.Path, "err", err)
@@ -340,7 +340,7 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest, input CreateDirectoryInput) (*mcp.CallToolResult, CreateDirectoryOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "dir_create", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Security("MCP tool execution", "tool", "dir_create", "path", input.Path, "user", log.Username())
 	if err := s.medium.EnsureDir(input.Path); err != nil {
 		log.Error("mcp: create directory failed", "path", input.Path, "err", err)
 		return nil, CreateDirectoryOutput{}, fmt.Errorf("failed to create directory: %w", err)
@@ -349,7 +349,7 @@ func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, input DeleteFileInput) (*mcp.CallToolResult, DeleteFileOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "file_delete", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Security("MCP tool execution", "tool", "file_delete", "path", input.Path, "user", log.Username())
 	if err := s.medium.Delete(input.Path); err != nil {
 		log.Error("mcp: delete file failed", "path", input.Path, "err", err)
 		return nil, DeleteFileOutput{}, fmt.Errorf("failed to delete file: %w", err)
@@ -358,7 +358,7 @@ func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, inpu
 }
 
 func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, input RenameFileInput) (*mcp.CallToolResult, RenameFileOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "file_rename", "oldPath", input.OldPath, "newPath", input.NewPath, "user", os.Getenv("USER"))
+	s.logger.Security("MCP tool execution", "tool", "file_rename", "oldPath", input.OldPath, "newPath", input.NewPath, "user", log.Username())
 	if err := s.medium.Rename(input.OldPath, input.NewPath); err != nil {
 		log.Error("mcp: rename file failed", "oldPath", input.OldPath, "newPath", input.NewPath, "err", err)
 		return nil, RenameFileOutput{}, fmt.Errorf("failed to rename file: %w", err)
@@ -367,7 +367,7 @@ func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, inpu
 }
 
 func (s *Service) fileExists(ctx context.Context, req *mcp.CallToolRequest, input FileExistsInput) (*mcp.CallToolResult, FileExistsOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "file_exists", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Info("MCP tool execution", "tool", "file_exists", "path", input.Path, "user", log.Username())
 	info, err := s.medium.Stat(input.Path)
 	if err != nil {
 		// Any error from Stat (e.g., not found, permission denied) is treated as "does not exist"
@@ -383,13 +383,13 @@ func (s *Service) fileExists(ctx context.Context, req *mcp.CallToolRequest, inpu
 }
 
 func (s *Service) detectLanguage(ctx context.Context, req *mcp.CallToolRequest, input DetectLanguageInput) (*mcp.CallToolResult, DetectLanguageOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "lang_detect", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Info("MCP tool execution", "tool", "lang_detect", "path", input.Path, "user", log.Username())
 	lang := detectLanguageFromPath(input.Path)
 	return nil, DetectLanguageOutput{Language: lang, Path: input.Path}, nil
 }
 
 func (s *Service) getSupportedLanguages(ctx context.Context, req *mcp.CallToolRequest, input GetSupportedLanguagesInput) (*mcp.CallToolResult, GetSupportedLanguagesOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "lang_list", "user", os.Getenv("USER"))
+	s.logger.Info("MCP tool execution", "tool", "lang_list", "user", log.Username())
 	languages := []LanguageInfo{
 		{ID: "typescript", Name: "TypeScript", Extensions: []string{".ts", ".tsx"}},
 		{ID: "javascript", Name: "JavaScript", Extensions: []string{".js", ".jsx"}},
@@ -411,7 +411,7 @@ func (s *Service) getSupportedLanguages(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input EditDiffInput) (*mcp.CallToolResult, EditDiffOutput, error) {
-	s.logger.Security("MCP tool execution", "tool", "file_edit", "path", input.Path, "user", os.Getenv("USER"))
+	s.logger.Security("MCP tool execution", "tool", "file_edit", "path", input.Path, "user", log.Username())
 	if input.OldString == "" {
 		return nil, EditDiffOutput{}, fmt.Errorf("old_string cannot be empty")
 	}

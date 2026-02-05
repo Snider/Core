@@ -85,7 +85,7 @@ func (m *Medium) validatePath(p string) (string, error) {
 		// Verify the resolved part is still within the root
 		rel, err := filepath.Rel(m.root, realNext)
 		if err != nil || strings.HasPrefix(rel, "..") {
-			log.Security("sandbox escape detected", "root", m.root, "path", p, "attempted", realNext, "user", os.Getenv("USER"))
+			log.Security("sandbox escape detected", "root", m.root, "path", p, "attempted", realNext, "user", log.Username())
 			return "", os.ErrPermission // Path escapes sandbox
 		}
 		current = realNext

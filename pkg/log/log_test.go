@@ -39,7 +39,7 @@ func TestLogger_Levels(t *testing.T) {
 		{"error at quiet", LevelQuiet, (*Logger).Error, false},
 
 		{"security at info", LevelInfo, (*Logger).Security, true},
-		{"security at error", LevelError, (*Logger).Security, false},
+		{"security at error", LevelError, (*Logger).Security, true},
 	}
 
 	for _, tt := range tests {
@@ -129,7 +129,7 @@ func TestLevel_String(t *testing.T) {
 
 func TestLogger_Security(t *testing.T) {
 	var buf bytes.Buffer
-	l := New(Options{Level: LevelInfo, Output: &buf})
+	l := New(Options{Level: LevelError, Output: &buf})
 
 	l.Security("unauthorized access", "user", "admin")
 

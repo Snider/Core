@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/log"
 )
 
 // GhAuthenticated checks if the GitHub CLI is authenticated.
@@ -20,9 +21,9 @@ func GhAuthenticated() bool {
 	authenticated := strings.Contains(string(output), "Logged in")
 
 	if authenticated {
-		LogSecurity("GitHub CLI authenticated", "user", os.Getenv("USER"))
+		LogSecurity("GitHub CLI authenticated", "user", log.Username())
 	} else {
-		LogSecurity("GitHub CLI not authenticated", "user", os.Getenv("USER"))
+		LogSecurity("GitHub CLI not authenticated", "user", log.Username())
 	}
 
 	return authenticated
