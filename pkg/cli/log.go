@@ -113,39 +113,3 @@ func LogSecurity(msg string, keyvals ...any) {
 		l.Security(msg, keyvals...)
 	}
 }
-
-// LogSecurity logs a security message if log service is available.
-func LogSecurity(msg string, keyvals ...any) {
-	if l := Log(); l != nil {
-		// Ensure user context is included if not already present
-		hasUser := false
-		for i := 0; i < len(keyvals); i += 2 {
-			if keyvals[i] == "user" {
-				hasUser = true
-				break
-			}
-		}
-		if !hasUser {
-			keyvals = append(keyvals, "user", log.Username())
-		}
-		l.Security(msg, keyvals...)
-	}
-}
-
-// LogSecurity logs a security message if log service is available.
-func LogSecurity(msg string, keyvals ...any) {
-	if l := Log(); l != nil {
-		// Ensure user context is included if not already present
-		hasUser := false
-		for i := 0; i < len(keyvals); i += 2 {
-			if keyvals[i] == "user" {
-				hasUser = true
-				break
-			}
-		}
-		if !hasUser {
-			keyvals = append(keyvals, "user", log.Username())
-		}
-		l.Security(msg, keyvals...)
-	}
-}
