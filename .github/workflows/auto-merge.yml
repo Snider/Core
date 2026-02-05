@@ -1,6 +1,6 @@
-# Local implementation of auto-merge to handle environments where .git is missing.
-# The reusable workflow fails because 'gh' requires repository context which is
-# missing when called without a checkout or explicit --repo flag.
+# This workflow is localized from host-uk/.github/.github/workflows/auto-merge.yml@dev
+# because the reusable version is currently failing due to missing git context.
+# See: https://github.com/host-uk/core/actions/runs/21697467567/job/62570690752
 name: Auto Merge
 
 on:
@@ -8,26 +8,25 @@ on:
     types: [opened, reopened, ready_for_review]
 
 permissions:
-  pull-requests: write
   contents: write
+  pull-requests: write
 
 jobs:
   merge:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    env:
-      PR_NUMBER: ${{ github.event.pull_request.number }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Auto Merge
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
+          github-token: ${{ github.token }}
           script: |
             const author = context.payload.pull_request.user.login;
             const association = context.payload.pull_request.author_association;
 
             // Trusted bot accounts (act as org members)
-            const trustedBots = ['google-labs-jules[bot]', 'github-actions[bot]'];
+            const trustedBots = ['google-labs-jules[bot]'];
             const isTrustedBot = trustedBots.includes(author);
 
             // Check author association
@@ -40,7 +39,12 @@ jobs:
             await exec.exec('gh', [
               'pr', 'merge', process.env.PR_NUMBER,
               '--auto',
-              '--merge',
-              '--repo', context.repo.owner + '/' + context.repo.repo
-            ]);
+              '--repo', `${context.repo.owner}/${context.repo.repo}`,
+              '--merge'
+            ], {
+              env: {
+                ...process.env,
+                GH_TOKEN: '${{ github.token }}'
+              }
+            });
             core.info(`Auto-merge enabled for #${process.env.PR_NUMBER}`);
