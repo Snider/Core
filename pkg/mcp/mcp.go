@@ -193,6 +193,9 @@ func (s *Service) registerTools(server *mcp.Server) {
 
 	// WebSocket operations (optional)
 	s.registerWSTools(server)
+
+	// Webview/browser automation operations
+	s.registerWebviewTools(server)
 }
 
 // Tool input/output types for MCP file operations.
