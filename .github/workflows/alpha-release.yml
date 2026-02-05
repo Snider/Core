@@ -69,6 +69,11 @@ jobs:
             tar czf "./bin/${ARCHIVE_PREFIX}.tar.gz" -C ./bin "${BINARY}"
           fi
 
+          # Create zip for Scoop (Windows)
+          if [ "$GOOS" = "windows" ]; then
+            cd ./bin && zip "${ARCHIVE_PREFIX}.zip" "${BINARY}" && cd ..
+          fi
+
           # Rename raw binary to platform-specific name for release
           mv "./bin/${BINARY}" "./bin/${ARCHIVE_PREFIX}${EXT}"
 
@@ -78,8 +83,120 @@ jobs:
           name: core-${{ matrix.goos }}-${{ matrix.goarch }}
           path: ./bin/core-*
 
+  build-ide:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+    runs-on: ${{ matrix.os }}
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+    defaults:
+      run:
+        working-directory: internal/core-ide
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: host-uk/build/actions/setup/go@v4.0.0
+        with:
+          go-version: "1.25"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Install frontend dependencies
+        working-directory: internal/core-ide/frontend
+        run: npm ci
+
+      - name: Generate bindings
+        run: wails3 generate bindings -f '-tags production' -clean=false -ts -i
+
+      - name: Build frontend
+        working-directory: internal/core-ide/frontend
+        run: npm run build
+
+      - name: Install Linux dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Build IDE
+        shell: bash
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+          BINARY="core-ide${EXT}"
+          ARCHIVE_PREFIX="core-ide-${GOOS}-${GOARCH}"
+
+          BUILD_FLAGS="-tags production -trimpath -buildvcs=false"
+
+          if [ "$GOOS" = "windows" ]; then
+            # Windows: no CGO, use windowsgui linker flag
+            export CGO_ENABLED=0
+            LDFLAGS="-w -s -H windowsgui"
+
+            # Generate Windows syso resource
+            cd build
+            wails3 generate syso -arch ${GOARCH} -icon windows/icon.ico -manifest windows/wails.exe.manifest -info windows/info.json -out ../wails_windows_${GOARCH}.syso
+            cd ..
+          elif [ "$GOOS" = "darwin" ]; then
+            export CGO_ENABLED=1
+            export CGO_CFLAGS="-mmacosx-version-min=10.15"
+            export CGO_LDFLAGS="-mmacosx-version-min=10.15"
+            export MACOSX_DEPLOYMENT_TARGET="10.15"
+            LDFLAGS="-w -s"
+          else
+            export CGO_ENABLED=1
+            LDFLAGS="-w -s"
+          fi
+
+          go build ${BUILD_FLAGS} -ldflags="${LDFLAGS}" -o "./bin/${BINARY}"
+
+          # Clean up syso files
+          rm -f *.syso
+
+          # Package
+          if [ "$GOOS" = "darwin" ]; then
+            # Create .app bundle
+            mkdir -p "./bin/Core IDE.app/Contents/"{MacOS,Resources}
+            cp build/darwin/icons.icns "./bin/Core IDE.app/Contents/Resources/"
+            cp "./bin/${BINARY}" "./bin/Core IDE.app/Contents/MacOS/"
+            cp build/darwin/Info.plist "./bin/Core IDE.app/Contents/"
+            codesign --force --deep --sign - "./bin/Core IDE.app"
+            tar czf "./bin/${ARCHIVE_PREFIX}.tar.gz" -C ./bin "Core IDE.app"
+          elif [ "$GOOS" = "windows" ]; then
+            cd ./bin && zip "${ARCHIVE_PREFIX}.zip" "${BINARY}" && cd ..
+          else
+            tar czf "./bin/${ARCHIVE_PREFIX}.tar.gz" -C ./bin "${BINARY}"
+          fi
+
+          # Rename raw binary
+          mv "./bin/${BINARY}" "./bin/${ARCHIVE_PREFIX}${EXT}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-ide-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: internal/core-ide/bin/core-ide-*
+
   release:
-    needs: build
+    needs: [build, build-ide]
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -129,6 +246,10 @@ jobs:
           \`\`\`bash
           # Homebrew (macOS/Linux)
           brew install host-uk/tap/core
+
+          # Scoop (Windows)
+          scoop bucket add host-uk https://github.com/host-uk/scoop-bucket
+          scoop install core
 
           # Direct download (example: Linux amd64)
           curl -fsSL https://github.com/host-uk/core/releases/download/$VERSION/core-linux-amd64 -o core
@@ -217,10 +338,163 @@ jobs:
           # Remove leading whitespace from heredoc
           sed -i 's/^          //' /tmp/tap/Formula/core.rb
 
+          # Read IDE checksums (may not exist if build-ide failed)
+          IDE_DARWIN_ARM64=$(cat dist/core-ide-darwin-arm64.tar.gz.sha256 2>/dev/null || echo "")
+          IDE_LINUX_AMD64=$(cat dist/core-ide-linux-amd64.tar.gz.sha256 2>/dev/null || echo "")
+
+          # Write core-ide Formula (Linux binary)
+          if [ -n "${IDE_LINUX_AMD64}" ]; then
+            cat > /tmp/tap/Formula/core-ide.rb << FORMULA
+            # typed: false
+            # frozen_string_literal: true
+
+            class CoreIde < Formula
+              desc "Host UK desktop development environment"
+              homepage "https://github.com/host-uk/core"
+              version "${FORMULA_VERSION}"
+              license "EUPL-1.2"
+
+              on_linux do
+                url "https://github.com/host-uk/core/releases/download/${VERSION}/core-ide-linux-amd64.tar.gz"
+                sha256 "${IDE_LINUX_AMD64}"
+              end
+
+              def install
+                bin.install "core-ide"
+              end
+            end
+          FORMULA
+            sed -i 's/^            //' /tmp/tap/Formula/core-ide.rb
+          fi
+
+          # Write core-ide Cask (macOS .app bundle)
+          if [ -n "${IDE_DARWIN_ARM64}" ]; then
+            mkdir -p /tmp/tap/Casks
+            cat > /tmp/tap/Casks/core-ide.rb << CASK
+            cask "core-ide" do
+              version "${FORMULA_VERSION}"
+              sha256 "${IDE_DARWIN_ARM64}"
+
+              url "https://github.com/host-uk/core/releases/download/${VERSION}/core-ide-darwin-arm64.tar.gz"
+              name "Core IDE"
+              desc "Host UK desktop development environment"
+              homepage "https://github.com/host-uk/core"
+
+              app "Core IDE.app"
+            end
+          CASK
+            sed -i 's/^            //' /tmp/tap/Casks/core-ide.rb
+          fi
+
           cd /tmp/tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git diff --cached --quiet && echo "No changes to tap" && exit 0
           git commit -m "Update core to ${FORMULA_VERSION}"
+          git push
+
+  update-scoop:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          for f in *.zip; do
+            [ -f "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+          echo "=== Checksums ==="
+          cat *.sha256 2>/dev/null || echo "No zip checksums"
+
+      - name: Update Scoop manifests
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          # Strip leading 'v' for manifest version
+          MANIFEST_VERSION="${VERSION#v}"
+
+          # Read checksums
+          WIN_AMD64=$(cat dist/core-windows-amd64.zip.sha256 2>/dev/null || echo "")
+          IDE_WIN_AMD64=$(cat dist/core-ide-windows-amd64.zip.sha256 2>/dev/null || echo "")
+
+          # Clone scoop bucket
+          gh repo clone host-uk/scoop-bucket /tmp/scoop -- --depth=1
+          cd /tmp/scoop
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/host-uk/scoop-bucket.git"
+
+          # Write core.json manifest
+          cat > core.json << 'MANIFEST'
+          {
+              "version": "VERSION_PLACEHOLDER",
+              "description": "Host UK development CLI",
+              "homepage": "https://github.com/host-uk/core",
+              "license": "EUPL-1.2",
+              "architecture": {
+                  "64bit": {
+                      "url": "URL_PLACEHOLDER",
+                      "hash": "HASH_PLACEHOLDER",
+                      "bin": "core.exe"
+                  }
+              },
+              "checkver": "github",
+              "autoupdate": {
+                  "architecture": {
+                      "64bit": {
+                          "url": "https://github.com/host-uk/core/releases/download/v$version/core-windows-amd64.zip"
+                      }
+                  }
+              }
+          }
+          MANIFEST
+
+          sed -i "s|VERSION_PLACEHOLDER|${MANIFEST_VERSION}|g" core.json
+          sed -i "s|URL_PLACEHOLDER|https://github.com/host-uk/core/releases/download/${VERSION}/core-windows-amd64.zip|g" core.json
+          sed -i "s|HASH_PLACEHOLDER|${WIN_AMD64}|g" core.json
+          sed -i 's/^          //' core.json
+
+          # Write core-ide.json manifest
+          if [ -n "${IDE_WIN_AMD64}" ]; then
+            cat > core-ide.json << 'MANIFEST'
+            {
+                "version": "VERSION_PLACEHOLDER",
+                "description": "Host UK desktop development environment",
+                "homepage": "https://github.com/host-uk/core",
+                "license": "EUPL-1.2",
+                "architecture": {
+                    "64bit": {
+                        "url": "URL_PLACEHOLDER",
+                        "hash": "HASH_PLACEHOLDER",
+                        "bin": "core-ide.exe"
+                    }
+                },
+                "checkver": "github",
+                "autoupdate": {
+                    "architecture": {
+                        "64bit": {
+                            "url": "https://github.com/host-uk/core/releases/download/v$version/core-ide-windows-amd64.zip"
+                        }
+                    }
+                }
+            }
+          MANIFEST
+            sed -i "s|VERSION_PLACEHOLDER|${MANIFEST_VERSION}|g" core-ide.json
+            sed -i "s|URL_PLACEHOLDER|https://github.com/host-uk/core/releases/download/${VERSION}/core-ide-windows-amd64.zip|g" core-ide.json
+            sed -i "s|HASH_PLACEHOLDER|${IDE_WIN_AMD64}|g" core-ide.json
+            sed -i 's/^            //' core-ide.json
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet && echo "No changes to scoop bucket" && exit 0
+          git commit -m "Update core to ${MANIFEST_VERSION}"
           git push

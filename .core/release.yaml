@@ -27,6 +27,9 @@ publishers:
   - type: homebrew
     tap: host-uk/homebrew-tap
     formula: core
+  - type: scoop
+    bucket: host-uk/scoop-bucket
+    manifest: core
 
 changelog:
   include:
