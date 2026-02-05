@@ -61,6 +61,19 @@ github.com/host-uk/core/pkg/foo.go:1.2,3.4 5 notanumber
 	assert.NoError(t, err)
 	assert.Equal(t, 0.0, pct)
 
+	// Test malformed file - missing fields
+	contentMalformed2 := `mode: set
+github.com/host-uk/core/pkg/foo.go:1.2,3.4 5
+`
+	tmpfileMalformed2, _ := os.CreateTemp("", "test-coverage-malformed2-*.out")
+	defer os.Remove(tmpfileMalformed2.Name())
+	tmpfileMalformed2.Write([]byte(contentMalformed2))
+	tmpfileMalformed2.Close()
+
+	pct, err = calculateBlockCoverage(tmpfileMalformed2.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 0.0, pct)
+
 	// Test completely empty file
 	tmpfileEmpty2, _ := os.CreateTemp("", "test-coverage-empty2-*.out")
 	defer os.Remove(tmpfileEmpty2.Name())
@@ -102,6 +115,102 @@ func TestAddGoQACommand(t *testing.T) {
 	assert.True(t, cmd.HasSubCommands())
 	sub := cmd.Commands()[0]
 	assert.Equal(t, "qa", sub.Name())
+}
+
+func TestDetermineChecks(t *testing.T) {
+	// Default checks
+	qaOnly = ""
+	qaSkip = ""
+	qaRace = false
+	qaBench = false
+	checks := determineChecks()
+	assert.Contains(t, checks, "fmt")
+	assert.Contains(t, checks, "test")
+
+	// Only
+	qaOnly = "fmt,lint"
+	checks = determineChecks()
+	assert.Equal(t, []string{"fmt", "lint"}, checks)
+
+	// Skip
+	qaOnly = ""
+	qaSkip = "fmt,lint"
+	checks = determineChecks()
+	assert.NotContains(t, checks, "fmt")
+	assert.NotContains(t, checks, "lint")
+	assert.Contains(t, checks, "test")
+
+	// Race
+	qaSkip = ""
+	qaRace = true
+	checks = determineChecks()
+	assert.Contains(t, checks, "race")
+	assert.NotContains(t, checks, "test")
+
+	// Reset
+	qaRace = false
+}
+
+func TestBuildCheck(t *testing.T) {
+	qaFix = false
+	c := buildCheck("fmt")
+	assert.Equal(t, "format", c.Name)
+	assert.Equal(t, []string{"-l", "."}, c.Args)
+
+	qaFix = true
+	c = buildCheck("fmt")
+	assert.Equal(t, []string{"-w", "."}, c.Args)
+
+	c = buildCheck("vet")
+	assert.Equal(t, "vet", c.Name)
+
+	c = buildCheck("lint")
+	assert.Equal(t, "lint", c.Name)
+
+	c = buildCheck("test")
+	assert.Equal(t, "test", c.Name)
+
+	c = buildCheck("race")
+	assert.Equal(t, "race", c.Name)
+
+	c = buildCheck("bench")
+	assert.Equal(t, "bench", c.Name)
+
+	c = buildCheck("vuln")
+	assert.Equal(t, "vuln", c.Name)
+
+	c = buildCheck("sec")
+	assert.Equal(t, "sec", c.Name)
+
+	c = buildCheck("fuzz")
+	assert.Equal(t, "fuzz", c.Name)
+
+	c = buildCheck("docblock")
+	assert.Equal(t, "docblock", c.Name)
+
+	c = buildCheck("unknown")
+	assert.Equal(t, "", c.Name)
+}
+
+func TestBuildChecks(t *testing.T) {
+	checks := buildChecks([]string{"fmt", "vet", "unknown"})
+	assert.Equal(t, 2, len(checks))
+	assert.Equal(t, "format", checks[0].Name)
+	assert.Equal(t, "vet", checks[1].Name)
+}
+
+func TestFixHintFor(t *testing.T) {
+	assert.Contains(t, fixHintFor("format", ""), "core go qa fmt --fix")
+	assert.Contains(t, fixHintFor("vet", ""), "go vet")
+	assert.Contains(t, fixHintFor("lint", ""), "core go qa lint --fix")
+	assert.Contains(t, fixHintFor("test", "--- FAIL: TestFoo"), "TestFoo")
+	assert.Contains(t, fixHintFor("race", ""), "Data race")
+	assert.Contains(t, fixHintFor("bench", ""), "Benchmark regression")
+	assert.Contains(t, fixHintFor("vuln", ""), "govulncheck")
+	assert.Contains(t, fixHintFor("sec", ""), "gosec")
+	assert.Contains(t, fixHintFor("fuzz", ""), "crashing input")
+	assert.Contains(t, fixHintFor("docblock", ""), "doc comments")
+	assert.Equal(t, "", fixHintFor("unknown", ""))
 }
 
 func TestRunGoQA_NoGoMod(t *testing.T) {
