@@ -211,6 +211,11 @@ func (c *Core) PERFORM(t Task) (any, bool, error) {
 func (c *Core) PerformAsync(t Task) string {
 	taskID := fmt.Sprintf("task-%d", c.taskIDCounter.Add(1))
 
+	// If the task supports it, inject the ID
+	if tid, ok := t.(TaskWithID); ok {
+		tid.SetTaskID(taskID)
+	}
+
 	// Broadcast task started
 	_ = c.ACTION(ActionTaskStarted{
 		TaskID: taskID,
@@ -233,6 +238,16 @@ func (c *Core) PerformAsync(t Task) string {
 	}()
 
 	return taskID
+}
+
+// Progress broadcasts a progress update for a background task.
+func (c *Core) Progress(taskID string, progress float64, message string, t Task) {
+	_ = c.ACTION(ActionTaskProgress{
+		TaskID:   taskID,
+		Task:     t,
+		Progress: progress,
+		Message:  message,
+	})
 }
 
 // RegisterQuery adds a query handler to the Core.

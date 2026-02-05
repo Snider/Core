@@ -23,7 +23,12 @@ type TaskPrompt struct {
 	Prompt       string
 	WorkDir      string
 	AllowedTools []string
+
+	taskID string
 }
+
+func (t *TaskPrompt) SetTaskID(id string) { t.taskID = id }
+func (t *TaskPrompt) GetTaskID() string   { return t.taskID }
 
 // ServiceOptions for configuring the AI service.
 type ServiceOptions struct {
@@ -90,6 +95,10 @@ func (s *Service) doCommit(task TaskCommit) error {
 }
 
 func (s *Service) doPrompt(task TaskPrompt) error {
+	if task.taskID != "" {
+		s.Core().Progress(task.taskID, 0.1, "Starting Claude...", &task)
+	}
+
 	opts := s.Opts()
 	tools := opts.DefaultTools
 	if len(tools) == 0 {
@@ -108,5 +117,19 @@ func (s *Service) doPrompt(task TaskPrompt) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
-	return cmd.Run()
+	if task.taskID != "" {
+		s.Core().Progress(task.taskID, 0.5, "Running Claude prompt...", &task)
+	}
+
+	err := cmd.Run()
+
+	if task.taskID != "" {
+		if err != nil {
+			s.Core().Progress(task.taskID, 1.0, "Failed: "+err.Error(), &task)
+		} else {
+			s.Core().Progress(task.taskID, 1.0, "Completed", &task)
+		}
+	}
+
+	return err
 }

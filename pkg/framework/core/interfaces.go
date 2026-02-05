@@ -53,6 +53,14 @@ type Query interface{}
 // Used with PERFORM (first responder executes).
 type Task interface{}
 
+// TaskWithID is an optional interface for tasks that need to know their assigned ID.
+// This is useful for tasks that want to report progress back to the frontend.
+type TaskWithID interface {
+	Task
+	SetTaskID(id string)
+	GetTaskID() string
+}
+
 // QueryHandler handles Query requests. Returns (result, handled, error).
 // If handled is false, the query will be passed to the next handler.
 type QueryHandler func(*Core, Query) (any, bool, error)
