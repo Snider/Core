@@ -21,6 +21,8 @@ func AddWorkspaceCommands(root *cobra.Command) {
 		RunE:  runWorkspaceActive,
 	})
 
+	addTaskCommands(wsCmd)
+
 	root.AddCommand(wsCmd)
 }
 

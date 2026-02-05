@@ -35,4 +35,5 @@ func AddPkgCommands(root *cobra.Command) {
 	addPkgListCommand(pkgCmd)
 	addPkgUpdateCommand(pkgCmd)
 	addPkgOutdatedCommand(pkgCmd)
+	addPkgRemoveCommand(pkgCmd)
 }
