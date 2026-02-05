@@ -298,13 +298,13 @@ func (c *Core) Display() (Display, error) {
 
 // Workspace returns the registered Workspace service.
 func (c *Core) Workspace() Workspace {
-	w := MustServiceFor[Workspace](c, "workspace")
+	w, _ := MustServiceFor[Workspace](c, "workspace")
 	return w
 }
 
 // Crypt returns the registered Crypt service.
 func (c *Core) Crypt() Crypt {
-	cr := MustServiceFor[Crypt](c, "crypt")
+	cr, _ := MustServiceFor[Crypt](c, "crypt")
 	return cr
 }
 
