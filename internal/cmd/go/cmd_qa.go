@@ -547,7 +547,16 @@ func runCheckCapture(ctx context.Context, dir string, check QACheck) (string, er
 }
 
 func runCoverage(ctx context.Context, dir string) (float64, float64, error) {
-	args := []string{"test", "-cover", "-covermode=atomic", "-coverprofile=/tmp/coverage.out"}
+	// Create temp file for coverage data
+	covFile, err := os.CreateTemp("", "coverage-*.out")
+	if err != nil {
+		return 0, 0, err
+	}
+	covPath := covFile.Name()
+	_ = covFile.Close()
+	defer os.Remove(covPath)
+
+	args := []string{"test", "-cover", "-covermode=atomic", "-coverprofile=" + covPath}
 	if qaShort {
 		args = append(args, "-short")
 	}
@@ -565,7 +574,7 @@ func runCoverage(ctx context.Context, dir string) (float64, float64, error) {
 	}
 
 	// Parse statement coverage
-	coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func=/tmp/coverage.out")
+	coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func=" + covPath)
 	output, err := coverCmd.Output()
 	if err != nil {
 		return 0, 0, err
@@ -585,7 +594,7 @@ func runCoverage(ctx context.Context, dir string) (float64, float64, error) {
 	}
 
 	// Parse branch coverage
-	branchPct, err := calculateBlockCoverage("/tmp/coverage.out")
+	branchPct, err := calculateBlockCoverage(covPath)
 	if err != nil {
 		return statementPct, 0, err
 	}

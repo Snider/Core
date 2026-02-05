@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,10 +54,9 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 
 	args := []string{"test"}
 
-	args = append(args, "-cover", "-covermode=atomic")
-
 	var covPath string
 	if coverage {
+		args = append(args, "-cover", "-covermode=atomic")
 		covFile, err := os.CreateTemp("", "coverage-*.out")
 		if err == nil {
 			covPath = covFile.Name()
@@ -132,8 +132,12 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	if cov > 0 {
 		cli.Print("\n  %s %s\n", cli.KeyStyle.Render(i18n.Label("statements")), formatCoverage(cov))
 		if covPath != "" {
-			branchCov, _ := calculateBlockCoverage(covPath)
-			cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
+			branchCov, err := calculateBlockCoverage(covPath)
+			if err != nil {
+				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), cli.ErrorStyle.Render("unable to calculate"))
+			} else {
+				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
+			}
 		}
 	}
 
@@ -213,8 +217,13 @@ func addGoCovCommand(parent *cli.Command) {
 					_ = os.Remove(covPath)
 				} else {
 					// Copy to output destination before removing
-					input, _ := os.ReadFile(covPath)
-					_ = os.WriteFile(covOutput, input, 0644)
+					src, _ := os.Open(covPath)
+					dst, _ := os.Create(covOutput)
+					if src != nil && dst != nil {
+						_, _ = io.Copy(dst, src)
+						_ = src.Close()
+						_ = dst.Close()
+					}
 					_ = os.Remove(covPath)
 				}
 			}()
@@ -331,8 +340,11 @@ func addGoCovCommand(parent *cli.Command) {
 	parent.AddCommand(covCmd)
 }
 
-// calculateBlockCoverage parses a Go coverage profile and returns the percentage of blocks covered.
-// This is used as a proxy for branch coverage.
+// calculateBlockCoverage parses a Go coverage profile and returns the percentage of basic
+// blocks that have a non-zero execution count. Go's coverage profile contains one line per
+// basic block, where the last field is the execution count, not explicit branch coverage.
+// The resulting block coverage is used here only as a proxy for branch coverage; computing
+// true branch coverage would require more detailed control-flow analysis.
 func calculateBlockCoverage(path string) (float64, error) {
 	file, err := os.Open(path)
 	if err != nil {
