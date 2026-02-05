@@ -24,6 +24,8 @@ const (
 	ConfigKeyPass = "unifi.pass"
 	// ConfigKeyAPIKey is the config key for the UniFi API key.
 	ConfigKeyAPIKey = "unifi.apikey"
+	// ConfigKeyInsecure is the config key for allowing insecure TLS connections.
+	ConfigKeyInsecure = "unifi.insecure"
 
 	// DefaultURL is the default UniFi controller URL.
 	DefaultURL = "https://10.69.1.1"
@@ -32,10 +34,10 @@ const (
 // NewFromConfig creates a UniFi client using the standard config resolution:
 //
 //  1. ~/.core/config.yaml keys: unifi.url, unifi.user, unifi.pass, unifi.apikey
-//  2. UNIFI_URL + UNIFI_USER + UNIFI_PASS + UNIFI_APIKEY environment variables (override config file)
+//  2. UNIFI_URL + UNIFI_USER + UNIFI_PASS + UNIFI_APIKEY + UNIFI_INSECURE environment variables (override config file)
 //  3. Provided flag overrides (highest priority; pass empty to skip)
-func NewFromConfig(flagURL, flagUser, flagPass, flagAPIKey string) (*Client, error) {
-	url, user, pass, apikey, err := ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey)
+func NewFromConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure *bool) (*Client, error) {
+	url, user, pass, apikey, insecure, err := ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey, flagInsecure)
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +46,12 @@ func NewFromConfig(flagURL, flagUser, flagPass, flagAPIKey string) (*Client, err
 		return nil, log.E("unifi.NewFromConfig", "no credentials configured (set UNIFI_USER/UNIFI_PASS or UNIFI_APIKEY, or run: core unifi config)", nil)
 	}
 
-	return New(url, user, pass, apikey)
+	return New(url, user, pass, apikey, insecure)
 }
 
 // ResolveConfig resolves the UniFi URL and credentials from all config sources.
 // Flag values take highest priority, then env vars, then config file.
-func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string) (url, user, pass, apikey string, err error) {
+func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure *bool) (url, user, pass, apikey string, insecure bool, err error) {
 	// Start with config file values
 	cfg, cfgErr := config.New()
 	if cfgErr == nil {
@@ -57,6 +59,7 @@ func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string) (url, user, p
 		_ = cfg.Get(ConfigKeyUser, &user)
 		_ = cfg.Get(ConfigKeyPass, &pass)
 		_ = cfg.Get(ConfigKeyAPIKey, &apikey)
+		_ = cfg.Get(ConfigKeyInsecure, &insecure)
 	}
 
 	// Overlay environment variables
@@ -72,6 +75,9 @@ func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string) (url, user, p
 	if envAPIKey := os.Getenv("UNIFI_APIKEY"); envAPIKey != "" {
 		apikey = envAPIKey
 	}
+	if envInsecure := os.Getenv("UNIFI_INSECURE"); envInsecure != "" {
+		insecure = envInsecure == "true" || envInsecure == "1"
+	}
 
 	// Overlay flag values (highest priority)
 	if flagURL != "" {
@@ -86,17 +92,20 @@ func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string) (url, user, p
 	if flagAPIKey != "" {
 		apikey = flagAPIKey
 	}
+	if flagInsecure != nil {
+		insecure = *flagInsecure
+	}
 
 	// Default URL if nothing configured
 	if url == "" {
 		url = DefaultURL
 	}
 
-	return url, user, pass, apikey, nil
+	return url, user, pass, apikey, insecure, nil
 }
 
 // SaveConfig persists the UniFi URL and/or credentials to the config file.
-func SaveConfig(url, user, pass, apikey string) error {
+func SaveConfig(url, user, pass, apikey string, insecure *bool) error {
 	cfg, err := config.New()
 	if err != nil {
 		return log.E("unifi.SaveConfig", "failed to load config", err)
@@ -123,6 +132,12 @@ func SaveConfig(url, user, pass, apikey string) error {
 	if apikey != "" {
 		if err := cfg.Set(ConfigKeyAPIKey, apikey); err != nil {
 			return log.E("unifi.SaveConfig", "failed to save API key", err)
+		}
+	}
+
+	if insecure != nil {
+		if err := cfg.Set(ConfigKeyInsecure, *insecure); err != nil {
+			return log.E("unifi.SaveConfig", "failed to save insecure flag", err)
 		}
 	}
 
