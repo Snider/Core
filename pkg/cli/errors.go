@@ -123,7 +123,7 @@ func Fatal(err error) {
 // Deprecated: return an error from the command instead.
 func Fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	LogError("Fatal error", "msg", msg, "format", format)
+	LogError("Fatal error", "msg", msg)
 	fmt.Fprintln(os.Stderr, ErrorStyle.Render(Glyph(":cross:")+" "+msg))
 	os.Exit(1)
 }
