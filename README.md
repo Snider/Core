@@ -153,23 +153,37 @@ Service("workspace")     // Get service by name (returns any)
 
 ## Configuration Management
 
-Core uses a decentralized configuration approach based on YAML files. Configuration is split between project-level settings and global user settings.
+Core uses a **centralized configuration service** implemented in `pkg/config`, with YAML-based persistence and layered overrides.
 
-### Configuration Locations
+The `pkg/config` package provides:
+
+- YAML-backed persistence at `~/.core/config.yaml`
+- Dot-notation key access (for example: `cfg.Set("dev.editor", "vim")`, `cfg.GetString("dev.editor")`)
+- Environment variable overlay support (env vars can override persisted values)
+- Thread-safe operations for concurrent reads/writes
+
+Application code should treat `pkg/config` as the **primary configuration mechanism**. Direct reads/writes to YAML files should generally be avoided from application logic in favour of using this centralized service.
+
+### Project and Service Configuration Files
+
+In addition to the centralized configuration service, Core uses several YAML files for project-specific build/CI and service configuration. These live alongside (but are distinct from) the centralized configuration:
 
 - **Project Configuration** (in the `.core/` directory of the project root):
     - `build.yaml`: Build targets, flags, and project metadata.
     - `release.yaml`: Release automation, changelog settings, and publishing targets.
     - `ci.yaml`: CI pipeline configuration.
 - **Global Configuration** (in the `~/.core/` directory):
-    - `config.yaml`: Global framework settings and defaults.
+    - `config.yaml`: Centralized user/framework settings and defaults, managed via `pkg/config`.
     - `agentic.yaml`: Configuration for agentic services (BaseURL, Token, etc.).
-- **Registry Configuration**:
-    - `repos.yaml`: Multi-repo registry definition.
+- **Registry Configuration** (`repos.yaml`, auto-discovered):
+    - Multi-repo registry definition.
+    - Searched in the current directory and its parent directories (walking up).
+    - Then in `~/Code/host-uk/repos.yaml`.
+    - Finally in `~/.config/core/repos.yaml`.
 
 ### Format
 
-All configuration files use YAML format for readability and nested structure support.
+All persisted configuration files described above use **YAML** format for readability and nested structure support.
 
 ### The IPC Bridge Pattern (Chosen Architecture)
 
@@ -253,6 +267,7 @@ type Crypt interface {
 | Package | Notes |
 |---------|-------|
 | `pkg/framework/core` | Service container, DI, thread-safe - solid |
+| `pkg/config` | Layered YAML configuration, XDG paths - solid |
 | `pkg/crypt` | Hashing, checksums, symmetric/asymmetric - solid, well-tested |
 | `pkg/help` | Embedded docs, full-text search - solid |
 | `pkg/i18n` | Multi-language with go-i18n - solid |
@@ -269,9 +284,9 @@ type Crypt interface {
 
 The crypt package provides a comprehensive suite of cryptographic primitives:
 - **Hashing & Checksums**: SHA-256, SHA-512, and CRC32 support.
-- **Symmetric Encryption**: AES-GCM for secure data at rest.
-- **Asymmetric Encryption**: PGP implementation using `github.com/ProtonMail/go-crypto`.
+- **Symmetric Encryption**: AES-GCM and ChaCha20-Poly1305 for secure data at rest.
 - **Key Derivation**: Argon2id for secure password hashing.
+- **Asymmetric Encryption**: PGP implementation in the `pkg/crypt/openpgp` subpackage using `github.com/ProtonMail/go-crypto`.
 
 ### pkg/io - Storage Abstraction
 
