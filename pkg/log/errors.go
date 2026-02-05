@@ -179,8 +179,7 @@ func Root(err error) error {
 func StackTrace(err error) []string {
 	var stack []string
 	for err != nil {
-		var e *Err
-		if As(err, &e) {
+		if e, ok := err.(*Err); ok {
 			if e.Op != "" {
 				stack = append(stack, e.Op)
 			}

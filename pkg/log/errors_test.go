@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -302,4 +303,47 @@ func TestMust_Ugly_Panics(t *testing.T) {
 	// Verify error was logged before panic
 	output := buf.String()
 	assert.True(t, strings.Contains(output, "[ERR]") || len(output) > 0)
+}
+
+func TestStackTrace_Good(t *testing.T) {
+	// Nested operations
+	err := E("op1", "msg1", nil)
+	err = Wrap(err, "op2", "msg2")
+	err = Wrap(err, "op3", "msg3")
+
+	stack := StackTrace(err)
+	assert.Equal(t, []string{"op3", "op2", "op1"}, stack)
+
+	// Format
+	formatted := FormatStackTrace(err)
+	assert.Equal(t, "op3 -> op2 -> op1", formatted)
+}
+
+func TestStackTrace_PlainError(t *testing.T) {
+	err := errors.New("plain error")
+	assert.Empty(t, StackTrace(err))
+	assert.Empty(t, FormatStackTrace(err))
+}
+
+func TestStackTrace_Nil(t *testing.T) {
+	assert.Empty(t, StackTrace(nil))
+	assert.Empty(t, FormatStackTrace(nil))
+}
+
+func TestStackTrace_NoOp(t *testing.T) {
+	err := &Err{Msg: "no op"}
+	assert.Empty(t, StackTrace(err))
+	assert.Empty(t, FormatStackTrace(err))
+}
+
+func TestStackTrace_Mixed(t *testing.T) {
+	err := E("inner", "msg", nil)
+	err = errors.New("middle: " + err.Error()) // Breaks the chain if not handled properly, but Unwrap should work if it's a wrapped error
+	// Wait, errors.New doesn't wrap. fmt.Errorf("%w") does.
+	err = E("inner", "msg", nil)
+	err = fmt.Errorf("wrapper: %w", err)
+	err = Wrap(err, "outer", "msg")
+
+	stack := StackTrace(err)
+	assert.Equal(t, []string{"outer", "inner"}, stack)
 }

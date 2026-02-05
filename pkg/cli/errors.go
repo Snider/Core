@@ -93,7 +93,7 @@ func Fatal(err error) {
 // Fatalf prints a formatted error message, logs it, and exits with code 1.
 func Fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	LogError("Fatal error: "+msg, "format", format)
+	LogError("Fatal error", "msg", msg, "format", format)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
 	os.Exit(1)
 }
@@ -106,7 +106,7 @@ func FatalWrap(err error, msg string) {
 	if err == nil {
 		return
 	}
-	LogError("Fatal error: "+msg, "err", err)
+	LogError("Fatal error", "msg", msg, "err", err)
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
 	os.Exit(1)
@@ -121,7 +121,7 @@ func FatalWrapVerb(err error, verb, subject string) {
 		return
 	}
 	msg := i18n.ActionFailed(verb, subject)
-	LogError("Fatal error: "+msg, "err", err, "verb", verb, "subject", subject)
+	LogError("Fatal error", "msg", msg, "err", err, "verb", verb, "subject", subject)
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
 	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
 	os.Exit(1)

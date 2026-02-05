@@ -132,8 +132,9 @@ func (l *Logger) log(level Level, prefix, msg string, keyvals ...any) {
 	timestamp := styleTimestamp(time.Now().Format("15:04:05"))
 
 	// Automatically extract context from error if present in keyvals
-	for i := 0; i < len(keyvals); i += 2 {
-		if i+1 < len(keyvals) {
+	origLen := len(keyvals)
+	for i := 0; i < origLen; i += 2 {
+		if i+1 < origLen {
 			if err, ok := keyvals[i+1].(error); ok {
 				if op := Op(err); op != "" {
 					// Check if op is already in keyvals
