@@ -5,7 +5,6 @@ import (
 	"context"
 	"io"
 	"net"
-	"os"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -85,7 +84,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	// Run server (blocks until connection closed)
 	// Server.Run calls Connect, then Read loop.
 	if err := server.Run(ctx, transport); err != nil {
-		log.Error("mcp: connection error", "err", err, "remote", conn.RemoteAddr())
+		s.logger.Error("MCP TCP connection error", "err", err, "remote", conn.RemoteAddr().String(), "user", log.Username())
 	}
 }
 
