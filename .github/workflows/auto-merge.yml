@@ -8,3 +8,5 @@ jobs:
   merge:
     uses: host-uk/.github/.github/workflows/auto-merge.yml@dev
     secrets: inherit
+    env:
+      GH_REPO: ${{ github.repository }}
