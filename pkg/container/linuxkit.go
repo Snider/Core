@@ -436,7 +436,7 @@ func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) err
 	// Build SSH command
 	sshArgs := []string{
 		"-p", fmt.Sprintf("%d", sshPort),
-		"-o", "StrictHostKeyChecking=yes",
+		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
 		"root@localhost",

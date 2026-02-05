@@ -167,7 +167,7 @@ func CheckDocblockCoverage(patterns []string) (*DocblockResult, error) {
 		}, parser.ParseComments)
 		if err != nil {
 			// Log parse errors but continue to check other directories
-			cli.Warnf("failed to parse %s: %v", dir, err)
+			fmt.Fprintf(os.Stderr, "warning: failed to parse %s: %v\n", dir, err)
 			continue
 		}
 

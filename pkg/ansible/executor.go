@@ -120,7 +120,7 @@ func (e *Executor) runPlay(ctx context.Context, play *Play) error {
 			if err := e.gatherFacts(ctx, host, play); err != nil {
 				// Non-fatal
 				if e.Verbose > 0 {
-					log.Warn("gather facts failed", "host", host, "err", err)
+					fmt.Fprintf(os.Stderr, "Warning: gather facts failed for %s: %v\n", host, err)
 				}
 			}
 		}

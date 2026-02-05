@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
@@ -46,50 +45,22 @@ func Successf(format string, args ...any) {
 	Success(fmt.Sprintf(format, args...))
 }
 
-// Error prints an error message with cross (red) to stderr and logs it.
+// Error prints an error message with cross (red).
 func Error(msg string) {
-	LogError(msg)
-	fmt.Fprintln(os.Stderr, ErrorStyle.Render(Glyph(":cross:")+" "+msg))
+	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
 }
 
-// Errorf prints a formatted error message to stderr and logs it.
+// Errorf prints a formatted error message.
 func Errorf(format string, args ...any) {
 	Error(fmt.Sprintf(format, args...))
 }
 
-// ErrorWrap prints a wrapped error message to stderr and logs it.
-func ErrorWrap(err error, msg string) {
-	if err == nil {
-		return
-	}
-	Error(fmt.Sprintf("%s: %v", msg, err))
-}
-
-// ErrorWrapVerb prints a wrapped error using i18n grammar to stderr and logs it.
-func ErrorWrapVerb(err error, verb, subject string) {
-	if err == nil {
-		return
-	}
-	msg := i18n.ActionFailed(verb, subject)
-	Error(fmt.Sprintf("%s: %v", msg, err))
-}
-
-// ErrorWrapAction prints a wrapped error using i18n grammar to stderr and logs it.
-func ErrorWrapAction(err error, verb string) {
-	if err == nil {
-		return
-	}
-	msg := i18n.ActionFailed(verb, "")
-	Error(fmt.Sprintf("%s: %v", msg, err))
-}
-
-// Warn prints a warning message with warning symbol (amber) to stderr and logs it.
+// Warn prints a warning message with warning symbol (amber).
 func Warn(msg string) {
-	LogWarn(msg)
-	fmt.Fprintln(os.Stderr, WarningStyle.Render(Glyph(":warn:")+" "+msg))
+	fmt.Println(WarningStyle.Render(Glyph(":warn:") + " " + msg))
 }
 
-// Warnf prints a formatted warning message to stderr and logs it.
+// Warnf prints a formatted warning message.
 func Warnf(format string, args ...any) {
 	Warn(fmt.Sprintf(format, args...))
 }

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/framework"
-	"github.com/host-uk/core/pkg/log"
 )
 
 // Tasks for AI service
@@ -69,16 +68,10 @@ func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, er
 	switch m := t.(type) {
 	case TaskCommit:
 		err := s.doCommit(m)
-		if err != nil {
-			log.Error("agentic: commit task failed", "err", err, "path", m.Path)
-		}
 		return nil, true, err
 
 	case TaskPrompt:
 		err := s.doPrompt(m)
-		if err != nil {
-			log.Error("agentic: prompt task failed", "err", err)
-		}
 		return nil, true, err
 	}
 	return nil, false, nil

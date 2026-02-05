@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -65,7 +64,7 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 	if addr == "" {
 		addr = t.listener.Addr().String()
 	}
-	s.logger.Security("MCP TCP server listening", "addr", addr, "user", log.Username())
+s.logger.Security("MCP TCP server listening", "addr", addr, "user", log.Username())
 
 	for {
 		conn, err := t.listener.Accept()
@@ -74,7 +73,7 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 			case <-ctx.Done():
 				return nil
 			default:
-				s.logger.Error("MCP TCP accept error", "err", err, "user", log.Username())
+s.logger.Error("MCP TCP accept error", "err", err, "user", log.Username())
 				continue
 			}
 		}
@@ -101,7 +100,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	// Run server (blocks until connection closed)
 	// Server.Run calls Connect, then Read loop.
 	if err := server.Run(ctx, transport); err != nil {
-		s.logger.Error("MCP TCP connection error", "err", err, "remote", conn.RemoteAddr().String(), "user", log.Username())
+s.logger.Error("MCP TCP connection error", "err", err, "remote", conn.RemoteAddr().String(), "user", log.Username())
 	}
 }
 

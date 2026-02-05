@@ -285,12 +285,14 @@ func ServiceFor[T any](c *Core, name string) (T, error) {
 	return typed, nil
 }
 
-// MustServiceFor retrieves a typed service or returns an error if not found.
-//
-// Deprecated: use ServiceFor instead. This function does not panic on failure
-// and is retained only for backward compatibility.
-func MustServiceFor[T any](c *Core, name string) (T, error) {
-	return ServiceFor[T](c, name)
+// MustServiceFor retrieves a registered service by name and asserts its type to the given interface T.
+// It panics if the service is not found or cannot be cast to T.
+func MustServiceFor[T any](c *Core, name string) T {
+	svc, err := ServiceFor[T](c, name)
+	if err != nil {
+		panic(err)
+	}
+	return svc
 }
 
 // App returns the global application instance.
@@ -332,23 +334,15 @@ func ClearInstance() {
 }
 
 // Config returns the registered Config service.
-func (c *Core) Config() (Config, error) {
-	return MustServiceFor[Config](c, "config")
+func (c *Core) Config() Config {
+	cfg := MustServiceFor[Config](c, "config")
+	return cfg
 }
 
 // Display returns the registered Display service.
-func (c *Core) Display() (Display, error) {
-	return MustServiceFor[Display](c, "display")
-}
-
-// Workspace returns the registered Workspace service.
-func (c *Core) Workspace() (Workspace, error) {
-	return MustServiceFor[Workspace](c, "workspace")
-}
-
-// Crypt returns the registered Crypt service.
-func (c *Core) Crypt() (Crypt, error) {
-	return MustServiceFor[Crypt](c, "crypt")
+func (c *Core) Display() Display {
+	d := MustServiceFor[Display](c, "display")
+	return d
 }
 
 // Core returns self, implementing the CoreProvider interface.

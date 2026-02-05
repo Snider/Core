@@ -174,37 +174,6 @@ func Root(err error) error {
 	}
 }
 
-// StackTrace returns the logical stack trace (chain of operations) from an error.
-// It returns an empty slice if no operational context is found.
-func StackTrace(err error) []string {
-	var stack []string
-	for err != nil {
-		if e, ok := err.(*Err); ok {
-			if e.Op != "" {
-				stack = append(stack, e.Op)
-			}
-		}
-		err = errors.Unwrap(err)
-	}
-	return stack
-}
-
-// FormatStackTrace returns a pretty-printed logical stack trace.
-func FormatStackTrace(err error) string {
-	stack := StackTrace(err)
-	if len(stack) == 0 {
-		return ""
-	}
-	var res string
-	for i, op := range stack {
-		if i > 0 {
-			res += " -> "
-		}
-		res += op
-	}
-	return res
-}
-
 // --- Combined Log-and-Return Helpers ---
 
 // LogError logs an error at Error level and returns a wrapped error.

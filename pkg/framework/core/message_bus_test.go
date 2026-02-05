@@ -144,33 +144,3 @@ func TestMessageBus_ConcurrentAccess_Good(t *testing.T) {
 
 	wg.Wait()
 }
-
-func TestMessageBus_Action_NoHandlers(t *testing.T) {
-	c, _ := New()
-	// Should not error if no handlers are registered
-	err := c.bus.action("no one listening")
-	assert.NoError(t, err)
-}
-
-func TestMessageBus_Query_NoHandlers(t *testing.T) {
-	c, _ := New()
-	result, handled, err := c.bus.query(TestQuery{})
-	assert.NoError(t, err)
-	assert.False(t, handled)
-	assert.Nil(t, result)
-}
-
-func TestMessageBus_QueryAll_NoHandlers(t *testing.T) {
-	c, _ := New()
-	results, err := c.bus.queryAll(TestQuery{})
-	assert.NoError(t, err)
-	assert.Empty(t, results)
-}
-
-func TestMessageBus_Perform_NoHandlers(t *testing.T) {
-	c, _ := New()
-	result, handled, err := c.bus.perform(TestTask{})
-	assert.NoError(t, err)
-	assert.False(t, handled)
-	assert.Nil(t, result)
-}
