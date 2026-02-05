@@ -23,8 +23,13 @@ contents:
     dst: "/usr/share/icons/hicolor/128x128/apps/core-ide.png"
   - src: "./build/linux/core-ide.desktop"
     dst: "/usr/share/applications/core-ide.desktop"
+  # System-wide service (requires root)
   - src: "./build/linux/core-ide.service"
     dst: "/etc/systemd/system/core-ide.service"
+    type: config
+  # User service template (for per-user deployment)
+  - src: "./build/linux/core-ide.user.service"
+    dst: "/usr/share/core-ide/core-ide.user.service"
     type: config
 
 # Default dependencies for Debian 12/Ubuntu 22.04+ with WebKit 4.1
