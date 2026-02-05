@@ -47,20 +47,20 @@ type Stats struct {
 
 // RepoStats contains statistics for a single repository.
 type RepoStats struct {
-	Name          string    `json:"name"`
-	IssuesFixed   int       `json:"issuesFixed"`
-	PRsSubmitted  int       `json:"prsSubmitted"`
-	PRsMerged     int       `json:"prsMerged"`
-	FirstContrib  time.Time `json:"firstContrib"`
-	LastContrib   time.Time `json:"lastContrib"`
+	Name         string    `json:"name"`
+	IssuesFixed  int       `json:"issuesFixed"`
+	PRsSubmitted int       `json:"prsSubmitted"`
+	PRsMerged    int       `json:"prsMerged"`
+	FirstContrib time.Time `json:"firstContrib"`
+	LastContrib  time.Time `json:"lastContrib"`
 }
 
 // DayStats contains statistics for a single day.
 type DayStats struct {
-	Date           string `json:"date"`
-	IssuesWorked   int    `json:"issuesWorked"`
-	PRsSubmitted   int    `json:"prsSubmitted"`
-	TimeSpent      int    `json:"timeSpentMinutes"`
+	Date         string `json:"date"`
+	IssuesWorked int    `json:"issuesWorked"`
+	PRsSubmitted int    `json:"prsSubmitted"`
+	TimeSpent    int    `json:"timeSpentMinutes"`
 }
 
 // NewStatsService creates a new StatsService.
@@ -234,7 +234,7 @@ func (s *StatsService) GetActivityHistory(days int) []*DayStats {
 func (s *StatsService) ensureRepo(repo string) {
 	if _, ok := s.stats.ReposContributed[repo]; !ok {
 		s.stats.ReposContributed[repo] = &RepoStats{
-			Name:        repo,
+			Name:         repo,
 			FirstContrib: time.Now(),
 			LastContrib:  time.Now(),
 		}

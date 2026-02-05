@@ -140,7 +140,7 @@ func (s *SeederService) runSeedSkill(issue *Issue, workDir string) (*IssueContex
 	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		// If not JSON, treat as plain text summary
 		return &IssueContext{
-			Summary:   stdout.String(),
+			Summary:    stdout.String(),
 			Complexity: "unknown",
 		}, nil
 	}

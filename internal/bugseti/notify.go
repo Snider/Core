@@ -159,7 +159,7 @@ func (n *NotifyService) NotifyWithAction(title, message, actionLabel string) err
 		args := []string{
 			"--app-name=BugSETI",
 			"--urgency=normal",
-			"--action=open="+actionLabel,
+			"--action=open=" + actionLabel,
 			title,
 			message,
 		}

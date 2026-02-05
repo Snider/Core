@@ -12,10 +12,10 @@ import (
 
 // ProcessStartInput contains parameters for starting a new process.
 type ProcessStartInput struct {
-	Command string   `json:"command"`           // The command to run
-	Args    []string `json:"args,omitempty"`    // Command arguments
-	Dir     string   `json:"dir,omitempty"`     // Working directory
-	Env     []string `json:"env,omitempty"`     // Environment variables (KEY=VALUE format)
+	Command string   `json:"command"`        // The command to run
+	Args    []string `json:"args,omitempty"` // Command arguments
+	Dir     string   `json:"dir,omitempty"`  // Working directory
+	Env     []string `json:"env,omitempty"`  // Environment variables (KEY=VALUE format)
 }
 
 // ProcessStartOutput contains the result of starting a process.

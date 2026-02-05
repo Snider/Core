@@ -17,7 +17,7 @@ var webviewInstance *webview.Webview
 
 // WebviewConnectInput contains parameters for connecting to Chrome DevTools.
 type WebviewConnectInput struct {
-	DebugURL string `json:"debug_url"` // Chrome DevTools URL (e.g., http://localhost:9222)
+	DebugURL string `json:"debug_url"`         // Chrome DevTools URL (e.g., http://localhost:9222)
 	Timeout  int    `json:"timeout,omitempty"` // Default timeout in seconds (default: 30)
 }
 
@@ -61,22 +61,22 @@ type WebviewTypeOutput struct {
 
 // WebviewQueryInput contains parameters for querying an element.
 type WebviewQueryInput struct {
-	Selector string `json:"selector"` // CSS selector
+	Selector string `json:"selector"`      // CSS selector
 	All      bool   `json:"all,omitempty"` // If true, return all matching elements
 }
 
 // WebviewQueryOutput contains the result of a query.
 type WebviewQueryOutput struct {
-	Found    bool                  `json:"found"`
-	Count    int                   `json:"count"`
-	Elements []WebviewElementInfo  `json:"elements,omitempty"`
+	Found    bool                 `json:"found"`
+	Count    int                  `json:"count"`
+	Elements []WebviewElementInfo `json:"elements,omitempty"`
 }
 
 // WebviewElementInfo represents information about a DOM element.
 type WebviewElementInfo struct {
-	NodeID      int               `json:"nodeId"`
-	TagName     string            `json:"tagName"`
-	Attributes  map[string]string `json:"attributes,omitempty"`
+	NodeID      int                  `json:"nodeId"`
+	TagName     string               `json:"tagName"`
+	Attributes  map[string]string    `json:"attributes,omitempty"`
 	BoundingBox *webview.BoundingBox `json:"boundingBox,omitempty"`
 }
 

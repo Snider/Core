@@ -305,24 +305,24 @@ type PressKeyAction struct {
 func (a PressKeyAction) Execute(ctx context.Context, wv *Webview) error {
 	// Map common key names to CDP key codes
 	keyMap := map[string]struct {
-		code      string
-		keyCode   int
-		text      string
+		code       string
+		keyCode    int
+		text       string
 		unmodified string
 	}{
-		"Enter":     {"Enter", 13, "\r", "\r"},
-		"Tab":       {"Tab", 9, "", ""},
-		"Escape":    {"Escape", 27, "", ""},
-		"Backspace": {"Backspace", 8, "", ""},
-		"Delete":    {"Delete", 46, "", ""},
-		"ArrowUp":   {"ArrowUp", 38, "", ""},
-		"ArrowDown": {"ArrowDown", 40, "", ""},
-		"ArrowLeft": {"ArrowLeft", 37, "", ""},
+		"Enter":      {"Enter", 13, "\r", "\r"},
+		"Tab":        {"Tab", 9, "", ""},
+		"Escape":     {"Escape", 27, "", ""},
+		"Backspace":  {"Backspace", 8, "", ""},
+		"Delete":     {"Delete", 46, "", ""},
+		"ArrowUp":    {"ArrowUp", 38, "", ""},
+		"ArrowDown":  {"ArrowDown", 40, "", ""},
+		"ArrowLeft":  {"ArrowLeft", 37, "", ""},
 		"ArrowRight": {"ArrowRight", 39, "", ""},
-		"Home":      {"Home", 36, "", ""},
-		"End":       {"End", 35, "", ""},
-		"PageUp":    {"PageUp", 33, "", ""},
-		"PageDown":  {"PageDown", 34, "", ""},
+		"Home":       {"Home", 36, "", ""},
+		"End":        {"End", 35, "", ""},
+		"PageUp":     {"PageUp", 33, "", ""},
+		"PageDown":   {"PageDown", 34, "", ""},
 	}
 
 	keyInfo, ok := keyMap[a.Key]

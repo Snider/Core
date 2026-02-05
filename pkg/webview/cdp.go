@@ -20,9 +20,9 @@ type CDPClient struct {
 	wsURL    string
 
 	// Message tracking
-	msgID    atomic.Int64
-	pending  map[int64]chan *cdpResponse
-	pendMu   sync.Mutex
+	msgID   atomic.Int64
+	pending map[int64]chan *cdpResponse
+	pendMu  sync.Mutex
 
 	// Event handlers
 	handlers map[string][]func(map[string]any)

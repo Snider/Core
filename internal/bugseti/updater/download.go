@@ -26,17 +26,17 @@ type DownloadProgress struct {
 
 // DownloadResult contains the result of a download operation.
 type DownloadResult struct {
-	BinaryPath  string `json:"binaryPath"`
-	Version     string `json:"version"`
-	Checksum    string `json:"checksum"`
-	VerifiedOK  bool   `json:"verifiedOK"`
+	BinaryPath string `json:"binaryPath"`
+	Version    string `json:"version"`
+	Checksum   string `json:"checksum"`
+	VerifiedOK bool   `json:"verifiedOK"`
 }
 
 // Downloader handles downloading and verifying updates.
 type Downloader struct {
-	httpClient   *http.Client
-	stagingDir   string
-	onProgress   func(DownloadProgress)
+	httpClient *http.Client
+	stagingDir string
+	onProgress func(DownloadProgress)
 }
 
 // NewDownloader creates a new update downloader.

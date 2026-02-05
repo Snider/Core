@@ -324,12 +324,12 @@ func findString(s, substr string) int {
 
 // ExceptionInfo represents information about a JavaScript exception.
 type ExceptionInfo struct {
-	Text        string    `json:"text"`
-	LineNumber  int       `json:"lineNumber"`
+	Text         string    `json:"text"`
+	LineNumber   int       `json:"lineNumber"`
 	ColumnNumber int       `json:"columnNumber"`
-	URL         string    `json:"url"`
-	StackTrace  string    `json:"stackTrace"`
-	Timestamp   time.Time `json:"timestamp"`
+	URL          string    `json:"url"`
+	StackTrace   string    `json:"stackTrace"`
+	Timestamp    time.Time `json:"timestamp"`
 }
 
 // ExceptionWatcher watches for JavaScript exceptions.

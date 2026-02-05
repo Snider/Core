@@ -24,21 +24,21 @@ const (
 
 // Issue represents a GitHub issue in the queue.
 type Issue struct {
-	ID        string      `json:"id"`
-	Number    int         `json:"number"`
-	Repo      string      `json:"repo"`
-	Title     string      `json:"title"`
-	Body      string      `json:"body"`
-	URL       string      `json:"url"`
-	Labels    []string    `json:"labels"`
-	Author    string      `json:"author"`
-	CreatedAt time.Time   `json:"createdAt"`
-	Priority  int         `json:"priority"`
-	Status    IssueStatus `json:"status"`
-	ClaimedAt time.Time   `json:"claimedAt,omitempty"`
+	ID        string        `json:"id"`
+	Number    int           `json:"number"`
+	Repo      string        `json:"repo"`
+	Title     string        `json:"title"`
+	Body      string        `json:"body"`
+	URL       string        `json:"url"`
+	Labels    []string      `json:"labels"`
+	Author    string        `json:"author"`
+	CreatedAt time.Time     `json:"createdAt"`
+	Priority  int           `json:"priority"`
+	Status    IssueStatus   `json:"status"`
+	ClaimedAt time.Time     `json:"claimedAt,omitempty"`
 	Context   *IssueContext `json:"context,omitempty"`
-	Comments  []Comment   `json:"comments,omitempty"`
-	index     int         // For heap interface
+	Comments  []Comment     `json:"comments,omitempty"`
+	index     int           // For heap interface
 }
 
 // Comment represents a comment on an issue.
@@ -49,13 +49,13 @@ type Comment struct {
 
 // IssueContext contains AI-prepared context for an issue.
 type IssueContext struct {
-	Summary        string   `json:"summary"`
-	RelevantFiles  []string `json:"relevantFiles"`
-	SuggestedFix   string   `json:"suggestedFix"`
-	RelatedIssues  []string `json:"relatedIssues"`
-	Complexity     string   `json:"complexity"`
-	EstimatedTime  string   `json:"estimatedTime"`
-	PreparedAt     time.Time `json:"preparedAt"`
+	Summary       string    `json:"summary"`
+	RelevantFiles []string  `json:"relevantFiles"`
+	SuggestedFix  string    `json:"suggestedFix"`
+	RelatedIssues []string  `json:"relatedIssues"`
+	Complexity    string    `json:"complexity"`
+	EstimatedTime string    `json:"estimatedTime"`
+	PreparedAt    time.Time `json:"preparedAt"`
 }
 
 // QueueService manages the priority queue of issues.

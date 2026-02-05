@@ -27,20 +27,20 @@ type Config struct {
 	Labels       []string `json:"labels"`
 
 	// Scheduling
-	WorkHours   *WorkHours `json:"workHours,omitempty"`
-	FetchInterval int      `json:"fetchIntervalMinutes"`
+	WorkHours     *WorkHours `json:"workHours,omitempty"`
+	FetchInterval int        `json:"fetchIntervalMinutes"`
 
 	// Notifications
-	NotificationsEnabled bool   `json:"notificationsEnabled"`
-	NotificationSound    bool   `json:"notificationSound"`
+	NotificationsEnabled bool `json:"notificationsEnabled"`
+	NotificationSound    bool `json:"notificationSound"`
 
 	// Workspace
 	WorkspaceDir string `json:"workspaceDir,omitempty"`
 	DataDir      string `json:"dataDir,omitempty"`
 
 	// Onboarding
-	Onboarded     bool      `json:"onboarded"`
-	OnboardedAt   time.Time `json:"onboardedAt,omitempty"`
+	Onboarded   bool      `json:"onboarded"`
+	OnboardedAt time.Time `json:"onboardedAt,omitempty"`
 
 	// UI Preferences
 	Theme         string `json:"theme"`
@@ -51,9 +51,9 @@ type Config struct {
 	AutoSeedContext     bool `json:"autoSeedContext"`
 
 	// Updates
-	UpdateChannel       string `json:"updateChannel"`       // stable, beta, nightly
-	AutoUpdate          bool   `json:"autoUpdate"`          // Automatically install updates
-	UpdateCheckInterval int    `json:"updateCheckInterval"` // Check interval in hours (0 = disabled)
+	UpdateChannel       string    `json:"updateChannel"`       // stable, beta, nightly
+	AutoUpdate          bool      `json:"autoUpdate"`          // Automatically install updates
+	UpdateCheckInterval int       `json:"updateCheckInterval"` // Check interval in hours (0 = disabled)
 	LastUpdateCheck     time.Time `json:"lastUpdateCheck,omitempty"`
 }
 

@@ -30,14 +30,14 @@ const (
 
 // GitHubRelease represents a GitHub release from the API.
 type GitHubRelease struct {
-	TagName     string         `json:"tag_name"`
-	Name        string         `json:"name"`
-	Body        string         `json:"body"`
-	Draft       bool           `json:"draft"`
-	Prerelease  bool           `json:"prerelease"`
-	PublishedAt time.Time      `json:"published_at"`
-	Assets      []GitHubAsset  `json:"assets"`
-	HTMLURL     string         `json:"html_url"`
+	TagName     string        `json:"tag_name"`
+	Name        string        `json:"name"`
+	Body        string        `json:"body"`
+	Draft       bool          `json:"draft"`
+	Prerelease  bool          `json:"prerelease"`
+	PublishedAt time.Time     `json:"published_at"`
+	Assets      []GitHubAsset `json:"assets"`
+	HTMLURL     string        `json:"html_url"`
 }
 
 // GitHubAsset represents a release asset from the GitHub API.
@@ -65,12 +65,12 @@ type ReleaseInfo struct {
 
 // UpdateCheckResult contains the result of an update check.
 type UpdateCheckResult struct {
-	Available      bool        `json:"available"`
-	CurrentVersion string      `json:"currentVersion"`
-	LatestVersion  string      `json:"latestVersion"`
+	Available      bool         `json:"available"`
+	CurrentVersion string       `json:"currentVersion"`
+	LatestVersion  string       `json:"latestVersion"`
 	Release        *ReleaseInfo `json:"release,omitempty"`
-	Error          string      `json:"error,omitempty"`
-	CheckedAt      time.Time   `json:"checkedAt"`
+	Error          string       `json:"error,omitempty"`
+	CheckedAt      time.Time    `json:"checkedAt"`
 }
 
 // Checker checks for available updates.

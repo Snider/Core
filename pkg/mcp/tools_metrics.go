@@ -20,10 +20,10 @@ const (
 
 // MetricsRecordInput contains parameters for recording a metrics event.
 type MetricsRecordInput struct {
-	Type    string         `json:"type"`              // Event type (required)
+	Type    string         `json:"type"`               // Event type (required)
 	AgentID string         `json:"agent_id,omitempty"` // Agent identifier
-	Repo    string         `json:"repo,omitempty"`    // Repository name
-	Data    map[string]any `json:"data,omitempty"`    // Additional event data
+	Repo    string         `json:"repo,omitempty"`     // Repository name
+	Data    map[string]any `json:"data,omitempty"`     // Additional event data
 }
 
 // MetricsRecordOutput contains the result of recording a metrics event.

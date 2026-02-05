@@ -68,12 +68,10 @@ func TestCore_Services_Good(t *testing.T) {
 	err = c.RegisterService("display", &MockDisplayService{})
 	assert.NoError(t, err)
 
-	cfg, err := c.Config()
-	assert.NoError(t, err)
+	cfg := c.Config()
 	assert.NotNil(t, cfg)
 
-	d, err := c.Display()
-	assert.NoError(t, err)
+	d := c.Display()
 	assert.NotNil(t, d)
 }
 
@@ -81,11 +79,15 @@ func TestCore_Services_Ugly(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
 
-	_, err = c.Config()
-	assert.Error(t, err)
+	// Config panics when service not registered
+	assert.Panics(t, func() {
+		c.Config()
+	})
 
-	_, err = c.Display()
-	assert.Error(t, err)
+	// Display panics when service not registered
+	assert.Panics(t, func() {
+		c.Display()
+	})
 }
 
 func TestCore_App_Good(t *testing.T) {
@@ -237,21 +239,26 @@ func TestCore_MustServiceFor_Good(t *testing.T) {
 	assert.NoError(t, err)
 	err = c.RegisterService("test", &MockService{Name: "test"})
 	assert.NoError(t, err)
-	svc, err := MustServiceFor[*MockService](c, "test")
-	assert.NoError(t, err)
+	svc := MustServiceFor[*MockService](c, "test")
 	assert.Equal(t, "test", svc.GetName())
 }
 
 func TestCore_MustServiceFor_Ugly(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
-	_, err = MustServiceFor[*MockService](c, "nonexistent")
-	assert.Error(t, err)
+
+	// MustServiceFor panics on missing service
+	assert.Panics(t, func() {
+		MustServiceFor[*MockService](c, "nonexistent")
+	})
 
 	err = c.RegisterService("test", "not a service")
 	assert.NoError(t, err)
-	_, err = MustServiceFor[*MockService](c, "test")
-	assert.Error(t, err)
+
+	// MustServiceFor panics on type mismatch
+	assert.Panics(t, func() {
+		MustServiceFor[*MockService](c, "test")
+	})
 }
 
 type MockAction struct {

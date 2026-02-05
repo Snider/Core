@@ -36,13 +36,13 @@ func (s *SubmitService) ServiceName() string {
 
 // PRSubmission contains the data for a pull request submission.
 type PRSubmission struct {
-	Issue       *Issue   `json:"issue"`
-	Title       string   `json:"title"`
-	Body        string   `json:"body"`
-	Branch      string   `json:"branch"`
-	CommitMsg   string   `json:"commitMsg"`
-	Files       []string `json:"files"`
-	WorkDir     string   `json:"workDir"`
+	Issue     *Issue   `json:"issue"`
+	Title     string   `json:"title"`
+	Body      string   `json:"body"`
+	Branch    string   `json:"branch"`
+	CommitMsg string   `json:"commitMsg"`
+	Files     []string `json:"files"`
+	WorkDir   string   `json:"workDir"`
 }
 
 // PRResult contains the result of a PR submission.
@@ -357,9 +357,9 @@ func (s *SubmitService) GetPRStatus(repo string, prNumber int) (*PRStatus, error
 	}
 
 	var result struct {
-		State              string `json:"state"`
-		Mergeable          string `json:"mergeable"`
-		StatusCheckRollup  []struct {
+		State             string `json:"state"`
+		Mergeable         string `json:"mergeable"`
+		StatusCheckRollup []struct {
 			State string `json:"state"`
 		} `json:"statusCheckRollup"`
 		Reviews []struct {
