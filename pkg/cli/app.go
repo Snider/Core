@@ -39,14 +39,28 @@ func Main() {
 
 	// Manual flag parsing for daemon mode before Init()
 	// This ensures MCP settings from CLI flags are available to services
-	if len(os.Args) > 1 && os.Args[1] == "daemon" {
-		for i := 2; i < len(os.Args); i++ {
-			arg := os.Args[i]
-			if strings.HasPrefix(arg, "--mcp-transport=") {
-				os.Setenv("CORE_MCP_TRANSPORT", strings.TrimPrefix(arg, "--mcp-transport="))
-			} else if strings.HasPrefix(arg, "--mcp-addr=") {
-				os.Setenv("CORE_MCP_ADDR", strings.TrimPrefix(arg, "--mcp-addr="))
+	// Detect daemon command and parse flags manually before Init()
+	// This ensures MCP settings from CLI flags are available as environment variables
+Loop:
+	for i, arg := range os.Args[1:] {
+		if !strings.HasPrefix(arg, "-") {
+			if arg == "daemon" {
+				for j := i + 2; j < len(os.Args); j++ {
+				f := os.Args[j]
+					if strings.HasPrefix(f, "--mcp-transport=") {
+						os.Setenv("CORE_MCP_TRANSPORT", strings.TrimPrefix(f, "--mcp-transport="))
+					} else if f == "--mcp-transport" && j+1 < len(os.Args) {
+						os.Setenv("CORE_MCP_TRANSPORT", os.Args[j+1])
+						j++
+					} else if strings.HasPrefix(f, "--mcp-addr=") {
+						os.Setenv("CORE_MCP_ADDR", strings.TrimPrefix(f, "--mcp-addr="))
+					} else if f == "--mcp-addr" && j+1 < len(os.Args) {
+						os.Setenv("CORE_MCP_ADDR", os.Args[j+1])
+						j++
+					}
+				}
 			}
+			break Loop
 		}
 	}
 

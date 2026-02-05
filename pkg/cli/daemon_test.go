@@ -19,8 +19,12 @@ func TestDetectMode(t *testing.T) {
 
 	t.Run("daemon_mode_from_args", func(t *testing.T) {
 		oldArgs := os.Args
-		os.Args = []string{"core", "daemon"}
 		defer func() { os.Args = oldArgs }()
+
+		os.Args = []string{"core", "daemon"}
+		assert.Equal(t, ModeDaemon, DetectMode())
+
+		os.Args = []string{"core", "--debug", "daemon"}
 		assert.Equal(t, ModeDaemon, DetectMode())
 	})
 

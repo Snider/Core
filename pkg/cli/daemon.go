@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"strings"
 	"syscall"
 	"time"
 
@@ -50,8 +51,14 @@ func DetectMode() Mode {
 		return ModeDaemon
 	}
 	// Check if 'daemon' command is being run
-	if len(os.Args) > 1 && os.Args[1] == "daemon" {
-		return ModeDaemon
+	for _, arg := range os.Args[1:] {
+		if !strings.HasPrefix(arg, "-") {
+			if arg == "daemon" {
+				return ModeDaemon
+			}
+			// First non-flag argument is not 'daemon'
+			break
+		}
 	}
 	if !IsTTY() {
 		return ModePipe
