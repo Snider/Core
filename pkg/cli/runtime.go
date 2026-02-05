@@ -147,9 +147,10 @@ func Shutdown() {
 // --- Signal Service (internal) ---
 
 type signalService struct {
-	cancel   context.CancelFunc
-	sigChan  chan os.Signal
-	onReload func() error
+	cancel       context.CancelFunc
+	sigChan      chan os.Signal
+	onReload     func() error
+	shutdownOnce sync.Once
 }
 
 // SignalOption configures signal handling.
@@ -209,7 +210,9 @@ func (s *signalService) OnStartup(ctx context.Context) error {
 }
 
 func (s *signalService) OnShutdown(ctx context.Context) error {
-	signal.Stop(s.sigChan)
-	close(s.sigChan)
+	s.shutdownOnce.Do(func() {
+		signal.Stop(s.sigChan)
+		close(s.sigChan)
+	})
 	return nil
 }

@@ -98,6 +98,23 @@ type Display interface {
 	OpenWindow(opts ...WindowOption) error
 }
 
+// Workspace provides access to workspace-related functionality.
+type Workspace interface {
+	CreateWorkspace(identifier, password string) (string, error)
+	SwitchWorkspace(name string) error
+	WorkspaceFileGet(filename string) (string, error)
+	WorkspaceFileSet(filename, content string) error
+}
+
+// Crypt provides access to cryptographic services.
+type Crypt interface {
+	GenerateKey(opts ...Option) (any, error)
+	Encrypt(pub any, data []byte) ([]byte, error)
+	Decrypt(priv any, data []byte) ([]byte, error)
+	Sign(priv any, data []byte) ([]byte, error)
+	Verify(pub any, data, sig []byte) error
+}
+
 // ActionServiceStartup is a message sent when the application's services are starting up.
 // This provides a hook for services to perform initialization tasks.
 type ActionServiceStartup struct{}

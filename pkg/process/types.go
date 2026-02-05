@@ -11,7 +11,7 @@
 //	)
 //
 //	// Get service and run a process
-//	svc := framework.MustServiceFor[*process.Service](core, "process")
+//	svc, _ := framework.MustServiceFor[*process.Service](core, "process")
 //	proc, _ := svc.Start(ctx, "go", "test", "./...")
 //
 // # Listening for Events
