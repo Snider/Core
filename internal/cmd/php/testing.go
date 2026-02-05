@@ -53,7 +53,7 @@ const (
 func DetectTestRunner(dir string) TestRunner {
 	// Check for Pest
 	pestFile := filepath.Join(dir, "tests", "Pest.php")
-	if _, err := os.Stat(pestFile); err == nil {
+	if getMedium().IsFile(pestFile) {
 		return TestRunnerPest
 	}
 
@@ -108,10 +108,11 @@ func RunParallel(ctx context.Context, opts TestOptions) error {
 
 // buildPestCommand builds the command for running Pest tests.
 func buildPestCommand(opts TestOptions) (string, []string) {
+	m := getMedium()
 	// Check for vendor binary first
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "pest")
 	cmdName := "pest"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.IsFile(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -149,10 +150,11 @@ func buildPestCommand(opts TestOptions) (string, []string) {
 
 // buildPHPUnitCommand builds the command for running PHPUnit tests.
 func buildPHPUnitCommand(opts TestOptions) (string, []string) {
+	m := getMedium()
 	// Check for vendor binary first
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "phpunit")
 	cmdName := "phpunit"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.IsFile(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -165,7 +167,7 @@ func buildPHPUnitCommand(opts TestOptions) (string, []string) {
 	if opts.Parallel {
 		// PHPUnit uses paratest for parallel execution
 		paratestBin := filepath.Join(opts.Dir, "vendor", "bin", "paratest")
-		if _, err := os.Stat(paratestBin); err == nil {
+		if m.IsFile(paratestBin) {
 			cmdName = paratestBin
 		}
 	}

@@ -3,7 +3,7 @@ package php
 import (
 	"context"
 	"encoding/json"
-	"io"
+	goio "io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,7 +31,7 @@ type FormatOptions struct {
 	Paths []string
 
 	// Output is the writer for output (defaults to os.Stdout).
-	Output io.Writer
+	Output goio.Writer
 }
 
 // AnalyseOptions configures PHP static analysis.
@@ -55,7 +55,7 @@ type AnalyseOptions struct {
 	SARIF bool
 
 	// Output is the writer for output (defaults to os.Stdout).
-	Output io.Writer
+	Output goio.Writer
 }
 
 // FormatterType represents the detected formatter.
@@ -80,15 +80,17 @@ const (
 
 // DetectFormatter detects which formatter is available in the project.
 func DetectFormatter(dir string) (FormatterType, bool) {
+	m := getMedium()
+
 	// Check for Pint config
 	pintConfig := filepath.Join(dir, "pint.json")
-	if _, err := os.Stat(pintConfig); err == nil {
+	if m.Exists(pintConfig) {
 		return FormatterPint, true
 	}
 
 	// Check for vendor binary
 	pintBin := filepath.Join(dir, "vendor", "bin", "pint")
-	if _, err := os.Stat(pintBin); err == nil {
+	if m.Exists(pintBin) {
 		return FormatterPint, true
 	}
 
@@ -97,34 +99,27 @@ func DetectFormatter(dir string) (FormatterType, bool) {
 
 // DetectAnalyser detects which static analyser is available in the project.
 func DetectAnalyser(dir string) (AnalyserType, bool) {
+	m := getMedium()
+
 	// Check for PHPStan config
 	phpstanConfig := filepath.Join(dir, "phpstan.neon")
 	phpstanDistConfig := filepath.Join(dir, "phpstan.neon.dist")
 
-	hasConfig := false
-	if _, err := os.Stat(phpstanConfig); err == nil {
-		hasConfig = true
-	}
-	if _, err := os.Stat(phpstanDistConfig); err == nil {
-		hasConfig = true
-	}
+	hasConfig := m.Exists(phpstanConfig) || m.Exists(phpstanDistConfig)
 
 	// Check for vendor binary
 	phpstanBin := filepath.Join(dir, "vendor", "bin", "phpstan")
-	hasBin := false
-	if _, err := os.Stat(phpstanBin); err == nil {
-		hasBin = true
-	}
+	hasBin := m.Exists(phpstanBin)
 
 	if hasConfig || hasBin {
 		// Check if it's Larastan (Laravel-specific PHPStan)
 		larastanPath := filepath.Join(dir, "vendor", "larastan", "larastan")
-		if _, err := os.Stat(larastanPath); err == nil {
+		if m.Exists(larastanPath) {
 			return AnalyserLarastan, true
 		}
 		// Also check nunomaduro/larastan
 		larastanPath2 := filepath.Join(dir, "vendor", "nunomaduro", "larastan")
-		if _, err := os.Stat(larastanPath2); err == nil {
+		if m.Exists(larastanPath2) {
 			return AnalyserLarastan, true
 		}
 		return AnalyserPHPStan, true
@@ -207,10 +202,12 @@ func Analyse(ctx context.Context, opts AnalyseOptions) error {
 
 // buildPintCommand builds the command for running Laravel Pint.
 func buildPintCommand(opts FormatOptions) (string, []string) {
+	m := getMedium()
+
 	// Check for vendor binary first
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "pint")
 	cmdName := "pint"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.Exists(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -236,10 +233,12 @@ func buildPintCommand(opts FormatOptions) (string, []string) {
 
 // buildPHPStanCommand builds the command for running PHPStan.
 func buildPHPStanCommand(opts AnalyseOptions) (string, []string) {
+	m := getMedium()
+
 	// Check for vendor binary first
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "phpstan")
 	cmdName := "phpstan"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.Exists(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -279,7 +278,7 @@ type PsalmOptions struct {
 	ShowInfo bool // Show info-level issues
 	JSON     bool // Output in JSON format
 	SARIF    bool // Output in SARIF format for GitHub Security tab
-	Output   io.Writer
+	Output   goio.Writer
 }
 
 // PsalmType represents the detected Psalm configuration.
@@ -293,21 +292,17 @@ const (
 
 // DetectPsalm checks if Psalm is available in the project.
 func DetectPsalm(dir string) (PsalmType, bool) {
+	m := getMedium()
+
 	// Check for psalm.xml config
 	psalmConfig := filepath.Join(dir, "psalm.xml")
 	psalmDistConfig := filepath.Join(dir, "psalm.xml.dist")
 
-	hasConfig := false
-	if _, err := os.Stat(psalmConfig); err == nil {
-		hasConfig = true
-	}
-	if _, err := os.Stat(psalmDistConfig); err == nil {
-		hasConfig = true
-	}
+	hasConfig := m.Exists(psalmConfig) || m.Exists(psalmDistConfig)
 
 	// Check for vendor binary
 	psalmBin := filepath.Join(dir, "vendor", "bin", "psalm")
-	if _, err := os.Stat(psalmBin); err == nil {
+	if m.Exists(psalmBin) {
 		return PsalmStandard, true
 	}
 
@@ -332,10 +327,12 @@ func RunPsalm(ctx context.Context, opts PsalmOptions) error {
 		opts.Output = os.Stdout
 	}
 
+	m := getMedium()
+
 	// Build command
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "psalm")
 	cmdName := "psalm"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.Exists(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -381,7 +378,7 @@ type AuditOptions struct {
 	Dir    string
 	JSON   bool // Output in JSON format
 	Fix    bool // Auto-fix vulnerabilities (npm only)
-	Output io.Writer
+	Output goio.Writer
 }
 
 // AuditResult holds the results of a security audit.
@@ -422,7 +419,7 @@ func RunAudit(ctx context.Context, opts AuditOptions) ([]AuditResult, error) {
 	results = append(results, composerResult)
 
 	// Run npm audit if package.json exists
-	if _, err := os.Stat(filepath.Join(opts.Dir, "package.json")); err == nil {
+	if getMedium().Exists(filepath.Join(opts.Dir, "package.json")) {
 		npmResult := runNpmAudit(ctx, opts)
 		results = append(results, npmResult)
 	}
@@ -533,20 +530,22 @@ type RectorOptions struct {
 	Fix        bool // Apply changes (default is dry-run)
 	Diff       bool // Show detailed diff
 	ClearCache bool // Clear cache before running
-	Output     io.Writer
+	Output     goio.Writer
 }
 
 // DetectRector checks if Rector is available in the project.
 func DetectRector(dir string) bool {
+	m := getMedium()
+
 	// Check for rector.php config
 	rectorConfig := filepath.Join(dir, "rector.php")
-	if _, err := os.Stat(rectorConfig); err == nil {
+	if m.Exists(rectorConfig) {
 		return true
 	}
 
 	// Check for vendor binary
 	rectorBin := filepath.Join(dir, "vendor", "bin", "rector")
-	if _, err := os.Stat(rectorBin); err == nil {
+	if m.Exists(rectorBin) {
 		return true
 	}
 
@@ -567,10 +566,12 @@ func RunRector(ctx context.Context, opts RectorOptions) error {
 		opts.Output = os.Stdout
 	}
 
+	m := getMedium()
+
 	// Build command
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "rector")
 	cmdName := "rector"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.Exists(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -608,22 +609,24 @@ type InfectionOptions struct {
 	Threads       int    // Number of parallel threads
 	Filter        string // Filter files by pattern
 	OnlyCovered   bool   // Only mutate covered code
-	Output        io.Writer
+	Output        goio.Writer
 }
 
 // DetectInfection checks if Infection is available in the project.
 func DetectInfection(dir string) bool {
+	m := getMedium()
+
 	// Check for infection config files
 	configs := []string{"infection.json", "infection.json5", "infection.json.dist"}
 	for _, config := range configs {
-		if _, err := os.Stat(filepath.Join(dir, config)); err == nil {
+		if m.Exists(filepath.Join(dir, config)) {
 			return true
 		}
 	}
 
 	// Check for vendor binary
 	infectionBin := filepath.Join(dir, "vendor", "bin", "infection")
-	if _, err := os.Stat(infectionBin); err == nil {
+	if m.Exists(infectionBin) {
 		return true
 	}
 
@@ -644,10 +647,12 @@ func RunInfection(ctx context.Context, opts InfectionOptions) error {
 		opts.Output = os.Stdout
 	}
 
+	m := getMedium()
+
 	// Build command
 	vendorBin := filepath.Join(opts.Dir, "vendor", "bin", "infection")
 	cmdName := "infection"
-	if _, err := os.Stat(vendorBin); err == nil {
+	if m.Exists(vendorBin) {
 		cmdName = vendorBin
 	}
 
@@ -780,7 +785,7 @@ type SecurityOptions struct {
 	JSON     bool   // Output in JSON format
 	SARIF    bool   // Output in SARIF format
 	URL      string // URL to check HTTP headers (optional)
-	Output   io.Writer
+	Output   goio.Writer
 }
 
 // SecurityResult holds the results of security scanning.
@@ -873,13 +878,14 @@ func RunSecurityChecks(ctx context.Context, opts SecurityOptions) (*SecurityResu
 func runEnvSecurityChecks(dir string) []SecurityCheck {
 	var checks []SecurityCheck
 
+	m := getMedium()
 	envPath := filepath.Join(dir, ".env")
-	envContent, err := os.ReadFile(envPath)
+	envContent, err := m.Read(envPath)
 	if err != nil {
 		return checks
 	}
 
-	envLines := strings.Split(string(envContent), "\n")
+	envLines := strings.Split(envContent, "\n")
 	envMap := make(map[string]string)
 	for _, line := range envLines {
 		line = strings.TrimSpace(line)
@@ -948,12 +954,13 @@ func runEnvSecurityChecks(dir string) []SecurityCheck {
 
 func runFilesystemSecurityChecks(dir string) []SecurityCheck {
 	var checks []SecurityCheck
+	m := getMedium()
 
 	// Check .env not in public
 	publicEnvPaths := []string{"public/.env", "public_html/.env"}
 	for _, path := range publicEnvPaths {
 		fullPath := filepath.Join(dir, path)
-		if _, err := os.Stat(fullPath); err == nil {
+		if m.Exists(fullPath) {
 			checks = append(checks, SecurityCheck{
 				ID:          "env_not_public",
 				Name:        ".env Not Publicly Accessible",
@@ -970,7 +977,7 @@ func runFilesystemSecurityChecks(dir string) []SecurityCheck {
 	publicGitPaths := []string{"public/.git", "public_html/.git"}
 	for _, path := range publicGitPaths {
 		fullPath := filepath.Join(dir, path)
-		if _, err := os.Stat(fullPath); err == nil {
+		if m.Exists(fullPath) {
 			checks = append(checks, SecurityCheck{
 				ID:          "git_not_public",
 				Name:        ".git Not Publicly Accessible",

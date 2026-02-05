@@ -25,14 +25,15 @@ type composerRepository struct {
 
 // readComposerJSON reads and parses composer.json from the given directory.
 func readComposerJSON(dir string) (map[string]json.RawMessage, error) {
+	m := getMedium()
 	composerPath := filepath.Join(dir, "composer.json")
-	data, err := os.ReadFile(composerPath)
+	content, err := m.Read(composerPath)
 	if err != nil {
 		return nil, cli.WrapVerb(err, "read", "composer.json")
 	}
 
 	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
+	if err := json.Unmarshal([]byte(content), &raw); err != nil {
 		return nil, cli.WrapVerb(err, "parse", "composer.json")
 	}
 
@@ -41,6 +42,7 @@ func readComposerJSON(dir string) (map[string]json.RawMessage, error) {
 
 // writeComposerJSON writes the composer.json to the given directory.
 func writeComposerJSON(dir string, raw map[string]json.RawMessage) error {
+	m := getMedium()
 	composerPath := filepath.Join(dir, "composer.json")
 
 	data, err := json.MarshalIndent(raw, "", "    ")
@@ -49,9 +51,9 @@ func writeComposerJSON(dir string, raw map[string]json.RawMessage) error {
 	}
 
 	// Add trailing newline
-	data = append(data, '\n')
+	content := string(data) + "\n"
 
-	if err := os.WriteFile(composerPath, data, 0644); err != nil {
+	if err := m.Write(composerPath, content); err != nil {
 		return cli.WrapVerb(err, "write", "composer.json")
 	}
 
@@ -91,8 +93,9 @@ func setRepositories(raw map[string]json.RawMessage, repos []composerRepository)
 
 // getPackageInfo reads package name and version from a composer.json in the given path.
 func getPackageInfo(packagePath string) (name, version string, err error) {
+	m := getMedium()
 	composerPath := filepath.Join(packagePath, "composer.json")
-	data, err := os.ReadFile(composerPath)
+	content, err := m.Read(composerPath)
 	if err != nil {
 		return "", "", cli.WrapVerb(err, "read", "package composer.json")
 	}
@@ -102,7 +105,7 @@ func getPackageInfo(packagePath string) (name, version string, err error) {
 		Version string `json:"version"`
 	}
 
-	if err := json.Unmarshal(data, &pkg); err != nil {
+	if err := json.Unmarshal([]byte(content), &pkg); err != nil {
 		return "", "", cli.WrapVerb(err, "parse", "package composer.json")
 	}
 

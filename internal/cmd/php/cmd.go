@@ -7,8 +7,25 @@ import (
 	"github.com/host-uk/core/internal/cmd/workspace"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/spf13/cobra"
 )
+
+// DefaultMedium is the default filesystem medium used by the php package.
+// It defaults to io.Local (unsandboxed filesystem access).
+// Use SetMedium to change this for testing or sandboxed operation.
+var DefaultMedium io.Medium = io.Local
+
+// SetMedium sets the default medium for filesystem operations.
+// This is primarily useful for testing with mock mediums.
+func SetMedium(m io.Medium) {
+	DefaultMedium = m
+}
+
+// getMedium returns the default medium for filesystem operations.
+func getMedium() io.Medium {
+	return DefaultMedium
+}
 
 func init() {
 	cli.RegisterCommands(AddPHPCommands)
@@ -89,7 +106,7 @@ func AddPHPCommands(root *cobra.Command) {
 			targetDir := filepath.Join(pkgDir, config.Active)
 
 			// Check if target directory exists
-			if _, err := os.Stat(targetDir); err != nil {
+			if !getMedium().IsDir(targetDir) {
 				cli.Warnf("Active package directory not found: %s", targetDir)
 				return nil
 			}

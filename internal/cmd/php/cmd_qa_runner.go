@@ -2,7 +2,6 @@ package php
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -77,6 +76,7 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		}
 
 	case "fmt":
+		m := getMedium()
 		formatter, found := DetectFormatter(r.dir)
 		if !found {
 			return nil
@@ -84,7 +84,7 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		if formatter == FormatterPint {
 			vendorBin := filepath.Join(r.dir, "vendor", "bin", "pint")
 			cmd := "pint"
-			if _, err := os.Stat(vendorBin); err == nil {
+			if m.IsFile(vendorBin) {
 				cmd = vendorBin
 			}
 			args := []string{}
@@ -102,13 +102,14 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		return nil
 
 	case "stan":
+		m := getMedium()
 		_, found := DetectAnalyser(r.dir)
 		if !found {
 			return nil
 		}
 		vendorBin := filepath.Join(r.dir, "vendor", "bin", "phpstan")
 		cmd := "phpstan"
-		if _, err := os.Stat(vendorBin); err == nil {
+		if m.IsFile(vendorBin) {
 			cmd = vendorBin
 		}
 		return &process.RunSpec{
@@ -120,13 +121,14 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		}
 
 	case "psalm":
+		m := getMedium()
 		_, found := DetectPsalm(r.dir)
 		if !found {
 			return nil
 		}
 		vendorBin := filepath.Join(r.dir, "vendor", "bin", "psalm")
 		cmd := "psalm"
-		if _, err := os.Stat(vendorBin); err == nil {
+		if m.IsFile(vendorBin) {
 			cmd = vendorBin
 		}
 		args := []string{"--no-progress"}
@@ -142,14 +144,15 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		}
 
 	case "test":
+		m := getMedium()
 		// Check for Pest first, fall back to PHPUnit
 		pestBin := filepath.Join(r.dir, "vendor", "bin", "pest")
 		phpunitBin := filepath.Join(r.dir, "vendor", "bin", "phpunit")
 
 		var cmd string
-		if _, err := os.Stat(pestBin); err == nil {
+		if m.IsFile(pestBin) {
 			cmd = pestBin
-		} else if _, err := os.Stat(phpunitBin); err == nil {
+		} else if m.IsFile(phpunitBin) {
 			cmd = phpunitBin
 		} else {
 			return nil
@@ -170,12 +173,13 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		}
 
 	case "rector":
+		m := getMedium()
 		if !DetectRector(r.dir) {
 			return nil
 		}
 		vendorBin := filepath.Join(r.dir, "vendor", "bin", "rector")
 		cmd := "rector"
-		if _, err := os.Stat(vendorBin); err == nil {
+		if m.IsFile(vendorBin) {
 			cmd = vendorBin
 		}
 		args := []string{"process"}
@@ -192,12 +196,13 @@ func (r *QARunner) buildSpec(check string) *process.RunSpec {
 		}
 
 	case "infection":
+		m := getMedium()
 		if !DetectInfection(r.dir) {
 			return nil
 		}
 		vendorBin := filepath.Join(r.dir, "vendor", "bin", "infection")
 		cmd := "infection"
-		if _, err := os.Stat(vendorBin); err == nil {
+		if m.IsFile(vendorBin) {
 			cmd = vendorBin
 		}
 		return &process.RunSpec{

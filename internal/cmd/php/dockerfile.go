@@ -2,7 +2,6 @@ package php
 
 import (
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -50,6 +49,7 @@ func GenerateDockerfile(dir string) (string, error) {
 
 // DetectDockerfileConfig detects configuration from project files.
 func DetectDockerfileConfig(dir string) (*DockerfileConfig, error) {
+	m := getMedium()
 	config := &DockerfileConfig{
 		PHPVersion: "8.3",
 		BaseImage:  "dunglas/frankenphp",
@@ -58,13 +58,13 @@ func DetectDockerfileConfig(dir string) (*DockerfileConfig, error) {
 
 	// Read composer.json
 	composerPath := filepath.Join(dir, "composer.json")
-	composerData, err := os.ReadFile(composerPath)
+	composerContent, err := m.Read(composerPath)
 	if err != nil {
 		return nil, cli.WrapVerb(err, "read", "composer.json")
 	}
 
 	var composer ComposerJSON
-	if err := json.Unmarshal(composerData, &composer); err != nil {
+	if err := json.Unmarshal([]byte(composerContent), &composer); err != nil {
 		return nil, cli.WrapVerb(err, "parse", "composer.json")
 	}
 
@@ -318,13 +318,14 @@ func extractPHPVersion(constraint string) string {
 
 // hasNodeAssets checks if the project has frontend assets.
 func hasNodeAssets(dir string) bool {
+	m := getMedium()
 	packageJSON := filepath.Join(dir, "package.json")
-	if _, err := os.Stat(packageJSON); err != nil {
+	if !m.IsFile(packageJSON) {
 		return false
 	}
 
 	// Check for build script in package.json
-	data, err := os.ReadFile(packageJSON)
+	content, err := m.Read(packageJSON)
 	if err != nil {
 		return false
 	}
@@ -333,7 +334,7 @@ func hasNodeAssets(dir string) bool {
 		Scripts map[string]string `json:"scripts"`
 	}
 
-	if err := json.Unmarshal(data, &pkg); err != nil {
+	if err := json.Unmarshal([]byte(content), &pkg); err != nil {
 		return false
 	}
 

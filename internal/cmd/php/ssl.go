@@ -22,6 +22,7 @@ type SSLOptions struct {
 
 // GetSSLDir returns the SSL directory, creating it if necessary.
 func GetSSLDir(opts SSLOptions) (string, error) {
+	m := getMedium()
 	dir := opts.Dir
 	if dir == "" {
 		home, err := os.UserHomeDir()
@@ -31,7 +32,7 @@ func GetSSLDir(opts SSLOptions) (string, error) {
 		dir = filepath.Join(home, DefaultSSLDir)
 	}
 
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := m.EnsureDir(dir); err != nil {
 		return "", cli.WrapVerb(err, "create", "SSL directory")
 	}
 
@@ -53,16 +54,17 @@ func CertPaths(domain string, opts SSLOptions) (certFile, keyFile string, err er
 
 // CertsExist checks if SSL certificates exist for the given domain.
 func CertsExist(domain string, opts SSLOptions) bool {
+	m := getMedium()
 	certFile, keyFile, err := CertPaths(domain, opts)
 	if err != nil {
 		return false
 	}
 
-	if _, err := os.Stat(certFile); os.IsNotExist(err) {
+	if !m.IsFile(certFile) {
 		return false
 	}
 
-	if _, err := os.Stat(keyFile); os.IsNotExist(err) {
+	if !m.IsFile(keyFile) {
 		return false
 	}
 

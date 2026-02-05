@@ -75,6 +75,7 @@ func LoadCoolifyConfig(dir string) (*CoolifyConfig, error) {
 
 // LoadCoolifyConfigFromFile loads Coolify configuration from a specific .env file.
 func LoadCoolifyConfigFromFile(path string) (*CoolifyConfig, error) {
+	m := getMedium()
 	config := &CoolifyConfig{}
 
 	// First try environment variables
@@ -84,23 +85,18 @@ func LoadCoolifyConfigFromFile(path string) (*CoolifyConfig, error) {
 	config.StagingAppID = os.Getenv("COOLIFY_STAGING_APP_ID")
 
 	// Then try .env file
-	file, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// No .env file, just use env vars
-			return validateCoolifyConfig(config)
-		}
-		return nil, cli.WrapVerb(err, "open", ".env file")
+	if !m.Exists(path) {
+		// No .env file, just use env vars
+		return validateCoolifyConfig(config)
 	}
-	defer func() { _ = file.Close() }()
 
-	content, err := io.ReadAll(file)
+	content, err := m.Read(path)
 	if err != nil {
 		return nil, cli.WrapVerb(err, "read", ".env file")
 	}
 
 	// Parse .env file
-	lines := strings.Split(string(content), "\n")
+	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {

@@ -1,9 +1,7 @@
 package php
 
 import (
-	"bufio"
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -28,15 +26,17 @@ const (
 // IsLaravelProject checks if the given directory is a Laravel project.
 // It looks for the presence of artisan file and laravel in composer.json.
 func IsLaravelProject(dir string) bool {
+	m := getMedium()
+
 	// Check for artisan file
 	artisanPath := filepath.Join(dir, "artisan")
-	if _, err := os.Stat(artisanPath); os.IsNotExist(err) {
+	if !m.Exists(artisanPath) {
 		return false
 	}
 
 	// Check composer.json for laravel/framework
 	composerPath := filepath.Join(dir, "composer.json")
-	data, err := os.ReadFile(composerPath)
+	data, err := m.Read(composerPath)
 	if err != nil {
 		return false
 	}
@@ -46,7 +46,7 @@ func IsLaravelProject(dir string) bool {
 		RequireDev map[string]string `json:"require-dev"`
 	}
 
-	if err := json.Unmarshal(data, &composer); err != nil {
+	if err := json.Unmarshal([]byte(data), &composer); err != nil {
 		return false
 	}
 
@@ -66,9 +66,11 @@ func IsLaravelProject(dir string) bool {
 // IsFrankenPHPProject checks if the project is configured for FrankenPHP.
 // It looks for laravel/octane with frankenphp driver.
 func IsFrankenPHPProject(dir string) bool {
+	m := getMedium()
+
 	// Check composer.json for laravel/octane
 	composerPath := filepath.Join(dir, "composer.json")
-	data, err := os.ReadFile(composerPath)
+	data, err := m.Read(composerPath)
 	if err != nil {
 		return false
 	}
@@ -77,7 +79,7 @@ func IsFrankenPHPProject(dir string) bool {
 		Require map[string]string `json:"require"`
 	}
 
-	if err := json.Unmarshal(data, &composer); err != nil {
+	if err := json.Unmarshal([]byte(data), &composer); err != nil {
 		return false
 	}
 
@@ -87,18 +89,18 @@ func IsFrankenPHPProject(dir string) bool {
 
 	// Check octane config for frankenphp
 	configPath := filepath.Join(dir, "config", "octane.php")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	if !m.Exists(configPath) {
 		// If no config exists but octane is installed, assume frankenphp
 		return true
 	}
 
-	configData, err := os.ReadFile(configPath)
+	configData, err := m.Read(configPath)
 	if err != nil {
 		return true // Assume frankenphp if we can't read config
 	}
 
 	// Look for frankenphp in the config
-	return strings.Contains(string(configData), "frankenphp")
+	return strings.Contains(configData, "frankenphp")
 }
 
 // DetectServices detects which services are needed based on project files.
@@ -135,6 +137,7 @@ func DetectServices(dir string) []DetectedService {
 
 // hasVite checks if the project uses Vite.
 func hasVite(dir string) bool {
+	m := getMedium()
 	viteConfigs := []string{
 		"vite.config.js",
 		"vite.config.ts",
@@ -143,7 +146,7 @@ func hasVite(dir string) bool {
 	}
 
 	for _, config := range viteConfigs {
-		if _, err := os.Stat(filepath.Join(dir, config)); err == nil {
+		if m.Exists(filepath.Join(dir, config)) {
 			return true
 		}
 	}
@@ -154,29 +157,27 @@ func hasVite(dir string) bool {
 // hasHorizon checks if Laravel Horizon is configured.
 func hasHorizon(dir string) bool {
 	horizonConfig := filepath.Join(dir, "config", "horizon.php")
-	_, err := os.Stat(horizonConfig)
-	return err == nil
+	return getMedium().Exists(horizonConfig)
 }
 
 // hasReverb checks if Laravel Reverb is configured.
 func hasReverb(dir string) bool {
 	reverbConfig := filepath.Join(dir, "config", "reverb.php")
-	_, err := os.Stat(reverbConfig)
-	return err == nil
+	return getMedium().Exists(reverbConfig)
 }
 
 // needsRedis checks if the project uses Redis based on .env configuration.
 func needsRedis(dir string) bool {
+	m := getMedium()
 	envPath := filepath.Join(dir, ".env")
-	file, err := os.Open(envPath)
+	content, err := m.Read(envPath)
 	if err != nil {
 		return false
 	}
-	defer func() { _ = file.Close() }()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -207,6 +208,7 @@ func needsRedis(dir string) bool {
 // DetectPackageManager detects which package manager is used in the project.
 // Returns "npm", "pnpm", "yarn", or "bun".
 func DetectPackageManager(dir string) string {
+	m := getMedium()
 	// Check for lock files in order of preference
 	lockFiles := []struct {
 		file    string
@@ -219,7 +221,7 @@ func DetectPackageManager(dir string) string {
 	}
 
 	for _, lf := range lockFiles {
-		if _, err := os.Stat(filepath.Join(dir, lf.file)); err == nil {
+		if m.Exists(filepath.Join(dir, lf.file)) {
 			return lf.manager
 		}
 	}
@@ -230,16 +232,16 @@ func DetectPackageManager(dir string) string {
 
 // GetLaravelAppName extracts the application name from Laravel's .env file.
 func GetLaravelAppName(dir string) string {
+	m := getMedium()
 	envPath := filepath.Join(dir, ".env")
-	file, err := os.Open(envPath)
+	content, err := m.Read(envPath)
 	if err != nil {
 		return ""
 	}
-	defer func() { _ = file.Close() }()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "APP_NAME=") {
 			value := strings.TrimPrefix(line, "APP_NAME=")
 			// Remove quotes if present
@@ -253,16 +255,16 @@ func GetLaravelAppName(dir string) string {
 
 // GetLaravelAppURL extracts the application URL from Laravel's .env file.
 func GetLaravelAppURL(dir string) string {
+	m := getMedium()
 	envPath := filepath.Join(dir, ".env")
-	file, err := os.Open(envPath)
+	content, err := m.Read(envPath)
 	if err != nil {
 		return ""
 	}
-	defer func() { _ = file.Close() }()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "APP_URL=") {
 			value := strings.TrimPrefix(line, "APP_URL=")
 			// Remove quotes if present

@@ -515,7 +515,7 @@ func generateSARIF(ctx context.Context, dir, checkName, outputFile string) error
 		return fmt.Errorf("invalid SARIF output: %w", err)
 	}
 
-	return os.WriteFile(outputFile, output, 0644)
+	return getMedium().Write(outputFile, string(output))
 }
 
 // uploadSARIFToGitHub uploads a SARIF file to GitHub Security tab

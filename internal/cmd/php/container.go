@@ -128,11 +128,12 @@ func BuildDocker(ctx context.Context, opts DockerBuildOptions) error {
 		}
 
 		// Write to temporary file
+		m := getMedium()
 		tempDockerfile = filepath.Join(opts.ProjectDir, "Dockerfile.core-generated")
-		if err := os.WriteFile(tempDockerfile, []byte(content), 0644); err != nil {
+		if err := m.Write(tempDockerfile, content); err != nil {
 			return cli.WrapVerb(err, "write", "Dockerfile")
 		}
-		defer func() { _ = os.Remove(tempDockerfile) }()
+		defer func() { _ = m.Delete(tempDockerfile) }()
 
 		dockerfilePath = tempDockerfile
 	}
@@ -198,8 +199,9 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 	}
 
 	// Ensure output directory exists
+	m := getMedium()
 	outputDir := filepath.Dir(opts.OutputPath)
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := m.EnsureDir(outputDir); err != nil {
 		return cli.WrapVerb(err, "create", "output directory")
 	}
 
@@ -230,10 +232,10 @@ func BuildLinuxKit(ctx context.Context, opts LinuxKitBuildOptions) error {
 
 	// Write template to temp file
 	tempYAML := filepath.Join(opts.ProjectDir, ".core-linuxkit.yml")
-	if err := os.WriteFile(tempYAML, []byte(content), 0644); err != nil {
+	if err := m.Write(tempYAML, content); err != nil {
 		return cli.WrapVerb(err, "write", "template")
 	}
-	defer func() { _ = os.Remove(tempYAML) }()
+	defer func() { _ = m.Delete(tempYAML) }()
 
 	// Build LinuxKit image
 	args := []string{
@@ -345,8 +347,7 @@ func Shell(ctx context.Context, containerID string) error {
 // IsPHPProject checks if the given directory is a PHP project.
 func IsPHPProject(dir string) bool {
 	composerPath := filepath.Join(dir, "composer.json")
-	_, err := os.Stat(composerPath)
-	return err == nil
+	return getMedium().IsFile(composerPath)
 }
 
 // commonLinuxKitPaths defines default search locations for linuxkit.
@@ -362,8 +363,9 @@ func lookupLinuxKit() (string, error) {
 		return path, nil
 	}
 
+	m := getMedium()
 	for _, p := range commonLinuxKitPaths {
-		if _, err := os.Stat(p); err == nil {
+		if m.IsFile(p) {
 			return p, nil
 		}
 	}

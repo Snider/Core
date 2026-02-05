@@ -78,17 +78,24 @@ func (s *baseService) Logs(follow bool) (io.ReadCloser, error) {
 		return nil, cli.Err("no log file available for %s", s.name)
 	}
 
-	file, err := os.Open(s.logPath)
+	m := getMedium()
+	file, err := m.Open(s.logPath)
 	if err != nil {
 		return nil, cli.WrapVerb(err, "open", "log file")
 	}
 
 	if !follow {
-		return file, nil
+		return file.(io.ReadCloser), nil
 	}
 
 	// For follow mode, return a tailing reader
-	return newTailReader(file), nil
+	// Type assert to get the underlying *os.File for tailing
+	osFile, ok := file.(*os.File)
+	if !ok {
+		file.Close()
+		return nil, cli.Err("log file is not a regular file")
+	}
+	return newTailReader(osFile), nil
 }
 
 func (s *baseService) startProcess(ctx context.Context, cmdName string, args []string, env []string) error {
@@ -100,15 +107,22 @@ func (s *baseService) startProcess(ctx context.Context, cmdName string, args []s
 	}
 
 	// Create log file
+	m := getMedium()
 	logDir := filepath.Join(s.dir, ".core", "logs")
-	if err := os.MkdirAll(logDir, 0755); err != nil {
+	if err := m.EnsureDir(logDir); err != nil {
 		return cli.WrapVerb(err, "create", "log directory")
 	}
 
 	s.logPath = filepath.Join(logDir, cli.Sprintf("%s.log", strings.ToLower(s.name)))
-	logFile, err := os.OpenFile(s.logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	logWriter, err := m.Create(s.logPath)
 	if err != nil {
 		return cli.WrapVerb(err, "create", "log file")
+	}
+	// Type assert to get the underlying *os.File for use with exec.Cmd
+	logFile, ok := logWriter.(*os.File)
+	if !ok {
+		logWriter.Close()
+		return cli.Err("log file is not a regular file")
 	}
 	s.logFile = logFile
 
