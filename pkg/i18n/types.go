@@ -408,16 +408,6 @@ var irregularVerbs = map[string]VerbForms{
 	"cancel": {Past: "cancelled", Gerund: "cancelling"}, "travel": {Past: "travelled", Gerund: "travelling"},
 	"label": {Past: "labelled", Gerund: "labelling"}, "model": {Past: "modelled", Gerund: "modelling"},
 	"level": {Past: "levelled", Gerund: "levelling"},
-	// British English spellings
-	"format":      {Past: "formatted", Gerund: "formatting"},
-	"analyse":     {Past: "analysed", Gerund: "analysing"},
-	"organise":    {Past: "organised", Gerund: "organising"},
-	"recognise":   {Past: "recognised", Gerund: "recognising"},
-	"realise":     {Past: "realised", Gerund: "realising"},
-	"customise":   {Past: "customised", Gerund: "customising"},
-	"optimise":    {Past: "optimised", Gerund: "optimising"},
-	"initialise":  {Past: "initialised", Gerund: "initialising"},
-	"synchronise": {Past: "synchronised", Gerund: "synchronising"},
 }
 
 // noDoubleConsonant contains multi-syllable verbs that don't double the final consonant.

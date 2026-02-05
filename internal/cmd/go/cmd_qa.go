@@ -24,7 +24,6 @@ var (
 	qaOnly              string
 	qaCoverage          bool
 	qaThreshold         float64
-	qaBranchThreshold   float64
 	qaDocblockThreshold float64
 	qaJSON              bool
 	qaVerbose           bool
@@ -72,8 +71,7 @@ Examples:
 	// Coverage flags
 	qaCmd.PersistentFlags().BoolVar(&qaCoverage, "coverage", false, "Include coverage reporting")
 	qaCmd.PersistentFlags().BoolVarP(&qaCoverage, "cov", "c", false, "Include coverage reporting (shorthand)")
-	qaCmd.PersistentFlags().Float64Var(&qaThreshold, "threshold", 0, "Minimum statement coverage threshold (0-100), fail if below")
-	qaCmd.PersistentFlags().Float64Var(&qaBranchThreshold, "branch-threshold", 0, "Minimum branch coverage threshold (0-100), fail if below")
+	qaCmd.PersistentFlags().Float64Var(&qaThreshold, "threshold", 0, "Minimum coverage threshold (0-100), fail if below")
 	qaCmd.PersistentFlags().Float64Var(&qaDocblockThreshold, "docblock-threshold", 80, "Minimum docblock coverage threshold (0-100)")
 
 	// Test flags
@@ -136,13 +134,11 @@ Examples:
 
 // QAResult holds the result of a QA run for JSON output
 type QAResult struct {
-	Success         bool          `json:"success"`
-	Duration        string        `json:"duration"`
-	Checks          []CheckResult `json:"checks"`
-	Coverage        *float64      `json:"coverage,omitempty"`
-	BranchCoverage  *float64      `json:"branch_coverage,omitempty"`
-	Threshold       *float64      `json:"threshold,omitempty"`
-	BranchThreshold *float64      `json:"branch_threshold,omitempty"`
+	Success   bool          `json:"success"`
+	Duration  string        `json:"duration"`
+	Checks    []CheckResult `json:"checks"`
+	Coverage  *float64      `json:"coverage,omitempty"`
+	Threshold *float64      `json:"threshold,omitempty"`
 }
 
 // CheckResult holds the result of a single check
@@ -258,33 +254,20 @@ func runGoQA(cmd *cli.Command, args []string) error {
 
 	// Run coverage if requested
 	var coverageVal *float64
-	var branchVal *float64
 	if qaCoverage && !qaFailFast || (qaCoverage && failed == 0) {
-		cov, branch, err := runCoverage(ctx, cwd)
+		cov, err := runCoverage(ctx, cwd)
 		if err == nil {
 			coverageVal = &cov
-			branchVal = &branch
 			if !qaJSON && !qaQuiet {
-				cli.Print("\n%s %.1f%%\n", cli.DimStyle.Render("Statement Coverage:"), cov)
-				cli.Print("%s %.1f%%\n", cli.DimStyle.Render("Branch Coverage:"), branch)
+				cli.Print("\n%s %.1f%%\n", cli.DimStyle.Render("Coverage:"), cov)
 			}
 			if qaThreshold > 0 && cov < qaThreshold {
 				failed++
 				if !qaJSON && !qaQuiet {
-					cli.Print("  %s Statement coverage %.1f%% below threshold %.1f%%\n",
+					cli.Print("  %s Coverage %.1f%% below threshold %.1f%%\n",
 						cli.ErrorStyle.Render(cli.Glyph(":cross:")), cov, qaThreshold)
+					cli.Hint("fix", "Run 'core go cov --open' to see uncovered lines, then add tests.")
 				}
-			}
-			if qaBranchThreshold > 0 && branch < qaBranchThreshold {
-				failed++
-				if !qaJSON && !qaQuiet {
-					cli.Print("  %s Branch coverage %.1f%% below threshold %.1f%%\n",
-						cli.ErrorStyle.Render(cli.Glyph(":cross:")), branch, qaBranchThreshold)
-				}
-			}
-
-			if failed > 0 && !qaJSON && !qaQuiet {
-				cli.Hint("fix", "Run 'core go cov --open' to see uncovered lines, then add tests.")
 			}
 		}
 	}
@@ -294,17 +277,13 @@ func runGoQA(cmd *cli.Command, args []string) error {
 	// JSON output
 	if qaJSON {
 		qaResult := QAResult{
-			Success:        failed == 0,
-			Duration:       duration.String(),
-			Checks:         results,
-			Coverage:       coverageVal,
-			BranchCoverage: branchVal,
+			Success:  failed == 0,
+			Duration: duration.String(),
+			Checks:   results,
+			Coverage: coverageVal,
 		}
 		if qaThreshold > 0 {
 			qaResult.Threshold = &qaThreshold
-		}
-		if qaBranchThreshold > 0 {
-			qaResult.BranchThreshold = &qaBranchThreshold
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -546,17 +525,8 @@ func runCheckCapture(ctx context.Context, dir string, check QACheck) (string, er
 	return "", cmd.Run()
 }
 
-func runCoverage(ctx context.Context, dir string) (float64, float64, error) {
-	// Create temp file for coverage data
-	covFile, err := os.CreateTemp("", "coverage-*.out")
-	if err != nil {
-		return 0, 0, err
-	}
-	covPath := covFile.Name()
-	_ = covFile.Close()
-	defer os.Remove(covPath)
-
-	args := []string{"test", "-cover", "-covermode=atomic", "-coverprofile=" + covPath}
+func runCoverage(ctx context.Context, dir string) (float64, error) {
+	args := []string{"test", "-cover", "-coverprofile=/tmp/coverage.out"}
 	if qaShort {
 		args = append(args, "-short")
 	}
@@ -570,36 +540,36 @@ func runCoverage(ctx context.Context, dir string) (float64, float64, error) {
 	}
 
 	if err := cmd.Run(); err != nil {
-		return 0, 0, err
+		return 0, err
 	}
 
-	// Parse statement coverage
-	coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func="+covPath)
+	// Parse coverage
+	coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func=/tmp/coverage.out")
 	output, err := coverCmd.Output()
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
 
 	// Parse last line for total coverage
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	var statementPct float64
-	if len(lines) > 0 {
-		lastLine := lines[len(lines)-1]
-		fields := strings.Fields(lastLine)
-		if len(fields) >= 3 {
-			// Parse percentage (e.g., "45.6%")
-			pctStr := strings.TrimSuffix(fields[len(fields)-1], "%")
-			_, _ = fmt.Sscanf(pctStr, "%f", &statementPct)
-		}
+	if len(lines) == 0 {
+		return 0, nil
 	}
 
-	// Parse branch coverage
-	branchPct, err := calculateBlockCoverage(covPath)
-	if err != nil {
-		return statementPct, 0, err
+	lastLine := lines[len(lines)-1]
+	fields := strings.Fields(lastLine)
+	if len(fields) < 3 {
+		return 0, nil
 	}
 
-	return statementPct, branchPct, nil
+	// Parse percentage (e.g., "45.6%")
+	pctStr := strings.TrimSuffix(fields[len(fields)-1], "%")
+	var pct float64
+	if _, err := fmt.Sscanf(pctStr, "%f", &pct); err == nil {
+		return pct, nil
+	}
+
+	return 0, nil
 }
 
 // runInternalCheck runs internal Go-based checks (not external commands).

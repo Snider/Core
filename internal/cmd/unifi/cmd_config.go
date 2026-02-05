@@ -93,10 +93,6 @@ func showConfig() error {
 	cli.Blank()
 	cli.Print("  %s %s\n", dimStyle.Render("URL:"), valueStyle.Render(url))
 
-	if insecure {
-		cli.Print("  %s %s\n", dimStyle.Render("Insecure:"), warningStyle.Render("true (TLS verification skipped)"))
-	}
-
 	if user != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("User:"), valueStyle.Render(user))
 	} else {

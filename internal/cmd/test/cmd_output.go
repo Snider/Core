@@ -138,11 +138,7 @@ func printCoverageSummary(results testResults) {
 			continue
 		}
 		name := shortenPackageName(pkg.name)
-		padLen := maxLen - len(name) + 2
-		if padLen < 0 {
-			padLen = 2
-		}
-		padding := strings.Repeat(" ", padLen)
+		padding := strings.Repeat(" ", maxLen-len(name)+2)
 		fmt.Printf("    %s%s%s\n", name, padding, formatCoverage(pkg.coverage))
 	}
 
@@ -150,11 +146,7 @@ func printCoverageSummary(results testResults) {
 	if results.covCount > 0 {
 		avgCov := results.totalCov / float64(results.covCount)
 		avgLabel := i18n.T("cmd.test.label.average")
-		padLen := maxLen - len(avgLabel) + 2
-		if padLen < 0 {
-			padLen = 2
-		}
-		padding := strings.Repeat(" ", padLen)
+		padding := strings.Repeat(" ", maxLen-len(avgLabel)+2)
 		fmt.Printf("\n    %s%s%s\n", testHeaderStyle.Render(avgLabel), padding, formatCoverage(avgCov))
 	}
 }
