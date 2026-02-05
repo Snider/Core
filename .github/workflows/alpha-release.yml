@@ -36,7 +36,7 @@ jobs:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # GUI build disabled until build action supports Wails v3
       # - name: Wails Build Action
@@ -104,7 +104,7 @@ jobs:
       run:
         working-directory: internal/core-ide
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Go
         uses: host-uk/build/actions/setup/go@v4.0.0
@@ -208,7 +208,7 @@ jobs:
         run: echo "version=v${{ env.NEXT_VERSION }}-alpha.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: dist
           merge-multiple: true

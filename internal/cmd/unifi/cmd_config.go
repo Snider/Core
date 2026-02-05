@@ -63,7 +63,11 @@ func runConfig(cmd *cli.Command) error {
 			cli.Success("UniFi API key saved")
 		}
 		if insecure != nil {
-			cli.Success(fmt.Sprintf("UniFi insecure mode set to %v", *insecure))
+			if *insecure {
+				cli.Warn("UniFi insecure mode enabled")
+			} else {
+				cli.Success("UniFi insecure mode disabled")
+			}
 		}
 	}
 
@@ -73,7 +77,7 @@ func runConfig(cmd *cli.Command) error {
 	}
 
 	// If no flags, show current config
-	if configURL == "" && configUser == "" && configPass == "" && configAPIKey == "" && !configInsecure && !configTest {
+	if configURL == "" && configUser == "" && configPass == "" && configAPIKey == "" && !cmd.Flags().Changed("insecure") && !configTest {
 		return showConfig()
 	}
 

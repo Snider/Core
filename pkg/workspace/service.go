@@ -67,6 +67,9 @@ func (s *Service) CreateWorkspace(identifier, password string) (string, error) {
 
 	// 3. PGP Keypair generation
 	crypt := s.core.Crypt()
+	if crypt == nil {
+		return "", core.E("workspace.CreateWorkspace", "crypt service not available", nil)
+	}
 	privKey, err := crypt.CreateKeyPair(identifier, password)
 	if err != nil {
 		return "", core.E("workspace.CreateWorkspace", "failed to generate keys", err)

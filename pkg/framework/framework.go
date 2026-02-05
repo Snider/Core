@@ -16,27 +16,24 @@ import (
 
 // Re-export core types for cleaner imports
 type (
-	Core                            = core.Core
-	Option                          = core.Option
-	Message                         = core.Message
-	Query                           = core.Query
-	Task                            = core.Task
-	QueryHandler                    = core.QueryHandler
-	TaskHandler                     = core.TaskHandler
-	Startable                       = core.Startable
-	Stoppable                       = core.Stoppable
-	Config                          = core.Config
-	Display                         = core.Display
-	WindowOption                    = core.WindowOption
-	Features                        = core.Features
-	Contract                        = core.Contract
-	Error                           = core.Error
-	ServiceRuntime[T any]           = core.ServiceRuntime[T]
-	Runtime                         = core.Runtime
-	ServiceFactory                  = core.ServiceFactory
-	Request[R any]                  = core.Request[R]
-	TypedQueryHandler[Q any, R any] = core.TypedQueryHandler[Q, R]
-	TypedTaskHandler[T any, R any]  = core.TypedTaskHandler[T, R]
+	Core                  = core.Core
+	Option                = core.Option
+	Message               = core.Message
+	Query                 = core.Query
+	Task                  = core.Task
+	QueryHandler          = core.QueryHandler
+	TaskHandler           = core.TaskHandler
+	Startable             = core.Startable
+	Stoppable             = core.Stoppable
+	Config                = core.Config
+	Display               = core.Display
+	WindowOption          = core.WindowOption
+	Features              = core.Features
+	Contract              = core.Contract
+	Error                 = core.Error
+	ServiceRuntime[T any] = core.ServiceRuntime[T]
+	Runtime               = core.Runtime
+	ServiceFactory        = core.ServiceFactory
 )
 
 // Re-export core functions
@@ -52,51 +49,6 @@ var (
 	NewRuntime       = core.NewRuntime
 	NewWithFactories = core.NewWithFactories
 )
-
-// Action dispatches a message of type T to all registered IPC handlers.
-func Action[T any](c *Core, msg T) error {
-	return core.Action(c, msg)
-}
-
-// RegisterAction adds a type-safe IPC handler to the Core.
-func RegisterAction[T any](c *Core, handler func(*Core, T) error) {
-	core.RegisterAction(c, handler)
-}
-
-// Query dispatches a query to handlers until one responds, returning a typed result.
-func Query[R any](c *Core, q any) (R, bool, error) {
-	return core.Query[R](c, q)
-}
-
-// QueryAll dispatches a query to all handlers and collects typed responses.
-func QueryAll[R any](c *Core, q any) ([]R, error) {
-	return core.QueryAll[R](c, q)
-}
-
-// RegisterQuery adds a type-safe query handler to the Core.
-func RegisterQuery[Q any, R any](c *Core, handler TypedQueryHandler[Q, R]) {
-	core.RegisterQuery(c, handler)
-}
-
-// Perform dispatches a task to handlers until one responds, returning a typed result.
-func Perform[R any](c *Core, t any) (R, bool, error) {
-	return core.Perform[R](c, t)
-}
-
-// RegisterTask adds a type-safe task handler to the Core.
-func RegisterTask[T any, R any](c *Core, handler TypedTaskHandler[T, R]) {
-	core.RegisterTask(c, handler)
-}
-
-// DispatchQuery dispatches a query that implements Request[R], using type inference for the result.
-func DispatchQuery[R any](c *Core, q Request[R]) (R, bool, error) {
-	return core.DispatchQuery(c, q)
-}
-
-// DispatchTask dispatches a task that implements Request[R], using type inference for the result.
-func DispatchTask[R any](c *Core, t Request[R]) (R, bool, error) {
-	return core.DispatchTask(c, t)
-}
 
 // NewServiceRuntime creates a new ServiceRuntime for a service.
 func NewServiceRuntime[T any](c *Core, opts T) *ServiceRuntime[T] {

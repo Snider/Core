@@ -126,6 +126,15 @@ func TestFeatures_IsEnabled_Good(t *testing.T) {
 	assert.True(t, c.Features.IsEnabled("feature1"))
 	assert.True(t, c.Features.IsEnabled("feature2"))
 	assert.False(t, c.Features.IsEnabled("feature3"))
+	assert.False(t, c.Features.IsEnabled(""))
+}
+
+func TestFeatures_IsEnabled_Edge(t *testing.T) {
+	c, _ := New()
+	c.Features.Flags = []string{"  ", "foo"}
+	assert.True(t, c.Features.IsEnabled("  "))
+	assert.True(t, c.Features.IsEnabled("foo"))
+	assert.False(t, c.Features.IsEnabled("FOO")) // Case sensitive check
 }
 
 func TestCore_ServiceLifecycle_Good(t *testing.T) {

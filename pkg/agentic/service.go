@@ -19,16 +19,12 @@ type TaskCommit struct {
 	CanEdit bool // allow Write/Edit tools
 }
 
-func (TaskCommit) Response() any { return nil }
-
 // TaskPrompt sends a custom prompt to Claude.
 type TaskPrompt struct {
 	Prompt       string
 	WorkDir      string
 	AllowedTools []string
 }
-
-func (TaskPrompt) Response() any { return nil }
 
 // ServiceOptions for configuring the AI service.
 type ServiceOptions struct {
@@ -60,25 +56,27 @@ func NewService(opts ServiceOptions) func(*framework.Core) (any, error) {
 
 // OnStartup registers task handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
-	framework.RegisterTask(s.Core(), s.handleTaskCommit)
-	framework.RegisterTask(s.Core(), s.handleTaskPrompt)
+	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) handleTaskCommit(c *framework.Core, t TaskCommit) (any, bool, error) {
-	err := s.doCommit(t)
-	if err != nil {
-		log.Error("agentic: commit task failed", "err", err, "path", t.Path)
-	}
-	return nil, true, err
-}
+func (s *Service) handleTask(c *framework.Core, t framework.Task) (any, bool, error) {
+	switch m := t.(type) {
+	case TaskCommit:
+		err := s.doCommit(m)
+		if err != nil {
+			log.Error("agentic: commit task failed", "err", err, "path", m.Path)
+		}
+		return nil, true, err
 
-func (s *Service) handleTaskPrompt(c *framework.Core, t TaskPrompt) (any, bool, error) {
-	err := s.doPrompt(t)
-	if err != nil {
-		log.Error("agentic: prompt task failed", "err", err)
+	case TaskPrompt:
+		err := s.doPrompt(m)
+		if err != nil {
+			log.Error("agentic: prompt task failed", "err", err)
+		}
+		return nil, true, err
 	}
-	return nil, true, err
+	return nil, false, nil
 }
 
 func (s *Service) doCommit(task TaskCommit) error {
