@@ -39,7 +39,7 @@ func runClients() error {
 		return log.E("unifi.clients", "conflicting flags", errors.New("--wired and --wireless cannot both be set"))
 	}
 
-	client, err := uf.NewFromConfig("", "", "", "")
+	client, err := uf.NewFromConfig("", "", "", "", nil)
 	if err != nil {
 		return log.E("unifi.clients", "failed to initialise client", err)
 	}
