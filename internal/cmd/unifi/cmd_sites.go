@@ -21,7 +21,7 @@ func addSitesCommand(parent *cli.Command) {
 }
 
 func runSites() error {
-	client, err := uf.NewFromConfig("", "", "", "")
+	client, err := uf.NewFromConfig("", "", "", "", nil)
 	if err != nil {
 		return log.E("unifi.sites", "failed to initialise client", err)
 	}
