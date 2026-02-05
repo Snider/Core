@@ -61,6 +61,9 @@ func ServiceFor[T any](c *Core, name string) (T, error) {
 }
 
 // MustServiceFor retrieves a typed service or returns an error if not found.
+//
+// Deprecated: use ServiceFor instead. This function does not panic on failure
+// and is retained only for backward compatibility.
 func MustServiceFor[T any](c *Core, name string) (T, error) {
 	return core.MustServiceFor[T](c, name)
 }

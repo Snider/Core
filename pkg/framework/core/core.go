@@ -240,8 +240,10 @@ func ServiceFor[T any](c *Core, name string) (T, error) {
 	return typed, nil
 }
 
-// MustServiceFor retrieves a registered service by name and asserts its type to the given interface T.
-// It returns an error if the service is not found or cannot be cast to T.
+// MustServiceFor retrieves a typed service or returns an error if not found.
+//
+// Deprecated: use ServiceFor instead. This function does not panic on failure
+// and is retained only for backward compatibility.
 func MustServiceFor[T any](c *Core, name string) (T, error) {
 	return ServiceFor[T](c, name)
 }
