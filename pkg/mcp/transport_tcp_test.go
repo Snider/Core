@@ -29,11 +29,11 @@ func TestNewTCPTransport_Warning(t *testing.T) {
 	oldStderr := os.Stderr
 	r, w, _ := os.Pipe()
 	os.Stderr = w
+	defer func() { os.Stderr = oldStderr }()
 
 	// Trigger warning
 	tr, err := NewTCPTransport("0.0.0.0:9101")
 	if err != nil {
-		os.Stderr = oldStderr
 		t.Fatalf("Failed to create transport: %v", err)
 	}
 	defer tr.listener.Close()
@@ -42,7 +42,6 @@ func TestNewTCPTransport_Warning(t *testing.T) {
 	w.Close()
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, r)
-	os.Stderr = oldStderr
 
 	output := buf.String()
 	if !strings.Contains(output, "WARNING") {

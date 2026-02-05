@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strings"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -34,14 +33,17 @@ func NewTCPTransport(addr string) (*TCPTransport, error) {
 	// Security warning for binding to all interfaces
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
-		// If SplitHostPort fails, it might be just a port or an invalid address.
-		// net.Listen will catch invalid addresses.
-		if !strings.Contains(addr, ":") {
-			host = addr
-		}
+		// If SplitHostPort fails, it might be an IP or hostname without a port.
+		host = addr
 	}
 
-	if host == "0.0.0.0" || host == "::" || host == "" {
+	// For IPv6 literals like `[::]`, we need to remove brackets before parsing.
+	if len(host) > 2 && host[0] == '[' && host[len(host)-1] == ']' {
+		host = host[1 : len(host)-1]
+	}
+
+	ip := net.ParseIP(host)
+	if host == "" || (ip != nil && ip.IsUnspecified()) {
 		fmt.Fprintf(os.Stderr, "WARNING: MCP TCP server binding to all interfaces (%s). This may be insecure. Consider using 127.0.0.1 for local-only access.\n", addr)
 	}
 
