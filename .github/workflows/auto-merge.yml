@@ -4,7 +4,39 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review]
 
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   merge:
-    uses: host-uk/.github/.github/workflows/auto-merge.yml@dev
-    secrets: inherit
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Enable Auto Merge
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const association = context.payload.pull_request.author_association;
+
+            // Trusted bot accounts (act as org members)
+            const trustedBots = ['google-labs-jules[bot]'];
+            const isTrustedBot = trustedBots.includes(author);
+
+            // Check author association from webhook payload
+            const trusted = ['MEMBER', 'OWNER', 'COLLABORATOR'];
+            if (!isTrustedBot && !trusted.includes(association)) {
+              core.info(`${author} is ${association} — skipping auto-merge`);
+              return;
+            }
+
+            await exec.exec('gh', [
+              'pr', 'merge', process.env.PR_NUMBER,
+              '--auto',
+              '--repo', `${context.repo.owner}/${context.repo.repo}`
+            ]);
+            core.info(`Auto-merge enabled for #${process.env.PR_NUMBER}`);
