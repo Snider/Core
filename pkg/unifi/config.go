@@ -24,7 +24,7 @@ const (
 	ConfigKeyPass = "unifi.pass"
 	// ConfigKeyAPIKey is the config key for the UniFi API key.
 	ConfigKeyAPIKey = "unifi.apikey"
-	// ConfigKeyInsecure is the config key for skipping TLS verification.
+	// ConfigKeyInsecure is the config key for allowing insecure TLS connections.
 	ConfigKeyInsecure = "unifi.insecure"
 
 	// DefaultURL is the default UniFi controller URL.
@@ -36,7 +36,7 @@ const (
 //  1. ~/.core/config.yaml keys: unifi.url, unifi.user, unifi.pass, unifi.apikey, unifi.insecure
 //  2. UNIFI_URL + UNIFI_USER + UNIFI_PASS + UNIFI_APIKEY + UNIFI_INSECURE environment variables (override config file)
 //  3. Provided flag overrides (highest priority; pass empty to skip)
-func NewFromConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure bool) (*Client, error) {
+func NewFromConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure *bool) (*Client, error) {
 	url, user, pass, apikey, insecure, err := ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey, flagInsecure)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func NewFromConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure 
 
 // ResolveConfig resolves the UniFi URL and credentials from all config sources.
 // Flag values take highest priority, then env vars, then config file.
-func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure bool) (url, user, pass, apikey string, insecure bool, err error) {
+func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure *bool) (url, user, pass, apikey string, insecure bool, err error) {
 	// Start with config file values
 	cfg, cfgErr := config.New()
 	if cfgErr == nil {
@@ -76,7 +76,7 @@ func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure 
 		apikey = envAPIKey
 	}
 	if envInsecure := os.Getenv("UNIFI_INSECURE"); envInsecure != "" {
-		insecure = envInsecure == "true"
+		insecure = envInsecure == "true" || envInsecure == "1"
 	}
 
 	// Overlay flag values (highest priority)
@@ -92,8 +92,8 @@ func ResolveConfig(flagURL, flagUser, flagPass, flagAPIKey string, flagInsecure 
 	if flagAPIKey != "" {
 		apikey = flagAPIKey
 	}
-	if flagInsecure {
-		insecure = true
+	if flagInsecure != nil {
+		insecure = *flagInsecure
 	}
 
 	// Default URL if nothing configured
@@ -137,7 +137,7 @@ func SaveConfig(url, user, pass, apikey string, insecure *bool) error {
 
 	if insecure != nil {
 		if err := cfg.Set(ConfigKeyInsecure, *insecure); err != nil {
-			return log.E("unifi.SaveConfig", "failed to save insecure setting", err)
+			return log.E("unifi.SaveConfig", "failed to save insecure flag", err)
 		}
 	}
 

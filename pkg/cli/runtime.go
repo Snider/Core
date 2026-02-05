@@ -58,8 +58,10 @@ func Init(opts Options) error {
 
 		// Create root command
 		rootCmd := &cobra.Command{
-			Use:     opts.AppName,
-			Version: opts.Version,
+			Use:           opts.AppName,
+			Version:       opts.Version,
+			SilenceErrors: true,
+			SilenceUsage:  true,
 		}
 
 		// Attach all registered commands

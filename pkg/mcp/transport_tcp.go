@@ -3,11 +3,10 @@ package mcp
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"net"
-	"os"
 
+	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -49,7 +48,7 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 	if addr == "" {
 		addr = t.listener.Addr().String()
 	}
-	fmt.Fprintf(os.Stderr, "MCP TCP server listening on %s\n", addr)
+	log.Info("MCP TCP server listening", "addr", addr)
 
 	for {
 		conn, err := t.listener.Accept()
@@ -58,7 +57,7 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 			case <-ctx.Done():
 				return nil
 			default:
-				fmt.Fprintf(os.Stderr, "Accept error: %v\n", err)
+				log.Error("Accept error", "err", err)
 				continue
 			}
 		}
@@ -84,7 +83,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	// Run server (blocks until connection closed)
 	// Server.Run calls Connect, then Read loop.
 	if err := server.Run(ctx, transport); err != nil {
-		fmt.Fprintf(os.Stderr, "Connection error: %v\n", err)
+		log.Error("Connection error", "err", err)
 	}
 }
 

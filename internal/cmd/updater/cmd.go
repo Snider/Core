@@ -3,7 +3,6 @@ package updater
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
 
 	"github.com/host-uk/core/pkg/cli"
@@ -133,8 +132,6 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	cli.Print("%s Updated to %s\n", cli.SuccessStyle.Render(cli.Glyph(":check:")), release.TagName)
 	cli.Print("%s Restarting...\n", cli.DimStyle.Render("→"))
 
-	// Exit so the watcher can restart us
-	os.Exit(0)
 	return nil
 }
 
@@ -179,7 +176,6 @@ func handleDevUpdate(currentVersion string) error {
 	cli.Print("%s Updated to %s\n", cli.SuccessStyle.Render(cli.Glyph(":check:")), release.TagName)
 	cli.Print("%s Restarting...\n", cli.DimStyle.Render("→"))
 
-	os.Exit(0)
 	return nil
 }
 
@@ -216,6 +212,5 @@ func handleDevTagUpdate(currentVersion string) error {
 	cli.Print("%s Updated to latest dev build\n", cli.SuccessStyle.Render(cli.Glyph(":check:")))
 	cli.Print("%s Restarting...\n", cli.DimStyle.Render("→"))
 
-	os.Exit(0)
 	return nil
 }

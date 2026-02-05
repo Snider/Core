@@ -77,27 +77,59 @@ func Join(errs ...error) error {
 	return errors.Join(errs...)
 }
 
+// ExitError represents an error that should cause the CLI to exit with a specific code.
+type ExitError struct {
+	Code int
+	Err  error
+}
+
+func (e *ExitError) Error() string {
+	if e.Err == nil {
+		return ""
+	}
+	return e.Err.Error()
+}
+
+func (e *ExitError) Unwrap() error {
+	return e.Err
+}
+
+// Exit creates a new ExitError with the given code and error.
+// Use this to return an error from a command with a specific exit code.
+func Exit(code int, err error) error {
+	if err == nil {
+		return nil
+	}
+	return &ExitError{Code: code, Err: err}
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Fatal Functions (print and exit)
+// Fatal Functions (Deprecated - return error from command instead)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Fatal prints an error message and exits with code 1.
+// Fatal prints an error message to stderr and exits with code 1.
+//
+// Deprecated: return an error from the command instead.
 func Fatal(err error) {
 	if err != nil {
-		fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + err.Error()))
+		fmt.Fprintln(os.Stderr, ErrorStyle.Render(Glyph(":cross:")+" "+err.Error()))
 		os.Exit(1)
 	}
 }
 
-// Fatalf prints a formatted error message and exits with code 1.
+// Fatalf prints a formatted error message to stderr and exits with code 1.
+//
+// Deprecated: return an error from the command instead.
 func Fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + msg))
+	fmt.Fprintln(os.Stderr, ErrorStyle.Render(Glyph(":cross:")+" "+msg))
 	os.Exit(1)
 }
 
-// FatalWrap prints a wrapped error message and exits with code 1.
+// FatalWrap prints a wrapped error message to stderr and exits with code 1.
 // Does nothing if err is nil.
+//
+// Deprecated: return an error from the command instead.
 //
 //	cli.FatalWrap(err, "load config")  // Prints "✗ load config: <error>" and exits
 func FatalWrap(err error, msg string) {
@@ -105,12 +137,14 @@ func FatalWrap(err error, msg string) {
 		return
 	}
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
-	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
+	fmt.Fprintln(os.Stderr, ErrorStyle.Render(Glyph(":cross:")+" "+fullMsg))
 	os.Exit(1)
 }
 
-// FatalWrapVerb prints a wrapped error using i18n grammar and exits with code 1.
+// FatalWrapVerb prints a wrapped error using i18n grammar to stderr and exits with code 1.
 // Does nothing if err is nil.
+//
+// Deprecated: return an error from the command instead.
 //
 //	cli.FatalWrapVerb(err, "load", "config")  // Prints "✗ Failed to load config: <error>" and exits
 func FatalWrapVerb(err error, verb, subject string) {
@@ -119,6 +153,6 @@ func FatalWrapVerb(err error, verb, subject string) {
 	}
 	msg := i18n.ActionFailed(verb, subject)
 	fullMsg := fmt.Sprintf("%s: %v", msg, err)
-	fmt.Println(ErrorStyle.Render(Glyph(":cross:") + " " + fullMsg))
+	fmt.Fprintln(os.Stderr, ErrorStyle.Render(Glyph(":cross:")+" "+fullMsg))
 	os.Exit(1)
 }
