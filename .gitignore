@@ -16,6 +16,5 @@ bin/
 dist/
 tasks
 /core
-/covdata/
 
 

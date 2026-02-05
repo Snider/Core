@@ -12,6 +12,12 @@ func TestShortenPackageName(t *testing.T) {
 	assert.Equal(t, "bar", shortenPackageName("github.com/other/bar"))
 }
 
+func TestFormatCoverageTest(t *testing.T) {
+	assert.Contains(t, formatCoverage(85.0), "85.0%")
+	assert.Contains(t, formatCoverage(65.0), "65.0%")
+	assert.Contains(t, formatCoverage(25.0), "25.0%")
+}
+
 func TestParseTestOutput(t *testing.T) {
 	output := `ok  	github.com/host-uk/core/pkg/foo	0.100s	coverage: 50.0% of statements
 FAIL	github.com/host-uk/core/pkg/bar
@@ -32,7 +38,7 @@ func TestPrintCoverageSummarySafe(t *testing.T) {
 	results := testResults{
 		packages: []packageCoverage{
 			{name: "github.com/host-uk/core/pkg/short", coverage: 100, hasCov: true},
-			{name: "github.com/host-uk/core/pkg/a-very-very-very-very-very-very-long-package-name-that-might-cause-issues", coverage: 80, hasCov: true},
+			{name: "github.com/host-uk/core/pkg/a-very-very-very-very-very-long-package-name-that-might-cause-issues", coverage: 80, hasCov: true},
 		},
 		passed:   2,
 		totalCov: 180,

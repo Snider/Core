@@ -1,0 +1,2283 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>go: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+
+				<option value="file0">github.com/host-uk/core/internal/cmd/go/cmd_commands.go (100.0%)</option>
+
+				<option value="file1">github.com/host-uk/core/internal/cmd/go/cmd_format.go (0.0%)</option>
+
+				<option value="file2">github.com/host-uk/core/internal/cmd/go/cmd_fuzz.go (0.0%)</option>
+
+				<option value="file3">github.com/host-uk/core/internal/cmd/go/cmd_go.go (0.0%)</option>
+
+				<option value="file4">github.com/host-uk/core/internal/cmd/go/cmd_gotest.go (17.6%)</option>
+
+				<option value="file5">github.com/host-uk/core/internal/cmd/go/cmd_qa.go (0.0%)</option>
+
+				<option value="file6">github.com/host-uk/core/internal/cmd/go/cmd_tools.go (0.0%)</option>
+
+				<option value="file7">github.com/host-uk/core/internal/cmd/test/cmd_commands.go (100.0%)</option>
+
+				<option value="file8">github.com/host-uk/core/internal/cmd/test/cmd_main.go (0.0%)</option>
+
+				<option value="file9">github.com/host-uk/core/internal/cmd/test/cmd_output.go (51.4%)</option>
+
+				<option value="file10">github.com/host-uk/core/internal/cmd/test/cmd_runner.go (0.0%)</option>
+
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+
+			</div>
+		</div>
+		<div id="content">
+
+		<pre class="file" id="file0" style="display: none">// Package gocmd provides Go development commands with enhanced output.
+//
+// Note: Package named gocmd because 'go' is a reserved keyword.
+//
+// Commands:
+//   - test: Run tests with colour-coded coverage summary
+//   - cov: Run tests with detailed coverage reports (HTML, thresholds)
+//   - fmt: Format code using goimports or gofmt
+//   - lint: Run golangci-lint
+//   - install: Install binary to $GOPATH/bin
+//   - mod: Module management (tidy, download, verify, graph)
+//   - work: Workspace management (sync, init, use)
+//
+// Sets MACOSX_DEPLOYMENT_TARGET to suppress linker warnings on macOS.
+package gocmd
+
+import "github.com/host-uk/core/pkg/cli"
+
+func init() <span class="cov8" title="1">{
+        cli.RegisterCommands(AddGoCommands)
+}</span>
+</pre>
+
+		<pre class="file" id="file1" style="display: none">package gocmd
+
+import (
+        "bufio"
+        "os"
+        "os/exec"
+        "path/filepath"
+        "strings"
+
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+var (
+        fmtFix   bool
+        fmtDiff  bool
+        fmtCheck bool
+        fmtAll   bool
+)
+
+func addGoFmtCommand(parent *cli.Command) <span class="cov0" title="0">{
+        fmtCmd := &amp;cli.Command{
+                Use:   "fmt",
+                Short: "Format Go code",
+                Long:  "Format Go code using goimports or gofmt. By default only checks changed files.",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        // Get list of files to check
+                        var files []string
+                        if fmtAll </span><span class="cov0" title="0">{
+                                // Check all Go files
+                                files = []string{"."}
+                        }</span> else<span class="cov0" title="0"> {
+                                // Only check changed Go files (git-aware)
+                                files = getChangedGoFiles()
+                                if len(files) == 0 </span><span class="cov0" title="0">{
+                                        cli.Print("%s\n", i18n.T("cmd.go.fmt.no_changes"))
+                                        return nil
+                                }</span>
+                        }
+
+                        // Validate flag combinations
+                        <span class="cov0" title="0">if fmtCheck &amp;&amp; fmtFix </span><span class="cov0" title="0">{
+                                return cli.Err("--check and --fix are mutually exclusive")
+                        }</span>
+
+                        <span class="cov0" title="0">fmtArgs := []string{}
+                        if fmtFix </span><span class="cov0" title="0">{
+                                fmtArgs = append(fmtArgs, "-w")
+                        }</span>
+                        <span class="cov0" title="0">if fmtDiff </span><span class="cov0" title="0">{
+                                fmtArgs = append(fmtArgs, "-d")
+                        }</span>
+                        <span class="cov0" title="0">if !fmtFix &amp;&amp; !fmtDiff </span><span class="cov0" title="0">{
+                                fmtArgs = append(fmtArgs, "-l")
+                        }</span>
+                        <span class="cov0" title="0">fmtArgs = append(fmtArgs, files...)
+
+                        // Try goimports first, fall back to gofmt
+                        var execCmd *exec.Cmd
+                        if _, err := exec.LookPath("goimports"); err == nil </span><span class="cov0" title="0">{
+                                execCmd = exec.Command("goimports", fmtArgs...)
+                        }</span> else<span class="cov0" title="0"> {
+                                execCmd = exec.Command("gofmt", fmtArgs...)
+                        }</span>
+
+                        // For --check mode, capture output to detect unformatted files
+                        <span class="cov0" title="0">if fmtCheck </span><span class="cov0" title="0">{
+                                output, err := execCmd.CombinedOutput()
+                                if err != nil </span><span class="cov0" title="0">{
+                                        _, _ = os.Stderr.Write(output)
+                                        return err
+                                }</span>
+                                <span class="cov0" title="0">if len(output) &gt; 0 </span><span class="cov0" title="0">{
+                                        _, _ = os.Stdout.Write(output)
+                                        return cli.Err("files need formatting (use --fix)")
+                                }</span>
+                                <span class="cov0" title="0">return nil</span>
+                        }
+
+                        <span class="cov0" title="0">execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()</span>
+                },
+        }
+
+        <span class="cov0" title="0">fmtCmd.Flags().BoolVar(&amp;fmtFix, "fix", false, i18n.T("common.flag.fix"))
+        fmtCmd.Flags().BoolVar(&amp;fmtDiff, "diff", false, i18n.T("common.flag.diff"))
+        fmtCmd.Flags().BoolVar(&amp;fmtCheck, "check", false, i18n.T("cmd.go.fmt.flag.check"))
+        fmtCmd.Flags().BoolVar(&amp;fmtAll, "all", false, i18n.T("cmd.go.fmt.flag.all"))
+
+        parent.AddCommand(fmtCmd)</span>
+}
+
+// getChangedGoFiles returns Go files that have been modified, staged, or are untracked.
+func getChangedGoFiles() []string <span class="cov0" title="0">{
+        var files []string
+
+        // Get modified and staged files
+        cmd := exec.Command("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD")
+        output, err := cmd.Output()
+        if err == nil </span><span class="cov0" title="0">{
+                files = append(files, filterGoFiles(string(output))...)
+        }</span>
+
+        // Get untracked files
+        <span class="cov0" title="0">cmd = exec.Command("git", "ls-files", "--others", "--exclude-standard")
+        output, err = cmd.Output()
+        if err == nil </span><span class="cov0" title="0">{
+                files = append(files, filterGoFiles(string(output))...)
+        }</span>
+
+        // Deduplicate
+        <span class="cov0" title="0">seen := make(map[string]bool)
+        var unique []string
+        for _, f := range files </span><span class="cov0" title="0">{
+                if !seen[f] </span><span class="cov0" title="0">{
+                        seen[f] = true
+                        // Verify file exists (might have been deleted)
+                        if _, err := os.Stat(f); err == nil </span><span class="cov0" title="0">{
+                                unique = append(unique, f)
+                        }</span>
+                }
+        }
+
+        <span class="cov0" title="0">return unique</span>
+}
+
+// filterGoFiles filters a newline-separated list of files to only include .go files.
+func filterGoFiles(output string) []string <span class="cov0" title="0">{
+        var goFiles []string
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        for scanner.Scan() </span><span class="cov0" title="0">{
+                file := strings.TrimSpace(scanner.Text())
+                if file != "" &amp;&amp; filepath.Ext(file) == ".go" </span><span class="cov0" title="0">{
+                        goFiles = append(goFiles, file)
+                }</span>
+        }
+        <span class="cov0" title="0">return goFiles</span>
+}
+
+var (
+        lintFix bool
+        lintAll bool
+)
+
+func addGoLintCommand(parent *cli.Command) <span class="cov0" title="0">{
+        lintCmd := &amp;cli.Command{
+                Use:   "lint",
+                Short: "Run golangci-lint",
+                Long:  "Run golangci-lint for comprehensive static analysis. By default only lints changed files.",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        lintArgs := []string{"run"}
+                        if lintFix </span><span class="cov0" title="0">{
+                                lintArgs = append(lintArgs, "--fix")
+                        }</span>
+
+                        <span class="cov0" title="0">if !lintAll </span><span class="cov0" title="0">{
+                                // Use --new-from-rev=HEAD to only report issues in uncommitted changes
+                                // This is golangci-lint's native way to handle incremental linting
+                                lintArgs = append(lintArgs, "--new-from-rev=HEAD")
+                        }</span>
+
+                        // Always lint all packages
+                        <span class="cov0" title="0">lintArgs = append(lintArgs, "./...")
+
+                        execCmd := exec.Command("golangci-lint", lintArgs...)
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()</span>
+                },
+        }
+
+        <span class="cov0" title="0">lintCmd.Flags().BoolVar(&amp;lintFix, "fix", false, i18n.T("common.flag.fix"))
+        lintCmd.Flags().BoolVar(&amp;lintAll, "all", false, i18n.T("cmd.go.lint.flag.all"))
+
+        parent.AddCommand(lintCmd)</span>
+}
+</pre>
+
+		<pre class="file" id="file2" style="display: none">package gocmd
+
+import (
+        "fmt"
+        "os"
+        "os/exec"
+        "path/filepath"
+        "regexp"
+        "strings"
+        "time"
+
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+var (
+        fuzzDuration time.Duration
+        fuzzPkg      string
+        fuzzRun      string
+        fuzzVerbose  bool
+)
+
+func addGoFuzzCommand(parent *cli.Command) <span class="cov0" title="0">{
+        fuzzCmd := &amp;cli.Command{
+                Use:   "fuzz",
+                Short: "Run Go fuzz tests",
+                Long: `Run Go fuzz tests with configurable duration.
+
+Discovers Fuzz* functions across the project and runs each with go test -fuzz.
+
+Examples:
+  core go fuzz                      # Run all fuzz targets for 10s each
+  core go fuzz --duration=30s       # Run each target for 30s
+  core go fuzz --pkg=./pkg/...      # Fuzz specific package
+  core go fuzz --run=FuzzE          # Run only matching fuzz targets`,
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        return runGoFuzz(fuzzDuration, fuzzPkg, fuzzRun, fuzzVerbose)
+                }</span>,
+        }
+
+        <span class="cov0" title="0">fuzzCmd.Flags().DurationVar(&amp;fuzzDuration, "duration", 10*time.Second, "Duration per fuzz target")
+        fuzzCmd.Flags().StringVar(&amp;fuzzPkg, "pkg", "", "Package to fuzz (default: auto-discover)")
+        fuzzCmd.Flags().StringVar(&amp;fuzzRun, "run", "", "Only run fuzz targets matching pattern")
+        fuzzCmd.Flags().BoolVarP(&amp;fuzzVerbose, "verbose", "v", false, "Verbose output")
+
+        parent.AddCommand(fuzzCmd)</span>
+}
+
+// fuzzTarget represents a discovered fuzz function and its package.
+type fuzzTarget struct {
+        Pkg  string
+        Name string
+}
+
+func runGoFuzz(duration time.Duration, pkg, run string, verbose bool) error <span class="cov0" title="0">{
+        cli.Print("%s %s\n", dimStyle.Render(i18n.Label("fuzz")), i18n.ProgressSubject("run", "fuzz tests"))
+        cli.Blank()
+
+        targets, err := discoverFuzzTargets(pkg, run)
+        if err != nil </span><span class="cov0" title="0">{
+                return cli.Wrap(err, "discover fuzz targets")
+        }</span>
+
+        <span class="cov0" title="0">if len(targets) == 0 </span><span class="cov0" title="0">{
+                cli.Print("  %s no fuzz targets found\n", dimStyle.Render("—"))
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">cli.Print("  %s %d target(s), %s each\n", dimStyle.Render(i18n.Label("targets")), len(targets), duration)
+        cli.Blank()
+
+        passed := 0
+        failed := 0
+
+        for _, t := range targets </span><span class="cov0" title="0">{
+                cli.Print("  %s %s in %s\n", dimStyle.Render("→"), t.Name, t.Pkg)
+
+                args := []string{
+                        "test",
+                        fmt.Sprintf("-fuzz=^%s$", t.Name),
+                        fmt.Sprintf("-fuzztime=%s", duration),
+                        "-run=^$", // Don't run unit tests
+                }
+                if verbose </span><span class="cov0" title="0">{
+                        args = append(args, "-v")
+                }</span>
+                <span class="cov0" title="0">args = append(args, t.Pkg)
+
+                cmd := exec.Command("go", args...)
+                cmd.Env = append(os.Environ(), "MACOSX_DEPLOYMENT_TARGET=26.0", "CGO_ENABLED=0")
+                cmd.Dir, _ = os.Getwd()
+
+                output, runErr := cmd.CombinedOutput()
+                outputStr := string(output)
+
+                if runErr != nil </span><span class="cov0" title="0">{
+                        failed++
+                        cli.Print("    %s %s\n", errorStyle.Render(cli.Glyph(":cross:")), runErr.Error())
+                        if outputStr != "" </span><span class="cov0" title="0">{
+                                cli.Text(outputStr)
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        passed++
+                        cli.Print("    %s %s\n", successStyle.Render(cli.Glyph(":check:")), i18n.T("i18n.done.pass"))
+                        if verbose &amp;&amp; outputStr != "" </span><span class="cov0" title="0">{
+                                cli.Text(outputStr)
+                        }</span>
+                }
+        }
+
+        <span class="cov0" title="0">cli.Blank()
+        if failed &gt; 0 </span><span class="cov0" title="0">{
+                cli.Print("%s %d passed, %d failed\n", errorStyle.Render(cli.Glyph(":cross:")), passed, failed)
+                return cli.Err("fuzz: %d target(s) failed", failed)
+        }</span>
+
+        <span class="cov0" title="0">cli.Print("%s %d passed\n", successStyle.Render(cli.Glyph(":check:")), passed)
+        return nil</span>
+}
+
+// discoverFuzzTargets scans for Fuzz* functions in test files.
+func discoverFuzzTargets(pkg, pattern string) ([]fuzzTarget, error) <span class="cov0" title="0">{
+        root := "."
+        if pkg != "" </span><span class="cov0" title="0">{
+                // Convert Go package pattern to filesystem path
+                root = strings.TrimPrefix(pkg, "./")
+                root = strings.TrimSuffix(root, "/...")
+        }</span>
+
+        <span class="cov0" title="0">fuzzRe := regexp.MustCompile(`^func\s+(Fuzz\w+)\s*\(\s*\w+\s+\*testing\.F\s*\)`)
+        var matchRe *regexp.Regexp
+        if pattern != "" </span><span class="cov0" title="0">{
+                var err error
+                matchRe, err = regexp.Compile(pattern)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("invalid --run pattern: %w", err)
+                }</span>
+        }
+
+        <span class="cov0" title="0">var targets []fuzzTarget
+        err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+                <span class="cov0" title="0">if info.IsDir() || !strings.HasSuffix(info.Name(), "_test.go") </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+
+                <span class="cov0" title="0">data, readErr := os.ReadFile(path)
+                if readErr != nil </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+
+                <span class="cov0" title="0">dir := "./" + filepath.Dir(path)
+                for line := range strings.SplitSeq(string(data), "\n") </span><span class="cov0" title="0">{
+                        m := fuzzRe.FindStringSubmatch(line)
+                        if m == nil </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">name := m[1]
+                        if matchRe != nil &amp;&amp; !matchRe.MatchString(name) </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">targets = append(targets, fuzzTarget{Pkg: dir, Name: name})</span>
+                }
+                <span class="cov0" title="0">return nil</span>
+        })
+        <span class="cov0" title="0">return targets, err</span>
+}
+</pre>
+
+		<pre class="file" id="file3" style="display: none">// Package gocmd provides Go development commands.
+//
+// Note: Package named gocmd because 'go' is a reserved keyword.
+package gocmd
+
+import (
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+// Style aliases for shared styles
+var (
+        successStyle = cli.SuccessStyle
+        errorStyle   = cli.ErrorStyle
+        dimStyle     = cli.DimStyle
+)
+
+// AddGoCommands adds Go development commands.
+func AddGoCommands(root *cli.Command) <span class="cov0" title="0">{
+        goCmd := &amp;cli.Command{
+                Use:   "go",
+                Short: i18n.T("cmd.go.short"),
+                Long:  i18n.T("cmd.go.long"),
+        }
+
+        root.AddCommand(goCmd)
+        addGoQACommand(goCmd)
+        addGoTestCommand(goCmd)
+        addGoCovCommand(goCmd)
+        addGoFmtCommand(goCmd)
+        addGoLintCommand(goCmd)
+        addGoInstallCommand(goCmd)
+        addGoModCommand(goCmd)
+        addGoWorkCommand(goCmd)
+        addGoFuzzCommand(goCmd)
+}</span>
+</pre>
+
+		<pre class="file" id="file4" style="display: none">package gocmd
+
+import (
+        "bufio"
+        "errors"
+        "fmt"
+        "io"
+        "os"
+        "os/exec"
+        "path/filepath"
+        "regexp"
+        "strconv"
+        "strings"
+
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+var (
+        testCoverage bool
+        testPkg      string
+        testRun      string
+        testShort    bool
+        testRace     bool
+        testJSON     bool
+        testVerbose  bool
+)
+
+func addGoTestCommand(parent *cli.Command) <span class="cov0" title="0">{
+        testCmd := &amp;cli.Command{
+                Use:   "test",
+                Short: "Run Go tests",
+                Long:  "Run Go tests with optional coverage, filtering, and race detection",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        return runGoTest(testCoverage, testPkg, testRun, testShort, testRace, testJSON, testVerbose)
+                }</span>,
+        }
+
+        <span class="cov0" title="0">testCmd.Flags().BoolVar(&amp;testCoverage, "coverage", false, "Generate coverage report")
+        testCmd.Flags().StringVar(&amp;testPkg, "pkg", "", "Package to test")
+        testCmd.Flags().StringVar(&amp;testRun, "run", "", "Run only tests matching pattern")
+        testCmd.Flags().BoolVar(&amp;testShort, "short", false, "Run only short tests")
+        testCmd.Flags().BoolVar(&amp;testRace, "race", false, "Enable race detector")
+        testCmd.Flags().BoolVar(&amp;testJSON, "json", false, "Output as JSON")
+        testCmd.Flags().BoolVarP(&amp;testVerbose, "verbose", "v", false, "Verbose output")
+
+        parent.AddCommand(testCmd)</span>
+}
+
+func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose bool) error <span class="cov0" title="0">{
+        if pkg == "" </span><span class="cov0" title="0">{
+                pkg = "./..."
+        }</span>
+
+        <span class="cov0" title="0">args := []string{"test"}
+
+        var covPath string
+        if coverage </span><span class="cov0" title="0">{
+                args = append(args, "-cover", "-covermode=atomic")
+                covFile, err := os.CreateTemp("", "coverage-*.out")
+                if err == nil </span><span class="cov0" title="0">{
+                        covPath = covFile.Name()
+                        _ = covFile.Close()
+                        args = append(args, "-coverprofile="+covPath)
+                        defer os.Remove(covPath)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if run != "" </span><span class="cov0" title="0">{
+                args = append(args, "-run", run)
+        }</span>
+        <span class="cov0" title="0">if short </span><span class="cov0" title="0">{
+                args = append(args, "-short")
+        }</span>
+        <span class="cov0" title="0">if race </span><span class="cov0" title="0">{
+                args = append(args, "-race")
+        }</span>
+        <span class="cov0" title="0">if verbose </span><span class="cov0" title="0">{
+                args = append(args, "-v")
+        }</span>
+
+        <span class="cov0" title="0">args = append(args, pkg)
+
+        if !jsonOut </span><span class="cov0" title="0">{
+                cli.Print("%s %s\n", dimStyle.Render(i18n.Label("test")), i18n.ProgressSubject("run", "tests"))
+                cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("package")), pkg)
+                cli.Blank()
+        }</span>
+
+        <span class="cov0" title="0">cmd := exec.Command("go", args...)
+        cmd.Env = append(os.Environ(), "MACOSX_DEPLOYMENT_TARGET=26.0", "CGO_ENABLED=0")
+        cmd.Dir, _ = os.Getwd()
+
+        output, err := cmd.CombinedOutput()
+        outputStr := string(output)
+
+        // Filter linker warnings
+        lines := strings.Split(outputStr, "\n")
+        var filtered []string
+        for _, line := range lines </span><span class="cov0" title="0">{
+                if !strings.Contains(line, "ld: warning:") </span><span class="cov0" title="0">{
+                        filtered = append(filtered, line)
+                }</span>
+        }
+        <span class="cov0" title="0">outputStr = strings.Join(filtered, "\n")
+
+        // Parse results
+        passed, failed, skipped := parseTestResults(outputStr)
+        cov := parseOverallCoverage(outputStr)
+
+        if jsonOut </span><span class="cov0" title="0">{
+                cli.Print(`{"passed":%d,"failed":%d,"skipped":%d,"coverage":%.1f,"exit_code":%d}`,
+                        passed, failed, skipped, cov, cmd.ProcessState.ExitCode())
+                cli.Blank()
+                return err
+        }</span>
+
+        // Print filtered output if verbose or failed
+        <span class="cov0" title="0">if verbose || err != nil </span><span class="cov0" title="0">{
+                cli.Text(outputStr)
+        }</span>
+
+        // Summary
+        <span class="cov0" title="0">if err == nil </span><span class="cov0" title="0">{
+                cli.Print("  %s %s\n", successStyle.Render(cli.Glyph(":check:")), i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"))
+        }</span> else<span class="cov0" title="0"> {
+                cli.Print("  %s %s, %s\n", errorStyle.Render(cli.Glyph(":cross:")),
+                        i18n.T("i18n.count.test", passed)+" "+i18n.T("i18n.done.pass"),
+                        i18n.T("i18n.count.test", failed)+" "+i18n.T("i18n.done.fail"))
+        }</span>
+
+        <span class="cov0" title="0">if cov &gt; 0 </span><span class="cov0" title="0">{
+                cli.Print("\n  %s %s\n", cli.KeyStyle.Render(i18n.Label("statements")), formatCoverage(cov))
+                if covPath != "" </span><span class="cov0" title="0">{
+                        branchCov, err := calculateBlockCoverage(covPath)
+                        if err != nil </span><span class="cov0" title="0">{
+                                cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), cli.ErrorStyle.Render("unable to calculate"))
+                        }</span> else<span class="cov0" title="0"> {
+                                cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
+                        }</span>
+                }
+        }
+
+        <span class="cov0" title="0">if err == nil </span><span class="cov0" title="0">{
+                cli.Print("\n%s\n", successStyle.Render(i18n.T("i18n.done.pass")))
+        }</span> else<span class="cov0" title="0"> {
+                cli.Print("\n%s\n", errorStyle.Render(i18n.T("i18n.done.fail")))
+        }</span>
+
+        <span class="cov0" title="0">return err</span>
+}
+
+func parseTestResults(output string) (passed, failed, skipped int) <span class="cov0" title="0">{
+        passRe := regexp.MustCompile(`(?m)^ok\s+`)
+        failRe := regexp.MustCompile(`(?m)^FAIL\s+`)
+        skipRe := regexp.MustCompile(`(?m)^\?\s+`)
+
+        passed = len(passRe.FindAllString(output, -1))
+        failed = len(failRe.FindAllString(output, -1))
+        skipped = len(skipRe.FindAllString(output, -1))
+        return
+}</span>
+
+func parseOverallCoverage(output string) float64 <span class="cov8" title="1">{
+        re := regexp.MustCompile(`coverage:\s+([\d.]+)%`)
+        matches := re.FindAllStringSubmatch(output, -1)
+        if len(matches) == 0 </span><span class="cov8" title="1">{
+                return 0
+        }</span>
+
+        <span class="cov8" title="1">var total float64
+        for _, m := range matches </span><span class="cov8" title="1">{
+                var cov float64
+                _, _ = fmt.Sscanf(m[1], "%f", &amp;cov)
+                total += cov
+        }</span>
+        <span class="cov8" title="1">return total / float64(len(matches))</span>
+}
+
+var (
+        covPkg             string
+        covHTML            bool
+        covOpen            bool
+        covThreshold       float64
+        covBranchThreshold float64
+        covOutput          string
+)
+
+func addGoCovCommand(parent *cli.Command) <span class="cov0" title="0">{
+        covCmd := &amp;cli.Command{
+                Use:   "cov",
+                Short: "Run tests with coverage report",
+                Long:  "Run tests with detailed coverage reports, HTML output, and threshold checking",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        pkg := covPkg
+                        if pkg == "" </span><span class="cov0" title="0">{
+                                // Auto-discover packages with tests
+                                pkgs, err := findTestPackages(".")
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return cli.Wrap(err, i18n.T("i18n.fail.find", "test packages"))
+                                }</span>
+                                <span class="cov0" title="0">if len(pkgs) == 0 </span><span class="cov0" title="0">{
+                                        return errors.New("no test packages found")
+                                }</span>
+                                <span class="cov0" title="0">pkg = strings.Join(pkgs, " ")</span>
+                        }
+
+                        // Create temp file for coverage data
+                        <span class="cov0" title="0">covFile, err := os.CreateTemp("", "coverage-*.out")
+                        if err != nil </span><span class="cov0" title="0">{
+                                return cli.Wrap(err, i18n.T("i18n.fail.create", "coverage file"))
+                        }</span>
+                        <span class="cov0" title="0">covPath := covFile.Name()
+                        _ = covFile.Close()
+                        defer func() </span><span class="cov0" title="0">{
+                                if covOutput == "" </span><span class="cov0" title="0">{
+                                        _ = os.Remove(covPath)
+                                }</span> else<span class="cov0" title="0"> {
+                                        // Copy to output destination before removing
+                                        src, _ := os.Open(covPath)
+                                        dst, _ := os.Create(covOutput)
+                                        if src != nil &amp;&amp; dst != nil </span><span class="cov0" title="0">{
+                                                _, _ = io.Copy(dst, src)
+                                                _ = src.Close()
+                                                _ = dst.Close()
+                                        }</span>
+                                        <span class="cov0" title="0">_ = os.Remove(covPath)</span>
+                                }
+                        }()
+
+                        <span class="cov0" title="0">cli.Print("%s %s\n", dimStyle.Render(i18n.Label("coverage")), i18n.ProgressSubject("run", "tests"))
+                        // Truncate package list if too long for display
+                        displayPkg := pkg
+                        if len(displayPkg) &gt; 60 </span><span class="cov0" title="0">{
+                                displayPkg = displayPkg[:57] + "..."
+                        }</span>
+                        <span class="cov0" title="0">cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("package")), displayPkg)
+                        cli.Blank()
+
+                        // Run tests with coverage
+                        // We need to split pkg into individual arguments if it contains spaces
+                        pkgArgs := strings.Fields(pkg)
+                        cmdArgs := append([]string{"test", "-coverprofile=" + covPath, "-covermode=atomic"}, pkgArgs...)
+
+                        goCmd := exec.Command("go", cmdArgs...)
+                        goCmd.Env = append(os.Environ(), "MACOSX_DEPLOYMENT_TARGET=26.0")
+                        goCmd.Stdout = os.Stdout
+                        goCmd.Stderr = os.Stderr
+
+                        testErr := goCmd.Run()
+
+                        // Get coverage percentage
+                        coverCmd := exec.Command("go", "tool", "cover", "-func="+covPath)
+                        covOutput, err := coverCmd.Output()
+                        if err != nil </span><span class="cov0" title="0">{
+                                if testErr != nil </span><span class="cov0" title="0">{
+                                        return testErr
+                                }</span>
+                                <span class="cov0" title="0">return cli.Wrap(err, i18n.T("i18n.fail.get", "coverage"))</span>
+                        }
+
+                        // Parse total coverage from last line
+                        <span class="cov0" title="0">lines := strings.Split(strings.TrimSpace(string(covOutput)), "\n")
+                        var statementCov float64
+                        if len(lines) &gt; 0 </span><span class="cov0" title="0">{
+                                lastLine := lines[len(lines)-1]
+                                // Format: "total:    (statements)    XX.X%"
+                                if strings.Contains(lastLine, "total:") </span><span class="cov0" title="0">{
+                                        parts := strings.Fields(lastLine)
+                                        if len(parts) &gt;= 3 </span><span class="cov0" title="0">{
+                                                covStr := strings.TrimSuffix(parts[len(parts)-1], "%")
+                                                _, _ = fmt.Sscanf(covStr, "%f", &amp;statementCov)
+                                        }</span>
+                                }
+                        }
+
+                        // Calculate branch coverage (block coverage)
+                        <span class="cov0" title="0">branchCov, err := calculateBlockCoverage(covPath)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return cli.Wrap(err, "calculate branch coverage")
+                        }</span>
+
+                        // Print coverage summary
+                        <span class="cov0" title="0">cli.Blank()
+                        cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("statements")), formatCoverage(statementCov))
+                        cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
+
+                        // Generate HTML if requested
+                        if covHTML || covOpen </span><span class="cov0" title="0">{
+                                htmlPath := "coverage.html"
+                                htmlCmd := exec.Command("go", "tool", "cover", "-html="+covPath, "-o="+htmlPath)
+                                if err := htmlCmd.Run(); err != nil </span><span class="cov0" title="0">{
+                                        return cli.Wrap(err, i18n.T("i18n.fail.generate", "HTML"))
+                                }</span>
+                                <span class="cov0" title="0">cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("html")), htmlPath)
+
+                                if covOpen </span><span class="cov0" title="0">{
+                                        // Open in browser
+                                        var openCmd *exec.Cmd
+                                        switch </span>{
+                                        case exec.Command("which", "open").Run() == nil:<span class="cov0" title="0">
+                                                openCmd = exec.Command("open", htmlPath)</span>
+                                        case exec.Command("which", "xdg-open").Run() == nil:<span class="cov0" title="0">
+                                                openCmd = exec.Command("xdg-open", htmlPath)</span>
+                                        default:<span class="cov0" title="0">
+                                                cli.Print("  %s\n", dimStyle.Render("Open coverage.html in your browser"))</span>
+                                        }
+                                        <span class="cov0" title="0">if openCmd != nil </span><span class="cov0" title="0">{
+                                                _ = openCmd.Run()
+                                        }</span>
+                                }
+                        }
+
+                        // Check thresholds
+                        <span class="cov0" title="0">if covThreshold &gt; 0 &amp;&amp; statementCov &lt; covThreshold </span><span class="cov0" title="0">{
+                                cli.Print("\n%s Statements: %.1f%% &lt; %.1f%%\n", errorStyle.Render(i18n.T("i18n.fail.meet", "threshold")), statementCov, covThreshold)
+                                return errors.New("statement coverage below threshold")
+                        }</span>
+                        <span class="cov0" title="0">if covBranchThreshold &gt; 0 &amp;&amp; branchCov &lt; covBranchThreshold </span><span class="cov0" title="0">{
+                                cli.Print("\n%s Branches: %.1f%% &lt; %.1f%%\n", errorStyle.Render(i18n.T("i18n.fail.meet", "threshold")), branchCov, covBranchThreshold)
+                                return errors.New("branch coverage below threshold")
+                        }</span>
+
+                        <span class="cov0" title="0">if testErr != nil </span><span class="cov0" title="0">{
+                                return testErr
+                        }</span>
+
+                        <span class="cov0" title="0">cli.Print("\n%s\n", successStyle.Render(i18n.T("i18n.done.pass")))
+                        return nil</span>
+                },
+        }
+
+        <span class="cov0" title="0">covCmd.Flags().StringVar(&amp;covPkg, "pkg", "", "Package to test")
+        covCmd.Flags().BoolVar(&amp;covHTML, "html", false, "Generate HTML report")
+        covCmd.Flags().BoolVar(&amp;covOpen, "open", false, "Open HTML report in browser")
+        covCmd.Flags().Float64Var(&amp;covThreshold, "threshold", 0, "Minimum statement coverage percentage")
+        covCmd.Flags().Float64Var(&amp;covBranchThreshold, "branch-threshold", 0, "Minimum branch coverage percentage")
+        covCmd.Flags().StringVarP(&amp;covOutput, "output", "o", "", "Output file for coverage profile")
+
+        parent.AddCommand(covCmd)</span>
+}
+
+// calculateBlockCoverage parses a Go coverage profile and returns the percentage of basic
+// blocks that have a non-zero execution count. Go's coverage profile contains one line per
+// basic block, where the last field is the execution count, not explicit branch coverage.
+// The resulting block coverage is used here only as a proxy for branch coverage; computing
+// true branch coverage would require more detailed control-flow analysis.
+func calculateBlockCoverage(path string) (float64, error) <span class="cov8" title="1">{
+        file, err := os.Open(path)
+        if err != nil </span><span class="cov8" title="1">{
+                return 0, err
+        }</span>
+        <span class="cov8" title="1">defer file.Close()
+
+        scanner := bufio.NewScanner(file)
+        var totalBlocks, coveredBlocks int
+
+        // Skip the first line (mode: atomic/set/count)
+        if !scanner.Scan() </span><span class="cov0" title="0">{
+                return 0, nil
+        }</span>
+
+        <span class="cov8" title="1">for scanner.Scan() </span><span class="cov8" title="1">{
+                line := scanner.Text()
+                if line == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">fields := strings.Fields(line)
+                if len(fields) &lt; 3 </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                // Last field is the count
+                <span class="cov8" title="1">count, err := strconv.Atoi(fields[len(fields)-1])
+                if err != nil </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">totalBlocks++
+                if count &gt; 0 </span><span class="cov8" title="1">{
+                        coveredBlocks++
+                }</span>
+        }
+
+        <span class="cov8" title="1">if err := scanner.Err(); err != nil </span><span class="cov0" title="0">{
+                return 0, err
+        }</span>
+
+        <span class="cov8" title="1">if totalBlocks == 0 </span><span class="cov8" title="1">{
+                return 0, nil
+        }</span>
+
+        <span class="cov8" title="1">return (float64(coveredBlocks) / float64(totalBlocks)) * 100, nil</span>
+}
+
+func findTestPackages(root string) ([]string, error) <span class="cov0" title="0">{
+        pkgMap := make(map[string]bool)
+        err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+                <span class="cov0" title="0">if !info.IsDir() &amp;&amp; strings.HasSuffix(info.Name(), "_test.go") </span><span class="cov0" title="0">{
+                        dir := filepath.Dir(path)
+                        if !strings.HasPrefix(dir, ".") </span><span class="cov0" title="0">{
+                                dir = "./" + dir
+                        }</span>
+                        <span class="cov0" title="0">pkgMap[dir] = true</span>
+                }
+                <span class="cov0" title="0">return nil</span>
+        })
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">var pkgs []string
+        for pkg := range pkgMap </span><span class="cov0" title="0">{
+                pkgs = append(pkgs, pkg)
+        }</span>
+        <span class="cov0" title="0">return pkgs, nil</span>
+}
+
+func formatCoverage(cov float64) string <span class="cov8" title="1">{
+        s := fmt.Sprintf("%.1f%%", cov)
+        if cov &gt;= 80 </span><span class="cov8" title="1">{
+                return cli.SuccessStyle.Render(s)
+        }</span> else<span class="cov8" title="1"> if cov &gt;= 50 </span><span class="cov8" title="1">{
+                return cli.WarningStyle.Render(s)
+        }</span>
+        <span class="cov8" title="1">return cli.ErrorStyle.Render(s)</span>
+}
+</pre>
+
+		<pre class="file" id="file5" style="display: none">package gocmd
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "os"
+        "os/exec"
+        "regexp"
+        "strings"
+        "time"
+
+        "github.com/host-uk/core/internal/cmd/qa"
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+// QA command flags - comprehensive options for all agents
+var (
+        qaFix               bool
+        qaChanged           bool
+        qaAll               bool
+        qaSkip              string
+        qaOnly              string
+        qaCoverage          bool
+        qaThreshold         float64
+        qaBranchThreshold   float64
+        qaDocblockThreshold float64
+        qaJSON              bool
+        qaVerbose           bool
+        qaQuiet             bool
+        qaTimeout           time.Duration
+        qaShort             bool
+        qaRace              bool
+        qaBench             bool
+        qaFailFast          bool
+        qaMod               bool
+        qaCI                bool
+)
+
+func addGoQACommand(parent *cli.Command) <span class="cov0" title="0">{
+        qaCmd := &amp;cli.Command{
+                Use:   "qa",
+                Short: "Run QA checks",
+                Long: `Run comprehensive code quality checks for Go projects.
+
+Checks available: fmt, vet, lint, test, race, fuzz, vuln, sec, bench, docblock
+
+Examples:
+  core go qa                    # Default: fmt, lint, test
+  core go qa --fix              # Auto-fix formatting and lint issues
+  core go qa --only=test        # Only run tests
+  core go qa --skip=vuln,sec    # Skip vulnerability and security scans
+  core go qa --coverage --threshold=80  # Require 80% coverage
+  core go qa --changed          # Only check changed files (git-aware)
+  core go qa --ci               # CI mode: strict, coverage, fail-fast
+  core go qa --race --short     # Quick tests with race detection
+  core go qa --json             # Output results as JSON`,
+                RunE: runGoQA,
+        }
+
+        // Fix and modification flags (persistent so subcommands inherit them)
+        qaCmd.PersistentFlags().BoolVar(&amp;qaFix, "fix", false, "Auto-fix issues where possible")
+        qaCmd.PersistentFlags().BoolVar(&amp;qaMod, "mod", false, "Run go mod tidy before checks")
+
+        // Scope flags
+        qaCmd.PersistentFlags().BoolVar(&amp;qaChanged, "changed", false, "Only check changed files (git-aware)")
+        qaCmd.PersistentFlags().BoolVar(&amp;qaAll, "all", false, "Check all files (override git-aware)")
+        qaCmd.PersistentFlags().StringVar(&amp;qaSkip, "skip", "", "Skip checks (comma-separated: fmt,vet,lint,test,race,fuzz,vuln,sec,bench)")
+        qaCmd.PersistentFlags().StringVar(&amp;qaOnly, "only", "", "Only run these checks (comma-separated)")
+
+        // Coverage flags
+        qaCmd.PersistentFlags().BoolVar(&amp;qaCoverage, "coverage", false, "Include coverage reporting")
+        qaCmd.PersistentFlags().BoolVarP(&amp;qaCoverage, "cov", "c", false, "Include coverage reporting (shorthand)")
+        qaCmd.PersistentFlags().Float64Var(&amp;qaThreshold, "threshold", 0, "Minimum statement coverage threshold (0-100), fail if below")
+        qaCmd.PersistentFlags().Float64Var(&amp;qaBranchThreshold, "branch-threshold", 0, "Minimum branch coverage threshold (0-100), fail if below")
+        qaCmd.PersistentFlags().Float64Var(&amp;qaDocblockThreshold, "docblock-threshold", 80, "Minimum docblock coverage threshold (0-100)")
+
+        // Test flags
+        qaCmd.PersistentFlags().BoolVar(&amp;qaShort, "short", false, "Run tests with -short flag")
+        qaCmd.PersistentFlags().BoolVar(&amp;qaRace, "race", false, "Include race detection in tests")
+        qaCmd.PersistentFlags().BoolVar(&amp;qaBench, "bench", false, "Include benchmarks")
+
+        // Output flags
+        qaCmd.PersistentFlags().BoolVar(&amp;qaJSON, "json", false, "Output results as JSON")
+        qaCmd.PersistentFlags().BoolVarP(&amp;qaVerbose, "verbose", "v", false, "Show verbose output")
+        qaCmd.PersistentFlags().BoolVarP(&amp;qaQuiet, "quiet", "q", false, "Only show errors")
+
+        // Control flags
+        qaCmd.PersistentFlags().DurationVar(&amp;qaTimeout, "timeout", 10*time.Minute, "Timeout for all checks")
+        qaCmd.PersistentFlags().BoolVar(&amp;qaFailFast, "fail-fast", false, "Stop on first failure")
+        qaCmd.PersistentFlags().BoolVar(&amp;qaCI, "ci", false, "CI mode: strict checks, coverage required, fail-fast")
+
+        // Preset subcommands for convenience
+        qaCmd.AddCommand(&amp;cli.Command{
+                Use:   "quick",
+                Short: "Quick QA: fmt, vet, lint (no tests)",
+                RunE:  func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{ qaOnly = "fmt,vet,lint"; return runGoQA(cmd, args) }</span>,
+        })
+
+        <span class="cov0" title="0">qaCmd.AddCommand(&amp;cli.Command{
+                Use:   "full",
+                Short: "Full QA: all checks including race, vuln, sec",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        qaOnly = "fmt,vet,lint,test,race,vuln,sec"
+                        return runGoQA(cmd, args)
+                }</span>,
+        })
+
+        <span class="cov0" title="0">qaCmd.AddCommand(&amp;cli.Command{
+                Use:   "pre-commit",
+                Short: "Pre-commit checks: fmt --fix, lint --fix, test --short",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        qaFix = true
+                        qaShort = true
+                        qaOnly = "fmt,lint,test"
+                        return runGoQA(cmd, args)
+                }</span>,
+        })
+
+        <span class="cov0" title="0">qaCmd.AddCommand(&amp;cli.Command{
+                Use:   "pr",
+                Short: "PR checks: full QA with coverage threshold",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        qaCoverage = true
+                        if qaThreshold == 0 </span><span class="cov0" title="0">{
+                                qaThreshold = 50 // Default PR threshold
+                        }</span>
+                        <span class="cov0" title="0">qaOnly = "fmt,vet,lint,test"
+                        return runGoQA(cmd, args)</span>
+                },
+        })
+
+        <span class="cov0" title="0">parent.AddCommand(qaCmd)</span>
+}
+
+// QAResult holds the result of a QA run for JSON output
+type QAResult struct {
+        Success         bool          `json:"success"`
+        Duration        string        `json:"duration"`
+        Checks          []CheckResult `json:"checks"`
+        Coverage        *float64      `json:"coverage,omitempty"`
+        BranchCoverage  *float64      `json:"branch_coverage,omitempty"`
+        Threshold       *float64      `json:"threshold,omitempty"`
+        BranchThreshold *float64      `json:"branch_threshold,omitempty"`
+}
+
+// CheckResult holds the result of a single check
+type CheckResult struct {
+        Name     string `json:"name"`
+        Passed   bool   `json:"passed"`
+        Duration string `json:"duration"`
+        Error    string `json:"error,omitempty"`
+        Output   string `json:"output,omitempty"`
+        FixHint  string `json:"fix_hint,omitempty"`
+}
+
+func runGoQA(cmd *cli.Command, args []string) error <span class="cov0" title="0">{
+        // Apply CI mode defaults
+        if qaCI </span><span class="cov0" title="0">{
+                qaCoverage = true
+                qaFailFast = true
+                if qaThreshold == 0 </span><span class="cov0" title="0">{
+                        qaThreshold = 50
+                }</span>
+        }
+
+        <span class="cov0" title="0">cwd, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return cli.Wrap(err, i18n.T("i18n.fail.get", "working directory"))
+        }</span>
+
+        // Detect if this is a Go project
+        <span class="cov0" title="0">if _, err := os.Stat("go.mod"); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                return cli.Err("not a Go project (no go.mod found)")
+        }</span>
+
+        // Determine which checks to run
+        <span class="cov0" title="0">checkNames := determineChecks()
+
+        if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                cli.Print("%s %s\n\n", cli.DimStyle.Render(i18n.Label("qa")), i18n.ProgressSubject("run", "Go QA"))
+        }</span>
+
+        // Run go mod tidy if requested
+        <span class="cov0" title="0">if qaMod </span><span class="cov0" title="0">{
+                if !qaQuiet </span><span class="cov0" title="0">{
+                        cli.Print("%s %s\n", cli.DimStyle.Render("→"), "Running go mod tidy...")
+                }</span>
+                <span class="cov0" title="0">modCmd := exec.Command("go", "mod", "tidy")
+                modCmd.Dir = cwd
+                if err := modCmd.Run(); err != nil </span><span class="cov0" title="0">{
+                        return cli.Wrap(err, "go mod tidy failed")
+                }</span>
+        }
+
+        <span class="cov0" title="0">ctx, cancel := context.WithTimeout(context.Background(), qaTimeout)
+        defer cancel()
+
+        startTime := time.Now()
+        checks := buildChecks(checkNames)
+        results := make([]CheckResult, 0, len(checks))
+        passed := 0
+        failed := 0
+
+        for _, check := range checks </span><span class="cov0" title="0">{
+                checkStart := time.Now()
+
+                if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                        cli.Print("%s %s\n", cli.DimStyle.Render("→"), i18n.Progress(check.Name))
+                }</span>
+
+                <span class="cov0" title="0">output, err := runCheckCapture(ctx, cwd, check)
+                checkDuration := time.Since(checkStart)
+
+                result := CheckResult{
+                        Name:     check.Name,
+                        Duration: checkDuration.Round(time.Millisecond).String(),
+                }
+
+                if err != nil </span><span class="cov0" title="0">{
+                        result.Passed = false
+                        result.Error = err.Error()
+                        if qaVerbose </span><span class="cov0" title="0">{
+                                result.Output = output
+                        }</span>
+                        <span class="cov0" title="0">result.FixHint = fixHintFor(check.Name, output)
+                        failed++
+
+                        if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                                cli.Print("  %s %s\n", cli.ErrorStyle.Render(cli.Glyph(":cross:")), err.Error())
+                                if qaVerbose &amp;&amp; output != "" </span><span class="cov0" title="0">{
+                                        cli.Text(output)
+                                }</span>
+                                <span class="cov0" title="0">if result.FixHint != "" </span><span class="cov0" title="0">{
+                                        cli.Hint("fix", result.FixHint)
+                                }</span>
+                        }
+
+                        <span class="cov0" title="0">if qaFailFast </span><span class="cov0" title="0">{
+                                results = append(results, result)
+                                break</span>
+                        }
+                } else<span class="cov0" title="0"> {
+                        result.Passed = true
+                        if qaVerbose </span><span class="cov0" title="0">{
+                                result.Output = output
+                        }</span>
+                        <span class="cov0" title="0">passed++
+
+                        if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                                cli.Print("  %s %s\n", cli.SuccessStyle.Render(cli.Glyph(":check:")), i18n.T("i18n.done.pass"))
+                        }</span>
+                }
+
+                <span class="cov0" title="0">results = append(results, result)</span>
+        }
+
+        // Run coverage if requested
+        <span class="cov0" title="0">var coverageVal *float64
+        var branchVal *float64
+        if qaCoverage &amp;&amp; !qaFailFast || (qaCoverage &amp;&amp; failed == 0) </span><span class="cov0" title="0">{
+                cov, branch, err := runCoverage(ctx, cwd)
+                if err == nil </span><span class="cov0" title="0">{
+                        coverageVal = &amp;cov
+                        branchVal = &amp;branch
+                        if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                                cli.Print("\n%s %.1f%%\n", cli.DimStyle.Render("Statement Coverage:"), cov)
+                                cli.Print("%s %.1f%%\n", cli.DimStyle.Render("Branch Coverage:"), branch)
+                        }</span>
+                        <span class="cov0" title="0">if qaThreshold &gt; 0 &amp;&amp; cov &lt; qaThreshold </span><span class="cov0" title="0">{
+                                failed++
+                                if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                                        cli.Print("  %s Statement coverage %.1f%% below threshold %.1f%%\n",
+                                                cli.ErrorStyle.Render(cli.Glyph(":cross:")), cov, qaThreshold)
+                                }</span>
+                        }
+                        <span class="cov0" title="0">if qaBranchThreshold &gt; 0 &amp;&amp; branch &lt; qaBranchThreshold </span><span class="cov0" title="0">{
+                                failed++
+                                if !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                                        cli.Print("  %s Branch coverage %.1f%% below threshold %.1f%%\n",
+                                                cli.ErrorStyle.Render(cli.Glyph(":cross:")), branch, qaBranchThreshold)
+                                }</span>
+                        }
+
+                        <span class="cov0" title="0">if failed &gt; 0 &amp;&amp; !qaJSON &amp;&amp; !qaQuiet </span><span class="cov0" title="0">{
+                                cli.Hint("fix", "Run 'core go cov --open' to see uncovered lines, then add tests.")
+                        }</span>
+                }
+        }
+
+        <span class="cov0" title="0">duration := time.Since(startTime).Round(time.Millisecond)
+
+        // JSON output
+        if qaJSON </span><span class="cov0" title="0">{
+                qaResult := QAResult{
+                        Success:        failed == 0,
+                        Duration:       duration.String(),
+                        Checks:         results,
+                        Coverage:       coverageVal,
+                        BranchCoverage: branchVal,
+                }
+                if qaThreshold &gt; 0 </span><span class="cov0" title="0">{
+                        qaResult.Threshold = &amp;qaThreshold
+                }</span>
+                <span class="cov0" title="0">if qaBranchThreshold &gt; 0 </span><span class="cov0" title="0">{
+                        qaResult.BranchThreshold = &amp;qaBranchThreshold
+                }</span>
+                <span class="cov0" title="0">enc := json.NewEncoder(os.Stdout)
+                enc.SetIndent("", "  ")
+                return enc.Encode(qaResult)</span>
+        }
+
+        // Summary
+        <span class="cov0" title="0">if !qaQuiet </span><span class="cov0" title="0">{
+                cli.Blank()
+                if failed &gt; 0 </span><span class="cov0" title="0">{
+                        cli.Print("%s %s, %s (%s)\n",
+                                cli.ErrorStyle.Render(cli.Glyph(":cross:")),
+                                i18n.T("i18n.count.check", passed)+" "+i18n.T("i18n.done.pass"),
+                                i18n.T("i18n.count.check", failed)+" "+i18n.T("i18n.done.fail"),
+                                duration)
+                }</span> else<span class="cov0" title="0"> {
+                        cli.Print("%s %s (%s)\n",
+                                cli.SuccessStyle.Render(cli.Glyph(":check:")),
+                                i18n.T("i18n.count.check", passed)+" "+i18n.T("i18n.done.pass"),
+                                duration)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if failed &gt; 0 </span><span class="cov0" title="0">{
+                os.Exit(1)
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func determineChecks() []string <span class="cov0" title="0">{
+        // If --only is specified, use those
+        if qaOnly != "" </span><span class="cov0" title="0">{
+                return strings.Split(qaOnly, ",")
+        }</span>
+
+        // Default checks
+        <span class="cov0" title="0">checks := []string{"fmt", "lint", "test", "fuzz", "docblock"}
+
+        // Add race if requested
+        if qaRace </span><span class="cov0" title="0">{
+                // Replace test with race (which includes test)
+                for i, c := range checks </span><span class="cov0" title="0">{
+                        if c == "test" </span><span class="cov0" title="0">{
+                                checks[i] = "race"
+                                break</span>
+                        }
+                }
+        }
+
+        // Add bench if requested
+        <span class="cov0" title="0">if qaBench </span><span class="cov0" title="0">{
+                checks = append(checks, "bench")
+        }</span>
+
+        // Remove skipped checks
+        <span class="cov0" title="0">if qaSkip != "" </span><span class="cov0" title="0">{
+                skipMap := make(map[string]bool)
+                for _, s := range strings.Split(qaSkip, ",") </span><span class="cov0" title="0">{
+                        skipMap[strings.TrimSpace(s)] = true
+                }</span>
+                <span class="cov0" title="0">filtered := make([]string, 0, len(checks))
+                for _, c := range checks </span><span class="cov0" title="0">{
+                        if !skipMap[c] </span><span class="cov0" title="0">{
+                                filtered = append(filtered, c)
+                        }</span>
+                }
+                <span class="cov0" title="0">checks = filtered</span>
+        }
+
+        <span class="cov0" title="0">return checks</span>
+}
+
+// QACheck represents a single QA check.
+type QACheck struct {
+        Name    string
+        Command string
+        Args    []string
+}
+
+func buildChecks(names []string) []QACheck <span class="cov0" title="0">{
+        var checks []QACheck
+        for _, name := range names </span><span class="cov0" title="0">{
+                name = strings.TrimSpace(name)
+                check := buildCheck(name)
+                if check.Command != "" </span><span class="cov0" title="0">{
+                        checks = append(checks, check)
+                }</span>
+        }
+        <span class="cov0" title="0">return checks</span>
+}
+
+func buildCheck(name string) QACheck <span class="cov0" title="0">{
+        switch name </span>{
+        case "fmt", "format":<span class="cov0" title="0">
+                args := []string{"-l", "."}
+                if qaFix </span><span class="cov0" title="0">{
+                        args = []string{"-w", "."}
+                }</span>
+                <span class="cov0" title="0">return QACheck{Name: "format", Command: "gofmt", Args: args}</span>
+
+        case "vet":<span class="cov0" title="0">
+                return QACheck{Name: "vet", Command: "go", Args: []string{"vet", "./..."}}</span>
+
+        case "lint":<span class="cov0" title="0">
+                args := []string{"run"}
+                if qaFix </span><span class="cov0" title="0">{
+                        args = append(args, "--fix")
+                }</span>
+                <span class="cov0" title="0">if qaChanged &amp;&amp; !qaAll </span><span class="cov0" title="0">{
+                        args = append(args, "--new-from-rev=HEAD")
+                }</span>
+                <span class="cov0" title="0">args = append(args, "./...")
+                return QACheck{Name: "lint", Command: "golangci-lint", Args: args}</span>
+
+        case "test":<span class="cov0" title="0">
+                args := []string{"test"}
+                if qaShort </span><span class="cov0" title="0">{
+                        args = append(args, "-short")
+                }</span>
+                <span class="cov0" title="0">if qaVerbose </span><span class="cov0" title="0">{
+                        args = append(args, "-v")
+                }</span>
+                <span class="cov0" title="0">args = append(args, "./...")
+                return QACheck{Name: "test", Command: "go", Args: args}</span>
+
+        case "race":<span class="cov0" title="0">
+                args := []string{"test", "-race"}
+                if qaShort </span><span class="cov0" title="0">{
+                        args = append(args, "-short")
+                }</span>
+                <span class="cov0" title="0">if qaVerbose </span><span class="cov0" title="0">{
+                        args = append(args, "-v")
+                }</span>
+                <span class="cov0" title="0">args = append(args, "./...")
+                return QACheck{Name: "race", Command: "go", Args: args}</span>
+
+        case "bench":<span class="cov0" title="0">
+                args := []string{"test", "-bench=.", "-benchmem", "-run=^$"}
+                args = append(args, "./...")
+                return QACheck{Name: "bench", Command: "go", Args: args}</span>
+
+        case "vuln":<span class="cov0" title="0">
+                return QACheck{Name: "vuln", Command: "govulncheck", Args: []string{"./..."}}</span>
+
+        case "sec":<span class="cov0" title="0">
+                return QACheck{Name: "sec", Command: "gosec", Args: []string{"-quiet", "./..."}}</span>
+
+        case "fuzz":<span class="cov0" title="0">
+                return QACheck{Name: "fuzz", Command: "_internal_"}</span>
+
+        case "docblock":<span class="cov0" title="0">
+                // Special internal check - handled separately
+                return QACheck{Name: "docblock", Command: "_internal_"}</span>
+
+        default:<span class="cov0" title="0">
+                return QACheck{}</span>
+        }
+}
+
+// fixHintFor returns an actionable fix instruction for a given check failure.
+func fixHintFor(checkName, output string) string <span class="cov0" title="0">{
+        switch checkName </span>{
+        case "format", "fmt":<span class="cov0" title="0">
+                return "Run 'core go qa fmt --fix' to auto-format."</span>
+        case "vet":<span class="cov0" title="0">
+                return "Fix the issues reported by go vet — typically genuine bugs."</span>
+        case "lint":<span class="cov0" title="0">
+                return "Run 'core go qa lint --fix' for auto-fixable issues."</span>
+        case "test":<span class="cov0" title="0">
+                if name := extractFailingTest(output); name != "" </span><span class="cov0" title="0">{
+                        return fmt.Sprintf("Run 'go test -run %s -v ./...' to debug.", name)
+                }</span>
+                <span class="cov0" title="0">return "Run 'go test -run &lt;TestName&gt; -v ./path/' to debug."</span>
+        case "race":<span class="cov0" title="0">
+                return "Data race detected. Add mutex, channel, or atomic to synchronise shared state."</span>
+        case "bench":<span class="cov0" title="0">
+                return "Benchmark regression. Run 'go test -bench=. -benchmem' to reproduce."</span>
+        case "vuln":<span class="cov0" title="0">
+                return "Run 'govulncheck ./...' for details. Update affected deps with 'go get -u'."</span>
+        case "sec":<span class="cov0" title="0">
+                return "Review gosec findings. Common fixes: validate inputs, parameterised queries."</span>
+        case "fuzz":<span class="cov0" title="0">
+                return "Add a regression test for the crashing input in testdata/fuzz/&lt;Target&gt;/."</span>
+        case "docblock":<span class="cov0" title="0">
+                return "Add doc comments to exported symbols: '// Name does X.' before each declaration."</span>
+        default:<span class="cov0" title="0">
+                return ""</span>
+        }
+}
+
+var failTestRe = regexp.MustCompile(`--- FAIL: (\w+)`)
+
+// extractFailingTest parses the first failing test name from go test output.
+func extractFailingTest(output string) string <span class="cov0" title="0">{
+        if m := failTestRe.FindStringSubmatch(output); len(m) &gt; 1 </span><span class="cov0" title="0">{
+                return m[1]
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+
+func runCheckCapture(ctx context.Context, dir string, check QACheck) (string, error) <span class="cov0" title="0">{
+        // Handle internal checks
+        if check.Command == "_internal_" </span><span class="cov0" title="0">{
+                return runInternalCheck(check)
+        }</span>
+
+        // Check if command exists
+        <span class="cov0" title="0">if _, err := exec.LookPath(check.Command); err != nil </span><span class="cov0" title="0">{
+                return "", cli.Err("%s: not installed", check.Command)
+        }</span>
+
+        <span class="cov0" title="0">cmd := exec.CommandContext(ctx, check.Command, check.Args...)
+        cmd.Dir = dir
+
+        // For gofmt -l, capture output to check if files need formatting
+        if check.Name == "format" &amp;&amp; len(check.Args) &gt; 0 &amp;&amp; check.Args[0] == "-l" </span><span class="cov0" title="0">{
+                output, err := cmd.Output()
+                if err != nil </span><span class="cov0" title="0">{
+                        return string(output), err
+                }</span>
+                <span class="cov0" title="0">if len(output) &gt; 0 </span><span class="cov0" title="0">{
+                        // Show files that need formatting
+                        if !qaQuiet &amp;&amp; !qaJSON </span><span class="cov0" title="0">{
+                                cli.Text(string(output))
+                        }</span>
+                        <span class="cov0" title="0">return string(output), cli.Err("files need formatting (use --fix)")</span>
+                }
+                <span class="cov0" title="0">return "", nil</span>
+        }
+
+        // For other commands, stream or capture based on quiet mode
+        <span class="cov0" title="0">if qaQuiet || qaJSON </span><span class="cov0" title="0">{
+                output, err := cmd.CombinedOutput()
+                return string(output), err
+        }</span>
+
+        <span class="cov0" title="0">cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return "", cmd.Run()</span>
+}
+
+func runCoverage(ctx context.Context, dir string) (float64, float64, error) <span class="cov0" title="0">{
+        // Create temp file for coverage data
+        covFile, err := os.CreateTemp("", "coverage-*.out")
+        if err != nil </span><span class="cov0" title="0">{
+                return 0, 0, err
+        }</span>
+        <span class="cov0" title="0">covPath := covFile.Name()
+        _ = covFile.Close()
+        defer os.Remove(covPath)
+
+        args := []string{"test", "-cover", "-covermode=atomic", "-coverprofile=" + covPath}
+        if qaShort </span><span class="cov0" title="0">{
+                args = append(args, "-short")
+        }</span>
+        <span class="cov0" title="0">args = append(args, "./...")
+
+        cmd := exec.CommandContext(ctx, "go", args...)
+        cmd.Dir = dir
+        if !qaQuiet &amp;&amp; !qaJSON </span><span class="cov0" title="0">{
+                cmd.Stdout = os.Stdout
+                cmd.Stderr = os.Stderr
+        }</span>
+
+        <span class="cov0" title="0">if err := cmd.Run(); err != nil </span><span class="cov0" title="0">{
+                return 0, 0, err
+        }</span>
+
+        // Parse statement coverage
+        <span class="cov0" title="0">coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func=" + covPath)
+        output, err := coverCmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                return 0, 0, err
+        }</span>
+
+        // Parse last line for total coverage
+        <span class="cov0" title="0">lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+        var statementPct float64
+        if len(lines) &gt; 0 </span><span class="cov0" title="0">{
+                lastLine := lines[len(lines)-1]
+                fields := strings.Fields(lastLine)
+                if len(fields) &gt;= 3 </span><span class="cov0" title="0">{
+                        // Parse percentage (e.g., "45.6%")
+                        pctStr := strings.TrimSuffix(fields[len(fields)-1], "%")
+                        _, _ = fmt.Sscanf(pctStr, "%f", &amp;statementPct)
+                }</span>
+        }
+
+        // Parse branch coverage
+        <span class="cov0" title="0">branchPct, err := calculateBlockCoverage(covPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return statementPct, 0, err
+        }</span>
+
+        <span class="cov0" title="0">return statementPct, branchPct, nil</span>
+}
+
+// runInternalCheck runs internal Go-based checks (not external commands).
+func runInternalCheck(check QACheck) (string, error) <span class="cov0" title="0">{
+        switch check.Name </span>{
+        case "fuzz":<span class="cov0" title="0">
+                // Short burst fuzz in QA (3s per target)
+                duration := 3 * time.Second
+                if qaTimeout &gt; 0 &amp;&amp; qaTimeout &lt; 30*time.Second </span><span class="cov0" title="0">{
+                        duration = 2 * time.Second
+                }</span>
+                <span class="cov0" title="0">return "", runGoFuzz(duration, "", "", qaVerbose)</span>
+
+        case "docblock":<span class="cov0" title="0">
+                result, err := qa.CheckDocblockCoverage([]string{"./..."})
+                if err != nil </span><span class="cov0" title="0">{
+                        return "", err
+                }</span>
+                <span class="cov0" title="0">result.Threshold = qaDocblockThreshold
+                result.Passed = result.Coverage &gt;= qaDocblockThreshold
+
+                if !result.Passed </span><span class="cov0" title="0">{
+                        var output strings.Builder
+                        output.WriteString(fmt.Sprintf("Docblock coverage: %.1f%% (threshold: %.1f%%)\n",
+                                result.Coverage, qaDocblockThreshold))
+                        for _, m := range result.Missing </span><span class="cov0" title="0">{
+                                output.WriteString(fmt.Sprintf("%s:%d\n", m.File, m.Line))
+                        }</span>
+                        <span class="cov0" title="0">return output.String(), cli.Err("docblock coverage %.1f%% below threshold %.1f%%",
+                                result.Coverage, qaDocblockThreshold)</span>
+                }
+                <span class="cov0" title="0">return fmt.Sprintf("Docblock coverage: %.1f%%", result.Coverage), nil</span>
+
+        default:<span class="cov0" title="0">
+                return "", cli.Err("unknown internal check: %s", check.Name)</span>
+        }
+}
+</pre>
+
+		<pre class="file" id="file6" style="display: none">package gocmd
+
+import (
+        "errors"
+        "os"
+        "os/exec"
+        "path/filepath"
+
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+var (
+        installVerbose bool
+        installNoCgo   bool
+)
+
+func addGoInstallCommand(parent *cli.Command) <span class="cov0" title="0">{
+        installCmd := &amp;cli.Command{
+                Use:   "install [path]",
+                Short: "Install Go binary",
+                Long:  "Install Go binary to $GOPATH/bin",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        // Get install path from args or default to current dir
+                        installPath := "./..."
+                        if len(args) &gt; 0 </span><span class="cov0" title="0">{
+                                installPath = args[0]
+                        }</span>
+
+                        // Detect if we're in a module with cmd/ subdirectories or a root main.go
+                        <span class="cov0" title="0">if installPath == "./..." </span><span class="cov0" title="0">{
+                                if _, err := os.Stat("core.go"); err == nil </span><span class="cov0" title="0">{
+                                        installPath = "."
+                                }</span> else<span class="cov0" title="0"> if entries, err := os.ReadDir("cmd"); err == nil &amp;&amp; len(entries) &gt; 0 </span><span class="cov0" title="0">{
+                                        installPath = "./cmd/..."
+                                }</span> else<span class="cov0" title="0"> if _, err := os.Stat("main.go"); err == nil </span><span class="cov0" title="0">{
+                                        installPath = "."
+                                }</span>
+                        }
+
+                        <span class="cov0" title="0">cli.Print("%s %s\n", dimStyle.Render(i18n.Label("install")), i18n.Progress("install"))
+                        cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("path")), installPath)
+                        if installNoCgo </span><span class="cov0" title="0">{
+                                cli.Print("  %s %s\n", dimStyle.Render(i18n.Label("cgo")), "disabled")
+                        }</span>
+
+                        <span class="cov0" title="0">cmdArgs := []string{"install"}
+                        if installVerbose </span><span class="cov0" title="0">{
+                                cmdArgs = append(cmdArgs, "-v")
+                        }</span>
+                        <span class="cov0" title="0">cmdArgs = append(cmdArgs, installPath)
+
+                        execCmd := exec.Command("go", cmdArgs...)
+                        if installNoCgo </span><span class="cov0" title="0">{
+                                execCmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+                        }</span>
+                        <span class="cov0" title="0">execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+
+                        if err := execCmd.Run(); err != nil </span><span class="cov0" title="0">{
+                                cli.Print("\n%s\n", errorStyle.Render(i18n.T("i18n.fail.install", "binary")))
+                                return err
+                        }</span>
+
+                        // Show where it was installed
+                        <span class="cov0" title="0">gopath := os.Getenv("GOPATH")
+                        if gopath == "" </span><span class="cov0" title="0">{
+                                home, _ := os.UserHomeDir()
+                                gopath = filepath.Join(home, "go")
+                        }</span>
+                        <span class="cov0" title="0">binDir := filepath.Join(gopath, "bin")
+
+                        cli.Print("\n%s %s\n", successStyle.Render(i18n.T("i18n.done.install")), binDir)
+                        return nil</span>
+                },
+        }
+
+        <span class="cov0" title="0">installCmd.Flags().BoolVarP(&amp;installVerbose, "verbose", "v", false, "Verbose output")
+        installCmd.Flags().BoolVar(&amp;installNoCgo, "no-cgo", false, "Disable CGO")
+
+        parent.AddCommand(installCmd)</span>
+}
+
+func addGoModCommand(parent *cli.Command) <span class="cov0" title="0">{
+        modCmd := &amp;cli.Command{
+                Use:   "mod",
+                Short: "Module management",
+                Long:  "Go module management commands",
+        }
+
+        // tidy
+        tidyCmd := &amp;cli.Command{
+                Use:   "tidy",
+                Short: "Run go mod tidy",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        execCmd := exec.Command("go", "mod", "tidy")
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()
+                }</span>,
+        }
+
+        // download
+        <span class="cov0" title="0">downloadCmd := &amp;cli.Command{
+                Use:   "download",
+                Short: "Download module dependencies",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        execCmd := exec.Command("go", "mod", "download")
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()
+                }</span>,
+        }
+
+        // verify
+        <span class="cov0" title="0">verifyCmd := &amp;cli.Command{
+                Use:   "verify",
+                Short: "Verify module checksums",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        execCmd := exec.Command("go", "mod", "verify")
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()
+                }</span>,
+        }
+
+        // graph
+        <span class="cov0" title="0">graphCmd := &amp;cli.Command{
+                Use:   "graph",
+                Short: "Print module dependency graph",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        execCmd := exec.Command("go", "mod", "graph")
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()
+                }</span>,
+        }
+
+        <span class="cov0" title="0">modCmd.AddCommand(tidyCmd)
+        modCmd.AddCommand(downloadCmd)
+        modCmd.AddCommand(verifyCmd)
+        modCmd.AddCommand(graphCmd)
+        parent.AddCommand(modCmd)</span>
+}
+
+func addGoWorkCommand(parent *cli.Command) <span class="cov0" title="0">{
+        workCmd := &amp;cli.Command{
+                Use:   "work",
+                Short: "Workspace management",
+                Long:  "Go workspace management commands",
+        }
+
+        // sync
+        syncCmd := &amp;cli.Command{
+                Use:   "sync",
+                Short: "Sync workspace modules",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        execCmd := exec.Command("go", "work", "sync")
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()
+                }</span>,
+        }
+
+        // init
+        <span class="cov0" title="0">initCmd := &amp;cli.Command{
+                Use:   "init",
+                Short: "Initialise a new workspace",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        execCmd := exec.Command("go", "work", "init")
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        if err := execCmd.Run(); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                        // Auto-add current module if go.mod exists
+                        <span class="cov0" title="0">if _, err := os.Stat("go.mod"); err == nil </span><span class="cov0" title="0">{
+                                execCmd = exec.Command("go", "work", "use", ".")
+                                execCmd.Stdout = os.Stdout
+                                execCmd.Stderr = os.Stderr
+                                return execCmd.Run()
+                        }</span>
+                        <span class="cov0" title="0">return nil</span>
+                },
+        }
+
+        // use
+        <span class="cov0" title="0">useCmd := &amp;cli.Command{
+                Use:   "use [modules...]",
+                Short: "Add modules to workspace",
+                RunE: func(cmd *cli.Command, args []string) error </span><span class="cov0" title="0">{
+                        if len(args) == 0 </span><span class="cov0" title="0">{
+                                // Auto-detect modules
+                                modules := findGoModules(".")
+                                if len(modules) == 0 </span><span class="cov0" title="0">{
+                                        return errors.New("no Go modules found")
+                                }</span>
+                                <span class="cov0" title="0">for _, mod := range modules </span><span class="cov0" title="0">{
+                                        execCmd := exec.Command("go", "work", "use", mod)
+                                        execCmd.Stdout = os.Stdout
+                                        execCmd.Stderr = os.Stderr
+                                        if err := execCmd.Run(); err != nil </span><span class="cov0" title="0">{
+                                                return err
+                                        }</span>
+                                        <span class="cov0" title="0">cli.Print("%s %s\n", successStyle.Render(i18n.T("i18n.done.add")), mod)</span>
+                                }
+                                <span class="cov0" title="0">return nil</span>
+                        }
+
+                        <span class="cov0" title="0">cmdArgs := append([]string{"work", "use"}, args...)
+                        execCmd := exec.Command("go", cmdArgs...)
+                        execCmd.Stdout = os.Stdout
+                        execCmd.Stderr = os.Stderr
+                        return execCmd.Run()</span>
+                },
+        }
+
+        <span class="cov0" title="0">workCmd.AddCommand(syncCmd)
+        workCmd.AddCommand(initCmd)
+        workCmd.AddCommand(useCmd)
+        parent.AddCommand(workCmd)</span>
+}
+
+func findGoModules(root string) []string <span class="cov0" title="0">{
+        var modules []string
+        _ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+                <span class="cov0" title="0">if info.Name() == "go.mod" &amp;&amp; path != "go.mod" </span><span class="cov0" title="0">{
+                        modules = append(modules, filepath.Dir(path))
+                }</span>
+                <span class="cov0" title="0">return nil</span>
+        })
+        <span class="cov0" title="0">return modules</span>
+}
+</pre>
+
+		<pre class="file" id="file7" style="display: none">// Package testcmd provides Go test running commands with enhanced output.
+//
+// Note: Package named testcmd to avoid conflict with Go's test package.
+//
+// Features:
+//   - Colour-coded pass/fail/skip output
+//   - Per-package coverage breakdown with --coverage
+//   - JSON output for CI/agents with --json
+//   - Filters linker warnings on macOS
+//
+// Flags: --verbose, --coverage, --short, --pkg, --run, --race, --json
+package testcmd
+
+import "github.com/host-uk/core/pkg/cli"
+
+func init() <span class="cov8" title="1">{
+        cli.RegisterCommands(AddTestCommands)
+}</span>
+</pre>
+
+		<pre class="file" id="file8" style="display: none">// Package testcmd provides test running commands.
+//
+// Note: Package named testcmd to avoid conflict with Go's test package.
+package testcmd
+
+import (
+        "github.com/host-uk/core/pkg/cli"
+        "github.com/host-uk/core/pkg/i18n"
+        "github.com/spf13/cobra"
+)
+
+// Style aliases from shared
+var (
+        testHeaderStyle  = cli.RepoStyle
+        testPassStyle    = cli.SuccessStyle
+        testFailStyle    = cli.ErrorStyle
+        testSkipStyle    = cli.WarningStyle
+        testDimStyle     = cli.DimStyle
+        testCovHighStyle = cli.NewStyle().Foreground(cli.ColourGreen500)
+        testCovMedStyle  = cli.NewStyle().Foreground(cli.ColourAmber500)
+        testCovLowStyle  = cli.NewStyle().Foreground(cli.ColourRed500)
+)
+
+// Flag variables for test command
+var (
+        testVerbose  bool
+        testCoverage bool
+        testShort    bool
+        testPkg      string
+        testRun      string
+        testRace     bool
+        testJSON     bool
+)
+
+var testCmd = &amp;cobra.Command{
+        Use:   "test",
+        Short: i18n.T("cmd.test.short"),
+        Long:  i18n.T("cmd.test.long"),
+        RunE: func(cmd *cobra.Command, args []string) error <span class="cov0" title="0">{
+                return runTest(testVerbose, testCoverage, testShort, testPkg, testRun, testRace, testJSON)
+        }</span>,
+}
+
+func initTestFlags() <span class="cov0" title="0">{
+        testCmd.Flags().BoolVar(&amp;testVerbose, "verbose", false, i18n.T("cmd.test.flag.verbose"))
+        testCmd.Flags().BoolVar(&amp;testCoverage, "coverage", false, i18n.T("common.flag.coverage"))
+        testCmd.Flags().BoolVar(&amp;testShort, "short", false, i18n.T("cmd.test.flag.short"))
+        testCmd.Flags().StringVar(&amp;testPkg, "pkg", "", i18n.T("cmd.test.flag.pkg"))
+        testCmd.Flags().StringVar(&amp;testRun, "run", "", i18n.T("cmd.test.flag.run"))
+        testCmd.Flags().BoolVar(&amp;testRace, "race", false, i18n.T("cmd.test.flag.race"))
+        testCmd.Flags().BoolVar(&amp;testJSON, "json", false, i18n.T("cmd.test.flag.json"))
+}</span>
+
+// AddTestCommands registers the 'test' command and all subcommands.
+func AddTestCommands(root *cobra.Command) <span class="cov0" title="0">{
+        initTestFlags()
+        root.AddCommand(testCmd)
+}</span>
+</pre>
+
+		<pre class="file" id="file9" style="display: none">package testcmd
+
+import (
+        "bufio"
+        "fmt"
+        "path/filepath"
+        "regexp"
+        "sort"
+        "strconv"
+        "strings"
+
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+type packageCoverage struct {
+        name     string
+        coverage float64
+        hasCov   bool
+}
+
+type testResults struct {
+        packages   []packageCoverage
+        passed     int
+        failed     int
+        skipped    int
+        totalCov   float64
+        covCount   int
+        failedPkgs []string
+}
+
+func parseTestOutput(output string) testResults <span class="cov8" title="1">{
+        results := testResults{}
+
+        // Regex patterns - handle both timed and cached test results
+        // Example: ok          github.com/host-uk/core/pkg/crypt        0.015s        coverage: 91.2% of statements
+        // Example: ok          github.com/host-uk/core/pkg/crypt        (cached)        coverage: 91.2% of statements
+        okPattern := regexp.MustCompile(`^ok\s+(\S+)\s+(?:[\d.]+s|\(cached\))(?:\s+coverage:\s+([\d.]+)%)?`)
+        failPattern := regexp.MustCompile(`^FAIL\s+(\S+)`)
+        skipPattern := regexp.MustCompile(`^\?\s+(\S+)\s+\[no test files\]`)
+        coverPattern := regexp.MustCompile(`coverage:\s+([\d.]+)%`)
+
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                line := scanner.Text()
+
+                if matches := okPattern.FindStringSubmatch(line); matches != nil </span><span class="cov8" title="1">{
+                        pkg := packageCoverage{name: matches[1]}
+                        if len(matches) &gt; 2 &amp;&amp; matches[2] != "" </span><span class="cov8" title="1">{
+                                cov, _ := strconv.ParseFloat(matches[2], 64)
+                                pkg.coverage = cov
+                                pkg.hasCov = true
+                                results.totalCov += cov
+                                results.covCount++
+                        }</span>
+                        <span class="cov8" title="1">results.packages = append(results.packages, pkg)
+                        results.passed++</span>
+                } else<span class="cov8" title="1"> if matches := failPattern.FindStringSubmatch(line); matches != nil </span><span class="cov8" title="1">{
+                        results.failed++
+                        results.failedPkgs = append(results.failedPkgs, matches[1])
+                }</span> else<span class="cov8" title="1"> if matches := skipPattern.FindStringSubmatch(line); matches != nil </span><span class="cov8" title="1">{
+                        results.skipped++
+                }</span> else<span class="cov0" title="0"> if matches := coverPattern.FindStringSubmatch(line); matches != nil </span><span class="cov0" title="0">{
+                        // Catch any additional coverage lines
+                        cov, _ := strconv.ParseFloat(matches[1], 64)
+                        if cov &gt; 0 </span><span class="cov0" title="0">{
+                                // Find the last package without coverage and update it
+                                for i := len(results.packages) - 1; i &gt;= 0; i-- </span><span class="cov0" title="0">{
+                                        if !results.packages[i].hasCov </span><span class="cov0" title="0">{
+                                                results.packages[i].coverage = cov
+                                                results.packages[i].hasCov = true
+                                                results.totalCov += cov
+                                                results.covCount++
+                                                break</span>
+                                        }
+                                }
+                        }
+                }
+        }
+
+        <span class="cov8" title="1">return results</span>
+}
+
+func printTestSummary(results testResults, showCoverage bool) <span class="cov0" title="0">{
+        // Print pass/fail summary
+        total := results.passed + results.failed
+        if total &gt; 0 </span><span class="cov0" title="0">{
+                fmt.Printf("  %s %s", testPassStyle.Render("✓"), i18n.T("i18n.count.passed", results.passed))
+                if results.failed &gt; 0 </span><span class="cov0" title="0">{
+                        fmt.Printf("  %s %s", testFailStyle.Render("✗"), i18n.T("i18n.count.failed", results.failed))
+                }</span>
+                <span class="cov0" title="0">if results.skipped &gt; 0 </span><span class="cov0" title="0">{
+                        fmt.Printf("  %s %s", testSkipStyle.Render("○"), i18n.T("i18n.count.skipped", results.skipped))
+                }</span>
+                <span class="cov0" title="0">fmt.Println()</span>
+        }
+
+        // Print failed packages
+        <span class="cov0" title="0">if len(results.failedPkgs) &gt; 0 </span><span class="cov0" title="0">{
+                fmt.Printf("\n  %s\n", i18n.T("cmd.test.failed_packages"))
+                for _, pkg := range results.failedPkgs </span><span class="cov0" title="0">{
+                        fmt.Printf("    %s %s\n", testFailStyle.Render("✗"), pkg)
+                }</span>
+        }
+
+        // Print coverage
+        <span class="cov0" title="0">if showCoverage </span><span class="cov0" title="0">{
+                printCoverageSummary(results)
+        }</span> else<span class="cov0" title="0"> if results.covCount &gt; 0 </span><span class="cov0" title="0">{
+                avgCov := results.totalCov / float64(results.covCount)
+                fmt.Printf("\n  %s %s\n", i18n.Label("coverage"), formatCoverage(avgCov))
+        }</span>
+}
+
+func printCoverageSummary(results testResults) <span class="cov8" title="1">{
+        if len(results.packages) == 0 </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov8" title="1">fmt.Printf("\n  %s\n", testHeaderStyle.Render(i18n.T("cmd.test.coverage_by_package")))
+
+        // Sort packages by name
+        sort.Slice(results.packages, func(i, j int) bool </span><span class="cov8" title="1">{
+                return results.packages[i].name &lt; results.packages[j].name
+        }</span>)
+
+        // Find max package name length for alignment
+        <span class="cov8" title="1">maxLen := 0
+        for _, pkg := range results.packages </span><span class="cov8" title="1">{
+                name := shortenPackageName(pkg.name)
+                if len(name) &gt; maxLen </span><span class="cov8" title="1">{
+                        maxLen = len(name)
+                }</span>
+        }
+
+        // Print each package
+        <span class="cov8" title="1">for _, pkg := range results.packages </span><span class="cov8" title="1">{
+                if !pkg.hasCov </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">name := shortenPackageName(pkg.name)
+                padLen := maxLen - len(name) + 2
+                if padLen &lt; 0 </span><span class="cov0" title="0">{
+                        padLen = 2
+                }</span>
+                <span class="cov8" title="1">padding := strings.Repeat(" ", padLen)
+                fmt.Printf("    %s%s%s\n", name, padding, formatCoverage(pkg.coverage))</span>
+        }
+
+        // Print average
+        <span class="cov8" title="1">if results.covCount &gt; 0 </span><span class="cov8" title="1">{
+                avgCov := results.totalCov / float64(results.covCount)
+                avgLabel := i18n.T("cmd.test.label.average")
+                padLen := maxLen - len(avgLabel) + 2
+                if padLen &lt; 0 </span><span class="cov0" title="0">{
+                        padLen = 2
+                }</span>
+                <span class="cov8" title="1">padding := strings.Repeat(" ", padLen)
+                fmt.Printf("\n    %s%s%s\n", testHeaderStyle.Render(avgLabel), padding, formatCoverage(avgCov))</span>
+        }
+}
+
+func formatCoverage(cov float64) string <span class="cov8" title="1">{
+        s := fmt.Sprintf("%.1f%%", cov)
+        if cov &gt;= 80 </span><span class="cov8" title="1">{
+                return testCovHighStyle.Render(s)
+        }</span> else<span class="cov0" title="0"> if cov &gt;= 50 </span><span class="cov0" title="0">{
+                return testCovMedStyle.Render(s)
+        }</span>
+        <span class="cov0" title="0">return testCovLowStyle.Render(s)</span>
+}
+
+func shortenPackageName(name string) string <span class="cov8" title="1">{
+        // Remove common prefixes
+        prefixes := []string{
+                "github.com/host-uk/core/",
+                "github.com/host-uk/",
+        }
+        for _, prefix := range prefixes </span><span class="cov8" title="1">{
+                if strings.HasPrefix(name, prefix) </span><span class="cov8" title="1">{
+                        return strings.TrimPrefix(name, prefix)
+                }</span>
+        }
+        <span class="cov8" title="1">return filepath.Base(name)</span>
+}
+
+func printJSONResults(results testResults, exitCode int) <span class="cov0" title="0">{
+        // Simple JSON output for agents
+        fmt.Printf("{\n")
+        fmt.Printf("  \"passed\": %d,\n", results.passed)
+        fmt.Printf("  \"failed\": %d,\n", results.failed)
+        fmt.Printf("  \"skipped\": %d,\n", results.skipped)
+        if results.covCount &gt; 0 </span><span class="cov0" title="0">{
+                avgCov := results.totalCov / float64(results.covCount)
+                fmt.Printf("  \"coverage\": %.1f,\n", avgCov)
+        }</span>
+        <span class="cov0" title="0">fmt.Printf("  \"exit_code\": %d,\n", exitCode)
+        if len(results.failedPkgs) &gt; 0 </span><span class="cov0" title="0">{
+                fmt.Printf("  \"failed_packages\": [\n")
+                for i, pkg := range results.failedPkgs </span><span class="cov0" title="0">{
+                        comma := ","
+                        if i == len(results.failedPkgs)-1 </span><span class="cov0" title="0">{
+                                comma = ""
+                        }</span>
+                        <span class="cov0" title="0">fmt.Printf("    %q%s\n", pkg, comma)</span>
+                }
+                <span class="cov0" title="0">fmt.Printf("  ]\n")</span>
+        } else<span class="cov0" title="0"> {
+                fmt.Printf("  \"failed_packages\": []\n")
+        }</span>
+        <span class="cov0" title="0">fmt.Printf("}\n")</span>
+}
+</pre>
+
+		<pre class="file" id="file10" style="display: none">package testcmd
+
+import (
+        "bufio"
+        "errors"
+        "fmt"
+        "io"
+        "os"
+        "os/exec"
+        "runtime"
+        "strings"
+
+        "github.com/host-uk/core/pkg/i18n"
+)
+
+func runTest(verbose, coverage, short bool, pkg, run string, race, jsonOutput bool) error <span class="cov0" title="0">{
+        // Detect if we're in a Go project
+        if _, err := os.Stat("go.mod"); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                return errors.New(i18n.T("cmd.test.error.no_go_mod"))
+        }</span>
+
+        // Build command arguments
+        <span class="cov0" title="0">args := []string{"test"}
+
+        // Default to ./... if no package specified
+        if pkg == "" </span><span class="cov0" title="0">{
+                pkg = "./..."
+        }</span>
+
+        // Add flags
+        <span class="cov0" title="0">if verbose </span><span class="cov0" title="0">{
+                args = append(args, "-v")
+        }</span>
+        <span class="cov0" title="0">if short </span><span class="cov0" title="0">{
+                args = append(args, "-short")
+        }</span>
+        <span class="cov0" title="0">if run != "" </span><span class="cov0" title="0">{
+                args = append(args, "-run", run)
+        }</span>
+        <span class="cov0" title="0">if race </span><span class="cov0" title="0">{
+                args = append(args, "-race")
+        }</span>
+
+        // Always add coverage
+        <span class="cov0" title="0">args = append(args, "-cover")
+
+        // Add package pattern
+        args = append(args, pkg)
+
+        // Create command
+        cmd := exec.Command("go", args...)
+        cmd.Dir, _ = os.Getwd()
+
+        // Set environment to suppress macOS linker warnings
+        cmd.Env = append(os.Environ(), getMacOSDeploymentTarget())
+
+        if !jsonOutput </span><span class="cov0" title="0">{
+                fmt.Printf("%s %s\n", testHeaderStyle.Render(i18n.Label("test")), i18n.ProgressSubject("run", "tests"))
+                fmt.Printf("  %s %s\n", i18n.Label("package"), testDimStyle.Render(pkg))
+                if run != "" </span><span class="cov0" title="0">{
+                        fmt.Printf("  %s  %s\n", i18n.Label("filter"), testDimStyle.Render(run))
+                }</span>
+                <span class="cov0" title="0">fmt.Println()</span>
+        }
+
+        // Capture output for parsing
+        <span class="cov0" title="0">var stdout, stderr strings.Builder
+
+        if verbose &amp;&amp; !jsonOutput </span><span class="cov0" title="0">{
+                // Stream output in verbose mode, but also capture for parsing
+                cmd.Stdout = io.MultiWriter(os.Stdout, &amp;stdout)
+                cmd.Stderr = io.MultiWriter(os.Stderr, &amp;stderr)
+        }</span> else<span class="cov0" title="0"> {
+                // Capture output for parsing
+                cmd.Stdout = &amp;stdout
+                cmd.Stderr = &amp;stderr
+        }</span>
+
+        <span class="cov0" title="0">err := cmd.Run()
+        exitCode := 0
+        if err != nil </span><span class="cov0" title="0">{
+                if exitErr, ok := err.(*exec.ExitError); ok </span><span class="cov0" title="0">{
+                        exitCode = exitErr.ExitCode()
+                }</span>
+        }
+
+        // Combine stdout and stderr for parsing, filtering linker warnings
+        <span class="cov0" title="0">combined := filterLinkerWarnings(stdout.String() + "\n" + stderr.String())
+
+        // Parse results
+        results := parseTestOutput(combined)
+
+        if jsonOutput </span><span class="cov0" title="0">{
+                // JSON output for CI/agents
+                printJSONResults(results, exitCode)
+                if exitCode != 0 </span><span class="cov0" title="0">{
+                        return errors.New(i18n.T("i18n.fail.run", "tests"))
+                }</span>
+                <span class="cov0" title="0">return nil</span>
+        }
+
+        // Print summary
+        <span class="cov0" title="0">if !verbose </span><span class="cov0" title="0">{
+                printTestSummary(results, coverage)
+        }</span> else<span class="cov0" title="0"> if coverage </span><span class="cov0" title="0">{
+                // In verbose mode, still show coverage summary at end
+                fmt.Println()
+                printCoverageSummary(results)
+        }</span>
+
+        <span class="cov0" title="0">if exitCode != 0 </span><span class="cov0" title="0">{
+                fmt.Printf("\n%s %s\n", testFailStyle.Render(i18n.T("cli.fail")), i18n.T("cmd.test.tests_failed"))
+                return errors.New(i18n.T("i18n.fail.run", "tests"))
+        }</span>
+
+        <span class="cov0" title="0">fmt.Printf("\n%s %s\n", testPassStyle.Render(i18n.T("cli.pass")), i18n.T("common.result.all_passed"))
+        return nil</span>
+}
+
+func getMacOSDeploymentTarget() string <span class="cov0" title="0">{
+        if runtime.GOOS == "darwin" </span><span class="cov0" title="0">{
+                // Use deployment target matching current macOS to suppress linker warnings
+                return "MACOSX_DEPLOYMENT_TARGET=26.0"
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+
+func filterLinkerWarnings(output string) string <span class="cov0" title="0">{
+        // Filter out ld: warning lines that pollute the output
+        var filtered []string
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        for scanner.Scan() </span><span class="cov0" title="0">{
+                line := scanner.Text()
+                // Skip linker warnings
+                if strings.HasPrefix(line, "ld: warning:") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                // Skip test binary build comments
+                <span class="cov0" title="0">if strings.HasPrefix(line, "# ") &amp;&amp; strings.HasSuffix(line, ".test") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">filtered = append(filtered, line)</span>
+        }
+        <span class="cov0" title="0">return strings.Join(filtered, "\n")</span>
+}
+</pre>
+
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

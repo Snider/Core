@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/host-uk/core/pkg/cli"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,6 +60,14 @@ github.com/host-uk/core/pkg/foo.go:1.2,3.4 5 notanumber
 	pct, err = calculateBlockCoverage(tmpfileMalformed.Name())
 	assert.NoError(t, err)
 	assert.Equal(t, 0.0, pct)
+
+	// Test completely empty file
+	tmpfileEmpty2, _ := os.CreateTemp("", "test-coverage-empty2-*.out")
+	defer os.Remove(tmpfileEmpty2.Name())
+	tmpfileEmpty2.Close()
+	pct, err = calculateBlockCoverage(tmpfileEmpty2.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 0.0, pct)
 }
 
 func TestParseOverallCoverage(t *testing.T) {
@@ -74,10 +83,38 @@ ok  	github.com/host-uk/core/pkg/bar	0.200s	coverage: 100.0% of statements
 }
 
 func TestFormatCoverage(t *testing.T) {
-	// Since formatCoverage uses cli.SuccessStyle etc which might rely on a global state
-	// or terminal, we just test if it returns a non-empty string for now.
-	// Actually, we can check if it contains the percentage.
 	assert.Contains(t, formatCoverage(85.0), "85.0%")
 	assert.Contains(t, formatCoverage(65.0), "65.0%")
 	assert.Contains(t, formatCoverage(25.0), "25.0%")
+}
+
+func TestAddGoCovCommand(t *testing.T) {
+	cmd := &cli.Command{Use: "test"}
+	addGoCovCommand(cmd)
+	assert.True(t, cmd.HasSubCommands())
+	sub := cmd.Commands()[0]
+	assert.Equal(t, "cov", sub.Name())
+}
+
+func TestAddGoQACommand(t *testing.T) {
+	cmd := &cli.Command{Use: "test"}
+	addGoQACommand(cmd)
+	assert.True(t, cmd.HasSubCommands())
+	sub := cmd.Commands()[0]
+	assert.Equal(t, "qa", sub.Name())
+}
+
+func TestRunGoQA_NoGoMod(t *testing.T) {
+	// runGoQA should fail if go.mod is not present in CWD
+	// We run it in a temp dir without go.mod
+	tmpDir, _ := os.MkdirTemp("", "test-qa-*")
+	defer os.RemoveAll(tmpDir)
+	cwd, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(cwd)
+
+	cmd := &cli.Command{Use: "qa"}
+	err := runGoQA(cmd, []string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "no go.mod found")
 }

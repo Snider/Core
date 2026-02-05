@@ -574,7 +574,7 @@ func runCoverage(ctx context.Context, dir string) (float64, float64, error) {
 	}
 
 	// Parse statement coverage
-	coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func="+covPath)
+	coverCmd := exec.CommandContext(ctx, "go", "tool", "cover", "-func=" + covPath)
 	output, err := coverCmd.Output()
 	if err != nil {
 		return 0, 0, err
