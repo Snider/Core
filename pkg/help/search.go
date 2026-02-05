@@ -100,6 +100,16 @@ func (i *searchIndex) Search(query string) []*SearchResult {
 		}
 	}
 
+	// Pre-compile regexes for snippets
+	var res []*regexp.Regexp
+	for _, word := range queryWords {
+		if len(word) >= 2 {
+			if re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(word)); err == nil {
+				res = append(res, re)
+			}
+		}
+	}
+
 	// Build results with title boost and snippet extraction
 	var results []*SearchResult
 	for topicID, score := range scores {
@@ -122,7 +132,7 @@ func (i *searchIndex) Search(query string) []*SearchResult {
 		}
 
 		// Find matching section and extract snippet
-		section, snippet := i.findBestMatch(topic, queryWords)
+		section, snippet := i.findBestMatch(topic, queryWords, res)
 
 		// Section title boost
 		if section != nil {
@@ -159,20 +169,10 @@ func (i *searchIndex) Search(query string) []*SearchResult {
 }
 
 // findBestMatch finds the section with the best match and extracts a snippet.
-func (i *searchIndex) findBestMatch(topic *Topic, queryWords []string) (*Section, string) {
+func (i *searchIndex) findBestMatch(topic *Topic, queryWords []string, res []*regexp.Regexp) (*Section, string) {
 	var bestSection *Section
 	var bestSnippet string
 	bestScore := 0
-
-	// Pre-compile regexes for snippets
-	var res []*regexp.Regexp
-	for _, word := range queryWords {
-		if len(word) >= 2 {
-			if re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(word)); err == nil {
-				res = append(res, re)
-			}
-		}
-	}
 
 	// Check topic title
 	titleScore := countMatches(topic.Title, queryWords)
