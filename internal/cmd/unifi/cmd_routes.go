@@ -32,7 +32,7 @@ func addRoutesCommand(parent *cli.Command) {
 }
 
 func runRoutes() error {
-	client, err := uf.NewFromConfig("", "", "", "", nil)
+	client, err := uf.NewFromConfig("", "", "", "")
 	if err != nil {
 		return log.E("unifi.routes", "failed to initialise client", err)
 	}

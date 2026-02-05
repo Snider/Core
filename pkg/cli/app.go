@@ -5,10 +5,8 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/host-uk/core/pkg/crypt/openpgp"
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/log"
-	"github.com/host-uk/core/pkg/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -44,27 +42,16 @@ func Main() {
 			framework.WithName("log", NewLogService(log.Options{
 				Level: log.LevelInfo,
 			})),
-			framework.WithName("crypt", openpgp.New),
-			framework.WithName("workspace", workspace.New),
 		},
 	}); err != nil {
-		Error(err.Error())
-		os.Exit(1)
+		Fatal(err)
 	}
 	defer Shutdown()
 
 	// Add completion command to the CLI's root
 	RootCmd().AddCommand(completionCmd)
 
-	if err := Execute(); err != nil {
-		code := 1
-		var exitErr *ExitError
-		if As(err, &exitErr) {
-			code = exitErr.Code
-		}
-		Error(err.Error())
-		os.Exit(code)
-	}
+	Fatal(Execute())
 }
 
 // completionCmd generates shell completion scripts.

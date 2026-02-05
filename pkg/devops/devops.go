@@ -13,11 +13,6 @@ import (
 	"github.com/host-uk/core/pkg/io"
 )
 
-const (
-	// DefaultSSHPort is the default port for SSH connections to the dev environment.
-	DefaultSSHPort = 2222
-)
-
 // DevOps manages the portable development environment.
 type DevOps struct {
 	medium    io.Medium
@@ -142,32 +137,12 @@ func (d *DevOps) Boot(ctx context.Context, opts BootOptions) error {
 		Name:    opts.Name,
 		Memory:  opts.Memory,
 		CPUs:    opts.CPUs,
-		SSHPort: DefaultSSHPort,
+		SSHPort: 2222,
 		Detach:  true,
 	}
 
 	_, err = d.container.Run(ctx, imagePath, runOpts)
-	if err != nil {
-		return err
-	}
-
-	// Wait for SSH to be ready and scan host key
-	// We try for up to 60 seconds as the VM takes a moment to boot
-	var lastErr error
-	for i := 0; i < 30; i++ {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(2 * time.Second):
-			if err := ensureHostKey(ctx, runOpts.SSHPort); err == nil {
-				return nil
-			} else {
-				lastErr = err
-			}
-		}
-	}
-
-	return fmt.Errorf("failed to verify host key after boot: %w", lastErr)
+	return err
 }
 
 // Stop stops the dev environment.
@@ -221,7 +196,7 @@ type DevStatus struct {
 func (d *DevOps) Status(ctx context.Context) (*DevStatus, error) {
 	status := &DevStatus{
 		Installed: d.images.IsInstalled(),
-		SSHPort:   DefaultSSHPort,
+		SSHPort:   2222,
 	}
 
 	if info, ok := d.images.manifest.Images[ImageName()]; ok {

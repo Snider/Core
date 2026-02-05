@@ -9,44 +9,43 @@ import (
 
 // Config command flags.
 var (
-	configURL      string
-	configUser     string
-	configPass     string
-	configAPIKey   string
-	configInsecure bool
-	configTest     bool
+	configURL       string
+	configUser      string
+	configPass      string
+	configAPIKey    string
+	configVerifyTLS bool
+	configTest      bool
 )
+
+var configCmd *cli.Command
 
 // addConfigCommand adds the 'config' subcommand for UniFi connection setup.
 func addConfigCommand(parent *cli.Command) {
-	cmd := &cli.Command{
+	configCmd = &cli.Command{
 		Use:   "config",
 		Short: "Configure UniFi connection",
 		Long:  "Set the UniFi controller URL and credentials, or test the current connection.",
 		RunE: func(cmd *cli.Command, args []string) error {
-			return runConfig(cmd)
+			return runConfig()
 		},
 	}
 
-	cmd.Flags().StringVar(&configURL, "url", "", "UniFi controller URL")
-	cmd.Flags().StringVar(&configUser, "user", "", "UniFi username")
-	cmd.Flags().StringVar(&configPass, "pass", "", "UniFi password")
-	cmd.Flags().StringVar(&configAPIKey, "apikey", "", "UniFi API key")
-	cmd.Flags().BoolVar(&configInsecure, "insecure", false, "Allow insecure TLS connections (e.g. self-signed certs)")
-	cmd.Flags().BoolVar(&configTest, "test", false, "Test the current connection")
+	configCmd.Flags().StringVar(&configURL, "url", "", "UniFi controller URL")
+	configCmd.Flags().StringVar(&configUser, "user", "", "UniFi username")
+	configCmd.Flags().StringVar(&configPass, "pass", "", "UniFi password")
+	configCmd.Flags().StringVar(&configAPIKey, "apikey", "", "UniFi API key")
+	configCmd.Flags().BoolVar(&configVerifyTLS, "verify-tls", true, "Verify TLS certificates")
+	configCmd.Flags().BoolVar(&configTest, "test", false, "Test the current connection")
 
-	parent.AddCommand(cmd)
+	parent.AddCommand(configCmd)
 }
 
-func runConfig(cmd *cli.Command) error {
-	var insecure *bool
-	if cmd.Flags().Changed("insecure") {
-		insecure = &configInsecure
-	}
+func runConfig() error {
+	setVerifyTLS := configCmd.Flags().Changed("verify-tls")
 
 	// If setting values, save them first
-	if configURL != "" || configUser != "" || configPass != "" || configAPIKey != "" || insecure != nil {
-		if err := uf.SaveConfig(configURL, configUser, configPass, configAPIKey, insecure); err != nil {
+	if configURL != "" || configUser != "" || configPass != "" || configAPIKey != "" || setVerifyTLS {
+		if err := uf.SaveConfig(configURL, configUser, configPass, configAPIKey, setVerifyTLS, configVerifyTLS); err != nil {
 			return err
 		}
 
@@ -62,18 +61,22 @@ func runConfig(cmd *cli.Command) error {
 		if configAPIKey != "" {
 			cli.Success("UniFi API key saved")
 		}
-		if insecure != nil {
-			cli.Success(fmt.Sprintf("UniFi insecure mode set to %v", *insecure))
+		if setVerifyTLS {
+			if configVerifyTLS {
+				cli.Success("TLS verification enabled")
+			} else {
+				cli.Success("TLS verification disabled (insecure)")
+			}
 		}
 	}
 
 	// If testing, verify the connection
 	if configTest {
-		return runConfigTest(cmd)
+		return runConfigTest()
 	}
 
 	// If no flags, show current config
-	if configURL == "" && configUser == "" && configPass == "" && configAPIKey == "" && !configInsecure && !configTest {
+	if configURL == "" && configUser == "" && configPass == "" && configAPIKey == "" && !configTest {
 		return showConfig()
 	}
 
@@ -81,7 +84,7 @@ func runConfig(cmd *cli.Command) error {
 }
 
 func showConfig() error {
-	url, user, pass, apikey, insecure, err := uf.ResolveConfig("", "", "", "", nil)
+	url, user, pass, apikey, verifyTLS, err := uf.ResolveConfig("", "", "", "")
 	if err != nil {
 		return err
 	}
@@ -111,10 +114,10 @@ func showConfig() error {
 		cli.Print("  %s %s\n", dimStyle.Render("API Key:"), warningStyle.Render("not set"))
 	}
 
-	if insecure {
-		cli.Print("  %s %s\n", dimStyle.Render("Insecure:"), warningStyle.Render("enabled"))
+	if verifyTLS {
+		cli.Print("  %s %s\n", dimStyle.Render("TLS Verify:"), successStyle.Render("enabled"))
 	} else {
-		cli.Print("  %s %s\n", dimStyle.Render("Insecure:"), successStyle.Render("disabled"))
+		cli.Print("  %s %s\n", dimStyle.Render("TLS Verify:"), errorStyle.Render("disabled (insecure)"))
 	}
 
 	cli.Blank()
@@ -122,13 +125,8 @@ func showConfig() error {
 	return nil
 }
 
-func runConfigTest(cmd *cli.Command) error {
-	var insecure *bool
-	if cmd.Flags().Changed("insecure") {
-		insecure = &configInsecure
-	}
-
-	client, err := uf.NewFromConfig(configURL, configUser, configPass, configAPIKey, insecure)
+func runConfigTest() error {
+	client, err := uf.NewFromConfig(configURL, configUser, configPass, configAPIKey)
 	if err != nil {
 		return err
 	}
