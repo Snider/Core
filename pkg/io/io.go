@@ -22,9 +22,6 @@ type Medium interface {
 	// Write saves the given content to a file, overwriting it if it exists.
 	Write(path, content string) error
 
-	// Open opens a file for reading.
-	Open(path string) (goio.ReadCloser, error)
-
 	// EnsureDir makes sure a directory exists, creating it if necessary.
 	EnsureDir(path string) error
 
@@ -51,6 +48,12 @@ type Medium interface {
 
 	// Stat returns file information for the given path.
 	Stat(path string) (fs.FileInfo, error)
+
+	// Open opens the named file for reading.
+	Open(path string) (fs.File, error)
+
+	// Create creates or truncates the named file.
+	Create(path string) (goio.WriteCloser, error)
 
 	// Exists checks if a path exists (file or directory).
 	Exists(path string) bool
@@ -171,15 +174,6 @@ func (m *MockMedium) Read(path string) (string, error) {
 func (m *MockMedium) Write(path, content string) error {
 	m.Files[path] = content
 	return nil
-}
-
-// Open opens a file for reading in the mock filesystem.
-func (m *MockMedium) Open(path string) (goio.ReadCloser, error) {
-	content, ok := m.Files[path]
-	if !ok {
-		return nil, coreerr.E("io.MockMedium.Open", "file not found: "+path, os.ErrNotExist)
-	}
-	return goio.NopCloser(strings.NewReader(content)), nil
 }
 
 // EnsureDir records that a directory exists in the mock filesystem.
@@ -318,6 +312,70 @@ func (m *MockMedium) Rename(oldPath, newPath string) error {
 		return nil
 	}
 	return coreerr.E("io.MockMedium.Rename", "path not found: "+oldPath, os.ErrNotExist)
+}
+
+// Open opens a file from the mock filesystem.
+func (m *MockMedium) Open(path string) (fs.File, error) {
+	content, ok := m.Files[path]
+	if !ok {
+		return nil, coreerr.E("io.MockMedium.Open", "file not found: "+path, os.ErrNotExist)
+	}
+	return &MockFile{
+		name:    filepath.Base(path),
+		content: []byte(content),
+	}, nil
+}
+
+// Create creates a file in the mock filesystem.
+func (m *MockMedium) Create(path string) (goio.WriteCloser, error) {
+	return &MockWriteCloser{
+		medium: m,
+		path:   path,
+	}, nil
+}
+
+// MockFile implements fs.File for MockMedium.
+type MockFile struct {
+	name    string
+	content []byte
+	offset  int64
+}
+
+func (f *MockFile) Stat() (fs.FileInfo, error) {
+	return FileInfo{
+		name: f.name,
+		size: int64(len(f.content)),
+	}, nil
+}
+
+func (f *MockFile) Read(b []byte) (int, error) {
+	if f.offset >= int64(len(f.content)) {
+		return 0, goio.EOF
+	}
+	n := copy(b, f.content[f.offset:])
+	f.offset += int64(n)
+	return n, nil
+}
+
+func (f *MockFile) Close() error {
+	return nil
+}
+
+// MockWriteCloser implements WriteCloser for MockMedium.
+type MockWriteCloser struct {
+	medium *MockMedium
+	path   string
+	data   []byte
+}
+
+func (w *MockWriteCloser) Write(p []byte) (int, error) {
+	w.data = append(w.data, p...)
+	return len(p), nil
+}
+
+func (w *MockWriteCloser) Close() error {
+	w.medium.Files[w.path] = string(w.data)
+	return nil
 }
 
 // List returns directory entries for the mock filesystem.

@@ -40,8 +40,9 @@ func TestPath_RootFilesystem(t *testing.T) {
 	assert.Equal(t, "/etc/passwd", m.path("/etc/passwd"))
 	assert.Equal(t, "/home/user/file.txt", m.path("/home/user/file.txt"))
 
-	// Relative paths still work
-	assert.Equal(t, "/file.txt", m.path("file.txt"))
+	// Relative paths are relative to CWD when root is "/"
+	cwd, _ := os.Getwd()
+	assert.Equal(t, filepath.Join(cwd, "file.txt"), m.path("file.txt"))
 }
 
 func TestReadWrite(t *testing.T) {

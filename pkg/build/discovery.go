@@ -1,9 +1,10 @@
 package build
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // Marker files for project type detection.
@@ -32,12 +33,12 @@ var markers = []projectMarker{
 // Discover detects project types in the given directory by checking for marker files.
 // Returns a slice of detected project types, ordered by priority (most specific first).
 // For example, a Wails project returns [wails, go] since it has both wails.json and go.mod.
-func Discover(dir string) ([]ProjectType, error) {
+func Discover(fs io.Medium, dir string) ([]ProjectType, error) {
 	var detected []ProjectType
 
 	for _, m := range markers {
 		path := filepath.Join(dir, m.file)
-		if fileExists(path) {
+		if fileExists(fs, path) {
 			// Avoid duplicates (shouldn't happen with current markers, but defensive)
 			if !slices.Contains(detected, m.projectType) {
 				detected = append(detected, m.projectType)
@@ -50,8 +51,8 @@ func Discover(dir string) ([]ProjectType, error) {
 
 // PrimaryType returns the most specific project type detected in the directory.
 // Returns empty string if no project type is detected.
-func PrimaryType(dir string) (ProjectType, error) {
-	types, err := Discover(dir)
+func PrimaryType(fs io.Medium, dir string) (ProjectType, error) {
+	types, err := Discover(fs, dir)
 	if err != nil {
 		return "", err
 	}
@@ -62,31 +63,27 @@ func PrimaryType(dir string) (ProjectType, error) {
 }
 
 // IsGoProject checks if the directory contains a Go project (go.mod or wails.json).
-func IsGoProject(dir string) bool {
-	return fileExists(filepath.Join(dir, markerGoMod)) ||
-		fileExists(filepath.Join(dir, markerWails))
+func IsGoProject(fs io.Medium, dir string) bool {
+	return fileExists(fs, filepath.Join(dir, markerGoMod)) ||
+		fileExists(fs, filepath.Join(dir, markerWails))
 }
 
 // IsWailsProject checks if the directory contains a Wails project.
-func IsWailsProject(dir string) bool {
-	return fileExists(filepath.Join(dir, markerWails))
+func IsWailsProject(fs io.Medium, dir string) bool {
+	return fileExists(fs, filepath.Join(dir, markerWails))
 }
 
 // IsNodeProject checks if the directory contains a Node.js project.
-func IsNodeProject(dir string) bool {
-	return fileExists(filepath.Join(dir, markerNodePackage))
+func IsNodeProject(fs io.Medium, dir string) bool {
+	return fileExists(fs, filepath.Join(dir, markerNodePackage))
 }
 
 // IsPHPProject checks if the directory contains a PHP project.
-func IsPHPProject(dir string) bool {
-	return fileExists(filepath.Join(dir, markerComposer))
+func IsPHPProject(fs io.Medium, dir string) bool {
+	return fileExists(fs, filepath.Join(dir, markerComposer))
 }
 
 // fileExists checks if a file exists and is not a directory.
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
+func fileExists(fs io.Medium, path string) bool {
+	return fs.IsFile(path)
 }

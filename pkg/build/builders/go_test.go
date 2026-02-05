@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,13 +45,14 @@ func TestGoBuilder_Name_Good(t *testing.T) {
 }
 
 func TestGoBuilder_Detect_Good(t *testing.T) {
+	fs := io.Local
 	t.Run("detects Go project with go.mod", func(t *testing.T) {
 		dir := t.TempDir()
 		err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module test"), 0644)
 		require.NoError(t, err)
 
 		builder := NewGoBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.True(t, detected)
 	})
@@ -61,7 +63,7 @@ func TestGoBuilder_Detect_Good(t *testing.T) {
 		require.NoError(t, err)
 
 		builder := NewGoBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.True(t, detected)
 	})
@@ -73,7 +75,7 @@ func TestGoBuilder_Detect_Good(t *testing.T) {
 		require.NoError(t, err)
 
 		builder := NewGoBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.False(t, detected)
 	})
@@ -82,7 +84,7 @@ func TestGoBuilder_Detect_Good(t *testing.T) {
 		dir := t.TempDir()
 
 		builder := NewGoBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.False(t, detected)
 	})
@@ -99,6 +101,7 @@ func TestGoBuilder_Build_Good(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "testbinary",
@@ -133,6 +136,7 @@ func TestGoBuilder_Build_Good(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "multitest",
@@ -160,6 +164,7 @@ func TestGoBuilder_Build_Good(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "wintest",
@@ -183,6 +188,7 @@ func TestGoBuilder_Build_Good(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "", // Empty name
@@ -209,6 +215,7 @@ func TestGoBuilder_Build_Good(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "ldflagstest",
@@ -230,6 +237,7 @@ func TestGoBuilder_Build_Good(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "nestedtest",
@@ -261,6 +269,7 @@ func TestGoBuilder_Build_Bad(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  t.TempDir(),
 			Name:       "test",
@@ -279,6 +288,7 @@ func TestGoBuilder_Build_Bad(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: "/nonexistent/path",
 			OutputDir:  t.TempDir(),
 			Name:       "test",
@@ -309,6 +319,7 @@ func TestGoBuilder_Build_Bad(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: dir,
 			OutputDir:  t.TempDir(),
 			Name:       "test",
@@ -335,6 +346,7 @@ func TestGoBuilder_Build_Bad(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "partialtest",
@@ -360,6 +372,7 @@ func TestGoBuilder_Build_Bad(t *testing.T) {
 
 		builder := NewGoBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  t.TempDir(),
 			Name:       "canceltest",

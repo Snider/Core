@@ -17,18 +17,43 @@ const maxMCPMessageSize = 10 * 1024 * 1024
 
 // TCPTransport manages a TCP listener for MCP.
 type TCPTransport struct {
-	addr     string
-	listener net.Listener
+	Addr     string
+	Listener net.Listener
 }
 
 // NewTCPTransport creates a new TCP transport listener.
 // It listens on the provided address (e.g. "localhost:9100").
+// If addr is empty, it defaults to "127.0.0.1:9100".
 func NewTCPTransport(addr string) (*TCPTransport, error) {
+	if addr == "" {
+		addr = "127.0.0.1:9100"
+	}
+
+	// Security warning for binding to all interfaces
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		// If SplitHostPort fails, it might be an IP or hostname without a port.
+		host = addr
+	}
+
+	// For IPv6 literals like `[::]`, we need to remove brackets before parsing.
+	if len(host) > 2 && host[0] == '[' && host[len(host)-1] == ']' {
+		host = host[1 : len(host)-1]
+	}
+
+	ip := net.ParseIP(host)
+	if host == "" || (ip != nil && ip.IsUnspecified()) {
+		fmt.Fprintf(os.Stderr, "WARNING: MCP TCP server binding to all interfaces (%s). This may be insecure. Consider using 127.0.0.1 for local-only access.\n", addr)
+	}
+
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
-	return &TCPTransport{addr: addr, listener: listener}, nil
+	return &TCPTransport{
+		Addr:     addr,
+		Listener: listener,
+	}, nil
 }
 
 // ServeTCP starts a TCP server for the MCP service.
@@ -38,21 +63,21 @@ func (s *Service) ServeTCP(ctx context.Context, addr string) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = t.listener.Close() }()
+	defer func() { _ = t.Listener.Close() }()
 
 	// Close listener when context is cancelled to unblock Accept
 	go func() {
 		<-ctx.Done()
-		_ = t.listener.Close()
+		_ = t.Listener.Close()
 	}()
 
 	if addr == "" {
-		addr = t.listener.Addr().String()
+		addr = t.Listener.Addr().String()
 	}
 	fmt.Fprintf(os.Stderr, "MCP TCP server listening on %s\n", addr)
 
 	for {
-		conn, err := t.listener.Accept()
+		conn, err := t.Listener.Accept()
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -82,7 +107,6 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	transport := &connTransport{conn: conn}
 
 	// Run server (blocks until connection closed)
-	// Server.Run calls Connect, then Read loop.
 	if err := server.Run(ctx, transport); err != nil {
 		fmt.Fprintf(os.Stderr, "Connection error: %v\n", err)
 	}
@@ -109,12 +133,10 @@ type connConnection struct {
 }
 
 func (c *connConnection) Read(ctx context.Context) (jsonrpc.Message, error) {
-	// Blocks until line is read
 	if !c.scanner.Scan() {
 		if err := c.scanner.Err(); err != nil {
 			return nil, err
 		}
-		// EOF - connection closed cleanly
 		return nil, io.EOF
 	}
 	line := c.scanner.Bytes()
@@ -126,7 +148,6 @@ func (c *connConnection) Write(ctx context.Context, msg jsonrpc.Message) error {
 	if err != nil {
 		return err
 	}
-	// Append newline for line-delimited JSON
 	data = append(data, '\n')
 	_, err = c.conn.Write(data)
 	return err
@@ -137,5 +158,5 @@ func (c *connConnection) Close() error {
 }
 
 func (c *connConnection) SessionID() string {
-	return "tcp-session" // Unique ID might be better, but optional
+	return "tcp-session"
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/host-uk/core/internal/cmd/workspace"
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -18,16 +19,16 @@ func loadRegistryWithConfig(registryPath string) (*repos.Registry, string, error
 	var registryDir string
 
 	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
+		reg, err = repos.LoadRegistry(io.Local, registryPath)
 		if err != nil {
 			return nil, "", cli.Wrap(err, "failed to load registry")
 		}
 		cli.Print("%s %s\n\n", dimStyle.Render(i18n.Label("registry")), registryPath)
 		registryDir = filepath.Dir(registryPath)
 	} else {
-		registryPath, err = repos.FindRegistry()
+		registryPath, err = repos.FindRegistry(io.Local)
 		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
+			reg, err = repos.LoadRegistry(io.Local, registryPath)
 			if err != nil {
 				return nil, "", cli.Wrap(err, "failed to load registry")
 			}
@@ -36,7 +37,7 @@ func loadRegistryWithConfig(registryPath string) (*repos.Registry, string, error
 		} else {
 			// Fallback: scan current directory
 			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
+			reg, err = repos.ScanDirectory(io.Local, cwd)
 			if err != nil {
 				return nil, "", cli.Wrap(err, "failed to scan directory")
 			}

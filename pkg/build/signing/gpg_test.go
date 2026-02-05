@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,9 +24,10 @@ func TestGPGSigner_Bad_NoKey(t *testing.T) {
 }
 
 func TestGPGSigner_Sign_Bad(t *testing.T) {
+	fs := io.Local
 	t.Run("fails when no key", func(t *testing.T) {
 		s := NewGPGSigner("")
-		err := s.Sign(context.Background(), "test.txt")
+		err := s.Sign(context.Background(), fs, "test.txt")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not available or key not configured")
 	})

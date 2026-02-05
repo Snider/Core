@@ -4,12 +4,12 @@ package builders
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // WailsBuilder implements the Builder interface for Wails v3 projects.
@@ -27,8 +27,8 @@ func (b *WailsBuilder) Name() string {
 
 // Detect checks if this builder can handle the project in the given directory.
 // Uses IsWailsProject from the build package which checks for wails.json.
-func (b *WailsBuilder) Detect(dir string) (bool, error) {
-	return build.IsWailsProject(dir), nil
+func (b *WailsBuilder) Detect(fs io.Medium, dir string) (bool, error) {
+	return build.IsWailsProject(fs, dir), nil
 }
 
 // Build compiles the Wails project for the specified targets.
@@ -45,12 +45,12 @@ func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []b
 	}
 
 	// Detect Wails version
-	isV3 := b.isWailsV3(cfg.ProjectDir)
+	isV3 := b.isWailsV3(cfg.FS, cfg.ProjectDir)
 
 	if isV3 {
 		// Wails v3 strategy: Delegate to Taskfile
 		taskBuilder := NewTaskfileBuilder()
-		if detected, _ := taskBuilder.Detect(cfg.ProjectDir); detected {
+		if detected, _ := taskBuilder.Detect(cfg.FS, cfg.ProjectDir); detected {
 			return taskBuilder.Build(ctx, cfg, targets)
 		}
 		return nil, fmt.Errorf("wails v3 projects require a Taskfile for building")
@@ -58,7 +58,7 @@ func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []b
 
 	// Wails v2 strategy: Use 'wails build'
 	// Ensure output directory exists
-	if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
+	if err := cfg.FS.EnsureDir(cfg.OutputDir); err != nil {
 		return nil, fmt.Errorf("builders.WailsBuilder.Build: failed to create output directory: %w", err)
 	}
 
@@ -78,13 +78,13 @@ func (b *WailsBuilder) Build(ctx context.Context, cfg *build.Config, targets []b
 }
 
 // isWailsV3 checks if the project uses Wails v3 by inspecting go.mod.
-func (b *WailsBuilder) isWailsV3(dir string) bool {
+func (b *WailsBuilder) isWailsV3(fs io.Medium, dir string) bool {
 	goModPath := filepath.Join(dir, "go.mod")
-	data, err := os.ReadFile(goModPath)
+	content, err := fs.Read(goModPath)
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(data), "github.com/wailsapp/wails/v3")
+	return strings.Contains(content, "github.com/wailsapp/wails/v3")
 }
 
 // buildV2Target compiles for a single target platform using wails (v2).
@@ -123,7 +123,7 @@ func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, tar
 	wailsOutputDir := filepath.Join(cfg.ProjectDir, "build", "bin")
 
 	// Find the artifact in Wails output dir
-	sourcePath, err := b.findArtifact(wailsOutputDir, binaryName, target)
+	sourcePath, err := b.findArtifact(cfg.FS, wailsOutputDir, binaryName, target)
 	if err != nil {
 		return build.Artifact{}, fmt.Errorf("failed to find Wails v2 build artifact: %w", err)
 	}
@@ -131,18 +131,18 @@ func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, tar
 	// Move/Copy to our output dir
 	// Create platform specific dir in our output
 	platformDir := filepath.Join(cfg.OutputDir, fmt.Sprintf("%s_%s", target.OS, target.Arch))
-	if err := os.MkdirAll(platformDir, 0755); err != nil {
+	if err := cfg.FS.EnsureDir(platformDir); err != nil {
 		return build.Artifact{}, fmt.Errorf("failed to create output dir: %w", err)
 	}
 
 	destPath := filepath.Join(platformDir, filepath.Base(sourcePath))
 
-	// Simple copy
-	input, err := os.ReadFile(sourcePath)
+	// Simple copy using the medium
+	content, err := cfg.FS.Read(sourcePath)
 	if err != nil {
 		return build.Artifact{}, err
 	}
-	if err := os.WriteFile(destPath, input, 0755); err != nil {
+	if err := cfg.FS.Write(destPath, content); err != nil {
 		return build.Artifact{}, err
 	}
 
@@ -154,7 +154,7 @@ func (b *WailsBuilder) buildV2Target(ctx context.Context, cfg *build.Config, tar
 }
 
 // findArtifact locates the built artifact based on the target platform.
-func (b *WailsBuilder) findArtifact(platformDir, binaryName string, target build.Target) (string, error) {
+func (b *WailsBuilder) findArtifact(fs io.Medium, platformDir, binaryName string, target build.Target) (string, error) {
 	var candidates []string
 
 	switch target.OS {
@@ -181,13 +181,13 @@ func (b *WailsBuilder) findArtifact(platformDir, binaryName string, target build
 
 	// Try each candidate
 	for _, candidate := range candidates {
-		if fileOrDirExists(candidate) {
+		if fs.Exists(candidate) {
 			return candidate, nil
 		}
 	}
 
 	// If no specific candidate found, try to find any executable or package in the directory
-	entries, err := os.ReadDir(platformDir)
+	entries, err := fs.List(platformDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to read platform directory: %w", err)
 	}
@@ -221,7 +221,7 @@ func (b *WailsBuilder) findArtifact(platformDir, binaryName string, target build
 
 // detectPackageManager detects the frontend package manager based on lock files.
 // Returns "bun", "pnpm", "yarn", or "npm" (default).
-func detectPackageManager(dir string) string {
+func detectPackageManager(fs io.Medium, dir string) string {
 	// Check in priority order: bun, pnpm, yarn, npm
 	lockFiles := []struct {
 		file    string
@@ -234,28 +234,13 @@ func detectPackageManager(dir string) string {
 	}
 
 	for _, lf := range lockFiles {
-		if fileExists(filepath.Join(dir, lf.file)) {
+		if fs.IsFile(filepath.Join(dir, lf.file)) {
 			return lf.manager
 		}
 	}
 
 	// Default to npm if no lock file found
 	return "npm"
-}
-
-// fileExists checks if a file exists and is not a directory.
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
-}
-
-// fileOrDirExists checks if a file or directory exists.
-func fileOrDirExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
 }
 
 // Ensure WailsBuilder implements the Builder interface.

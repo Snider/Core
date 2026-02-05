@@ -13,6 +13,7 @@ import (
 
 	"github.com/host-uk/core/pkg/cache"
 	"github.com/host-uk/core/pkg/i18n"
+	coreio "github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 	"github.com/spf13/cobra"
 )
@@ -69,7 +70,7 @@ type ghRepo struct {
 func runPkgSearch(org, pattern, repoType string, limit int, refresh bool) error {
 	// Initialize cache in workspace .core/ directory
 	var cacheDir string
-	if regPath, err := repos.FindRegistry(); err == nil {
+	if regPath, err := repos.FindRegistry(coreio.Local); err == nil {
 		cacheDir = filepath.Join(filepath.Dir(regPath), ".core", "cache")
 	}
 

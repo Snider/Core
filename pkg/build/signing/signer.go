@@ -5,6 +5,8 @@ import (
 	"context"
 	"os"
 	"strings"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // Signer defines the interface for code signing implementations.
@@ -14,7 +16,7 @@ type Signer interface {
 	// Available checks if this signer can be used.
 	Available() bool
 	// Sign signs the artifact at the given path.
-	Sign(ctx context.Context, path string) error
+	Sign(ctx context.Context, fs io.Medium, path string) error
 }
 
 // SignConfig holds signing configuration from .core/build.yaml.

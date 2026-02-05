@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 // GPGSigner signs files using GPG.
@@ -35,7 +37,7 @@ func (s *GPGSigner) Available() bool {
 
 // Sign creates a detached ASCII-armored signature.
 // For file.txt, creates file.txt.asc
-func (s *GPGSigner) Sign(ctx context.Context, file string) error {
+func (s *GPGSigner) Sign(ctx context.Context, fs io.Medium, file string) error {
 	if !s.Available() {
 		return fmt.Errorf("gpg.Sign: gpg not available or key not configured")
 	}

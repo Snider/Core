@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 )
 
 // GoBuilder implements the Builder interface for Go projects.
@@ -27,8 +28,8 @@ func (b *GoBuilder) Name() string {
 
 // Detect checks if this builder can handle the project in the given directory.
 // Uses IsGoProject from the build package which checks for go.mod or wails.json.
-func (b *GoBuilder) Detect(dir string) (bool, error) {
-	return build.IsGoProject(dir), nil
+func (b *GoBuilder) Detect(fs io.Medium, dir string) (bool, error) {
+	return build.IsGoProject(fs, dir), nil
 }
 
 // Build compiles the Go project for the specified targets.
@@ -44,7 +45,7 @@ func (b *GoBuilder) Build(ctx context.Context, cfg *build.Config, targets []buil
 	}
 
 	// Ensure output directory exists
-	if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
+	if err := cfg.FS.EnsureDir(cfg.OutputDir); err != nil {
 		return nil, fmt.Errorf("builders.GoBuilder.Build: failed to create output directory: %w", err)
 	}
 
@@ -76,7 +77,7 @@ func (b *GoBuilder) buildTarget(ctx context.Context, cfg *build.Config, target b
 
 	// Create platform-specific output path: output/os_arch/binary
 	platformDir := filepath.Join(cfg.OutputDir, fmt.Sprintf("%s_%s", target.OS, target.Arch))
-	if err := os.MkdirAll(platformDir, 0755); err != nil {
+	if err := cfg.FS.EnsureDir(platformDir); err != nil {
 		return build.Artifact{}, fmt.Errorf("failed to create platform directory: %w", err)
 	}
 

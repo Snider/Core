@@ -10,6 +10,7 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -75,20 +76,20 @@ func runCI(registryPath string, branch string, failedOnly bool) error {
 	var err error
 
 	if registryPath != "" {
-		reg, err = repos.LoadRegistry(registryPath)
+		reg, err = repos.LoadRegistry(io.Local, registryPath)
 		if err != nil {
 			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
-		registryPath, err = repos.FindRegistry()
+		registryPath, err = repos.FindRegistry(io.Local)
 		if err == nil {
-			reg, err = repos.LoadRegistry(registryPath)
+			reg, err = repos.LoadRegistry(io.Local, registryPath)
 			if err != nil {
 				return cli.Wrap(err, "failed to load registry")
 			}
 		} else {
 			cwd, _ := os.Getwd()
-			reg, err = repos.ScanDirectory(cwd)
+			reg, err = repos.ScanDirectory(io.Local, cwd)
 			if err != nil {
 				return cli.Wrap(err, "failed to scan directory")
 			}

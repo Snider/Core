@@ -195,12 +195,12 @@ func runFileSync(source string) error {
 // resolveTargetRepos resolves the --to pattern to actual repos
 func resolveTargetRepos(pattern string) ([]*repos.Repo, error) {
 	// Load registry
-	registryPath, err := repos.FindRegistry()
+	registryPath, err := repos.FindRegistry(coreio.Local)
 	if err != nil {
 		return nil, log.E("dev.sync", "failed to find registry", err)
 	}
 
-	registry, err := repos.LoadRegistry(registryPath)
+	registry, err := repos.LoadRegistry(coreio.Local, registryPath)
 	if err != nil {
 		return nil, log.E("dev.sync", "failed to load registry", err)
 	}
