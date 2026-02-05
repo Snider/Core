@@ -34,6 +34,8 @@ func NewTCPTransport(addr string) (*TCPTransport, error) {
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
 		// If SplitHostPort fails, it might be an IP or hostname without a port.
+		// Log at debug level since this may indicate a configuration issue.
+		log.Debug("SplitHostPort failed for address, using as-is", "addr", addr, "err", err)
 		host = addr
 	}
 

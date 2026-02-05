@@ -12,6 +12,14 @@ import (
 )
 
 func TestNewTCPTransport_Defaults(t *testing.T) {
+	// First, check if port 9100 is available
+	testListener, err := net.Listen("tcp", "127.0.0.1:9100")
+	if err != nil {
+		// Port 9100 is in use, skip the default address test
+		t.Skip("Port 9100 is in use, skipping default address test")
+	}
+	testListener.Close()
+
 	// Test default address
 	tr, err := NewTCPTransport("")
 	if err != nil {
