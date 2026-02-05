@@ -2,7 +2,9 @@ package log
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -302,4 +304,35 @@ func TestMust_Ugly_Panics(t *testing.T) {
 	// Verify error was logged before panic
 	output := buf.String()
 	assert.True(t, strings.Contains(output, "[ERR]") || len(output) > 0)
+}
+
+func TestErr_LogValue(t *testing.T) {
+	err := &Err{
+		Op:   "test.Op",
+		Msg:  "test message",
+		Code: "TEST_CODE",
+		Err:  errors.New("underlying error"),
+	}
+
+	// Create a logger that outputs JSON to verify the LogValue implementation
+	var buf bytes.Buffer
+	h := slog.NewJSONHandler(&buf, nil)
+	l := slog.New(h)
+
+	l.Error("failed", "err", err)
+
+	var data map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+		t.Fatalf("failed to unmarshal JSON: %v", err)
+	}
+
+	errData, ok := data["err"].(map[string]any)
+	if !ok {
+		t.Fatal("expected 'err' field to be a map")
+	}
+
+	assert.Equal(t, "test message", errData["msg"])
+	assert.Equal(t, "test.Op", errData["op"])
+	assert.Equal(t, "TEST_CODE", errData["code"])
+	assert.Equal(t, "underlying error", errData["cause"])
 }

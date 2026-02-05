@@ -20,6 +20,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 )
 
@@ -103,8 +104,14 @@ type Logger struct {
 
 // Options configures a Logger.
 type Options struct {
-	Level  Level
+	Level Level
+
+	// Format selects the log output format. Use FormatText for human-readable logs
+	// (typically during local development) and FormatJSON for structured logs that
+	// are easier to parse and aggregate in log collectors. When FormatJSON is used,
+	// errors automatically include captured stack traces when available.
 	Format LogFormat
+
 	Output io.Writer // defaults to os.Stderr
 }
 
@@ -139,18 +146,23 @@ func (l *Logger) updateSlog() {
 			Level: l.level.slogLevel(),
 		})
 	} else {
-		handler = &textHandler{l: l}
+		handler = &textHandler{
+			l:     l,
+			level: l.level.slogLevel(),
+		}
 	}
 	l.slog = slog.New(handler)
 }
 
 type textHandler struct {
-	l     *Logger
-	attrs []slog.Attr
+	l           *Logger
+	level       slog.Level
+	attrs       []slog.Attr
+	groupPrefix string
 }
 
 func (h *textHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return level >= h.l.Level().slogLevel()
+	return level >= h.level
 }
 
 func (h *textHandler) Handle(ctx context.Context, r slog.Record) error {
@@ -179,29 +191,40 @@ func (h *textHandler) Handle(ctx context.Context, r slog.Record) error {
 		prefix = "[" + r.Level.String() + "]"
 	}
 
-	var kvStr string
+	var kvStr strings.Builder
 	for _, a := range h.attrs {
-		kvStr += fmt.Sprintf(" %s=%v", a.Key, a.Value.Any())
+		kvStr.WriteString(fmt.Sprintf(" %s=%v", a.Key, a.Value.Any()))
 	}
 	r.Attrs(func(a slog.Attr) bool {
-		kvStr += fmt.Sprintf(" %s=%v", a.Key, a.Value.Any())
+		kvStr.WriteString(fmt.Sprintf(" %s%s=%v", h.groupPrefix, a.Key, a.Value.Any()))
 		return true
 	})
 
-	_, err := fmt.Fprintf(output, "%s %s %s%s\n", timestamp, prefix, r.Message, kvStr)
+	_, err := fmt.Fprintf(output, "%s %s %s%s\n", timestamp, prefix, r.Message, kvStr.String())
 	return err
 }
 
 func (h *textHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	newAttrs := make([]slog.Attr, len(h.attrs)+len(attrs))
 	copy(newAttrs, h.attrs)
-	copy(newAttrs[len(h.attrs):], attrs)
-	return &textHandler{l: h.l, attrs: newAttrs}
+	for i, a := range attrs {
+		newAttrs[len(h.attrs)+i] = slog.Attr{Key: h.groupPrefix + a.Key, Value: a.Value}
+	}
+	return &textHandler{
+		l:           h.l,
+		level:       h.level,
+		attrs:       newAttrs,
+		groupPrefix: h.groupPrefix,
+	}
 }
 
 func (h *textHandler) WithGroup(name string) slog.Handler {
-	// Grouping not supported in simple text mode
-	return h
+	return &textHandler{
+		l:           h.l,
+		level:       h.level,
+		attrs:       h.attrs,
+		groupPrefix: h.groupPrefix + name + ".",
+	}
 }
 
 func identity(s string) string { return s }
@@ -273,11 +296,18 @@ func (l *Logger) ErrorContext(ctx context.Context, msg string, keyvals ...any) {
 
 	// Add stack trace for errors in JSON mode
 	if format == FormatJSON && hndlr.Enabled(ctx, slog.LevelError) {
-		buf := make([]byte, 2048)
+		buf := stackPool.Get().([]byte)
 		n := runtime.Stack(buf, false)
 		keyvals = append(keyvals, slog.String("stack", string(buf[:n])))
+		stackPool.Put(buf)
 	}
 	l.slog.ErrorContext(ctx, msg, keyvals...)
+}
+
+var stackPool = sync.Pool{
+	New: func() any {
+		return make([]byte, 1024*8)
+	},
 }
 
 // --- Default logger ---

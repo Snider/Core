@@ -2,6 +2,8 @@ package log
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -120,5 +122,107 @@ func TestDefault(t *testing.T) {
 	Info("test")
 	if buf.Len() == 0 {
 		t.Error("expected package-level Info to produce output")
+	}
+}
+
+func TestLogger_JSON(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(Options{
+		Level:  LevelDebug,
+		Format: FormatJSON,
+		Output: &buf,
+	})
+
+	l.Info("test message", "key1", "value1", "key2", 42)
+
+	var data map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+		t.Fatalf("failed to unmarshal JSON output: %v", err)
+	}
+
+	if data["msg"] != "test message" {
+		t.Errorf("expected msg to be %q, got %q", "test message", data["msg"])
+	}
+	if data["key1"] != "value1" {
+		t.Errorf("expected key1 to be %q, got %q", "value1", data["key1"])
+	}
+	if data["key2"] != float64(42) {
+		t.Errorf("expected key2 to be %v, got %v", 42, data["key2"])
+	}
+	if data["time"] == nil {
+		t.Error("expected time field to exist")
+	}
+	if data["level"] != "INFO" {
+		t.Errorf("expected level to be %q, got %q", "INFO", data["level"])
+	}
+}
+
+func TestLogger_Context(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(Options{Level: LevelInfo, Output: &buf})
+	ctx := context.Background()
+
+	l.InfoContext(ctx, "context info")
+	if !strings.Contains(buf.String(), "context info") {
+		t.Error("expected context info in output")
+	}
+
+	buf.Reset()
+	l.ErrorContext(ctx, "context error")
+	if !strings.Contains(buf.String(), "context error") {
+		t.Error("expected context error in output")
+	}
+}
+
+func TestLogger_StackTrace(t *testing.T) {
+	t.Run("JSON mode has stack", func(t *testing.T) {
+		var buf bytes.Buffer
+		l := New(Options{
+			Level:  LevelInfo,
+			Format: FormatJSON,
+			Output: &buf,
+		})
+
+		l.Error("test error")
+
+		var data map[string]any
+		if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+			t.Fatalf("failed to unmarshal JSON output: %v", err)
+		}
+
+		if data["stack"] == nil {
+			t.Error("expected stack trace in JSON error output")
+		}
+	})
+
+	t.Run("Text mode has no stack", func(t *testing.T) {
+		var buf bytes.Buffer
+		l := New(Options{
+			Level:  LevelInfo,
+			Format: FormatText,
+			Output: &buf,
+		})
+
+		l.Error("test error")
+
+		if strings.Contains(buf.String(), "stack=") {
+			t.Error("did not expect stack trace in text error output")
+		}
+	})
+}
+
+func TestLogger_Grouping(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(Options{
+		Level:  LevelDebug,
+		Format: FormatText,
+		Output: &buf,
+	})
+
+	l.slog.WithGroup("group1").Info("msg", "key", "val")
+
+	output := buf.String()
+	if !strings.Contains(output, "group1.key=val") {
+		t.Errorf("expected group1.key=val in output, got %q", output)
 	}
 }
