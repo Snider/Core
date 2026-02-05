@@ -15,7 +15,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -58,8 +57,10 @@ func Init(opts Options) error {
 
 		// Create root command
 		rootCmd := &cobra.Command{
-			Use:     opts.AppName,
-			Version: opts.Version,
+			Use:           opts.AppName,
+			Version:       opts.Version,
+			SilenceErrors: true,
+			SilenceUsage:  true,
 		}
 
 		// Attach all registered commands
@@ -147,9 +148,10 @@ func Shutdown() {
 // --- Signal Service (internal) ---
 
 type signalService struct {
-	cancel   context.CancelFunc
-	sigChan  chan os.Signal
-	onReload func() error
+	cancel       context.CancelFunc
+	sigChan      chan os.Signal
+	onReload     func() error
+	shutdownOnce sync.Once
 }
 
 // SignalOption configures signal handling.
@@ -190,7 +192,7 @@ func (s *signalService) OnStartup(ctx context.Context) error {
 				case syscall.SIGHUP:
 					if s.onReload != nil {
 						if err := s.onReload(); err != nil {
-							LogError(fmt.Sprintf("reload failed: %v", err))
+							LogError("reload failed", "err", err)
 						} else {
 							LogInfo("configuration reloaded")
 						}
@@ -209,7 +211,9 @@ func (s *signalService) OnStartup(ctx context.Context) error {
 }
 
 func (s *signalService) OnShutdown(ctx context.Context) error {
-	signal.Stop(s.sigChan)
-	close(s.sigChan)
+	s.shutdownOnce.Do(func() {
+		signal.Stop(s.sigChan)
+		close(s.sigChan)
+	})
 	return nil
 }

@@ -20,6 +20,8 @@
 //   - test: Test runner with coverage
 //   - qa: Quality assurance workflows
 //   - monitor: Security monitoring aggregation
+//   - gitea: Gitea instance management (repos, issues, PRs, mirrors)
+//   - unifi: UniFi network management (sites, devices, clients)
 
 package variants
 
@@ -35,8 +37,10 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/docs"
 	_ "github.com/host-uk/core/internal/cmd/doctor"
 	_ "github.com/host-uk/core/internal/cmd/gitcmd"
+	_ "github.com/host-uk/core/internal/cmd/gitea"
 	_ "github.com/host-uk/core/internal/cmd/go"
 	_ "github.com/host-uk/core/internal/cmd/help"
+	_ "github.com/host-uk/core/internal/cmd/mcpcmd"
 	_ "github.com/host-uk/core/internal/cmd/monitor"
 	_ "github.com/host-uk/core/internal/cmd/php"
 	_ "github.com/host-uk/core/internal/cmd/pkgcmd"
@@ -46,6 +50,7 @@ import (
 	_ "github.com/host-uk/core/internal/cmd/security"
 	_ "github.com/host-uk/core/internal/cmd/setup"
 	_ "github.com/host-uk/core/internal/cmd/test"
+	_ "github.com/host-uk/core/internal/cmd/unifi"
 	_ "github.com/host-uk/core/internal/cmd/updater"
 	_ "github.com/host-uk/core/internal/cmd/vm"
 	_ "github.com/host-uk/core/internal/cmd/workspace"

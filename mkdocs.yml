@@ -43,6 +43,26 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - User Documentation:
+    - User Guide: user-guide.md
+    - FAQ: faq.md
+    - Troubleshooting: troubleshooting.md
+    - Workflows: workflows.md
+  - CLI Reference:
+    - Overview: cmd/index.md
+    - AI: cmd/ai/index.md
+    - Build: cmd/build/index.md
+    - CI: cmd/ci/index.md
+    - Dev: cmd/dev/index.md
+    - Go: cmd/go/index.md
+    - PHP: cmd/php/index.md
+    - SDK: cmd/sdk/index.md
+    - Setup: cmd/setup/index.md
+    - Doctor: cmd/doctor/index.md
+    - Test: cmd/test/index.md
+    - VM: cmd/vm/index.md
+    - Pkg: cmd/pkg/index.md
+    - Docs: cmd/docs/index.md
   - Getting Started:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quickstart.md
@@ -71,3 +91,14 @@ nav:
   - API Reference:
     - Core: api/core.md
     - Display: api/display.md
+  - Development:
+    - Package Standards: pkg/PACKAGE_STANDARDS.md
+    - Internationalization:
+      - Overview: pkg/i18n/README.md
+      - Grammar: pkg/i18n/GRAMMAR.md
+      - Extending: pkg/i18n/EXTENDING.md
+    - Claude Skill: skill/index.md
+  - Reference:
+    - Configuration: configuration.md
+    - Migration: migration.md
+    - Glossary: glossary.md

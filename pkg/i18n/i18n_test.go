@@ -44,10 +44,15 @@ func TestTranslateWithArgs(t *testing.T) {
 }
 
 func TestSetLanguage(t *testing.T) {
+	// Clear locale env vars to ensure fallback to en-GB
+	t.Setenv("LANG", "")
+	t.Setenv("LC_ALL", "")
+	t.Setenv("LC_MESSAGES", "")
+
 	svc, err := New()
 	require.NoError(t, err)
 
-	// Default is en-GB
+	// Default is en-GB (when no system locale detected)
 	assert.Equal(t, "en-GB", svc.Language())
 
 	// Setting invalid language should error

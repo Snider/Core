@@ -4,22 +4,27 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review]
 
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  GH_REPO: ${{ github.repository }}
+
 jobs:
   merge:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Auto Merge
+      - name: Enable auto-merge
         uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const author = context.payload.pull_request.user.login;
             const association = context.payload.pull_request.author_association;
@@ -28,15 +33,22 @@ jobs:
             const trustedBots = ['google-labs-jules[bot]'];
             const isTrustedBot = trustedBots.includes(author);
 
-            // Check author association from webhook payload (no API call needed)
+            // Check author association from webhook payload
             const trusted = ['MEMBER', 'OWNER', 'COLLABORATOR'];
             if (!isTrustedBot && !trusted.includes(association)) {
               core.info(`${author} is ${association} — skipping auto-merge`);
               return;
             }
 
-            await exec.exec('gh', [
-              'pr', 'merge', process.env.PR_NUMBER,
-              '--auto',
-            ]);
-            core.info(`Auto-merge enabled for #${process.env.PR_NUMBER}`);
+            try {
+              await exec.exec('gh', [
+                'pr', 'merge', process.env.PR_NUMBER,
+                '--auto',
+                '--merge',
+                '-R', `${context.repo.owner}/${context.repo.repo}`
+              ]);
+              core.info(`Auto-merge enabled for #${process.env.PR_NUMBER}`);
+            } catch (error) {
+              core.error(`Failed to enable auto-merge: ${error.message}`);
+              throw error;
+            }

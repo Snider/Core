@@ -335,14 +335,22 @@ func ClearInstance() {
 
 // Config returns the registered Config service.
 func (c *Core) Config() Config {
-	cfg := MustServiceFor[Config](c, "config")
-	return cfg
+	return MustServiceFor[Config](c, "config")
 }
 
 // Display returns the registered Display service.
 func (c *Core) Display() Display {
-	d := MustServiceFor[Display](c, "display")
-	return d
+	return MustServiceFor[Display](c, "display")
+}
+
+// Workspace returns the registered Workspace service.
+func (c *Core) Workspace() Workspace {
+	return MustServiceFor[Workspace](c, "workspace")
+}
+
+// Crypt returns the registered Crypt service.
+func (c *Core) Crypt() Crypt {
+	return MustServiceFor[Crypt](c, "crypt")
 }
 
 // Core returns self, implementing the CoreProvider interface.

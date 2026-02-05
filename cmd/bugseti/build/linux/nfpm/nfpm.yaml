@@ -1,0 +1,34 @@
+# nfpm configuration for BugSETI
+name: "bugseti"
+arch: "${GOARCH}"
+platform: "linux"
+version: "0.1.0"
+section: "devel"
+priority: "optional"
+maintainer: "Lethean <developers@lethean.io>"
+description: |
+  BugSETI - Distributed Bug Fixing
+  Like SETI@home but for code. Install the system tray app,
+  it pulls OSS issues from GitHub, AI prepares context,
+  you fix bugs, and it auto-submits PRs.
+vendor: "Lethean"
+homepage: "https://github.com/host-uk/core"
+license: "MIT"
+
+contents:
+  - src: ./bin/bugseti
+    dst: /usr/bin/bugseti
+  - src: ./build/linux/bugseti.desktop
+    dst: /usr/share/applications/bugseti.desktop
+  - src: ./build/appicon.png
+    dst: /usr/share/icons/hicolor/256x256/apps/bugseti.png
+
+overrides:
+  deb:
+    dependencies:
+      - libwebkit2gtk-4.1-0
+      - libgtk-3-0
+  rpm:
+    dependencies:
+      - webkit2gtk4.1
+      - gtk3

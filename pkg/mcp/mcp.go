@@ -5,12 +5,16 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/io/local"
+	"github.com/host-uk/core/pkg/log"
+	"github.com/host-uk/core/pkg/process"
+	"github.com/host-uk/core/pkg/ws"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -21,6 +25,12 @@ type Service struct {
 	workspaceRoot string      // Root directory for file operations (empty = unrestricted)
 	medium        io.Medium   // Filesystem medium for sandboxed operations
 	logger        *log.Logger // Logger for security events
+
+	// Optional services for extended functionality
+	processService *process.Service // Process management service (optional)
+	wsHub          *ws.Hub          // WebSocket hub for real-time events (optional)
+	wsServer       *http.Server     // WebSocket HTTP server (started by ws_start tool)
+	wsAddr         string           // Address the WebSocket server is listening on
 }
 
 // Option configures a Service.
@@ -56,6 +66,24 @@ func WithWorkspaceRoot(root string) Option {
 		}
 		s.workspaceRoot = abs
 		s.medium = m
+		return nil
+	}
+}
+
+// WithProcessService adds process management tools to the MCP server.
+// When combined with WithWSHub, process events are automatically forwarded to WebSocket clients.
+func WithProcessService(svc *process.Service) Option {
+	return func(s *Service) error {
+		s.processService = svc
+		return nil
+	}
+}
+
+// WithWSHub adds WebSocket tools to the MCP server.
+// Enables real-time streaming of process output and events to connected clients.
+func WithWSHub(hub *ws.Hub) Option {
+	return func(s *Service) error {
+		s.wsHub = hub
 		return nil
 	}
 }
@@ -153,6 +181,21 @@ func (s *Service) registerTools(server *mcp.Server) {
 		Name:        "lang_list",
 		Description: "Get list of supported programming languages",
 	}, s.getSupportedLanguages)
+
+	// RAG operations
+	s.registerRAGTools(server)
+
+	// Metrics operations
+	s.registerMetricsTools(server)
+
+	// Process management operations (optional)
+	s.registerProcessTools(server)
+
+	// WebSocket operations (optional)
+	s.registerWSTools(server)
+
+	// Webview/browser automation operations
+	s.registerWebviewTools(server)
 }
 
 // Tool input/output types for MCP file operations.
@@ -294,6 +337,7 @@ func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input 
 	s.logger.Info("MCP tool execution", "tool", "file_read", "path", input.Path, "user", log.Username())
 	content, err := s.medium.Read(input.Path)
 	if err != nil {
+		log.Error("mcp: read file failed", "path", input.Path, "err", err)
 		return nil, ReadFileOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 	return nil, ReadFileOutput{
@@ -307,6 +351,7 @@ func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input
 	s.logger.Security("MCP tool execution", "tool", "file_write", "path", input.Path, "user", log.Username())
 	// Medium.Write creates parent directories automatically
 	if err := s.medium.Write(input.Path, input.Content); err != nil {
+		log.Error("mcp: write file failed", "path", input.Path, "err", err)
 		return nil, WriteFileOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil, WriteFileOutput{Success: true, Path: input.Path}, nil
@@ -316,6 +361,7 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 	s.logger.Info("MCP tool execution", "tool", "dir_list", "path", input.Path, "user", log.Username())
 	entries, err := s.medium.List(input.Path)
 	if err != nil {
+		log.Error("mcp: list directory failed", "path", input.Path, "err", err)
 		return nil, ListDirectoryOutput{}, fmt.Errorf("failed to list directory: %w", err)
 	}
 	result := make([]DirectoryEntry, 0, len(entries))
@@ -338,6 +384,7 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest, input CreateDirectoryInput) (*mcp.CallToolResult, CreateDirectoryOutput, error) {
 	s.logger.Security("MCP tool execution", "tool", "dir_create", "path", input.Path, "user", log.Username())
 	if err := s.medium.EnsureDir(input.Path); err != nil {
+		log.Error("mcp: create directory failed", "path", input.Path, "err", err)
 		return nil, CreateDirectoryOutput{}, fmt.Errorf("failed to create directory: %w", err)
 	}
 	return nil, CreateDirectoryOutput{Success: true, Path: input.Path}, nil
@@ -346,6 +393,7 @@ func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest,
 func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, input DeleteFileInput) (*mcp.CallToolResult, DeleteFileOutput, error) {
 	s.logger.Security("MCP tool execution", "tool", "file_delete", "path", input.Path, "user", log.Username())
 	if err := s.medium.Delete(input.Path); err != nil {
+		log.Error("mcp: delete file failed", "path", input.Path, "err", err)
 		return nil, DeleteFileOutput{}, fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil, DeleteFileOutput{Success: true, Path: input.Path}, nil
@@ -354,6 +402,7 @@ func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, inpu
 func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, input RenameFileInput) (*mcp.CallToolResult, RenameFileOutput, error) {
 	s.logger.Security("MCP tool execution", "tool", "file_rename", "oldPath", input.OldPath, "newPath", input.NewPath, "user", log.Username())
 	if err := s.medium.Rename(input.OldPath, input.NewPath); err != nil {
+		log.Error("mcp: rename file failed", "oldPath", input.OldPath, "newPath", input.NewPath, "err", err)
 		return nil, RenameFileOutput{}, fmt.Errorf("failed to rename file: %w", err)
 	}
 	return nil, RenameFileOutput{Success: true, OldPath: input.OldPath, NewPath: input.NewPath}, nil
@@ -411,6 +460,7 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 
 	content, err := s.medium.Read(input.Path)
 	if err != nil {
+		log.Error("mcp: edit file read failed", "path", input.Path, "err", err)
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
@@ -431,6 +481,7 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 	}
 
 	if err := s.medium.Write(input.Path, content); err != nil {
+		log.Error("mcp: edit file write failed", "path", input.Path, "err", err)
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -511,4 +562,26 @@ func (s *Service) Run(ctx context.Context) error {
 // Server returns the underlying MCP server for advanced configuration.
 func (s *Service) Server() *mcp.Server {
 	return s.server
+}
+
+// ProcessService returns the process service if configured.
+func (s *Service) ProcessService() *process.Service {
+	return s.processService
+}
+
+// WSHub returns the WebSocket hub if configured.
+func (s *Service) WSHub() *ws.Hub {
+	return s.wsHub
+}
+
+// Shutdown gracefully shuts down the MCP service, including the WebSocket server if running.
+func (s *Service) Shutdown(ctx context.Context) error {
+	if s.wsServer != nil {
+		if err := s.wsServer.Shutdown(ctx); err != nil {
+			return fmt.Errorf("failed to shutdown WebSocket server: %w", err)
+		}
+		s.wsServer = nil
+		s.wsAddr = ""
+	}
+	return nil
 }
