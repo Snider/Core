@@ -22,7 +22,26 @@ Core is an **opinionated Web3 desktop application framework** providing:
 
 **Mental model:** A secure, encrypted workspace manager where each "workspace" is a cryptographically isolated environment. The framework handles windows, menus, trays, config, and i18n.
 
-## Quick Start
+## CLI Quick Start
+
+```bash
+# 1. Install Core
+go install github.com/host-uk/core/cmd/core@latest
+
+# 2. Verify environment
+core doctor
+
+# 3. Run tests in any Go/PHP project
+core go test   # or core php test
+
+# 4. Build and preview release
+core build
+core ci
+```
+
+For more details, see the [User Guide](docs/user-guide.md).
+
+## Framework Quick Start (Go)
 
 ```go
 import core "github.com/host-uk/core"
@@ -341,6 +360,24 @@ Implementations: `local/`, `sftp/`, `webdav/`
 - [ ] Platform installers (DMG, MSI, AppImage)
 - [ ] Signing and notarization
 - [ ] Crash reporting integration
+
+---
+
+## Getting Help
+
+- **[User Guide](docs/user-guide.md)**: Detailed usage and concepts.
+- **[FAQ](docs/faq.md)**: Frequently asked questions.
+- **[Workflows](docs/workflows.md)**: Common task sequences.
+- **[Troubleshooting](docs/troubleshooting.md)**: Solving common issues.
+- **[Configuration](docs/configuration.md)**: Config file reference.
+
+```bash
+# Check environment
+core doctor
+
+# Command help
+core <command> --help
+```
 
 ---
 

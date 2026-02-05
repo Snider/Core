@@ -238,7 +238,6 @@ func (m *LinuxKitManager) Stop(ctx context.Context, id string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-
 	container, ok := m.state.Get(id)
 	if !ok {
 		return fmt.Errorf("container not found: %s", id)
@@ -437,7 +436,7 @@ func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) err
 	// Build SSH command
 	sshArgs := []string{
 		"-p", fmt.Sprintf("%d", sshPort),
-		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "StrictHostKeyChecking=yes",
 		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
 		"root@localhost",

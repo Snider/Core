@@ -3,10 +3,8 @@ package mcp
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"net"
-	"os"
 
 	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
@@ -24,31 +22,7 @@ type TCPTransport struct {
 
 // NewTCPTransport creates a new TCP transport listener.
 // It listens on the provided address (e.g. "localhost:9100").
-// If addr is empty, it defaults to "127.0.0.1:9100".
 func NewTCPTransport(addr string) (*TCPTransport, error) {
-	if addr == "" {
-		addr = "127.0.0.1:9100"
-	}
-
-	// Security warning for binding to all interfaces
-	host, _, err := net.SplitHostPort(addr)
-	if err != nil {
-		// If SplitHostPort fails, it might be an IP or hostname without a port.
-		// Log at debug level since this may indicate a configuration issue.
-		log.Debug("SplitHostPort failed for address, using as-is", "addr", addr, "err", err)
-		host = addr
-	}
-
-	// For IPv6 literals like `[::]`, we need to remove brackets before parsing.
-	if len(host) > 2 && host[0] == '[' && host[len(host)-1] == ']' {
-		host = host[1 : len(host)-1]
-	}
-
-	ip := net.ParseIP(host)
-	if host == "" || (ip != nil && ip.IsUnspecified()) {
-		fmt.Fprintf(os.Stderr, "WARNING: MCP TCP server binding to all interfaces (%s). This may be insecure. Consider using 127.0.0.1 for local-only access.\n", addr)
-	}
-
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err

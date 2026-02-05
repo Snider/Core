@@ -189,7 +189,7 @@ func runPHPCI() error {
 			return err
 		}
 		if !result.Passed {
-			os.Exit(result.ExitCode)
+			return cli.Exit(result.ExitCode, cli.Err("CI pipeline failed"))
 		}
 		return nil
 	}

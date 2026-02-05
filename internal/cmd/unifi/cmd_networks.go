@@ -30,7 +30,7 @@ func addNetworksCommand(parent *cli.Command) {
 }
 
 func runNetworks() error {
-	client, err := uf.NewFromConfig("", "", "", "")
+	client, err := uf.NewFromConfig("", "", "", "", nil)
 	if err != nil {
 		return log.E("unifi.networks", "failed to initialise client", err)
 	}

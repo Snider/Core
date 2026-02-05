@@ -296,6 +296,18 @@ func (c *Core) Display() (Display, error) {
 	return MustServiceFor[Display](c, "display")
 }
 
+// Workspace returns the registered Workspace service.
+func (c *Core) Workspace() Workspace {
+	w, _ := MustServiceFor[Workspace](c, "workspace")
+	return w
+}
+
+// Crypt returns the registered Crypt service.
+func (c *Core) Crypt() Crypt {
+	cr, _ := MustServiceFor[Crypt](c, "crypt")
+	return cr
+}
+
 // Core returns self, implementing the CoreProvider interface.
 func (c *Core) Core() *Core { return c }
 
