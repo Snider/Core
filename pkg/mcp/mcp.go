@@ -157,6 +157,9 @@ func (s *Service) registerTools(server *mcp.Server) {
 
 	// RAG operations
 	s.registerRAGTools(server)
+
+	// Metrics operations
+	s.registerMetricsTools(server)
 }
 
 // Tool input/output types for MCP file operations.
