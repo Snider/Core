@@ -70,11 +70,11 @@ func (d *DevOps) Claude(ctx context.Context, projectDir string, opts ClaudeOptio
 
 	// Build SSH command with agent forwarding
 	args := []string{
-		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "StrictHostKeyChecking=yes",
 		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
 		"-A", // SSH agent forwarding
-		"-p", "2222",
+		"-p", fmt.Sprintf("%d", DefaultSSHPort),
 	}
 
 	args = append(args, "root@localhost")
@@ -132,10 +132,10 @@ func (d *DevOps) CopyGHAuth(ctx context.Context) error {
 
 	// Use scp to copy gh config
 	cmd := exec.CommandContext(ctx, "scp",
-		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "StrictHostKeyChecking=yes",
 		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
-		"-P", "2222",
+		"-P", fmt.Sprintf("%d", DefaultSSHPort),
 		"-r", ghConfigDir,
 		"root@localhost:/root/.config/",
 	)

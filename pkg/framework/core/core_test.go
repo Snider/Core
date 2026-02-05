@@ -68,20 +68,24 @@ func TestCore_Services_Good(t *testing.T) {
 	err = c.RegisterService("display", &MockDisplayService{})
 	assert.NoError(t, err)
 
-	assert.NotNil(t, c.Config())
-	assert.NotNil(t, c.Display())
+	cfg, err := c.Config()
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+
+	d, err := c.Display()
+	assert.NoError(t, err)
+	assert.NotNil(t, d)
 }
 
 func TestCore_Services_Ugly(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
 
-	assert.Panics(t, func() {
-		c.Config()
-	})
-	assert.Panics(t, func() {
-		c.Display()
-	})
+	_, err = c.Config()
+	assert.Error(t, err)
+
+	_, err = c.Display()
+	assert.Error(t, err)
 }
 
 func TestCore_App_Good(t *testing.T) {
@@ -122,6 +126,15 @@ func TestFeatures_IsEnabled_Good(t *testing.T) {
 	assert.True(t, c.Features.IsEnabled("feature1"))
 	assert.True(t, c.Features.IsEnabled("feature2"))
 	assert.False(t, c.Features.IsEnabled("feature3"))
+	assert.False(t, c.Features.IsEnabled(""))
+}
+
+func TestFeatures_IsEnabled_Edge(t *testing.T) {
+	c, _ := New()
+	c.Features.Flags = []string{"  ", "foo"}
+	assert.True(t, c.Features.IsEnabled("  "))
+	assert.True(t, c.Features.IsEnabled("foo"))
+	assert.False(t, c.Features.IsEnabled("FOO")) // Case sensitive check
 }
 
 func TestCore_ServiceLifecycle_Good(t *testing.T) {
@@ -224,21 +237,21 @@ func TestCore_MustServiceFor_Good(t *testing.T) {
 	assert.NoError(t, err)
 	err = c.RegisterService("test", &MockService{Name: "test"})
 	assert.NoError(t, err)
-	svc := MustServiceFor[*MockService](c, "test")
+	svc, err := MustServiceFor[*MockService](c, "test")
+	assert.NoError(t, err)
 	assert.Equal(t, "test", svc.GetName())
 }
 
 func TestCore_MustServiceFor_Ugly(t *testing.T) {
 	c, err := New()
 	assert.NoError(t, err)
-	assert.Panics(t, func() {
-		MustServiceFor[*MockService](c, "nonexistent")
-	})
+	_, err = MustServiceFor[*MockService](c, "nonexistent")
+	assert.Error(t, err)
+
 	err = c.RegisterService("test", "not a service")
 	assert.NoError(t, err)
-	assert.Panics(t, func() {
-		MustServiceFor[*MockService](c, "test")
-	})
+	_, err = MustServiceFor[*MockService](c, "test")
+	assert.Error(t, err)
 }
 
 type MockAction struct {

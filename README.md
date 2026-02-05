@@ -22,12 +22,31 @@ Core is an **opinionated Web3 desktop application framework** providing:
 
 **Mental model:** A secure, encrypted workspace manager where each "workspace" is a cryptographically isolated environment. The framework handles windows, menus, trays, config, and i18n.
 
-## Quick Start
+## CLI Quick Start
+
+```bash
+# 1. Install Core
+go install github.com/host-uk/core/cmd/core@latest
+
+# 2. Verify environment
+core doctor
+
+# 3. Run tests in any Go/PHP project
+core go test   # or core php test
+
+# 4. Build and preview release
+core build
+core ci
+```
+
+For more details, see the [User Guide](docs/user-guide.md).
+
+## Framework Quick Start (Go)
 
 ```go
-import core "github.com/host-uk/core"
+import core "github.com/host-uk/core/pkg/framework/core"
 
-app := core.New(
+app, err := core.New(
   core.WithServiceLock(),
 )
 ```
@@ -118,7 +137,7 @@ Any configuration value can be overridden using environment variables with the `
 | `task test-gen` | Generate test stubs for public API |
 | `task check` | go mod tidy + tests + review |
 | `task review` | CodeRabbit review |
-| `task cov` | Generate coverage.txt |
+| `task cov` | Run tests with coverage report |
 | `task cov-view` | Open HTML coverage report |
 | `task sync` | Update public API Go files |
 
@@ -130,21 +149,20 @@ Any configuration value can be overridden using environment variables with the `
 
 ```
 .
-├── core.go              # Facade re-exporting pkg/core
+├── main.go              # CLI application entry point
 ├── pkg/
-│   ├── core/            # Service container, DI, Runtime[T]
-│   ├── config/          # JSON persistence, XDG paths
-│   ├── display/         # Windows, tray, menus (Wails)
+│   ├── framework/core/  # Service container, DI, Runtime[T]
 │   ├── crypt/           # Hashing, checksums, PGP
-│   │   └── openpgp/     # Full PGP implementation
 │   ├── io/              # Medium interface + backends
-│   ├── workspace/       # Encrypted workspace management
 │   ├── help/            # In-app documentation
-│   └── i18n/            # Internationalization
-├── cmd/
-│   ├── core/            # CLI application
-│   └── core-gui/        # Wails GUI application
-└── go.work              # Links root, cmd/core, cmd/core-gui
+│   ├── i18n/            # Internationalization
+│   ├── repos/           # Multi-repo registry & management
+│   ├── agentic/         # AI agent task management
+│   └── mcp/             # Model Context Protocol service
+├── internal/
+│   ├── cmd/             # CLI command implementations
+│   └── variants/        # Build variants (full, minimal, etc.)
+└── go.mod               # Go module definition
 ```
 
 ### Service Pattern (Dual-Constructor DI)
@@ -201,6 +219,40 @@ Service("workspace")     // Get service by name (returns any)
 
 **NOT exposed:** Direct calls like `workspace.CreateWorkspace()` or `crypt.Hash()`.
 
+## Configuration Management
+
+Core uses a **centralized configuration service** implemented in `pkg/config`, with YAML-based persistence and layered overrides.
+
+The `pkg/config` package provides:
+
+- YAML-backed persistence at `~/.core/config.yaml`
+- Dot-notation key access (for example: `cfg.Set("dev.editor", "vim")`, `cfg.GetString("dev.editor")`)
+- Environment variable overlay support (env vars can override persisted values)
+- Thread-safe operations for concurrent reads/writes
+
+Application code should treat `pkg/config` as the **primary configuration mechanism**. Direct reads/writes to YAML files should generally be avoided from application logic in favour of using this centralized service.
+
+### Project and Service Configuration Files
+
+In addition to the centralized configuration service, Core uses several YAML files for project-specific build/CI and service configuration. These live alongside (but are distinct from) the centralized configuration:
+
+- **Project Configuration** (in the `.core/` directory of the project root):
+    - `build.yaml`: Build targets, flags, and project metadata.
+    - `release.yaml`: Release automation, changelog settings, and publishing targets.
+    - `ci.yaml`: CI pipeline configuration.
+- **Global Configuration** (in the `~/.core/` directory):
+    - `config.yaml`: Centralized user/framework settings and defaults, managed via `pkg/config`.
+    - `agentic.yaml`: Configuration for agentic services (BaseURL, Token, etc.).
+- **Registry Configuration** (`repos.yaml`, auto-discovered):
+    - Multi-repo registry definition.
+    - Searched in the current directory and its parent directories (walking up).
+    - Then in `~/Code/host-uk/repos.yaml`.
+    - Finally in `~/.config/core/repos.yaml`.
+
+### Format
+
+All persisted configuration files described above use **YAML** format for readability and nested structure support.
+
 ### The IPC Bridge Pattern (Chosen Architecture)
 
 Sub-services are accessed via Core's **IPC/ACTION system**, not direct Wails bindings:
@@ -241,16 +293,15 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 
 ### Generating Bindings
 
+Wails v3 bindings are typically generated in the GUI repository (e.g., `core-gui`).
+
 ```bash
-cd cmd/core-gui
 wails3 generate bindings    # Regenerate after Go changes
 ```
 
-Bindings output to `cmd/core-gui/public/bindings/github.com/host-uk/core/` mirroring Go package structure.
-
 ---
 
-### Service Interfaces (`pkg/core/interfaces.go`)
+### Service Interfaces (`pkg/framework/core/interfaces.go`)
 
 ```go
 type Config interface {
@@ -283,54 +334,27 @@ type Crypt interface {
 
 | Package | Notes |
 |---------|-------|
-| `pkg/core` | Service container, DI, thread-safe - solid |
-| `pkg/config` | JSON persistence, XDG paths - solid |
-| `pkg/crypt` | Hashing, checksums, PGP - solid, well-tested |
-| `pkg/help` | Embedded docs, Show/ShowAt - solid |
+| `pkg/framework/core` | Service container, DI, thread-safe - solid |
+| `pkg/config` | Layered YAML configuration, XDG paths - solid |
+| `pkg/crypt` | Hashing, checksums, symmetric/asymmetric - solid, well-tested |
+| `pkg/help` | Embedded docs, full-text search - solid |
 | `pkg/i18n` | Multi-language with go-i18n - solid |
 | `pkg/io` | Medium interface + local backend - solid |
-| `pkg/workspace` | Workspace creation, switching, file ops - functional |
-
-### Partial
-
-| Package | Issues |
-|---------|--------|
-| `pkg/display` | Window creation works; menu/tray handlers are TODOs |
-
----
-
-## Priority Work Items
-
-### 1. IMPLEMENT: System Tray Brand Support
-
-`pkg/display/tray.go:52-63` - Commented brand-specific menu items need implementation.
-
-### 2. ADD: Integration Tests
-
-| Package | Notes |
-|---------|-------|
-| `pkg/display` | Integration tests requiring Wails runtime (27% unit coverage) |
+| `pkg/repos` | Multi-repo registry & management - solid |
+| `pkg/agentic` | AI agent task management - solid |
+| `pkg/mcp` | Model Context Protocol service - solid |
 
 ---
 
 ## Package Deep Dives
 
-### pkg/workspace - The Core Feature
+### pkg/crypt
 
-Each workspace is:
-1. Identified by LTHN hash of user identifier
-2. Has directory structure: `config/`, `log/`, `data/`, `files/`, `keys/`
-3. Gets a PGP keypair generated on creation
-4. Files accessed via obfuscated paths
-
-The `workspaceList` maps workspace IDs to public keys.
-
-### pkg/crypt/openpgp
-
-Full PGP using `github.com/ProtonMail/go-crypto`:
-- `CreateKeyPair(name, passphrase)` - RSA-4096 with revocation cert
-- `EncryptPGP()` - Encrypt + optional signing
-- `DecryptPGP()` - Decrypt + optional signature verification
+The crypt package provides a comprehensive suite of cryptographic primitives:
+- **Hashing & Checksums**: SHA-256, SHA-512, and CRC32 support.
+- **Symmetric Encryption**: AES-GCM and ChaCha20-Poly1305 for secure data at rest.
+- **Key Derivation**: Argon2id for secure password hashing.
+- **Asymmetric Encryption**: PGP implementation in the `pkg/crypt/openpgp` subpackage using `github.com/ProtonMail/go-crypto`.
 
 ### pkg/io - Storage Abstraction
 
@@ -393,10 +417,27 @@ Implementations: `local/`, `sftp/`, `webdav/`
 
 ---
 
+## Getting Help
+
+- **[User Guide](docs/user-guide.md)**: Detailed usage and concepts.
+- **[FAQ](docs/faq.md)**: Frequently asked questions.
+- **[Workflows](docs/workflows.md)**: Common task sequences.
+- **[Troubleshooting](docs/troubleshooting.md)**: Solving common issues.
+- **[Configuration](docs/configuration.md)**: Config file reference.
+
+```bash
+# Check environment
+core doctor
+
+# Command help
+core <command> --help
+```
+
+---
+
 ## For New Contributors
 
 1. Run `task test` to verify all tests pass
 2. Follow TDD: `task test-gen` creates stubs, implement to pass
 3. The dual-constructor pattern is intentional: `New(deps)` for tests, `Register()` for runtime
-4. See `cmd/core-gui/main.go` for how services wire together
-5. IPC handlers in each service's `HandleIPCEvents()` are the frontend bridge
+4. IPC handlers in each service's `HandleIPCEvents()` are the frontend bridge

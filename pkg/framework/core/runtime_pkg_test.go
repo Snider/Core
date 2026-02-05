@@ -121,8 +121,7 @@ func TestNewServiceRuntime_Good(t *testing.T) {
 	assert.Equal(t, c, sr.Core())
 
 	// We can't directly test sr.Config() without a registered config service,
-	// but we can ensure it doesn't panic. We'll test the panic case separately.
-	assert.Panics(t, func() {
-		sr.Config()
-	})
+	// but we can ensure it returns an error.
+	_, err = sr.Config()
+	assert.Error(t, err)
 }

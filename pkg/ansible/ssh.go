@@ -30,7 +30,6 @@ type SSHClient struct {
 	becomeUser string
 	becomePass string
 	timeout    time.Duration
-	insecure   bool
 }
 
 // SSHConfig holds SSH connection configuration.
@@ -44,7 +43,6 @@ type SSHConfig struct {
 	BecomeUser string
 	BecomePass string
 	Timeout    time.Duration
-	Insecure   bool
 }
 
 // NewSSHClient creates a new SSH client.
@@ -69,7 +67,6 @@ func NewSSHClient(cfg SSHConfig) (*SSHClient, error) {
 		becomeUser: cfg.BecomeUser,
 		becomePass: cfg.BecomePass,
 		timeout:    cfg.Timeout,
-		insecure:   cfg.Insecure,
 	}
 
 	return client, nil
@@ -137,21 +134,27 @@ func (c *SSHClient) Connect(ctx context.Context) error {
 	// Host key verification
 	var hostKeyCallback ssh.HostKeyCallback
 
-	if c.insecure {
-		hostKeyCallback = ssh.InsecureIgnoreHostKey()
-	} else {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return log.E("ssh.Connect", "failed to get user home dir", err)
-		}
-		knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
-
-		cb, err := knownhosts.New(knownHostsPath)
-		if err != nil {
-			return log.E("ssh.Connect", "failed to load known_hosts (use Insecure=true to bypass)", err)
-		}
-		hostKeyCallback = cb
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return log.E("ssh.Connect", "failed to get user home dir", err)
 	}
+	knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
+
+	// Ensure known_hosts file exists
+	if _, err := os.Stat(knownHostsPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(knownHostsPath), 0700); err != nil {
+			return log.E("ssh.Connect", "failed to create .ssh dir", err)
+		}
+		if err := os.WriteFile(knownHostsPath, nil, 0600); err != nil {
+			return log.E("ssh.Connect", "failed to create known_hosts file", err)
+		}
+	}
+
+	cb, err := knownhosts.New(knownHostsPath)
+	if err != nil {
+		return log.E("ssh.Connect", "failed to load known_hosts", err)
+	}
+	hostKeyCallback = cb
 
 	config := &ssh.ClientConfig{
 		User:            c.user,

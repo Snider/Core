@@ -55,7 +55,7 @@ type Medium interface {
 	// Create creates or truncates the named file.
 	Create(path string) (goio.WriteCloser, error)
 
-// Append opens the named file for appending, creating it if it doesn't exist.
+	// Append opens the named file for appending, creating it if it doesn't exist.
 	Append(path string) (goio.WriteCloser, error)
 
 	// ReadStream returns a reader for the file content.

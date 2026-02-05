@@ -293,6 +293,30 @@ go mod download
 
 ---
 
+## AI and Agentic Issues
+
+### "ANTHROPIC_API_KEY not set"
+
+**Cause:** You're trying to use `core ai` or `core dev commit` (which uses Claude for messages) without an API key.
+
+**Fix:**
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxx
+```
+
+### "failed to connect to Agentic API"
+
+**Cause:** Network issues or incorrect `AGENTIC_BASE_URL`.
+
+**Fix:**
+
+1. Check your internet connection
+2. If using a custom endpoint, verify `AGENTIC_BASE_URL`
+3. Ensure you are authenticated if required: `export AGENTIC_TOKEN=xxxx`
+
+---
+
 ## Getting More Help
 
 ### Enable Verbose Output
