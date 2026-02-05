@@ -8,14 +8,17 @@ import (
 )
 
 func captureOutput(f func()) string {
-	old := os.Stdout
+	oldOut := os.Stdout
+	oldErr := os.Stderr
 	r, w, _ := os.Pipe()
 	os.Stdout = w
+	os.Stderr = w
 
 	f()
 
 	_ = w.Close()
-	os.Stdout = old
+	os.Stdout = oldOut
+	os.Stderr = oldErr
 
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, r)
