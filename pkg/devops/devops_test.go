@@ -616,7 +616,6 @@ func TestDevOps_IsRunning_Bad_DifferentContainerName(t *testing.T) {
 }
 
 func TestDevOps_Boot_Good_FreshFlag(t *testing.T) {
-	t.Setenv("CORE_SKIP_SSH_SCAN", "true")
 	tempDir, err := os.MkdirTemp("", "devops-test-*")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
@@ -701,7 +700,6 @@ func TestDevOps_Stop_Bad_ContainerNotRunning(t *testing.T) {
 }
 
 func TestDevOps_Boot_Good_FreshWithNoExisting(t *testing.T) {
-	t.Setenv("CORE_SKIP_SSH_SCAN", "true")
 	tempDir, err := os.MkdirTemp("", "devops-boot-fresh-*")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
@@ -784,7 +782,6 @@ func TestDevOps_CheckUpdate_Delegates(t *testing.T) {
 }
 
 func TestDevOps_Boot_Good_Success(t *testing.T) {
-	t.Setenv("CORE_SKIP_SSH_SCAN", "true")
 	tempDir, err := os.MkdirTemp("", "devops-boot-success-*")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })

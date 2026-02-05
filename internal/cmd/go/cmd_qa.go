@@ -329,7 +329,7 @@ func runGoQA(cmd *cli.Command, args []string) error {
 	}
 
 	if failed > 0 {
-		return cli.Err("QA checks failed: %d passed, %d failed", passed, failed)
+		os.Exit(1)
 	}
 	return nil
 }

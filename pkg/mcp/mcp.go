@@ -12,7 +12,6 @@ import (
 	"github.com/host-uk/core/pkg/framework"
 	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/io/local"
-	"github.com/host-uk/core/pkg/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -283,7 +282,6 @@ type EditDiffOutput struct {
 func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input ReadFileInput) (*mcp.CallToolResult, ReadFileOutput, error) {
 	content, err := s.medium.Read(input.Path)
 	if err != nil {
-		log.Error("mcp: read file failed", "path", input.Path, "err", err)
 		return nil, ReadFileOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 	return nil, ReadFileOutput{
@@ -296,7 +294,6 @@ func (s *Service) readFile(ctx context.Context, req *mcp.CallToolRequest, input 
 func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input WriteFileInput) (*mcp.CallToolResult, WriteFileOutput, error) {
 	// Medium.Write creates parent directories automatically
 	if err := s.medium.Write(input.Path, input.Content); err != nil {
-		log.Error("mcp: write file failed", "path", input.Path, "err", err)
 		return nil, WriteFileOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil, WriteFileOutput{Success: true, Path: input.Path}, nil
@@ -305,7 +302,6 @@ func (s *Service) writeFile(ctx context.Context, req *mcp.CallToolRequest, input
 func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, input ListDirectoryInput) (*mcp.CallToolResult, ListDirectoryOutput, error) {
 	entries, err := s.medium.List(input.Path)
 	if err != nil {
-		log.Error("mcp: list directory failed", "path", input.Path, "err", err)
 		return nil, ListDirectoryOutput{}, fmt.Errorf("failed to list directory: %w", err)
 	}
 	result := make([]DirectoryEntry, 0, len(entries))
@@ -327,7 +323,6 @@ func (s *Service) listDirectory(ctx context.Context, req *mcp.CallToolRequest, i
 
 func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest, input CreateDirectoryInput) (*mcp.CallToolResult, CreateDirectoryOutput, error) {
 	if err := s.medium.EnsureDir(input.Path); err != nil {
-		log.Error("mcp: create directory failed", "path", input.Path, "err", err)
 		return nil, CreateDirectoryOutput{}, fmt.Errorf("failed to create directory: %w", err)
 	}
 	return nil, CreateDirectoryOutput{Success: true, Path: input.Path}, nil
@@ -335,7 +330,6 @@ func (s *Service) createDirectory(ctx context.Context, req *mcp.CallToolRequest,
 
 func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, input DeleteFileInput) (*mcp.CallToolResult, DeleteFileOutput, error) {
 	if err := s.medium.Delete(input.Path); err != nil {
-		log.Error("mcp: delete file failed", "path", input.Path, "err", err)
 		return nil, DeleteFileOutput{}, fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil, DeleteFileOutput{Success: true, Path: input.Path}, nil
@@ -343,7 +337,6 @@ func (s *Service) deleteFile(ctx context.Context, req *mcp.CallToolRequest, inpu
 
 func (s *Service) renameFile(ctx context.Context, req *mcp.CallToolRequest, input RenameFileInput) (*mcp.CallToolResult, RenameFileOutput, error) {
 	if err := s.medium.Rename(input.OldPath, input.NewPath); err != nil {
-		log.Error("mcp: rename file failed", "oldPath", input.OldPath, "newPath", input.NewPath, "err", err)
 		return nil, RenameFileOutput{}, fmt.Errorf("failed to rename file: %w", err)
 	}
 	return nil, RenameFileOutput{Success: true, OldPath: input.OldPath, NewPath: input.NewPath}, nil
@@ -397,7 +390,6 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 
 	content, err := s.medium.Read(input.Path)
 	if err != nil {
-		log.Error("mcp: edit file read failed", "path", input.Path, "err", err)
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
@@ -418,7 +410,6 @@ func (s *Service) editDiff(ctx context.Context, req *mcp.CallToolRequest, input 
 	}
 
 	if err := s.medium.Write(input.Path, content); err != nil {
-		log.Error("mcp: edit file write failed", "path", input.Path, "err", err)
 		return nil, EditDiffOutput{}, fmt.Errorf("failed to write file: %w", err)
 	}
 

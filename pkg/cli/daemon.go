@@ -229,7 +229,7 @@ func (h *HealthServer) Start() error {
 
 	go func() {
 		if err := h.server.Serve(listener); err != http.ErrServerClosed {
-			LogError("health server error", "err", err)
+			LogError(fmt.Sprintf("health server error: %v", err))
 		}
 	}()
 

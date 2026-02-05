@@ -11,11 +11,8 @@
 //	)
 //
 //	// Get service and run a process
-//	svc, err := framework.ServiceFor[*process.Service](core, "process")
-//	if err != nil {
-//	    return err
-//	}
-//	proc, err := svc.Start(ctx, "go", "test", "./...")
+//	svc := framework.MustServiceFor[*process.Service](core, "process")
+//	proc, _ := svc.Start(ctx, "go", "test", "./...")
 //
 // # Listening for Events
 //
