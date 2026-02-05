@@ -17,6 +17,7 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 	"github.com/host-uk/core/pkg/repos"
 )
@@ -100,13 +101,13 @@ func runQAIssues() error {
 	var err error
 
 	if issuesRegistry != "" {
-		reg, err = repos.LoadRegistry(issuesRegistry)
+		reg, err = repos.LoadRegistry(io.Local, issuesRegistry)
 	} else {
-		registryPath, findErr := repos.FindRegistry()
+		registryPath, findErr := repos.FindRegistry(io.Local)
 		if findErr != nil {
 			return log.E("qa.issues", i18n.T("error.registry_not_found"), nil)
 		}
-		reg, err = repos.LoadRegistry(registryPath)
+		reg, err = repos.LoadRegistry(io.Local, registryPath)
 	}
 	if err != nil {
 		return log.E("qa.issues", "failed to load registry", err)

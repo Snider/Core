@@ -28,12 +28,12 @@ func addPkgListCommand(parent *cobra.Command) {
 }
 
 func runPkgList() error {
-	regPath, err := repos.FindRegistry()
+	regPath, err := repos.FindRegistry(coreio.Local)
 	if err != nil {
 		return errors.New(i18n.T("cmd.pkg.error.no_repos_yaml_workspace"))
 	}
 
-	reg, err := repos.LoadRegistry(regPath)
+	reg, err := repos.LoadRegistry(coreio.Local, regPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "registry"), err)
 	}
@@ -113,12 +113,12 @@ func addPkgUpdateCommand(parent *cobra.Command) {
 }
 
 func runPkgUpdate(packages []string, all bool) error {
-	regPath, err := repos.FindRegistry()
+	regPath, err := repos.FindRegistry(coreio.Local)
 	if err != nil {
 		return errors.New(i18n.T("cmd.pkg.error.no_repos_yaml"))
 	}
 
-	reg, err := repos.LoadRegistry(regPath)
+	reg, err := repos.LoadRegistry(coreio.Local, regPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "registry"), err)
 	}
@@ -193,12 +193,12 @@ func addPkgOutdatedCommand(parent *cobra.Command) {
 }
 
 func runPkgOutdated() error {
-	regPath, err := repos.FindRegistry()
+	regPath, err := repos.FindRegistry(coreio.Local)
 	if err != nil {
 		return errors.New(i18n.T("cmd.pkg.error.no_repos_yaml"))
 	}
 
-	reg, err := repos.LoadRegistry(regPath)
+	reg, err := repos.LoadRegistry(coreio.Local, regPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", i18n.T("i18n.fail.load", "registry"), err)
 	}

@@ -22,7 +22,7 @@ import (
 
 // runRegistrySetup loads a registry from path and runs setup.
 func runRegistrySetup(ctx context.Context, registryPath, only string, dryRun, all, runBuild bool) error {
-	reg, err := repos.LoadRegistry(registryPath)
+	reg, err := repos.LoadRegistry(coreio.Local, registryPath)
 	if err != nil {
 		return fmt.Errorf("failed to load registry: %w", err)
 	}

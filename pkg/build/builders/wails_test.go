@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/host-uk/core/pkg/build"
+	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -91,6 +92,7 @@ func TestWailsBuilder_Build_Taskfile_Good(t *testing.T) {
 	}
 
 	t.Run("delegates to Taskfile if present", func(t *testing.T) {
+		fs := io.Local
 		projectDir := setupWailsTestProject(t)
 		outputDir := t.TempDir()
 
@@ -107,6 +109,7 @@ tasks:
 
 		builder := NewWailsBuilder()
 		cfg := &build.Config{
+			FS:         fs,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "testapp",
@@ -136,11 +139,13 @@ func TestWailsBuilder_Build_V2_Good(t *testing.T) {
 	}
 
 	t.Run("builds v2 project", func(t *testing.T) {
+		fs := io.Local
 		projectDir := setupWailsV2TestProject(t)
 		outputDir := t.TempDir()
 
 		builder := NewWailsBuilder()
 		cfg := &build.Config{
+			FS:         fs,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "testapp",
@@ -158,13 +163,14 @@ func TestWailsBuilder_Build_V2_Good(t *testing.T) {
 }
 
 func TestWailsBuilder_Detect_Good(t *testing.T) {
+	fs := io.Local
 	t.Run("detects Wails project with wails.json", func(t *testing.T) {
 		dir := t.TempDir()
 		err := os.WriteFile(filepath.Join(dir, "wails.json"), []byte("{}"), 0644)
 		require.NoError(t, err)
 
 		builder := NewWailsBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.True(t, detected)
 	})
@@ -175,7 +181,7 @@ func TestWailsBuilder_Detect_Good(t *testing.T) {
 		require.NoError(t, err)
 
 		builder := NewWailsBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.False(t, detected)
 	})
@@ -186,7 +192,7 @@ func TestWailsBuilder_Detect_Good(t *testing.T) {
 		require.NoError(t, err)
 
 		builder := NewWailsBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.False(t, detected)
 	})
@@ -195,19 +201,20 @@ func TestWailsBuilder_Detect_Good(t *testing.T) {
 		dir := t.TempDir()
 
 		builder := NewWailsBuilder()
-		detected, err := builder.Detect(dir)
+		detected, err := builder.Detect(fs, dir)
 		assert.NoError(t, err)
 		assert.False(t, detected)
 	})
 }
 
 func TestDetectPackageManager_Good(t *testing.T) {
+	fs := io.Local
 	t.Run("detects bun from bun.lockb", func(t *testing.T) {
 		dir := t.TempDir()
 		err := os.WriteFile(filepath.Join(dir, "bun.lockb"), []byte(""), 0644)
 		require.NoError(t, err)
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "bun", result)
 	})
 
@@ -216,7 +223,7 @@ func TestDetectPackageManager_Good(t *testing.T) {
 		err := os.WriteFile(filepath.Join(dir, "pnpm-lock.yaml"), []byte(""), 0644)
 		require.NoError(t, err)
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "pnpm", result)
 	})
 
@@ -225,7 +232,7 @@ func TestDetectPackageManager_Good(t *testing.T) {
 		err := os.WriteFile(filepath.Join(dir, "yarn.lock"), []byte(""), 0644)
 		require.NoError(t, err)
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "yarn", result)
 	})
 
@@ -234,14 +241,14 @@ func TestDetectPackageManager_Good(t *testing.T) {
 		err := os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte(""), 0644)
 		require.NoError(t, err)
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "npm", result)
 	})
 
 	t.Run("defaults to npm when no lock file", func(t *testing.T) {
 		dir := t.TempDir()
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "npm", result)
 	})
 
@@ -252,7 +259,7 @@ func TestDetectPackageManager_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "yarn.lock"), []byte(""), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte(""), 0644))
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "bun", result)
 	})
 
@@ -263,7 +270,7 @@ func TestDetectPackageManager_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "yarn.lock"), []byte(""), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte(""), 0644))
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "pnpm", result)
 	})
 
@@ -273,7 +280,7 @@ func TestDetectPackageManager_Good(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "yarn.lock"), []byte(""), 0644))
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte(""), 0644))
 
-		result := detectPackageManager(dir)
+		result := detectPackageManager(fs, dir)
 		assert.Equal(t, "yarn", result)
 	})
 }
@@ -293,6 +300,7 @@ func TestWailsBuilder_Build_Bad(t *testing.T) {
 
 		builder := NewWailsBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  t.TempDir(),
 			Name:       "test",
@@ -321,6 +329,7 @@ func TestWailsBuilder_Build_Good(t *testing.T) {
 
 		builder := NewWailsBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  outputDir,
 			Name:       "testapp",
@@ -359,6 +368,7 @@ func TestWailsBuilder_Ugly(t *testing.T) {
 
 		builder := NewWailsBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: dir,
 			OutputDir:  t.TempDir(),
 			Name:       "test",
@@ -386,6 +396,7 @@ func TestWailsBuilder_Ugly(t *testing.T) {
 
 		builder := NewWailsBuilder()
 		cfg := &build.Config{
+			FS:         io.Local,
 			ProjectDir: projectDir,
 			OutputDir:  t.TempDir(),
 			Name:       "canceltest",
