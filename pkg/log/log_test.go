@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/host-uk/core/pkg/io"
 )
 
 func TestLogger_Levels(t *testing.T) {
@@ -120,5 +122,36 @@ func TestDefault(t *testing.T) {
 	Info("test")
 	if buf.Len() == 0 {
 		t.Error("expected package-level Info to produce output")
+	}
+}
+
+func TestLogger_RotationIntegration(t *testing.T) {
+	m := io.NewMockMedium()
+	// Hack: override io.Local for testing
+	oldLocal := io.Local
+	io.Local = m
+	defer func() { io.Local = oldLocal }()
+
+	l := New(Options{
+		Level: LevelInfo,
+		Rotation: &RotationOptions{
+			Filename: "integration.log",
+			MaxSize:  1,
+		},
+	})
+
+	l.Info("integration test")
+
+	// RotatingWriter needs to be closed to ensure data is written to MockMedium
+	if rw, ok := l.output.(*RotatingWriter); ok {
+		rw.Close()
+	}
+
+	content, err := m.Read("integration.log")
+	if err != nil {
+		t.Fatalf("failed to read log: %v", err)
+	}
+	if !strings.Contains(content, "integration test") {
+		t.Errorf("expected content to contain log message, got %q", content)
 	}
 }

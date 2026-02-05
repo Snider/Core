@@ -152,15 +152,17 @@ func Copy(src Medium, srcPath string, dst Medium, dstPath string) error {
 
 // MockMedium is an in-memory implementation of Medium for testing.
 type MockMedium struct {
-	Files map[string]string
-	Dirs  map[string]bool
+	Files    map[string]string
+	Dirs     map[string]bool
+	ModTimes map[string]time.Time
 }
 
 // NewMockMedium creates a new MockMedium instance.
 func NewMockMedium() *MockMedium {
 	return &MockMedium{
-		Files: make(map[string]string),
-		Dirs:  make(map[string]bool),
+		Files:    make(map[string]string),
+		Dirs:     make(map[string]bool),
+		ModTimes: make(map[string]time.Time),
 	}
 }
 
@@ -176,6 +178,7 @@ func (m *MockMedium) Read(path string) (string, error) {
 // Write saves the given content to a file in the mock filesystem.
 func (m *MockMedium) Write(path, content string) error {
 	m.Files[path] = content
+	m.ModTimes[path] = time.Now()
 	return nil
 }
 
@@ -270,6 +273,10 @@ func (m *MockMedium) Rename(oldPath, newPath string) error {
 	if content, ok := m.Files[oldPath]; ok {
 		m.Files[newPath] = content
 		delete(m.Files, oldPath)
+		if mt, ok := m.ModTimes[oldPath]; ok {
+			m.ModTimes[newPath] = mt
+			delete(m.ModTimes, oldPath)
+		}
 		return nil
 	}
 	if _, ok := m.Dirs[oldPath]; ok {
@@ -288,16 +295,19 @@ func (m *MockMedium) Rename(oldPath, newPath string) error {
 
 		// Collect files to move first (don't mutate during iteration)
 		filesToMove := make(map[string]string)
-		for f, content := range m.Files {
+		for f := range m.Files {
 			if strings.HasPrefix(f, oldPrefix) {
 				newF := newPrefix + strings.TrimPrefix(f, oldPrefix)
 				filesToMove[f] = newF
-				_ = content // content will be copied in next loop
 			}
 		}
 		for oldF, newF := range filesToMove {
 			m.Files[newF] = m.Files[oldF]
 			delete(m.Files, oldF)
+			if mt, ok := m.ModTimes[oldF]; ok {
+				m.ModTimes[newF] = mt
+				delete(m.ModTimes, oldF)
+			}
 		}
 
 		// Collect directories to move first
@@ -388,6 +398,7 @@ func (w *MockWriteCloser) Write(p []byte) (int, error) {
 
 func (w *MockWriteCloser) Close() error {
 	w.medium.Files[w.path] = string(w.data)
+	w.medium.ModTimes[w.path] = time.Now()
 	return nil
 }
 
@@ -503,11 +514,15 @@ func (m *MockMedium) List(path string) ([]fs.DirEntry, error) {
 // Stat returns file information for the mock filesystem.
 func (m *MockMedium) Stat(path string) (fs.FileInfo, error) {
 	if content, ok := m.Files[path]; ok {
+		modTime, ok := m.ModTimes[path]
+		if !ok {
+			modTime = time.Now()
+		}
 		return FileInfo{
 			name:    filepath.Base(path),
 			size:    int64(len(content)),
 			mode:    0644,
-			modTime: time.Now(),
+			modTime: modTime,
 		}, nil
 	}
 	if _, ok := m.Dirs[path]; ok {

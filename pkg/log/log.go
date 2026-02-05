@@ -79,8 +79,9 @@ type RotationOptions struct {
 	// It defaults to 100 megabytes.
 	MaxSize int
 
-	// MaxAge is the maximum number of days to retain old log files based on the
-	// timestamp encoded in their filename. It defaults to 28 days.
+	// MaxAge is the maximum number of days to retain old log files based on their
+	// file modification time. It defaults to 28 days.
+	// Note: set to a negative value to disable age-based retention.
 	MaxAge int
 
 	// MaxBackups is the maximum number of old log files to retain.
@@ -94,9 +95,12 @@ type RotationOptions struct {
 
 // Options configures a Logger.
 type Options struct {
-	Level    Level
-	Output   io.Writer        // defaults to os.Stderr if Filename is empty
-	Rotation *RotationOptions // if provided, enables log rotation to file
+	Level Level
+	// Output is the destination for log messages. If Rotation is provided,
+	// Output is ignored and logs are written to the rotating file instead.
+	Output io.Writer
+	// Rotation enables log rotation to file. If provided, Filename must be set.
+	Rotation *RotationOptions
 }
 
 // New creates a new Logger with the given options.

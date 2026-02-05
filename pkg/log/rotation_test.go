@@ -3,6 +3,7 @@ package log
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/host-uk/core/pkg/io"
 )
@@ -76,7 +77,7 @@ func TestRotatingWriter_Retention(t *testing.T) {
 	w := NewRotatingWriter(opts, m)
 	defer w.Close()
 
-	// Trigger rotation 3 times
+	// Trigger rotation 4 times to test retention of only the latest backups
 	for i := 1; i <= 4; i++ {
 		_, _ = w.Write([]byte(strings.Repeat("a", 1024*1024+1)))
 	}
@@ -114,5 +115,49 @@ func TestRotatingWriter_Append(t *testing.T) {
 	expected := "existing content\nnew content\n"
 	if content != expected {
 		t.Errorf("expected %q, got %q", expected, content)
+	}
+}
+
+func TestRotatingWriter_AgeRetention(t *testing.T) {
+	m := io.NewMockMedium()
+	opts := RotationOptions{
+		Filename:   "test.log",
+		MaxSize:    1,
+		MaxBackups: 5,
+		MaxAge:     7, // 7 days
+	}
+
+	w := NewRotatingWriter(opts, m)
+
+	// Create some backup files
+	m.Write("test.log.1", "recent")
+	m.ModTimes["test.log.1"] = time.Now()
+
+	m.Write("test.log.2", "old")
+	m.ModTimes["test.log.2"] = time.Now().AddDate(0, 0, -10) // 10 days old
+
+	// Trigger rotation to run cleanup
+	_, _ = w.Write([]byte(strings.Repeat("a", 1024*1024+1)))
+	w.Close()
+
+	if !m.Exists("test.log.1") {
+		t.Error("expected test.log.1 (now test.log.2) to exist as it's recent")
+	}
+	// Note: test.log.1 becomes test.log.2 after rotation, etc.
+	// But wait, my cleanup runs AFTER rotation.
+	// Initial state:
+	// test.log.1 (now)
+	// test.log.2 (-10d)
+	// Write triggers rotation:
+	// test.log -> test.log.1
+	// test.log.1 -> test.log.2
+	// test.log.2 -> test.log.3
+	// Then cleanup runs:
+	// test.log.1 (now) - keep
+	// test.log.2 (now) - keep
+	// test.log.3 (-10d) - delete (since MaxAge is 7)
+
+	if m.Exists("test.log.3") {
+		t.Error("expected test.log.3 to be deleted as it's too old")
 	}
 }

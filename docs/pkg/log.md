@@ -8,12 +8,12 @@ By default, the following log retention policy is applied when log rotation is e
 
 - **Max Size**: 100 MB per log file.
 - **Max Backups**: 5 old log files are retained.
-- **Max Age**: 28 days. Old log files beyond this age are automatically deleted.
+- **Max Age**: 28 days. Old log files beyond this age are automatically deleted. (Set to -1 to disable age-based retention).
 - **Compression**: Rotated log files can be compressed (future feature).
 
 ## Configuration
 
-Logging can be configured using the `log.Options` struct. To enable log rotation to a file, provide a `RotationOptions` struct.
+Logging can be configured using the `log.Options` struct. To enable log rotation to a file, provide a `RotationOptions` struct. If both `Output` and `Rotation` are provided, `Rotation` takes precedence and `Output` is ignored.
 
 ### Standalone Usage
 

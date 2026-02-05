@@ -29,8 +29,10 @@ func NewRotatingWriter(opts RotationOptions, m coreio.Medium) *RotatingWriter {
 	if opts.MaxBackups <= 0 {
 		opts.MaxBackups = 5
 	}
-	if opts.MaxAge <= 0 {
+	if opts.MaxAge == 0 {
 		opts.MaxAge = 28 // 28 days
+	} else if opts.MaxAge < 0 {
+		opts.MaxAge = 0 // disabled
 	}
 
 	return &RotatingWriter{
@@ -57,7 +59,9 @@ func (w *RotatingWriter) Write(p []byte) (n int, err error) {
 	}
 
 	n, err = w.file.Write(p)
-	w.size += int64(n)
+	if err == nil {
+		w.size += int64(n)
+	}
 	return n, err
 }
 
@@ -104,6 +108,8 @@ func (w *RotatingWriter) rotate() error {
 	}
 
 	if err := w.rotateFiles(); err != nil {
+		// Try to reopen current file even if rotation failed
+		_ = w.openExistingOrNew()
 		return err
 	}
 
@@ -111,7 +117,7 @@ func (w *RotatingWriter) rotate() error {
 		return err
 	}
 
-	go w.cleanup()
+	w.cleanup()
 
 	return nil
 }
@@ -140,9 +146,6 @@ func (w *RotatingWriter) backupPath(n int) string {
 }
 
 func (w *RotatingWriter) cleanup() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	// 1. Remove backups beyond MaxBackups
 	// This is already partially handled by rotateFiles but we can be thorough
 	for i := w.opts.MaxBackups + 1; ; i++ {
