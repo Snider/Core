@@ -81,6 +81,8 @@ unpushed branches. Use --force to skip safety checks.`,
 	_ = statusCmd.MarkFlagRequired("epic")
 	_ = statusCmd.MarkFlagRequired("issue")
 
+	addAgentCommands(taskCmd)
+
 	taskCmd.AddCommand(createCmd, removeCmd, listCmd, statusCmd)
 	parent.AddCommand(taskCmd)
 }
