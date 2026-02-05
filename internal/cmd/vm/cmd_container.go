@@ -17,34 +17,6 @@ import (
 )
 
 var (
-	// allowedExecCommands is a whitelist of commands allowed to be executed in containers.
-	allowedExecCommands = map[string]bool{
-		"ls":       true,
-		"ps":       true,
-		"cat":      true,
-		"top":      true,
-		"df":       true,
-		"du":       true,
-		"ifconfig": true,
-		"ip":       true,
-		"ping":     true,
-		"netstat":  true,
-		"date":     true,
-		"uptime":   true,
-		"whoami":   true,
-		"id":       true,
-		"uname":    true,
-		"echo":     true,
-		"tail":     true,
-		"head":     true,
-		"grep":     true,
-		"sleep":    true,
-		"sh":       true,
-		"bash":     true,
-	}
-)
-
-var (
 	runName         string
 	runDetach       bool
 	runMemory       int
@@ -358,16 +330,6 @@ func addVMExecCommand(parent *cobra.Command) {
 }
 
 func execInContainer(id string, cmd []string) error {
-	if len(cmd) == 0 {
-		return errors.New(i18n.T("cmd.vm.error.id_and_cmd_required"))
-	}
-
-	// Validate against whitelist
-	baseCmd := cmd[0]
-	if !allowedExecCommands[baseCmd] {
-		return errors.New(i18n.T("cmd.vm.error.command_not_allowed", map[string]interface{}{"Command": baseCmd}))
-	}
-
 	manager, err := container.NewLinuxKitManager(io.Local)
 	if err != nil {
 		return fmt.Errorf(i18n.T("i18n.fail.init", "container manager")+": %w", err)

@@ -633,8 +633,6 @@
 			"stop.short": "Stop a running VM",
 			"logs.short": "View VM logs",
 			"exec.short": "Execute a command in a VM",
-			"error.id_and_cmd_required": "container ID and command required",
-			"error.command_not_allowed": "command not allowed: {{.Command}}",
 			"templates.short": "Manage LinuxKit templates"
 		},
 		"monitor": {

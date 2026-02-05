@@ -7,7 +7,6 @@ import (
 	goio "io"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 	"time"
 
@@ -417,13 +416,6 @@ func (f *followReader) Close() error {
 	return f.file.Close()
 }
 
-// escapeShellArg safely quotes a string for use as a shell argument.
-func escapeShellArg(arg string) string {
-	// Wrap in single quotes and escape existing single quotes.
-	// For example: 'it'\''s'
-	return "'" + strings.ReplaceAll(arg, "'", "'\\''") + "'"
-}
-
 // Exec executes a command inside the container via SSH.
 func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) error {
 	if err := ctx.Err(); err != nil {
@@ -449,11 +441,7 @@ func (m *LinuxKitManager) Exec(ctx context.Context, id string, cmd []string) err
 		"-o", "LogLevel=ERROR",
 		"root@localhost",
 	}
-
-	// Escape each command argument for the remote shell
-	for _, c := range cmd {
-		sshArgs = append(sshArgs, escapeShellArg(c))
-	}
+	sshArgs = append(sshArgs, cmd...)
 
 	sshCmd := exec.CommandContext(ctx, "ssh", sshArgs...)
 	sshCmd.Stdin = os.Stdin
