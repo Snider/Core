@@ -24,32 +24,7 @@ var AppVersion = "dev"
 // This is the main entry point for the CLI.
 // Exits with code 1 on error.
 func Main() {
-	// Manual flag parsing for daemon mode before Init()
-	// This ensures MCP settings from CLI flags are available to services
-	// Detect daemon command and parse flags manually before Init()
-	// This ensures MCP settings from CLI flags are available as environment variables
-Loop:
-	for i, arg := range os.Args[1:] {
-		if !strings.HasPrefix(arg, "-") {
-			if arg == "daemon" {
-				for j := i + 2; j < len(os.Args); j++ {
-					f := os.Args[j]
-					if strings.HasPrefix(f, "--mcp-transport=") {
-						os.Setenv("CORE_MCP_TRANSPORT", strings.TrimPrefix(f, "--mcp-transport="))
-					} else if f == "--mcp-transport" && j+1 < len(os.Args) {
-						os.Setenv("CORE_MCP_TRANSPORT", os.Args[j+1])
-						j++
-					} else if strings.HasPrefix(f, "--mcp-addr=") {
-						os.Setenv("CORE_MCP_ADDR", strings.TrimPrefix(f, "--mcp-addr="))
-					} else if f == "--mcp-addr" && j+1 < len(os.Args) {
-						os.Setenv("CORE_MCP_ADDR", os.Args[j+1])
-						j++
-					}
-				}
-			}
-			break Loop
-		}
-	}
+	parseDaemonFlags(os.Args)
 
 	// Build service list
 	services := []framework.Option{
@@ -78,6 +53,35 @@ Loop:
 	RootCmd().AddCommand(completionCmd)
 
 	Fatal(Execute())
+}
+
+// parseDaemonFlags manually extracts MCP settings from flags before framework Init().
+func parseDaemonFlags(args []string) {
+Loop:
+	for i, arg := range args {
+		if i == 0 {
+			continue
+		}
+		if !strings.HasPrefix(arg, "-") {
+			if arg == "daemon" {
+				for j := i + 1; j < len(args); j++ {
+					f := args[j]
+					if strings.HasPrefix(f, "--mcp-transport=") {
+						os.Setenv("CORE_MCP_TRANSPORT", strings.TrimPrefix(f, "--mcp-transport="))
+					} else if f == "--mcp-transport" && j+1 < len(args) {
+						os.Setenv("CORE_MCP_TRANSPORT", args[j+1])
+						j++
+					} else if strings.HasPrefix(f, "--mcp-addr=") {
+						os.Setenv("CORE_MCP_ADDR", strings.TrimPrefix(f, "--mcp-addr="))
+					} else if f == "--mcp-addr" && j+1 < len(args) {
+						os.Setenv("CORE_MCP_ADDR", args[j+1])
+						j++
+					}
+				}
+			}
+			break Loop
+		}
+	}
 }
 
 // completionCmd generates shell completion scripts.

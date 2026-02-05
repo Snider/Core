@@ -248,11 +248,6 @@ func composeIntent(intent Intent, subject *Subject) *Composed {
 // can compose the same strings as the intent templates.
 // This turns the intents definitions into a comprehensive test suite.
 func TestGrammarComposition_MatchesIntents(t *testing.T) {
-	// Clear locale env vars to ensure British English fallback (en-GB)
-	t.Setenv("LANG", "")
-	t.Setenv("LC_ALL", "")
-	t.Setenv("LC_MESSAGES", "")
-
 	// Test subjects for validation
 	subjects := []struct {
 		noun  string
@@ -433,11 +428,6 @@ func TestProgress_AllIntentVerbs(t *testing.T) {
 
 // TestPastTense_AllIntentVerbs ensures PastTense works for all intent verbs.
 func TestPastTense_AllIntentVerbs(t *testing.T) {
-	// Clear locale env vars to ensure British English fallback (en-GB)
-	t.Setenv("LANG", "")
-	t.Setenv("LC_ALL", "")
-	t.Setenv("LC_MESSAGES", "")
-
 	expected := map[string]string{
 		// Destructive
 		"delete":    "deleted",
@@ -509,11 +499,6 @@ func TestPastTense_AllIntentVerbs(t *testing.T) {
 
 // TestGerund_AllIntentVerbs ensures Gerund works for all intent verbs.
 func TestGerund_AllIntentVerbs(t *testing.T) {
-	// Clear locale env vars to ensure British English fallback (en-GB)
-	t.Setenv("LANG", "")
-	t.Setenv("LC_ALL", "")
-	t.Setenv("LC_MESSAGES", "")
-
 	expected := map[string]string{
 		// Destructive
 		"delete":    "deleting",
