@@ -111,7 +111,7 @@ log:
 
 #### Layered Configuration Mapping
 
-Any configuration value can be overridden using environment variables with the `CORE_CONFIG_` prefix. The variable name is converted to lowercase and underscores are replaced with dots to map to the configuration hierarchy.
+Any configuration value can be overridden using environment variables with the `CORE_CONFIG_` prefix. After stripping the `CORE_CONFIG_` prefix, the remaining variable name is converted to lowercase and underscores are replaced with dots to map to the configuration hierarchy.
 
 **Examples:**
 - `CORE_CONFIG_DEV_EDITOR=nano` maps to `dev.editor: nano`
