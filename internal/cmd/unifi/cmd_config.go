@@ -9,8 +9,8 @@ import (
 
 // Config command flags.
 var (
-	configURL    string
-	configUser   string
+	configURL      string
+	configUser     string
 	configPass     string
 	configAPIKey   string
 	configInsecure bool
