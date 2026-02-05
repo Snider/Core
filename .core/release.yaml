@@ -24,6 +24,9 @@ publishers:
   - type: github
     prerelease: false
     draft: false
+  - type: homebrew
+    tap: host-uk/homebrew-tap
+    formula: core
 
 changelog:
   include:

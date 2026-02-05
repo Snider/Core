@@ -53,13 +53,25 @@ jobs:
         run: |
           EXT=""
           if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-          go build -o "./bin/core${EXT}" .
+          BINARY="core${EXT}"
+          ARCHIVE_PREFIX="core-${GOOS}-${GOARCH}"
+
+          APP_VERSION="${GITHUB_REF_NAME#v}"
+          go build -ldflags "-s -w -X github.com/host-uk/core/pkg/cli.AppVersion=${APP_VERSION}" -o "./bin/${BINARY}" .
+
+          # Create tar.gz for Homebrew (non-Windows)
+          if [ "$GOOS" != "windows" ]; then
+            tar czf "./bin/${ARCHIVE_PREFIX}.tar.gz" -C ./bin "${BINARY}"
+          fi
+
+          # Rename raw binary to platform-specific name for release
+          mv "./bin/${BINARY}" "./bin/${ARCHIVE_PREFIX}${EXT}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: core-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ./bin/core*
+          path: ./bin/core-*
 
   release:
     needs: build

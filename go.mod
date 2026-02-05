@@ -38,6 +38,7 @@ require (
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
+	github.com/brianvoe/gofakeit/v6 v6.28.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/coder/websocket v1.8.14 // indirect
@@ -96,6 +97,7 @@ require (
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
+	github.com/unpoller/unifi/v5 v5.17.0 // indirect
 	github.com/wI2L/jsondiff v0.7.0 // indirect
 	github.com/wailsapp/go-webview2 v1.0.23 // indirect
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.64 // indirect
