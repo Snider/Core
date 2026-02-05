@@ -14,7 +14,6 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 	"github.com/host-uk/core/pkg/repos"
 )
@@ -72,13 +71,13 @@ func runHealth() error {
 	var err error
 
 	if healthRegistry != "" {
-		reg, err = repos.LoadRegistry(io.Local, healthRegistry)
+		reg, err = repos.LoadRegistry(healthRegistry)
 	} else {
-		registryPath, findErr := repos.FindRegistry(io.Local)
+		registryPath, findErr := repos.FindRegistry()
 		if findErr != nil {
 			return log.E("qa.health", i18n.T("error.registry_not_found"), nil)
 		}
-		reg, err = repos.LoadRegistry(io.Local, registryPath)
+		reg, err = repos.LoadRegistry(registryPath)
 	}
 	if err != nil {
 		return log.E("qa.health", "failed to load registry", err)

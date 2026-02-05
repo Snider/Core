@@ -3,10 +3,9 @@ package signing
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
-
-	"github.com/host-uk/core/pkg/io"
 )
 
 // MacOSSigner signs binaries using macOS codesign.
@@ -40,7 +39,7 @@ func (s *MacOSSigner) Available() bool {
 }
 
 // Sign codesigns a binary with hardened runtime.
-func (s *MacOSSigner) Sign(ctx context.Context, fs io.Medium, binary string) error {
+func (s *MacOSSigner) Sign(ctx context.Context, binary string) error {
 	if !s.Available() {
 		return fmt.Errorf("codesign.Sign: codesign not available")
 	}
@@ -63,7 +62,7 @@ func (s *MacOSSigner) Sign(ctx context.Context, fs io.Medium, binary string) err
 
 // Notarize submits binary to Apple for notarization and staples the ticket.
 // This blocks until Apple responds (typically 1-5 minutes).
-func (s *MacOSSigner) Notarize(ctx context.Context, fs io.Medium, binary string) error {
+func (s *MacOSSigner) Notarize(ctx context.Context, binary string) error {
 	if s.config.AppleID == "" || s.config.TeamID == "" || s.config.AppPassword == "" {
 		return fmt.Errorf("codesign.Notarize: missing Apple credentials (apple_id, team_id, app_password)")
 	}
@@ -74,7 +73,7 @@ func (s *MacOSSigner) Notarize(ctx context.Context, fs io.Medium, binary string)
 	if output, err := zipCmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("codesign.Notarize: failed to create zip: %w\nOutput: %s", err, string(output))
 	}
-	defer func() { _ = fs.Delete(zipPath) }()
+	defer func() { _ = os.Remove(zipPath) }()
 
 	// Submit to Apple and wait
 	submitCmd := exec.CommandContext(ctx, "xcrun", "notarytool", "submit",

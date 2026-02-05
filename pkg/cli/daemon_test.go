@@ -3,10 +3,11 @@ package cli
 import (
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,36 +39,37 @@ func TestDetectMode(t *testing.T) {
 
 func TestPIDFile(t *testing.T) {
 	t.Run("acquire and release", func(t *testing.T) {
-		m := io.NewMockMedium()
-		pidPath := "/tmp/test.pid"
+		tmpDir := t.TempDir()
+		pidPath := filepath.Join(tmpDir, "test.pid")
 
-		pid := NewPIDFile(m, pidPath)
+		pid := NewPIDFile(pidPath)
 
 		// Acquire should succeed
 		err := pid.Acquire()
 		require.NoError(t, err)
 
 		// File should exist with our PID
-		data, err := m.Read(pidPath)
+		data, err := os.ReadFile(pidPath)
 		require.NoError(t, err)
-		assert.NotEmpty(t, data)
+		assert.NotEmpty(t, string(data))
 
 		// Release should remove file
 		err = pid.Release()
 		require.NoError(t, err)
 
-		assert.False(t, m.Exists(pidPath))
+		_, err = os.Stat(pidPath)
+		assert.True(t, os.IsNotExist(err))
 	})
 
 	t.Run("stale pid file", func(t *testing.T) {
-		m := io.NewMockMedium()
-		pidPath := "/tmp/stale.pid"
+		tmpDir := t.TempDir()
+		pidPath := filepath.Join(tmpDir, "stale.pid")
 
 		// Write a stale PID (non-existent process)
-		err := m.Write(pidPath, "999999999")
+		err := os.WriteFile(pidPath, []byte("999999999"), 0644)
 		require.NoError(t, err)
 
-		pid := NewPIDFile(m, pidPath)
+		pid := NewPIDFile(pidPath)
 
 		// Should acquire successfully (stale PID removed)
 		err = pid.Acquire()
@@ -78,23 +80,23 @@ func TestPIDFile(t *testing.T) {
 	})
 
 	t.Run("creates parent directory", func(t *testing.T) {
-		m := io.NewMockMedium()
-		pidPath := "/tmp/subdir/nested/test.pid"
+		tmpDir := t.TempDir()
+		pidPath := filepath.Join(tmpDir, "subdir", "nested", "test.pid")
 
-		pid := NewPIDFile(m, pidPath)
+		pid := NewPIDFile(pidPath)
 
 		err := pid.Acquire()
 		require.NoError(t, err)
 
-		assert.True(t, m.Exists(pidPath))
+		_, err = os.Stat(pidPath)
+		require.NoError(t, err)
 
 		err = pid.Release()
 		require.NoError(t, err)
 	})
 
 	t.Run("path getter", func(t *testing.T) {
-		m := io.NewMockMedium()
-		pid := NewPIDFile(m, "/tmp/test.pid")
+		pid := NewPIDFile("/tmp/test.pid")
 		assert.Equal(t, "/tmp/test.pid", pid.Path())
 	})
 }
@@ -166,12 +168,10 @@ func TestHealthServer(t *testing.T) {
 
 func TestDaemon(t *testing.T) {
 	t.Run("start and stop", func(t *testing.T) {
-		m := io.NewMockMedium()
-		pidPath := "/tmp/test.pid"
+		tmpDir := t.TempDir()
 
 		d := NewDaemon(DaemonOptions{
-			Medium:          m,
-			PIDFile:         pidPath,
+			PIDFile:         filepath.Join(tmpDir, "test.pid"),
 			HealthAddr:      "127.0.0.1:0",
 			ShutdownTimeout: 5 * time.Second,
 		})
@@ -193,7 +193,8 @@ func TestDaemon(t *testing.T) {
 		require.NoError(t, err)
 
 		// PID file should be removed
-		assert.False(t, m.Exists(pidPath))
+		_, err = os.Stat(filepath.Join(tmpDir, "test.pid"))
+		assert.True(t, os.IsNotExist(err))
 	})
 
 	t.Run("double start fails", func(t *testing.T) {

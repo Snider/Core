@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/host-uk/core/pkg/build/signing"
-	"github.com/host-uk/core/pkg/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -69,10 +68,10 @@ type TargetConfig struct {
 // LoadConfig loads build configuration from the .core/build.yaml file in the given directory.
 // If the config file does not exist, it returns DefaultConfig().
 // Returns an error if the file exists but cannot be parsed.
-func LoadConfig(fs io.Medium, dir string) (*BuildConfig, error) {
+func LoadConfig(dir string) (*BuildConfig, error) {
 	configPath := filepath.Join(dir, ConfigDir, ConfigFileName)
 
-	content, err := fs.Read(configPath)
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return DefaultConfig(), nil
@@ -81,7 +80,6 @@ func LoadConfig(fs io.Medium, dir string) (*BuildConfig, error) {
 	}
 
 	var cfg BuildConfig
-	data := []byte(content)
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("build.LoadConfig: failed to parse config file: %w", err)
 	}
@@ -155,8 +153,8 @@ func ConfigPath(dir string) string {
 }
 
 // ConfigExists checks if a build config file exists in the given directory.
-func ConfigExists(fs io.Medium, dir string) bool {
-	return fileExists(fs, ConfigPath(dir))
+func ConfigExists(dir string) bool {
+	return fileExists(ConfigPath(dir))
 }
 
 // ToTargets converts TargetConfig slice to Target slice for use with builders.

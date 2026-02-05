@@ -18,7 +18,6 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/log"
 	"github.com/host-uk/core/pkg/repos"
 )
@@ -178,12 +177,12 @@ func resolveRepos() ([]string, error) {
 
 	if monitorAll {
 		// All repos from registry
-		registry, err := repos.FindRegistry(io.Local)
+		registry, err := repos.FindRegistry()
 		if err != nil {
 			return nil, log.E("monitor", "failed to find registry", err)
 		}
 
-		loaded, err := repos.LoadRegistry(io.Local, registry)
+		loaded, err := repos.LoadRegistry(registry)
 		if err != nil {
 			return nil, log.E("monitor", "failed to load registry", err)
 		}

@@ -5,8 +5,6 @@ package build
 
 import (
 	"context"
-
-	"github.com/host-uk/core/pkg/io"
 )
 
 // ProjectType represents a detected project type.
@@ -51,8 +49,6 @@ type Artifact struct {
 
 // Config holds build configuration.
 type Config struct {
-	// FS is the medium used for file operations.
-	FS io.Medium
 	// ProjectDir is the root directory of the project.
 	ProjectDir string
 	// OutputDir is where build artifacts are placed.
@@ -82,7 +78,7 @@ type Builder interface {
 	// Name returns the builder's identifier.
 	Name() string
 	// Detect checks if this builder can handle the project in the given directory.
-	Detect(fs io.Medium, dir string) (bool, error)
+	Detect(dir string) (bool, error)
 	// Build compiles the project for the specified targets.
 	Build(ctx context.Context, cfg *Config, targets []Target) ([]Artifact, error)
 }

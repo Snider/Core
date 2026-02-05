@@ -51,8 +51,8 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 
 	// Determine target directory
 	if targetDir == "" {
-		if regPath, err := repos.FindRegistry(coreio.Local); err == nil {
-			if reg, err := repos.LoadRegistry(coreio.Local, regPath); err == nil {
+		if regPath, err := repos.FindRegistry(); err == nil {
+			if reg, err := repos.LoadRegistry(regPath); err == nil {
 				targetDir = reg.BasePath
 				if targetDir == "" {
 					targetDir = "./packages"
@@ -110,12 +110,12 @@ func runPkgInstall(repoArg, targetDir string, addToRegistry bool) error {
 }
 
 func addToRegistryFile(org, repoName string) error {
-	regPath, err := repos.FindRegistry(coreio.Local)
+	regPath, err := repos.FindRegistry()
 	if err != nil {
 		return errors.New(i18n.T("cmd.pkg.error.no_repos_yaml"))
 	}
 
-	reg, err := repos.LoadRegistry(coreio.Local, regPath)
+	reg, err := repos.LoadRegistry(regPath)
 	if err != nil {
 		return err
 	}

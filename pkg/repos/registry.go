@@ -20,7 +20,6 @@ type Registry struct {
 	BasePath string           `yaml:"base_path"`
 	Repos    map[string]*Repo `yaml:"repos"`
 	Defaults RegistryDefaults `yaml:"defaults"`
-	medium   io.Medium        `yaml:"-"`
 }
 
 // RegistryDefaults contains default values applied to all repos.
@@ -57,14 +56,17 @@ type Repo struct {
 	Clone       *bool    `yaml:"clone,omitempty"` // nil = true, false = skip cloning
 
 	// Computed fields
-	Path     string    `yaml:"-"` // Full path to repo directory
-	registry *Registry `yaml:"-"`
+	Path string `yaml:"-"` // Full path to repo directory
 }
 
-// LoadRegistry reads and parses a repos.yaml file from the given medium.
-// The path should be a valid path for the provided medium.
-func LoadRegistry(m io.Medium, path string) (*Registry, error) {
-	content, err := m.Read(path)
+// LoadRegistry reads and parses a repos.yaml file.
+func LoadRegistry(path string) (*Registry, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve path: %w", err)
+	}
+
+	content, err := io.Local.Read(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read registry file: %w", err)
 	}
@@ -75,8 +77,6 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 		return nil, fmt.Errorf("failed to parse registry file: %w", err)
 	}
 
-	reg.medium = m
-
 	// Expand base path
 	reg.BasePath = expandPath(reg.BasePath)
 
@@ -84,7 +84,6 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 	for name, repo := range reg.Repos {
 		repo.Name = name
 		repo.Path = filepath.Join(reg.BasePath, name)
-		repo.registry = &reg
 
 		// Apply defaults if not set
 		if repo.CI == "" {
@@ -97,8 +96,7 @@ func LoadRegistry(m io.Medium, path string) (*Registry, error) {
 
 // FindRegistry searches for repos.yaml in common locations.
 // It checks: current directory, parent directories, and home directory.
-// This function is primarily intended for use with io.Local or other local-like filesystems.
-func FindRegistry(m io.Medium) (string, error) {
+func FindRegistry() (string, error) {
 	// Check current directory and parents
 	dir, err := os.Getwd()
 	if err != nil {
@@ -107,7 +105,7 @@ func FindRegistry(m io.Medium) (string, error) {
 
 	for {
 		candidate := filepath.Join(dir, "repos.yaml")
-		if m.Exists(candidate) {
+		if io.Local.Exists(candidate) {
 			return candidate, nil
 		}
 
@@ -130,7 +128,7 @@ func FindRegistry(m io.Medium) (string, error) {
 	}
 
 	for _, p := range commonPaths {
-		if m.Exists(p) {
+		if io.Local.Exists(p) {
 			return p, nil
 		}
 	}
@@ -140,18 +138,21 @@ func FindRegistry(m io.Medium) (string, error) {
 
 // ScanDirectory creates a Registry by scanning a directory for git repos.
 // This is used as a fallback when no repos.yaml is found.
-// The dir should be a valid path for the provided medium.
-func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
-	entries, err := m.List(dir)
+func ScanDirectory(dir string) (*Registry, error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	entries, err := io.Local.List(absDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
 	reg := &Registry{
 		Version:  1,
-		BasePath: dir,
+		BasePath: absDir,
 		Repos:    make(map[string]*Repo),
-		medium:   m,
 	}
 
 	// Try to detect org from git remote
@@ -160,25 +161,24 @@ func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 			continue
 		}
 
-		repoPath := filepath.Join(dir, entry.Name())
+		repoPath := filepath.Join(absDir, entry.Name())
 		gitPath := filepath.Join(repoPath, ".git")
 
-		if !m.IsDir(gitPath) {
+		if !io.Local.IsDir(gitPath) {
 			continue // Not a git repo
 		}
 
 		repo := &Repo{
-			Name:     entry.Name(),
-			Path:     repoPath,
-			Type:     "module", // Default type
-			registry: reg,
+			Name: entry.Name(),
+			Path: repoPath,
+			Type: "module", // Default type
 		}
 
 		reg.Repos[entry.Name()] = repo
 
 		// Try to detect org from first repo's remote
 		if reg.Org == "" {
-			reg.Org = detectOrg(m, repoPath)
+			reg.Org = detectOrg(repoPath)
 		}
 	}
 
@@ -186,10 +186,10 @@ func ScanDirectory(m io.Medium, dir string) (*Registry, error) {
 }
 
 // detectOrg tries to extract the GitHub org from a repo's origin remote.
-func detectOrg(m io.Medium, repoPath string) string {
+func detectOrg(repoPath string) string {
 	// Try to read git remote
 	configPath := filepath.Join(repoPath, ".git", "config")
-	content, err := m.Read(configPath)
+	content, err := io.Local.Read(configPath)
 	if err != nil {
 		return ""
 	}
@@ -301,20 +301,13 @@ func (r *Registry) TopologicalOrder() ([]*Repo, error) {
 
 // Exists checks if the repo directory exists on disk.
 func (repo *Repo) Exists() bool {
-	return repo.getMedium().IsDir(repo.Path)
+	return io.Local.IsDir(repo.Path)
 }
 
 // IsGitRepo checks if the repo directory contains a .git folder.
 func (repo *Repo) IsGitRepo() bool {
 	gitPath := filepath.Join(repo.Path, ".git")
-	return repo.getMedium().IsDir(gitPath)
-}
-
-func (repo *Repo) getMedium() io.Medium {
-	if repo.registry != nil && repo.registry.medium != nil {
-		return repo.registry.medium
-	}
-	return io.Local
+	return io.Local.IsDir(gitPath)
 }
 
 // expandPath expands ~ to home directory.

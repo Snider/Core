@@ -6,7 +6,6 @@ import (
 
 	"github.com/host-uk/core/pkg/cli"
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -43,14 +42,14 @@ func runImpact(registryPath string, repoName string) error {
 	var err error
 
 	if registryPath != "" {
-		reg, err = repos.LoadRegistry(io.Local, registryPath)
+		reg, err = repos.LoadRegistry(registryPath)
 		if err != nil {
 			return cli.Wrap(err, "failed to load registry")
 		}
 	} else {
-		registryPath, err = repos.FindRegistry(io.Local)
+		registryPath, err = repos.FindRegistry()
 		if err == nil {
-			reg, err = repos.LoadRegistry(io.Local, registryPath)
+			reg, err = repos.LoadRegistry(registryPath)
 			if err != nil {
 				return cli.Wrap(err, "failed to load registry")
 			}

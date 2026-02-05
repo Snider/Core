@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/Snider/Borg/pkg/compress"
-	io_interface "github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +37,6 @@ func setupArchiveTestFile(t *testing.T, name, os_, arch string) (binaryPath stri
 }
 
 func TestArchive_Good(t *testing.T) {
-	fs := io_interface.Local
 	t.Run("creates tar.gz for linux", func(t *testing.T) {
 		binaryPath, outputDir := setupArchiveTestFile(t, "myapp", "linux", "amd64")
 
@@ -48,7 +46,7 @@ func TestArchive_Good(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		require.NoError(t, err)
 
 		// Verify archive was created
@@ -73,7 +71,7 @@ func TestArchive_Good(t *testing.T) {
 			Arch: "arm64",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		require.NoError(t, err)
 
 		expectedPath := filepath.Join(outputDir, "myapp_darwin_arm64.tar.gz")
@@ -92,7 +90,7 @@ func TestArchive_Good(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		require.NoError(t, err)
 
 		// Windows archives should strip .exe from archive name
@@ -113,7 +111,7 @@ func TestArchive_Good(t *testing.T) {
 			Checksum: "abc123",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		require.NoError(t, err)
 		assert.Equal(t, "abc123", result.Checksum)
 	})
@@ -127,7 +125,7 @@ func TestArchive_Good(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := ArchiveXZ(fs, artifact)
+		result, err := ArchiveXZ(artifact)
 		require.NoError(t, err)
 
 		expectedPath := filepath.Join(outputDir, "myapp_linux_amd64.tar.xz")
@@ -146,7 +144,7 @@ func TestArchive_Good(t *testing.T) {
 			Arch: "arm64",
 		}
 
-		result, err := ArchiveWithFormat(fs, artifact, ArchiveFormatXZ)
+		result, err := ArchiveWithFormat(artifact, ArchiveFormatXZ)
 		require.NoError(t, err)
 
 		expectedPath := filepath.Join(outputDir, "myapp_darwin_arm64.tar.xz")
@@ -165,7 +163,7 @@ func TestArchive_Good(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := ArchiveWithFormat(fs, artifact, ArchiveFormatXZ)
+		result, err := ArchiveWithFormat(artifact, ArchiveFormatXZ)
 		require.NoError(t, err)
 
 		// Windows should still get .zip regardless of format
@@ -178,7 +176,6 @@ func TestArchive_Good(t *testing.T) {
 }
 
 func TestArchive_Bad(t *testing.T) {
-	fs := io_interface.Local
 	t.Run("returns error for empty path", func(t *testing.T) {
 		artifact := Artifact{
 			Path: "",
@@ -186,7 +183,7 @@ func TestArchive_Bad(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "artifact path is empty")
 		assert.Empty(t, result.Path)
@@ -199,7 +196,7 @@ func TestArchive_Bad(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "source file not found")
 		assert.Empty(t, result.Path)
@@ -214,7 +211,7 @@ func TestArchive_Bad(t *testing.T) {
 			Arch: "amd64",
 		}
 
-		result, err := Archive(fs, artifact)
+		result, err := Archive(artifact)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "source path is a directory")
 		assert.Empty(t, result.Path)
@@ -222,7 +219,6 @@ func TestArchive_Bad(t *testing.T) {
 }
 
 func TestArchiveAll_Good(t *testing.T) {
-	fs := io_interface.Local
 	t.Run("archives multiple artifacts", func(t *testing.T) {
 		outputDir := t.TempDir()
 
@@ -259,7 +255,7 @@ func TestArchiveAll_Good(t *testing.T) {
 			})
 		}
 
-		results, err := ArchiveAll(fs, artifacts)
+		results, err := ArchiveAll(artifacts)
 		require.NoError(t, err)
 		require.Len(t, results, 4)
 
@@ -272,20 +268,19 @@ func TestArchiveAll_Good(t *testing.T) {
 	})
 
 	t.Run("returns nil for empty slice", func(t *testing.T) {
-		results, err := ArchiveAll(fs, []Artifact{})
+		results, err := ArchiveAll([]Artifact{})
 		assert.NoError(t, err)
 		assert.Nil(t, results)
 	})
 
 	t.Run("returns nil for nil slice", func(t *testing.T) {
-		results, err := ArchiveAll(fs, nil)
+		results, err := ArchiveAll(nil)
 		assert.NoError(t, err)
 		assert.Nil(t, results)
 	})
 }
 
 func TestArchiveAll_Bad(t *testing.T) {
-	fs := io_interface.Local
 	t.Run("returns partial results on error", func(t *testing.T) {
 		binaryPath, _ := setupArchiveTestFile(t, "myapp", "linux", "amd64")
 
@@ -294,7 +289,7 @@ func TestArchiveAll_Bad(t *testing.T) {
 			{Path: "/nonexistent/binary", OS: "linux", Arch: "arm64"}, // This will fail
 		}
 
-		results, err := ArchiveAll(fs, artifacts)
+		results, err := ArchiveAll(artifacts)
 		assert.Error(t, err)
 		// Should have the first successful result
 		assert.Len(t, results, 1)

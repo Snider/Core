@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,54 +22,52 @@ func setupTestDir(t *testing.T, markers ...string) string {
 }
 
 func TestDiscover_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("detects Go project", func(t *testing.T) {
 		dir := setupTestDir(t, "go.mod")
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, []ProjectType{ProjectTypeGo}, types)
 	})
 
 	t.Run("detects Wails project with priority over Go", func(t *testing.T) {
 		dir := setupTestDir(t, "wails.json", "go.mod")
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, []ProjectType{ProjectTypeWails, ProjectTypeGo}, types)
 	})
 
 	t.Run("detects Node.js project", func(t *testing.T) {
 		dir := setupTestDir(t, "package.json")
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, []ProjectType{ProjectTypeNode}, types)
 	})
 
 	t.Run("detects PHP project", func(t *testing.T) {
 		dir := setupTestDir(t, "composer.json")
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, []ProjectType{ProjectTypePHP}, types)
 	})
 
 	t.Run("detects multiple project types", func(t *testing.T) {
 		dir := setupTestDir(t, "go.mod", "package.json")
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, []ProjectType{ProjectTypeGo, ProjectTypeNode}, types)
 	})
 
 	t.Run("empty directory returns empty slice", func(t *testing.T) {
 		dir := t.TempDir()
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Empty(t, types)
 	})
 }
 
 func TestDiscover_Bad(t *testing.T) {
-	fs := io.Local
 	t.Run("non-existent directory returns empty slice", func(t *testing.T) {
-		types, err := Discover(fs, "/non/existent/path")
+		types, err := Discover("/non/existent/path")
 		assert.NoError(t, err) // os.Stat fails silently in fileExists
 		assert.Empty(t, types)
 	})
@@ -81,90 +78,85 @@ func TestDiscover_Bad(t *testing.T) {
 		err := os.Mkdir(filepath.Join(dir, "go.mod"), 0755)
 		require.NoError(t, err)
 
-		types, err := Discover(fs, dir)
+		types, err := Discover(dir)
 		assert.NoError(t, err)
 		assert.Empty(t, types)
 	})
 }
 
 func TestPrimaryType_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("returns wails for wails project", func(t *testing.T) {
 		dir := setupTestDir(t, "wails.json", "go.mod")
-		primary, err := PrimaryType(fs, dir)
+		primary, err := PrimaryType(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, ProjectTypeWails, primary)
 	})
 
 	t.Run("returns go for go-only project", func(t *testing.T) {
 		dir := setupTestDir(t, "go.mod")
-		primary, err := PrimaryType(fs, dir)
+		primary, err := PrimaryType(dir)
 		assert.NoError(t, err)
 		assert.Equal(t, ProjectTypeGo, primary)
 	})
 
 	t.Run("returns empty string for empty directory", func(t *testing.T) {
 		dir := t.TempDir()
-		primary, err := PrimaryType(fs, dir)
+		primary, err := PrimaryType(dir)
 		assert.NoError(t, err)
 		assert.Empty(t, primary)
 	})
 }
 
 func TestIsGoProject_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("true with go.mod", func(t *testing.T) {
 		dir := setupTestDir(t, "go.mod")
-		assert.True(t, IsGoProject(fs, dir))
+		assert.True(t, IsGoProject(dir))
 	})
 
 	t.Run("true with wails.json", func(t *testing.T) {
 		dir := setupTestDir(t, "wails.json")
-		assert.True(t, IsGoProject(fs, dir))
+		assert.True(t, IsGoProject(dir))
 	})
 
 	t.Run("false without markers", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.False(t, IsGoProject(fs, dir))
+		assert.False(t, IsGoProject(dir))
 	})
 }
 
 func TestIsWailsProject_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("true with wails.json", func(t *testing.T) {
 		dir := setupTestDir(t, "wails.json")
-		assert.True(t, IsWailsProject(fs, dir))
+		assert.True(t, IsWailsProject(dir))
 	})
 
 	t.Run("false with only go.mod", func(t *testing.T) {
 		dir := setupTestDir(t, "go.mod")
-		assert.False(t, IsWailsProject(fs, dir))
+		assert.False(t, IsWailsProject(dir))
 	})
 }
 
 func TestIsNodeProject_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("true with package.json", func(t *testing.T) {
 		dir := setupTestDir(t, "package.json")
-		assert.True(t, IsNodeProject(fs, dir))
+		assert.True(t, IsNodeProject(dir))
 	})
 
 	t.Run("false without package.json", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.False(t, IsNodeProject(fs, dir))
+		assert.False(t, IsNodeProject(dir))
 	})
 }
 
 func TestIsPHPProject_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("true with composer.json", func(t *testing.T) {
 		dir := setupTestDir(t, "composer.json")
-		assert.True(t, IsPHPProject(fs, dir))
+		assert.True(t, IsPHPProject(dir))
 	})
 
 	t.Run("false without composer.json", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.False(t, IsPHPProject(fs, dir))
+		assert.False(t, IsPHPProject(dir))
 	})
 }
 
@@ -174,31 +166,28 @@ func TestTarget_Good(t *testing.T) {
 }
 
 func TestFileExists_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("returns true for existing file", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "test.txt")
 		err := os.WriteFile(path, []byte("content"), 0644)
 		require.NoError(t, err)
-		assert.True(t, fileExists(fs, path))
+		assert.True(t, fileExists(path))
 	})
 
 	t.Run("returns false for directory", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.False(t, fileExists(fs, dir))
+		assert.False(t, fileExists(dir))
 	})
 
 	t.Run("returns false for non-existent path", func(t *testing.T) {
-		assert.False(t, fileExists(fs, "/non/existent/file"))
+		assert.False(t, fileExists("/non/existent/file"))
 	})
 }
 
 // TestDiscover_Testdata tests discovery using the testdata fixtures.
 // These serve as integration tests with realistic project structures.
 func TestDiscover_Testdata(t *testing.T) {
-	fs := io.Local
-	testdataDir, err := filepath.Abs("testdata")
-	require.NoError(t, err)
+	testdataDir := "testdata"
 
 	tests := []struct {
 		name     string
@@ -216,7 +205,7 @@ func TestDiscover_Testdata(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := filepath.Join(testdataDir, tt.dir)
-			types, err := Discover(fs, dir)
+			types, err := Discover(dir)
 			assert.NoError(t, err)
 			if len(tt.expected) == 0 {
 				assert.Empty(t, types)

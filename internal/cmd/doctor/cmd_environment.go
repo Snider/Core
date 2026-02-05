@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/i18n"
-	"github.com/host-uk/core/pkg/io"
 	"github.com/host-uk/core/pkg/repos"
 )
 
@@ -44,11 +43,11 @@ func checkGitHubCLI() bool {
 
 // checkWorkspace checks for repos.yaml and counts cloned repos
 func checkWorkspace() {
-	registryPath, err := repos.FindRegistry(io.Local)
+	registryPath, err := repos.FindRegistry()
 	if err == nil {
 		fmt.Printf("  %s %s\n", successStyle.Render("✓"), i18n.T("cmd.doctor.repos_yaml_found", map[string]interface{}{"Path": registryPath}))
 
-		reg, err := repos.LoadRegistry(io.Local, registryPath)
+		reg, err := repos.LoadRegistry(registryPath)
 		if err == nil {
 			basePath := reg.BasePath
 			if basePath == "" {

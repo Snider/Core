@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
-	"github.com/host-uk/core/pkg/io"
 )
 
 // LinuxKitBuilder builds LinuxKit images.
@@ -27,22 +26,14 @@ func (b *LinuxKitBuilder) Name() string {
 }
 
 // Detect checks if a linuxkit.yml or .yml config exists in the directory.
-func (b *LinuxKitBuilder) Detect(fs io.Medium, dir string) (bool, error) {
+func (b *LinuxKitBuilder) Detect(dir string) (bool, error) {
 	// Check for linuxkit.yml
-	if fs.IsFile(filepath.Join(dir, "linuxkit.yml")) {
+	if _, err := os.Stat(filepath.Join(dir, "linuxkit.yml")); err == nil {
 		return true, nil
 	}
-	// Check for .core/linuxkit/
-	lkDir := filepath.Join(dir, ".core", "linuxkit")
-	if fs.IsDir(lkDir) {
-		entries, err := fs.List(lkDir)
-		if err == nil {
-			for _, entry := range entries {
-				if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".yml") {
-					return true, nil
-				}
-			}
-		}
+	// Check for .core/linuxkit/*.yml
+	if matches, _ := filepath.Glob(filepath.Join(dir, ".core", "linuxkit", "*.yml")); len(matches) > 0 {
+		return true, nil
 	}
 	return false, nil
 }
@@ -58,21 +49,13 @@ func (b *LinuxKitBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 	configPath := cfg.LinuxKitConfig
 	if configPath == "" {
 		// Auto-detect
-		if cfg.FS.IsFile(filepath.Join(cfg.ProjectDir, "linuxkit.yml")) {
+		if _, err := os.Stat(filepath.Join(cfg.ProjectDir, "linuxkit.yml")); err == nil {
 			configPath = filepath.Join(cfg.ProjectDir, "linuxkit.yml")
 		} else {
 			// Look in .core/linuxkit/
-			lkDir := filepath.Join(cfg.ProjectDir, ".core", "linuxkit")
-			if cfg.FS.IsDir(lkDir) {
-				entries, err := cfg.FS.List(lkDir)
-				if err == nil {
-					for _, entry := range entries {
-						if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".yml") {
-							configPath = filepath.Join(lkDir, entry.Name())
-							break
-						}
-					}
-				}
+			matches, _ := filepath.Glob(filepath.Join(cfg.ProjectDir, ".core", "linuxkit", "*.yml"))
+			if len(matches) > 0 {
+				configPath = matches[0]
 			}
 		}
 	}
@@ -82,7 +65,7 @@ func (b *LinuxKitBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 	}
 
 	// Validate config file exists
-	if !cfg.FS.IsFile(configPath) {
+	if _, err := os.Stat(configPath); err != nil {
 		return nil, fmt.Errorf("linuxkit.Build: config file not found: %s", configPath)
 	}
 
@@ -97,7 +80,7 @@ func (b *LinuxKitBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 	if outputDir == "" {
 		outputDir = filepath.Join(cfg.ProjectDir, "dist")
 	}
-	if err := cfg.FS.EnsureDir(outputDir); err != nil {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return nil, fmt.Errorf("linuxkit.Build: failed to create output directory: %w", err)
 	}
 
@@ -142,9 +125,9 @@ func (b *LinuxKitBuilder) Build(ctx context.Context, cfg *build.Config, targets 
 			artifactPath := b.getArtifactPath(outputDir, outputName, format)
 
 			// Verify the artifact was created
-			if !cfg.FS.Exists(artifactPath) {
+			if _, err := os.Stat(artifactPath); err != nil {
 				// Try alternate naming conventions
-				artifactPath = b.findArtifact(cfg.FS, outputDir, outputName, format)
+				artifactPath = b.findArtifact(outputDir, outputName, format)
 				if artifactPath == "" {
 					return nil, fmt.Errorf("linuxkit.Build: artifact not found after build: expected %s", b.getArtifactPath(outputDir, outputName, format))
 				}
@@ -192,7 +175,7 @@ func (b *LinuxKitBuilder) getArtifactPath(outputDir, outputName, format string) 
 }
 
 // findArtifact searches for the built artifact with various naming conventions.
-func (b *LinuxKitBuilder) findArtifact(fs io.Medium, outputDir, outputName, format string) string {
+func (b *LinuxKitBuilder) findArtifact(outputDir, outputName, format string) string {
 	// LinuxKit can create files with different suffixes
 	extensions := []string{
 		b.getFormatExtension(format),
@@ -202,23 +185,18 @@ func (b *LinuxKitBuilder) findArtifact(fs io.Medium, outputDir, outputName, form
 
 	for _, ext := range extensions {
 		path := filepath.Join(outputDir, outputName+ext)
-		if fs.Exists(path) {
+		if _, err := os.Stat(path); err == nil {
 			return path
 		}
 	}
 
 	// Try to find any file matching the output name
-	entries, err := fs.List(outputDir)
-	if err == nil {
-		for _, entry := range entries {
-			if strings.HasPrefix(entry.Name(), outputName) {
-				match := filepath.Join(outputDir, entry.Name())
-				// Return first match that looks like an image
-				ext := filepath.Ext(match)
-				if ext == ".iso" || ext == ".qcow2" || ext == ".raw" || ext == ".vmdk" || ext == ".vhd" {
-					return match
-				}
-			}
+	matches, _ := filepath.Glob(filepath.Join(outputDir, outputName+"*"))
+	for _, match := range matches {
+		// Return first match that looks like an image
+		ext := filepath.Ext(match)
+		if ext == ".iso" || ext == ".qcow2" || ext == ".raw" || ext == ".vmdk" || ext == ".vhd" {
+			return match
 		}
 	}
 

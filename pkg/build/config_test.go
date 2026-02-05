@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/host-uk/core/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +28,6 @@ func setupConfigTestDir(t *testing.T, configContent string) string {
 }
 
 func TestLoadConfig_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("loads valid config", func(t *testing.T) {
 		content := `
 version: 1
@@ -56,7 +54,7 @@ targets:
 `
 		dir := setupConfigTestDir(t, content)
 
-		cfg, err := LoadConfig(fs, dir)
+		cfg, err := LoadConfig(dir)
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 
@@ -79,7 +77,7 @@ targets:
 	t.Run("returns defaults when config file missing", func(t *testing.T) {
 		dir := t.TempDir()
 
-		cfg, err := LoadConfig(fs, dir)
+		cfg, err := LoadConfig(dir)
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 
@@ -100,7 +98,7 @@ project:
 `
 		dir := setupConfigTestDir(t, content)
 
-		cfg, err := LoadConfig(fs, dir)
+		cfg, err := LoadConfig(dir)
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 
@@ -130,7 +128,7 @@ targets:
 `
 		dir := setupConfigTestDir(t, content)
 
-		cfg, err := LoadConfig(fs, dir)
+		cfg, err := LoadConfig(dir)
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 
@@ -143,7 +141,6 @@ targets:
 }
 
 func TestLoadConfig_Bad(t *testing.T) {
-	fs := io.Local
 	t.Run("returns error for invalid YAML", func(t *testing.T) {
 		content := `
 version: 1
@@ -152,7 +149,7 @@ project:
 `
 		dir := setupConfigTestDir(t, content)
 
-		cfg, err := LoadConfig(fs, dir)
+		cfg, err := LoadConfig(dir)
 		assert.Error(t, err)
 		assert.Nil(t, cfg)
 		assert.Contains(t, err.Error(), "failed to parse config file")
@@ -169,7 +166,7 @@ project:
 		err = os.Mkdir(configPath, 0755)
 		require.NoError(t, err)
 
-		cfg, err := LoadConfig(fs, dir)
+		cfg, err := LoadConfig(dir)
 		assert.Error(t, err)
 		assert.Nil(t, cfg)
 		assert.Contains(t, err.Error(), "failed to read config file")
@@ -220,20 +217,19 @@ func TestConfigPath_Good(t *testing.T) {
 }
 
 func TestConfigExists_Good(t *testing.T) {
-	fs := io.Local
 	t.Run("returns true when config exists", func(t *testing.T) {
 		dir := setupConfigTestDir(t, "version: 1")
-		assert.True(t, ConfigExists(fs, dir))
+		assert.True(t, ConfigExists(dir))
 	})
 
 	t.Run("returns false when config missing", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.False(t, ConfigExists(fs, dir))
+		assert.False(t, ConfigExists(dir))
 	})
 
 	t.Run("returns false when .core dir missing", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.False(t, ConfigExists(fs, dir))
+		assert.False(t, ConfigExists(dir))
 	})
 }
 
@@ -253,7 +249,7 @@ sign:
 `
 	_ = os.WriteFile(filepath.Join(coreDir, "build.yaml"), []byte(configContent), 0644)
 
-	cfg, err := LoadConfig(io.Local, tmpDir)
+	cfg, err := LoadConfig(tmpDir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -302,12 +298,8 @@ func TestBuildConfig_ToTargets_Good(t *testing.T) {
 
 // TestLoadConfig_Testdata tests loading from the testdata fixture.
 func TestLoadConfig_Testdata(t *testing.T) {
-	fs := io.Local
-	abs, err := filepath.Abs("testdata/config-project")
-	require.NoError(t, err)
-
 	t.Run("loads config-project fixture", func(t *testing.T) {
-		cfg, err := LoadConfig(fs, abs)
+		cfg, err := LoadConfig("testdata/config-project")
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 

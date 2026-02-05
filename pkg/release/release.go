@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
@@ -215,9 +216,9 @@ func Run(ctx context.Context, cfg *Config, dryRun bool) (*Release, error) {
 }
 
 // buildArtifacts builds all artifacts for the release.
-func buildArtifacts(ctx context.Context, fs io.Medium, cfg *Config, projectDir, version string) ([]build.Artifact, error) {
+func buildArtifacts(ctx context.Context, m io.Medium, cfg *Config, projectDir, version string) ([]build.Artifact, error) {
 	// Load build configuration
-	buildCfg, err := build.LoadConfig(fs, projectDir)
+	buildCfg, err := build.LoadConfig(projectDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load build config: %w", err)
 	}
@@ -256,7 +257,7 @@ func buildArtifacts(ctx context.Context, fs io.Medium, cfg *Config, projectDir, 
 	outputDir := filepath.Join(projectDir, "dist")
 
 	// Get builder (detect project type)
-	projectType, err := build.PrimaryType(fs, projectDir)
+	projectType, err := build.PrimaryType(projectDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect project type: %w", err)
 	}
@@ -268,7 +269,6 @@ func buildArtifacts(ctx context.Context, fs io.Medium, cfg *Config, projectDir, 
 
 	// Build configuration
 	buildConfig := &build.Config{
-		FS:         fs,
 		ProjectDir: projectDir,
 		OutputDir:  outputDir,
 		Name:       binaryName,
@@ -283,20 +283,29 @@ func buildArtifacts(ctx context.Context, fs io.Medium, cfg *Config, projectDir, 
 	}
 
 	// Archive artifacts
-	archivedArtifacts, err := build.ArchiveAll(fs, artifacts)
+	archivedArtifacts, err := build.ArchiveAll(artifacts)
 	if err != nil {
 		return nil, fmt.Errorf("archive failed: %w", err)
 	}
 
 	// Compute checksums
-	checksummedArtifacts, err := build.ChecksumAll(fs, archivedArtifacts)
+	checksummedArtifacts, err := build.ChecksumAll(archivedArtifacts)
 	if err != nil {
 		return nil, fmt.Errorf("checksum failed: %w", err)
 	}
 
 	// Write CHECKSUMS.txt
 	checksumPath := filepath.Join(outputDir, "CHECKSUMS.txt")
-	if err := build.WriteChecksumFile(fs, checksummedArtifacts, checksumPath); err != nil {
+	var lines []string
+	for _, artifact := range checksummedArtifacts {
+		if artifact.Checksum != "" {
+			lines = append(lines, fmt.Sprintf("%s  %s", artifact.Checksum, filepath.Base(artifact.Path)))
+		}
+	}
+	sort.Strings(lines)
+	content := strings.Join(lines, "\n") + "\n"
+
+	if err := m.Write(checksumPath, content); err != nil {
 		return nil, fmt.Errorf("failed to write checksums file: %w", err)
 	}
 

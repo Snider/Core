@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-
-	"github.com/host-uk/core/pkg/io"
 )
 
 // Artifact represents a build output that can be signed.
@@ -18,7 +16,7 @@ type Artifact struct {
 
 // SignBinaries signs macOS binaries in the artifacts list.
 // Only signs darwin binaries when running on macOS with a configured identity.
-func SignBinaries(ctx context.Context, fs io.Medium, cfg SignConfig, artifacts []Artifact) error {
+func SignBinaries(ctx context.Context, cfg SignConfig, artifacts []Artifact) error {
 	if !cfg.Enabled {
 		return nil
 	}
@@ -39,7 +37,7 @@ func SignBinaries(ctx context.Context, fs io.Medium, cfg SignConfig, artifacts [
 		}
 
 		fmt.Printf("  Signing %s...\n", artifact.Path)
-		if err := signer.Sign(ctx, fs, artifact.Path); err != nil {
+		if err := signer.Sign(ctx, artifact.Path); err != nil {
 			return fmt.Errorf("failed to sign %s: %w", artifact.Path, err)
 		}
 	}
@@ -48,7 +46,7 @@ func SignBinaries(ctx context.Context, fs io.Medium, cfg SignConfig, artifacts [
 }
 
 // NotarizeBinaries notarizes macOS binaries if enabled.
-func NotarizeBinaries(ctx context.Context, fs io.Medium, cfg SignConfig, artifacts []Artifact) error {
+func NotarizeBinaries(ctx context.Context, cfg SignConfig, artifacts []Artifact) error {
 	if !cfg.Enabled || !cfg.MacOS.Notarize {
 		return nil
 	}
@@ -68,7 +66,7 @@ func NotarizeBinaries(ctx context.Context, fs io.Medium, cfg SignConfig, artifac
 		}
 
 		fmt.Printf("  Notarizing %s (this may take a few minutes)...\n", artifact.Path)
-		if err := signer.Notarize(ctx, fs, artifact.Path); err != nil {
+		if err := signer.Notarize(ctx, artifact.Path); err != nil {
 			return fmt.Errorf("failed to notarize %s: %w", artifact.Path, err)
 		}
 	}
@@ -77,7 +75,7 @@ func NotarizeBinaries(ctx context.Context, fs io.Medium, cfg SignConfig, artifac
 }
 
 // SignChecksums signs the checksums file with GPG.
-func SignChecksums(ctx context.Context, fs io.Medium, cfg SignConfig, checksumFile string) error {
+func SignChecksums(ctx context.Context, cfg SignConfig, checksumFile string) error {
 	if !cfg.Enabled {
 		return nil
 	}
@@ -88,7 +86,7 @@ func SignChecksums(ctx context.Context, fs io.Medium, cfg SignConfig, checksumFi
 	}
 
 	fmt.Printf("  Signing %s with GPG...\n", checksumFile)
-	if err := signer.Sign(ctx, fs, checksumFile); err != nil {
+	if err := signer.Sign(ctx, checksumFile); err != nil {
 		return fmt.Errorf("failed to sign checksums: %w", err)
 	}
 

@@ -46,7 +46,7 @@ Loop:
 		if !strings.HasPrefix(arg, "-") {
 			if arg == "daemon" {
 				for j := i + 2; j < len(os.Args); j++ {
-				f := os.Args[j]
+					f := os.Args[j]
 					if strings.HasPrefix(f, "--mcp-transport=") {
 						os.Setenv("CORE_MCP_TRANSPORT", strings.TrimPrefix(f, "--mcp-transport="))
 					} else if f == "--mcp-transport" && j+1 < len(os.Args) {

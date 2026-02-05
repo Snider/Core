@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/host-uk/core/pkg/build"
-	"github.com/host-uk/core/pkg/io"
 )
 
 // DockerBuilder builds Docker images.
@@ -27,9 +26,9 @@ func (b *DockerBuilder) Name() string {
 }
 
 // Detect checks if a Dockerfile exists in the directory.
-func (b *DockerBuilder) Detect(fs io.Medium, dir string) (bool, error) {
+func (b *DockerBuilder) Detect(dir string) (bool, error) {
 	dockerfilePath := filepath.Join(dir, "Dockerfile")
-	if fs.IsFile(dockerfilePath) {
+	if _, err := os.Stat(dockerfilePath); err == nil {
 		return true, nil
 	}
 	return false, nil
@@ -54,7 +53,7 @@ func (b *DockerBuilder) Build(ctx context.Context, cfg *build.Config, targets []
 	}
 
 	// Validate Dockerfile exists
-	if !cfg.FS.IsFile(dockerfile) {
+	if _, err := os.Stat(dockerfile); err != nil {
 		return nil, fmt.Errorf("docker.Build: Dockerfile not found: %s", dockerfile)
 	}
 
@@ -151,7 +150,7 @@ func (b *DockerBuilder) Build(ctx context.Context, cfg *build.Config, targets []
 	args = append(args, cfg.ProjectDir)
 
 	// Create output directory
-	if err := cfg.FS.EnsureDir(cfg.OutputDir); err != nil {
+	if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
 		return nil, fmt.Errorf("docker.Build: failed to create output directory: %w", err)
 	}
 
