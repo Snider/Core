@@ -53,6 +53,11 @@ tasks:
     cmds:
       - core go cov
 
+  cov-view:
+    desc: "Open HTML coverage report"
+    cmds:
+      - core go cov --open
+
   fmt:
     desc: "Format Go code"
     cmds:

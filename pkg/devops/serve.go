@@ -59,11 +59,11 @@ func (d *DevOps) mountProject(ctx context.Context, path string) error {
 	// Use reverse SSHFS mount
 	// The VM connects back to host to mount the directory
 	cmd := exec.CommandContext(ctx, "ssh",
-		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "StrictHostKeyChecking=yes",
 		"-o", "UserKnownHostsFile=~/.core/known_hosts",
 		"-o", "LogLevel=ERROR",
 		"-R", "10000:localhost:22", // Reverse tunnel for SSHFS
-		"-p", "2222",
+		"-p", fmt.Sprintf("%d", DefaultSSHPort),
 		"root@localhost",
 		fmt.Sprintf("mkdir -p /app && sshfs -p 10000 %s@localhost:%s /app -o allow_other", os.Getenv("USER"), absPath),
 	)

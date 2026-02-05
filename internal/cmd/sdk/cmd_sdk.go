@@ -96,8 +96,7 @@ func runSDKDiff(basePath, specPath string) error {
 
 	result, err := Diff(basePath, specPath)
 	if err != nil {
-		fmt.Printf("%s %v\n", sdkErrorStyle.Render(i18n.Label("error")), err)
-		os.Exit(2)
+		return cli.Exit(2, cli.Wrap(err, i18n.Label("error")))
 	}
 
 	if result.Breaking {
@@ -105,7 +104,7 @@ func runSDKDiff(basePath, specPath string) error {
 		for _, change := range result.Changes {
 			fmt.Printf("  - %s\n", change)
 		}
-		os.Exit(1)
+		return cli.Exit(1, cli.Err("%s", result.Summary))
 	}
 
 	fmt.Printf("%s %s\n", sdkSuccessStyle.Render(i18n.T("cmd.sdk.label.ok")), result.Summary)

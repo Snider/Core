@@ -1,12 +1,15 @@
 package gocmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/host-uk/core/pkg/cli"
@@ -51,10 +54,16 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 
 	args := []string{"test"}
 
+	var covPath string
 	if coverage {
-		args = append(args, "-cover")
-	} else {
-		args = append(args, "-cover")
+		args = append(args, "-cover", "-covermode=atomic")
+		covFile, err := os.CreateTemp("", "coverage-*.out")
+		if err == nil {
+			covPath = covFile.Name()
+			_ = covFile.Close()
+			args = append(args, "-coverprofile="+covPath)
+			defer os.Remove(covPath)
+		}
 	}
 
 	if run != "" {
@@ -121,7 +130,15 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 	}
 
 	if cov > 0 {
-		cli.Print("\n  %s %s\n", cli.KeyStyle.Render(i18n.Label("coverage")), formatCoverage(cov))
+		cli.Print("\n  %s %s\n", cli.KeyStyle.Render(i18n.Label("statements")), formatCoverage(cov))
+		if covPath != "" {
+			branchCov, err := calculateBlockCoverage(covPath)
+			if err != nil {
+				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), cli.ErrorStyle.Render("unable to calculate"))
+			} else {
+				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
+			}
+		}
 	}
 
 	if err == nil {
@@ -161,10 +178,12 @@ func parseOverallCoverage(output string) float64 {
 }
 
 var (
-	covPkg       string
-	covHTML      bool
-	covOpen      bool
-	covThreshold float64
+	covPkg             string
+	covHTML            bool
+	covOpen            bool
+	covThreshold       float64
+	covBranchThreshold float64
+	covOutput          string
 )
 
 func addGoCovCommand(parent *cli.Command) {
@@ -193,7 +212,21 @@ func addGoCovCommand(parent *cli.Command) {
 			}
 			covPath := covFile.Name()
 			_ = covFile.Close()
-			defer func() { _ = os.Remove(covPath) }()
+			defer func() {
+				if covOutput == "" {
+					_ = os.Remove(covPath)
+				} else {
+					// Copy to output destination before removing
+					src, _ := os.Open(covPath)
+					dst, _ := os.Create(covOutput)
+					if src != nil && dst != nil {
+						_, _ = io.Copy(dst, src)
+						_ = src.Close()
+						_ = dst.Close()
+					}
+					_ = os.Remove(covPath)
+				}
+			}()
 
 			cli.Print("%s %s\n", dimStyle.Render(i18n.Label("coverage")), i18n.ProgressSubject("run", "tests"))
 			// Truncate package list if too long for display
@@ -228,7 +261,7 @@ func addGoCovCommand(parent *cli.Command) {
 
 			// Parse total coverage from last line
 			lines := strings.Split(strings.TrimSpace(string(covOutput)), "\n")
-			var totalCov float64
+			var statementCov float64
 			if len(lines) > 0 {
 				lastLine := lines[len(lines)-1]
 				// Format: "total:    (statements)    XX.X%"
@@ -236,14 +269,21 @@ func addGoCovCommand(parent *cli.Command) {
 					parts := strings.Fields(lastLine)
 					if len(parts) >= 3 {
 						covStr := strings.TrimSuffix(parts[len(parts)-1], "%")
-						_, _ = fmt.Sscanf(covStr, "%f", &totalCov)
+						_, _ = fmt.Sscanf(covStr, "%f", &statementCov)
 					}
 				}
 			}
 
+			// Calculate branch coverage (block coverage)
+			branchCov, err := calculateBlockCoverage(covPath)
+			if err != nil {
+				return cli.Wrap(err, "calculate branch coverage")
+			}
+
 			// Print coverage summary
 			cli.Blank()
-			cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("total")), formatCoverage(totalCov))
+			cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("statements")), formatCoverage(statementCov))
+			cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
 
 			// Generate HTML if requested
 			if covHTML || covOpen {
@@ -271,10 +311,14 @@ func addGoCovCommand(parent *cli.Command) {
 				}
 			}
 
-			// Check threshold
-			if covThreshold > 0 && totalCov < covThreshold {
-				cli.Print("\n%s %.1f%% < %.1f%%\n", errorStyle.Render(i18n.T("i18n.fail.meet", "threshold")), totalCov, covThreshold)
-				return errors.New("coverage below threshold")
+			// Check thresholds
+			if covThreshold > 0 && statementCov < covThreshold {
+				cli.Print("\n%s Statements: %.1f%% < %.1f%%\n", errorStyle.Render(i18n.T("i18n.fail.meet", "threshold")), statementCov, covThreshold)
+				return errors.New("statement coverage below threshold")
+			}
+			if covBranchThreshold > 0 && branchCov < covBranchThreshold {
+				cli.Print("\n%s Branches: %.1f%% < %.1f%%\n", errorStyle.Render(i18n.T("i18n.fail.meet", "threshold")), branchCov, covBranchThreshold)
+				return errors.New("branch coverage below threshold")
 			}
 
 			if testErr != nil {
@@ -289,9 +333,64 @@ func addGoCovCommand(parent *cli.Command) {
 	covCmd.Flags().StringVar(&covPkg, "pkg", "", "Package to test")
 	covCmd.Flags().BoolVar(&covHTML, "html", false, "Generate HTML report")
 	covCmd.Flags().BoolVar(&covOpen, "open", false, "Open HTML report in browser")
-	covCmd.Flags().Float64Var(&covThreshold, "threshold", 0, "Minimum coverage percentage")
+	covCmd.Flags().Float64Var(&covThreshold, "threshold", 0, "Minimum statement coverage percentage")
+	covCmd.Flags().Float64Var(&covBranchThreshold, "branch-threshold", 0, "Minimum branch coverage percentage")
+	covCmd.Flags().StringVarP(&covOutput, "output", "o", "", "Output file for coverage profile")
 
 	parent.AddCommand(covCmd)
+}
+
+// calculateBlockCoverage parses a Go coverage profile and returns the percentage of basic
+// blocks that have a non-zero execution count. Go's coverage profile contains one line per
+// basic block, where the last field is the execution count, not explicit branch coverage.
+// The resulting block coverage is used here only as a proxy for branch coverage; computing
+// true branch coverage would require more detailed control-flow analysis.
+func calculateBlockCoverage(path string) (float64, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var totalBlocks, coveredBlocks int
+
+	// Skip the first line (mode: atomic/set/count)
+	if !scanner.Scan() {
+		return 0, nil
+	}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			continue
+		}
+
+		// Last field is the count
+		count, err := strconv.Atoi(fields[len(fields)-1])
+		if err != nil {
+			continue
+		}
+
+		totalBlocks++
+		if count > 0 {
+			coveredBlocks++
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	if totalBlocks == 0 {
+		return 0, nil
+	}
+
+	return (float64(coveredBlocks) / float64(totalBlocks)) * 100, nil
 }
 
 func findTestPackages(root string) ([]string, error) {

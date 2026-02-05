@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleName</key>
+    <string>BugSETI (Dev)</string>
+    <key>CFBundleExecutable</key>
+    <string>bugseti</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.lethean.bugseti.dev</string>
+    <key>CFBundleVersion</key>
+    <string>0.1.0-dev</string>
+    <key>CFBundleGetInfoString</key>
+    <string>Distributed Bug Fixing - like SETI@home but for code (Development)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0-dev</string>
+    <key>CFBundleIconFile</key>
+    <string>icons.icns</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSUIElement</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+</dict>
+</plist>

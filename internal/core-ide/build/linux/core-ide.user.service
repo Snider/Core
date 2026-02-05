@@ -1,0 +1,26 @@
+[Unit]
+Description=Core IDE Job Runner (User Mode)
+Documentation=https://github.com/host-uk/core
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/core-ide --headless
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+
+# Environment
+Environment=CORE_DAEMON=1
+# GitHub token from environment
+# Set via: systemctl --user edit core-ide
+# Or in ~/.config/environment.d/core-ide.conf
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=core-ide
+
+[Install]
+WantedBy=default.target

@@ -2,11 +2,14 @@
 package local
 
 import (
+	"fmt"
 	goio "io"
 	"io/fs"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Medium is a local filesystem storage backend.
@@ -83,7 +86,13 @@ func (m *Medium) validatePath(p string) (string, error) {
 		// Verify the resolved part is still within the root
 		rel, err := filepath.Rel(m.root, realNext)
 		if err != nil || strings.HasPrefix(rel, "..") {
-			// Security event: sandbox escape attempt (path escapes root)
+			// Security event: sandbox escape attempt
+			username := "unknown"
+			if u, err := user.Current(); err == nil {
+				username = u.Username
+			}
+			fmt.Fprintf(os.Stderr, "[%s] SECURITY sandbox escape detected root=%s path=%s attempted=%s user=%s\n",
+				time.Now().Format(time.RFC3339), m.root, p, realNext, username)
 			return "", os.ErrPermission // Path escapes sandbox
 		}
 		current = realNext
