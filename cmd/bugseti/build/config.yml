@@ -1,0 +1,30 @@
+# BugSETI Wails v3 Build Configuration
+
+version: "3"
+
+# Application information
+name: "BugSETI"
+outputfilename: "bugseti"
+description: "Distributed Bug Fixing - like SETI@home but for code"
+productidentifier: "io.lethean.bugseti"
+productname: "BugSETI"
+productcompany: "Lethean"
+copyright: "Copyright 2026 Lethean"
+
+# Development server
+devserver:
+  frontend: "http://localhost:9246"
+
+# Frontend configuration
+frontend:
+  dir: "frontend"
+  installcmd: "npm install"
+  buildcmd: "npm run build"
+  devcmd: "npm run dev"
+
+# Build information
+info:
+  companyname: "Lethean"
+  productversion: "0.1.0"
+  fileversion: "0.1.0"
+  comments: "Distributed OSS bug fixing application"

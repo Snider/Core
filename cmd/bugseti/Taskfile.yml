@@ -1,0 +1,134 @@
+version: '3'
+
+includes:
+  common: ./build/Taskfile.yml
+  windows: ./build/windows/Taskfile.yml
+  darwin: ./build/darwin/Taskfile.yml
+  linux: ./build/linux/Taskfile.yml
+
+vars:
+  APP_NAME: "bugseti"
+  BIN_DIR: "bin"
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9246}}'
+
+tasks:
+  build:
+    summary: Builds the application
+    cmds:
+      - task: "{{OS}}:build"
+
+  package:
+    summary: Packages a production build of the application
+    cmds:
+      - task: "{{OS}}:package"
+
+  run:
+    summary: Runs the application
+    cmds:
+      - task: "{{OS}}:run"
+
+  dev:
+    summary: Runs the application in development mode
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  build:all:
+    summary: Builds for all platforms
+    cmds:
+      - task: darwin:build
+        vars:
+          PRODUCTION: "true"
+      - task: linux:build
+        vars:
+          PRODUCTION: "true"
+      - task: windows:build
+        vars:
+          PRODUCTION: "true"
+
+  package:all:
+    summary: Packages for all platforms
+    cmds:
+      - task: darwin:package
+      - task: linux:package
+      - task: windows:package
+
+  clean:
+    summary: Cleans build artifacts
+    cmds:
+      - rm -rf bin/
+      - rm -rf frontend/dist/
+      - rm -rf frontend/node_modules/
+
+  # Release targets
+  release:stable:
+    summary: Creates a stable release tag
+    desc: |
+      Creates a stable release tag (bugseti-vX.Y.Z).
+      Usage: task release:stable VERSION=1.0.0
+    preconditions:
+      - sh: '[ -n "{{.VERSION}}" ]'
+        msg: "VERSION is required. Usage: task release:stable VERSION=1.0.0"
+    cmds:
+      - git tag -a "bugseti-v{{.VERSION}}" -m "BugSETI v{{.VERSION}} stable release"
+      - echo "Created tag bugseti-v{{.VERSION}}"
+      - echo "To push: git push origin bugseti-v{{.VERSION}}"
+
+  release:beta:
+    summary: Creates a beta release tag
+    desc: |
+      Creates a beta release tag (bugseti-vX.Y.Z-beta.N).
+      Usage: task release:beta VERSION=1.0.0 BETA=1
+    preconditions:
+      - sh: '[ -n "{{.VERSION}}" ]'
+        msg: "VERSION is required. Usage: task release:beta VERSION=1.0.0 BETA=1"
+      - sh: '[ -n "{{.BETA}}" ]'
+        msg: "BETA number is required. Usage: task release:beta VERSION=1.0.0 BETA=1"
+    cmds:
+      - git tag -a "bugseti-v{{.VERSION}}-beta.{{.BETA}}" -m "BugSETI v{{.VERSION}} beta {{.BETA}}"
+      - echo "Created tag bugseti-v{{.VERSION}}-beta.{{.BETA}}"
+      - echo "To push: git push origin bugseti-v{{.VERSION}}-beta.{{.BETA}}"
+
+  release:nightly:
+    summary: Creates a nightly release tag
+    desc: Creates a nightly release tag (bugseti-nightly-YYYYMMDD)
+    vars:
+      DATE:
+        sh: date -u +%Y%m%d
+    cmds:
+      - git tag -a "bugseti-nightly-{{.DATE}}" -m "BugSETI nightly build {{.DATE}}"
+      - echo "Created tag bugseti-nightly-{{.DATE}}"
+      - echo "To push: git push origin bugseti-nightly-{{.DATE}}"
+
+  release:push:
+    summary: Pushes the latest release tag
+    desc: |
+      Pushes the most recent bugseti-* tag to origin.
+      Usage: task release:push
+    vars:
+      TAG:
+        sh: git tag -l 'bugseti-*' | sort -V | tail -1
+    preconditions:
+      - sh: '[ -n "{{.TAG}}" ]'
+        msg: "No bugseti-* tags found"
+    cmds:
+      - echo "Pushing tag {{.TAG}}..."
+      - git push origin {{.TAG}}
+      - echo "Tag {{.TAG}} pushed. GitHub Actions will build and release."
+
+  release:list:
+    summary: Lists all BugSETI release tags
+    cmds:
+      - echo "=== BugSETI Release Tags ==="
+      - git tag -l 'bugseti-*' | sort -V
+
+  version:
+    summary: Shows current version info
+    cmds:
+      - |
+        echo "=== BugSETI Version Info ==="
+        echo "Latest stable tag:"
+        git tag -l 'bugseti-v*' | grep -v beta | sort -V | tail -1 || echo "  (none)"
+        echo "Latest beta tag:"
+        git tag -l 'bugseti-v*-beta.*' | sort -V | tail -1 || echo "  (none)"
+        echo "Latest nightly tag:"
+        git tag -l 'bugseti-nightly-*' | sort -V | tail -1 || echo "  (none)"
