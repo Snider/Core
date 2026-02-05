@@ -1,3 +1,6 @@
+# This workflow is localized from host-uk/.github/.github/workflows/auto-merge.yml@dev
+# because the reusable version is currently failing due to missing git context.
+# See: https://github.com/host-uk/core/actions/runs/21697467567/job/62570690752
 name: Auto Merge
 
 on:
@@ -11,6 +14,7 @@ permissions:
 jobs:
   merge:
     runs-on: ubuntu-latest
+<<<<<<< HEAD
     permissions:
       contents: write
       pull-requests: write
@@ -22,6 +26,15 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+=======
+    steps:
+      - name: Auto Merge
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          github-token: ${{ github.token }}
+>>>>>>> 232bedf (Add Architecture Decision Records (ADRs) (#312))
           script: |
             const author = context.payload.pull_request.user.login;
             const association = context.payload.pull_request.author_association;
@@ -30,7 +43,11 @@ jobs:
             const trustedBots = ['google-labs-jules[bot]'];
             const isTrustedBot = trustedBots.includes(author);
 
+<<<<<<< HEAD
             // Check author association from webhook payload (no API call needed)
+=======
+            // Check author association
+>>>>>>> 232bedf (Add Architecture Decision Records (ADRs) (#312))
             const trusted = ['MEMBER', 'OWNER', 'COLLABORATOR'];
             if (!isTrustedBot && !trusted.includes(association)) {
               core.info(`${author} is ${association} — skipping auto-merge`);
@@ -40,6 +57,17 @@ jobs:
             await exec.exec('gh', [
               'pr', 'merge', process.env.PR_NUMBER,
               '--auto',
+<<<<<<< HEAD
               '--repo', `${context.repo.owner}/${context.repo.repo}`
             ]);
+=======
+              '--repo', `${context.repo.owner}/${context.repo.repo}`,
+              '--merge'
+            ], {
+              env: {
+                ...process.env,
+                GH_TOKEN: '${{ github.token }}'
+              }
+            });
+>>>>>>> 232bedf (Add Architecture Decision Records (ADRs) (#312))
             core.info(`Auto-merge enabled for #${process.env.PR_NUMBER}`);
