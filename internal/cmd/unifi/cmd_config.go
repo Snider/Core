@@ -9,11 +9,12 @@ import (
 
 // Config command flags.
 var (
-	configURL    string
-	configUser   string
-	configPass   string
-	configAPIKey string
-	configTest   bool
+	configURL      string
+	configUser     string
+	configPass     string
+	configAPIKey   string
+	configInsecure bool
+	configTest     bool
 )
 
 // addConfigCommand adds the 'config' subcommand for UniFi connection setup.
@@ -23,7 +24,7 @@ func addConfigCommand(parent *cli.Command) {
 		Short: "Configure UniFi connection",
 		Long:  "Set the UniFi controller URL and credentials, or test the current connection.",
 		RunE: func(cmd *cli.Command, args []string) error {
-			return runConfig()
+			return runConfig(cmd)
 		},
 	}
 
@@ -31,15 +32,21 @@ func addConfigCommand(parent *cli.Command) {
 	cmd.Flags().StringVar(&configUser, "user", "", "UniFi username")
 	cmd.Flags().StringVar(&configPass, "pass", "", "UniFi password")
 	cmd.Flags().StringVar(&configAPIKey, "apikey", "", "UniFi API key")
+	cmd.Flags().BoolVar(&configInsecure, "insecure", false, "Skip TLS verification")
 	cmd.Flags().BoolVar(&configTest, "test", false, "Test the current connection")
 
 	parent.AddCommand(cmd)
 }
 
-func runConfig() error {
+func runConfig(cmd *cli.Command) error {
 	// If setting values, save them first
-	if configURL != "" || configUser != "" || configPass != "" || configAPIKey != "" {
-		if err := uf.SaveConfig(configURL, configUser, configPass, configAPIKey); err != nil {
+	if configURL != "" || configUser != "" || configPass != "" || configAPIKey != "" || cmd.Flags().Changed("insecure") {
+		var insecurePtr *bool
+		if cmd.Flags().Changed("insecure") {
+			insecurePtr = &configInsecure
+		}
+
+		if err := uf.SaveConfig(configURL, configUser, configPass, configAPIKey, insecurePtr); err != nil {
 			return err
 		}
 
@@ -55,6 +62,9 @@ func runConfig() error {
 		if configAPIKey != "" {
 			cli.Success("UniFi API key saved")
 		}
+		if configInsecure {
+			cli.Success("UniFi TLS verification skip enabled")
+		}
 	}
 
 	// If testing, verify the connection
@@ -63,7 +73,7 @@ func runConfig() error {
 	}
 
 	// If no flags, show current config
-	if configURL == "" && configUser == "" && configPass == "" && configAPIKey == "" && !configTest {
+	if configURL == "" && configUser == "" && configPass == "" && configAPIKey == "" && !configInsecure && !configTest {
 		return showConfig()
 	}
 
@@ -71,13 +81,17 @@ func runConfig() error {
 }
 
 func showConfig() error {
-	url, user, pass, apikey, err := uf.ResolveConfig("", "", "", "")
+	url, user, pass, apikey, insecure, err := uf.ResolveConfig("", "", "", "", false)
 	if err != nil {
 		return err
 	}
 
 	cli.Blank()
 	cli.Print("  %s %s\n", dimStyle.Render("URL:"), valueStyle.Render(url))
+
+	if insecure {
+		cli.Print("  %s %s\n", dimStyle.Render("Insecure:"), warningStyle.Render("true (TLS verification skipped)"))
+	}
 
 	if user != "" {
 		cli.Print("  %s %s\n", dimStyle.Render("User:"), valueStyle.Render(user))
@@ -107,7 +121,7 @@ func showConfig() error {
 }
 
 func runConfigTest() error {
-	client, err := uf.NewFromConfig(configURL, configUser, configPass, configAPIKey)
+	client, err := uf.NewFromConfig(configURL, configUser, configPass, configAPIKey, configInsecure)
 	if err != nil {
 		return err
 	}

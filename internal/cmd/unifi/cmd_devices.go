@@ -32,7 +32,7 @@ func addDevicesCommand(parent *cli.Command) {
 }
 
 func runDevices() error {
-	client, err := uf.NewFromConfig("", "", "", "")
+	client, err := uf.NewFromConfig("", "", "", "", false)
 	if err != nil {
 		return log.E("unifi.devices", "failed to initialise client", err)
 	}
