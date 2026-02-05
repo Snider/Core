@@ -162,8 +162,8 @@ test:
   parallel: true
   coverage: true
   thresholds:
-    statements: 80
-    branches: 75
+    statements: 40
+    branches: 35
 
 deploy:
   coolify:

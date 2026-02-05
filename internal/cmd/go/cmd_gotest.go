@@ -134,7 +134,7 @@ func runGoTest(coverage bool, pkg, run string, short, race, jsonOut, verbose boo
 		if covPath != "" {
 			branchCov, err := calculateBlockCoverage(covPath)
 			if err != nil {
-				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), "unable to calculate branch coverage")
+				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), cli.ErrorStyle.Render("unable to calculate"))
 			} else {
 				cli.Print("  %s %s\n", cli.KeyStyle.Render(i18n.Label("branches")), formatCoverage(branchCov))
 			}

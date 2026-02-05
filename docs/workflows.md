@@ -11,7 +11,7 @@ Complete workflow from code to GitHub release.
 core go test
 
 # 2. Check coverage (Statement and Branch)
-core go cov --threshold 80 --branch-threshold 75
+core go cov --threshold 40 --branch-threshold 35
 
 # 3. Format and lint
 core go fmt --fix

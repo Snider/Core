@@ -18,3 +18,4 @@ tasks
 /core
 
 
+patch_cov.*
