@@ -140,6 +140,67 @@ tasks:
     cmds:
       - go run ./internal/tools/i18n-validate ./...
 
+  # --- Core IDE (Wails v3) ---
+  ide:dev:
+    desc: "Run Core IDE in Wails dev mode"
+    dir: cmd/core-ide
+    cmds:
+      - cd frontend && npm install && npm run build
+      - wails3 dev
+
+  ide:build:
+    desc: "Build Core IDE production binary"
+    dir: cmd/core-ide
+    cmds:
+      - cd frontend && npm install && npm run build
+      - wails3 build
+
+  ide:frontend:
+    desc: "Build Core IDE frontend only"
+    dir: cmd/core-ide/frontend
+    cmds:
+      - npm install
+      - npm run build
+
+  # --- Core App (FrankenPHP + Wails v3) ---
+  app:setup:
+    desc: "Install PHP-ZTS build dependency for Core App"
+    cmds:
+      - brew tap shivammathur/php 2>/dev/null || true
+      - brew install shivammathur/php/php@8.4-zts
+
+  app:composer:
+    desc: "Install Laravel dependencies for Core App"
+    dir: cmd/core-app/laravel
+    cmds:
+      - composer install --no-dev --optimize-autoloader --no-interaction
+
+  app:build:
+    desc: "Build Core App (FrankenPHP + Laravel desktop binary)"
+    dir: cmd/core-app
+    env:
+      CGO_ENABLED: "1"
+      CGO_CFLAGS:
+        sh: /opt/homebrew/opt/php@8.4-zts/bin/php-config --includes
+      CGO_LDFLAGS:
+        sh: "echo -L/opt/homebrew/opt/php@8.4-zts/lib $(/opt/homebrew/opt/php@8.4-zts/bin/php-config --ldflags) $(/opt/homebrew/opt/php@8.4-zts/bin/php-config --libs)"
+    cmds:
+      - go build -tags nowatcher -o ../../bin/core-app .
+
+  app:dev:
+    desc: "Build and run Core App"
+    dir: cmd/core-app
+    env:
+      CGO_ENABLED: "1"
+      CGO_CFLAGS:
+        sh: /opt/homebrew/opt/php@8.4-zts/bin/php-config --includes
+      CGO_LDFLAGS:
+        sh: "echo -L/opt/homebrew/opt/php@8.4-zts/lib $(/opt/homebrew/opt/php@8.4-zts/bin/php-config --ldflags) $(/opt/homebrew/opt/php@8.4-zts/bin/php-config --libs)"
+      DYLD_LIBRARY_PATH: "/opt/homebrew/opt/php@8.4-zts/lib"
+    cmds:
+      - go build -tags nowatcher -o ../../bin/core-app .
+      - ../../bin/core-app
+
   # --- Multi-repo (when in workspace) ---
   dev:health:
     desc: "Check health of all repos"
